@@ -1,12 +1,15 @@
 package service
 
 import (
+	"bytes"
 	"fmt"
+	"io"
 	"log"
 	"os"
 	"os/exec"
 	"os/user"
 	"path/filepath"
+	"strings"
 )
 
 // PaceBase for all go projects
@@ -163,8 +166,12 @@ func Test(name string, options TestOptions) {
 func Lint(name string) {
 	AutoInstall("golint", "golang.org/x/lint/golint")
 
+	var buf bytes.Buffer
+	GoBinCommandText(&buf, "go", "list", filepath.Join(GoServicePackagePath(name), "..."))
+	paths := strings.Split(buf.String(), "\n")
+
 	// start go run
-	SimpleExec(GoBinCommand("golint"), filepath.Join(GoServicePackagePath(name), "..."))
+	SimpleExec(GoBinCommand("golint"), paths...)
 }
 
 // GoServicePath returns the path of the go service for given name
@@ -217,6 +224,18 @@ func SimpleExecInPath(dir, cmdName string, arguments ...string) {
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 	cmd.Dir = dir
+	err := cmd.Run()
+	if err != nil {
+		log.Fatal(err)
+	}
+}
+
+// GoBinCommandText writes the command output to the passed writer
+func GoBinCommandText(w io.Writer, cmdName string, arguments ...string) {
+	cmd := exec.Command(cmdName, arguments...)
+	cmd.Stdin = os.Stdin
+	cmd.Stdout = w
+	cmd.Stderr = os.Stderr
 	err := cmd.Run()
 	if err != nil {
 		log.Fatal(err)

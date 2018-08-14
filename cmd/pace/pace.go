@@ -164,7 +164,6 @@ func mustIdentifyService() string {
 
 	// trim the gopath service prefix from the project
 	base := strings.TrimPrefix(relDir, servicePrefix+"/")
-	log.Print(base)
 	if err != nil {
 		log.Fatal(err)
 	}
