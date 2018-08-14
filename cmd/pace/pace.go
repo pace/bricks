@@ -69,7 +69,7 @@ func addRootCommands(rootCmd *cobra.Command) {
 func addServiceCommands(cmdService *cobra.Command) {
 	cmdServiceNew := &cobra.Command{
 		Use:  "new",
-		Args: cobra.MaximumNArgs(1),
+		Args: cobra.ExactArgs(1),
 		Run: func(cmd *cobra.Command, args []string) {
 			service.New(args[0])
 		},
@@ -78,7 +78,7 @@ func addServiceCommands(cmdService *cobra.Command) {
 
 	cmdServiceClone := &cobra.Command{
 		Use:  "clone",
-		Args: cobra.MaximumNArgs(1),
+		Args: cobra.ExactArgs(1),
 		Run: func(cmd *cobra.Command, args []string) {
 			service.Clone(args[0])
 		},
@@ -87,7 +87,7 @@ func addServiceCommands(cmdService *cobra.Command) {
 
 	cmdServicePath := &cobra.Command{
 		Use:  "path",
-		Args: cobra.MaximumNArgs(1),
+		Args: cobra.ExactArgs(1),
 		Run: func(cmd *cobra.Command, args []string) {
 			service.Path(args[0])
 		},
@@ -96,7 +96,7 @@ func addServiceCommands(cmdService *cobra.Command) {
 
 	cmdServiceEdit := &cobra.Command{
 		Use:  "edit",
-		Args: cobra.MaximumNArgs(1),
+		Args: cobra.ExactArgs(1),
 		Run: func(cmd *cobra.Command, args []string) {
 			service.Edit(args[0])
 		},
@@ -120,7 +120,7 @@ func addServiceCommands(cmdService *cobra.Command) {
 	var testGoConvey bool
 	cmdServiceTest := &cobra.Command{
 		Use:  "test",
-		Args: cobra.MaximumNArgs(1),
+		Args: cobra.ExactArgs(1),
 		Run: func(cmd *cobra.Command, args []string) {
 			service.Test(args[0], service.TestOptions{GoConvey: testGoConvey})
 		},
@@ -130,7 +130,7 @@ func addServiceCommands(cmdService *cobra.Command) {
 
 	cmdServiceLint := &cobra.Command{
 		Use:  "lint",
-		Args: cobra.MaximumNArgs(1),
+		Args: cobra.ExactArgs(1),
 		Run: func(cmd *cobra.Command, args []string) {
 			service.Lint(args[0])
 		},
