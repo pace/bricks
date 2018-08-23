@@ -24,6 +24,11 @@
 #   go-tests = true
 #   unused-packages = true
 
+# the microservice code can't be directly used, due to
+# and issue with go dep https://github.com/golang/dep/issues/1961
+ignored = [
+  "lab.jamit.de/pace/web/libs/go-microservice/http/jsonapi/generator",
+]
 
 [[constraint]]
   name = "github.com/spf13/cobra"
