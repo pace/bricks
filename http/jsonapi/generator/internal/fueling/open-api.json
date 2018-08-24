@@ -1,0 +1,1555 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "PACE Fueling API",
+    "description": "Fueling API",
+    "version": "0.0.1",
+    "x-logo": {
+      "url": "https://developer.pace.car/images/logo_black.svg"
+    }
+  },
+  "servers": [
+    {
+      "url": "https://api.pace.cloud/fueling/beta"
+    }
+  ],
+  "paths": {
+    "/gas-station/{fuelingAppId}/approaching": {
+      "get": {
+        "tags": [
+          "Fueling"
+        ],
+        "summary": "Gather information when approaching at the forecourt\n",
+        "description": "This request will:\n* Return a list of available paymentMethodIds\n* Return up-to-date price information (price structure) at the gas station\n* Return a list of pumps available at the gas station together with the current status (free, inUse, readyToPay, outOfOrder)\n* Create payment tokens for all paymentMethods of the user and pre-authorise the calculated maximum amount of money (background task)\n",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "fuelingAppId",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "required": true,
+            "description": "Location-based App ID",
+            "example": "93db55b6-a9ab-4597-a253-49a1718cea0a"
+          },
+          {
+            "in": "query",
+            "name": "expectedAmountInLiters",
+            "schema": {
+              "type": "number",
+              "format": "float"
+            },
+            "required": true,
+            "description": "Expected amount in liters for refuel",
+            "example": 47.8
+          },
+          {
+            "in": "query",
+            "name": "carFuelType",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "e85",
+                "ron91",
+                "ron95_e5",
+                "ron95_e10",
+                "ron98",
+                "ron98_e5",
+                "ron100",
+                "diesel",
+                "diesel_gtl",
+                "diesel_b7",
+                "lpg",
+                "cng",
+                "h2",
+                "Truck Diesel",
+                "AdBlue"
+              ]
+            },
+            "required": true,
+            "description": "Fuel type of the car",
+            "example": "ron95_e10"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/vnd.api+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GasStationResponse"
+                },
+                "example": {
+                  "data": [
+                    {
+                      "type": "gasStation",
+                      "id": "b86b67e9-7fae-4500-8885-45c8032056cc",
+                      "attributes": {
+                        "latitude": 49.013,
+                        "longitude": 8.425,
+                        "stationName": "PACE Station",
+                        "address": {
+                          "street": "Haid-und-Neu-Str.",
+                          "houseNo": "18",
+                          "postalCode": "76131",
+                          "city": "Karlsruhe",
+                          "countryCode": "DE"
+                        },
+                        "openingHours": [
+                          {
+                            "weekdays": [
+                              "Montag",
+                              "Dienstag",
+                              "Mittwoch",
+                              "Donnerstag",
+                              "Freitag"
+                            ],
+                            "openFromTo": [
+                              "06:00",
+                              "23:00"
+                            ]
+                          },
+                          {
+                            "weekdays": [
+                              "Samstag"
+                            ],
+                            "openFromTo": [
+                              "07:00",
+                              "23:00"
+                            ]
+                          },
+                          {
+                            "weekdays": [
+                              "Sonntag"
+                            ],
+                            "openFromTo": [
+                              "07:00",
+                              "22:00"
+                            ]
+                          }
+                        ],
+                        "amenities": [
+                          "restaurant",
+                          "wifi",
+                          "toilets"
+                        ],
+                        "paymentMethods": [
+                          "sepaDirectDebit"
+                        ]
+                      },
+                      "relationships": {
+                        "fuelPrices": {
+                          "data": [
+                            {
+                              "type": "fuelPrice",
+                              "id": "6b5bff6f-74e1-40a1-9da0-72305292d939"
+                            },
+                            {
+                              "type": "fuelPrice",
+                              "id": "f563e0ee-ba9a-4869-8fe7-42639fcf375d"
+                            },
+                            {
+                              "type": "fuelPrice",
+                              "id": "cb1afd35-f531-4606-abc8-e1cfbc1f96f5"
+                            }
+                          ]
+                        },
+                        "pumps": {
+                          "data": [
+                            {
+                              "type": "pump",
+                              "id": "cc6eb485-3f23-48bb-aa79-f995ba35b824"
+                            },
+                            {
+                              "type": "pump",
+                              "id": "689631b2-cd75-4f01-a36e-72f77cd4f007"
+                            }
+                          ]
+                        },
+                        "paymentMethods": {
+                          "data": [
+                            {
+                              "type": "paymentMethod",
+                              "id": "6e30ccd1-0f76-4208-bd3d-a804f810cba8"
+                            }
+                          ]
+                        }
+                      }
+                    }
+                  ],
+                  "included": [
+                    {
+                      "type": "fuelPrice",
+                      "id": "6b5bff6f-74e1-40a1-9da0-72305292d939",
+                      "attributes": {
+                        "fuelType": "ron95_e5",
+                        "fuelAmountUnit": "Ltr",
+                        "pricePerUnit": 1.399,
+                        "currency": "EUR",
+                        "productName": "Super E5"
+                      }
+                    },
+                    {
+                      "type": "fuelPrice",
+                      "id": "f563e0ee-ba9a-4869-8fe7-42639fcf375d",
+                      "attributes": {
+                        "fuelType": "ron95_e10",
+                        "fuelAmountUnit": "Ltr",
+                        "pricePerUnit": 1.379,
+                        "currency": "EUR",
+                        "productName": "Super E10"
+                      }
+                    },
+                    {
+                      "type": "fuelPrice",
+                      "id": "cb1afd35-f531-4606-abc8-e1cfbc1f96f5",
+                      "attributes": {
+                        "fuelType": "diesel",
+                        "fuelAmountUnit": "Ltr",
+                        "pricePerUnit": 1.239,
+                        "currency": "EUR",
+                        "productName": "Diesel"
+                      }
+                    },
+                    {
+                      "type": "pump",
+                      "id": "cc6eb485-3f23-48bb-aa79-f995ba35b824",
+                      "attributes": {
+                        "status": "free",
+                        "identifier": "1"
+                      }
+                    },
+                    {
+                      "type": "pump",
+                      "id": "689631b2-cd75-4f01-a36e-72f77cd4f007",
+                      "attributes": {
+                        "status": "inUse",
+                        "identifier": "2"
+                      }
+                    },
+                    {
+                      "type": "paymentMethod",
+                      "id": "6e30ccd1-0f76-4208-bd3d-a804f810cba8",
+                      "attributes": {
+                        "kind": "sepa"
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "406": {
+            "$ref": "#/components/responses/NotAcceptable"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        }
+      }
+    },
+    "/gas-station/{fuelingAppId}/pumps/{pumpId}": {
+      "get": {
+        "tags": [
+          "Fueling"
+        ],
+        "summary": "Return current pump information",
+        "description": "Returns the current pump status (free, inUse, readyToPay, outOfOrder) and identifier. If the status is readyToPay, the result also contains fuelType, productName, fuelAmount, fuelAmountUnit, VAT (amount & rate), priceWithoutVAT, priceIncludingVAT, currency.\n",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "fuelingAppId",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "required": true,
+            "description": "Location-based App ID",
+            "example": "583ad807-6a08-4d5a-b3f6-8861b0e355df"
+          },
+          {
+            "in": "path",
+            "name": "pumpId",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "required": true,
+            "description": "Pump ID",
+            "example": "a4373543-4083-4f0c-a4a9-4bc458b598fd"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/vnd.api+json": {
+                "schema": {
+                  "oneOf": [
+                    {
+                      "$ref": "#/components/schemas/PumpResponse"
+                    },
+                    {
+                      "$ref": "#/components/schemas/PumpReadyForPaymentResponse"
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "406": {
+            "$ref": "#/components/responses/NotAcceptable"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        }
+      }
+    },
+    "/gas-station/{fuelingAppId}/pumps/{pumpId}/waitForStatusChange": {
+      "get": {
+        "tags": [
+          "Fueling"
+        ],
+        "summary": "Wait for a status change on a given pump",
+        "description": "Uses **long polling** to wait for a status change on a given pump. Returns as soon as the status has changed or after the number of seconds provided by the optional `timeout` query parameter (default timeout is 30 seconds). In case of timeout (408 status code) you're safe to start the request again. Instantaneously returns if `lastStatus` was given and already changed between request. If successful, it returns the same structure as the normal status call\n",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "fuelingAppId",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "required": true,
+            "description": "Location-based App ID",
+            "example": "a6ec9bd7-cf0b-416c-b24f-9ce65ab3dfe1"
+          },
+          {
+            "in": "path",
+            "name": "pumpId",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "required": true,
+            "description": "Pump ID",
+            "example": "4665fddc-83fe-46bd-85ae-110d71e78357"
+          },
+          {
+            "in": "query",
+            "name": "lastStatus",
+            "schema": {
+              "$ref": "#/components/schemas/PumpStatus"
+            },
+            "required": false,
+            "description": "Pump status",
+            "example": "outOfOrder"
+          },
+          {
+            "in": "query",
+            "name": "timeout",
+            "schema": {
+              "type": "integer"
+            },
+            "required": false,
+            "description": "Timeout in seconds",
+            "example": 20
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/vnd.api+json": {
+                "schema": {
+                  "oneOf": [
+                    {
+                      "$ref": "#/components/schemas/PumpResponse"
+                    },
+                    {
+                      "$ref": "#/components/schemas/PumpReadyForPaymentResponse"
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "406": {
+            "$ref": "#/components/responses/NotAcceptable"
+          },
+          "408": {
+            "$ref": "#/components/responses/RequestTimeout"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        }
+      }
+    },
+    "/gas-station/{fuelingAppId}/pumps/{pumpId}/pay": {
+      "post": {
+        "tags": [
+          "Fueling"
+        ],
+        "summary": "Process payment",
+        "description": "Process payment and notify user if transaction is finished successfully. You can optionally provide `priceIncludingVAT`and `currency` in the request body to check if the price the user has seen is still correct.\n",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "fuelingAppId",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "required": true,
+            "description": "Location-based App ID",
+            "example": "c30bce97-b732-4390-af38-1ac6b017aa4c"
+          },
+          {
+            "in": "path",
+            "name": "pumpId",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "required": true,
+            "description": "Pump ID",
+            "example": "460ffaad-a3c1-4199-b69e-63949ccda82f"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/vnd.api+json": {
+              "schema": {
+                "oneOf": [
+                  {
+                    "$ref": "#/components/schemas/TransactionRequest"
+                  },
+                  {
+                    "$ref": "#/components/schemas/TransactionWithPriceCheckRequest"
+                  }
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/vnd.api+json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "type": {
+                          "type": "string",
+                          "enum": [
+                            "transaction"
+                          ]
+                        },
+                        "id": {
+                          "type": "string",
+                          "description": "Transaction ID",
+                          "example": "c3f037ea-492e-4033-9b4b-4efc7beca16c"
+                        },
+                        "attributes": {
+                          "type": "object",
+                          "properties": {
+                            "fuelingAppId": {
+                              "type": "string",
+                              "format": "uuid",
+                              "example": "c30bce97-b732-4390-af38-1ac6b017aa4c"
+                            },
+                            "pumpId": {
+                              "type": "string",
+                              "format": "uuid",
+                              "example": "460ffaad-a3c1-4199-b69e-63949ccda82f"
+                            },
+                            "paymentMethodId": {
+                              "type": "string",
+                              "format": "uuid",
+                              "example": "f106ac99-213c-4cf7-8c1b-1e841516026b"
+                            },
+                            "vin": {
+                              "type": "string",
+                              "example": "1B3EL46R36N102271"
+                            },
+                            "mileageInMeters": {
+                              "type": "integer",
+                              "example": 66435
+                            },
+                            "VAT": {
+                              "type": "object",
+                              "properties": {
+                                "amount": {
+                                  "type": "number",
+                                  "format": "float",
+                                  "example": 11.07
+                                },
+                                "rate": {
+                                  "type": "number",
+                                  "format": "float",
+                                  "example": 0.19
+                                }
+                              }
+                            },
+                            "priceWithoutVAT": {
+                              "type": "number",
+                              "format": "float",
+                              "example": 58.27
+                            },
+                            "priceIncludingVAT": {
+                              "type": "number",
+                              "format": "float",
+                              "example": 69.34
+                            },
+                            "currency": {
+                              "$ref": "#/components/schemas/currency"
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/vnd.api+json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "errors": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "status": {
+                            "type": "string",
+                            "enum": [
+                              "400"
+                            ]
+                          },
+                          "code": {
+                            "type": "string",
+                            "enum": [
+                              "badRequest"
+                            ]
+                          },
+                          "title": {
+                            "type": "string",
+                            "example": "The server cannot or will not process the request due to an apparent client error"
+                          },
+                          "source": {
+                            "type": "object",
+                            "properties": {
+                              "pointer": {
+                                "type": "string"
+                              },
+                              "parameter": {
+                                "type": "string"
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                },
+                "example": {
+                  "errors": [
+                    {
+                      "status": "400",
+                      "code": "badRequest",
+                      "title": "Payment method ID missing",
+                      "source": {
+                        "pointer": "/data/attributes/paymentMethodId"
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "406": {
+            "$ref": "#/components/responses/NotAcceptable"
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/vnd.api+json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "errors": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "status": {
+                            "type": "string",
+                            "enum": [
+                              "409"
+                            ]
+                          },
+                          "code": {
+                            "type": "string",
+                            "example": "priceCheckFailed"
+                          },
+                          "title": {
+                            "type": "string",
+                            "example": "The provided priceIncludingVAT does not match the actual price"
+                          },
+                          "source": {
+                            "type": "object",
+                            "properties": {
+                              "pointer": {
+                                "type": "string",
+                                "example": "/data/attributes/priceIncludingVAT"
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                },
+                "example": {
+                  "errors": [
+                    {
+                      "status": "409",
+                      "code": "priceCheckFailed",
+                      "title": "The provided priceIncludingVAT does not match the actual price",
+                      "source": {
+                        "pointer": "/data/attributes/priceIncludingVAT"
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "415": {
+            "$ref": "#/components/responses/UnsupportedMediaType"
+          },
+          "422": {
+            "$ref": "#/components/responses/UnprocessableEntity"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "PumpStatus": {
+        "type": "string",
+        "description": "Current pump status",
+        "enum": [
+          "free",
+          "inUse",
+          "readyToPay",
+          "outOfOrder"
+        ]
+      },
+      "Pump": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "description": "Type",
+            "enum": [
+              "pump"
+            ]
+          },
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Pump ID",
+            "example": "f106ac99-213c-4cf7-8c1b-1e841516026b"
+          },
+          "attributes": {
+            "type": "object",
+            "properties": {
+              "status": {
+                "$ref": "#/components/schemas/PumpStatus"
+              },
+              "identifier": {
+                "type": "string",
+                "description": "Pump identifier",
+                "example": "2"
+              }
+            }
+          }
+        }
+      },
+      "PumpResponse": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/Pump"
+          }
+        },
+        "example": {
+          "data": {
+            "type": "pump",
+            "id": "baca9c76-82bf-44e7-b8b0-8af44fa4998b",
+            "attributes": {
+              "identifier": "3",
+              "status": "inUse"
+            }
+          }
+        }
+      },
+      "PumpReadyForPaymentResponse": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/PumpResponse"
+          },
+          {
+            "type": "object",
+            "properties": {
+              "data": {
+                "type": "object",
+                "properties": {
+                  "attributes": {
+                    "type": "object",
+                    "properties": {
+                      "status": {
+                        "type": "string",
+                        "enum": [
+                          "readyToPay"
+                        ]
+                      },
+                      "fuelType": {
+                        "type": "string",
+                        "example": "ron95_e10"
+                      },
+                      "productName": {
+                        "type": "string",
+                        "example": "Super E10"
+                      },
+                      "fuelAmount": {
+                        "type": "number",
+                        "format": "float",
+                        "example": 44.3
+                      },
+                      "fuelAmountUnit": {
+                        "$ref": "#/components/schemas/fuelAmountUnit"
+                      },
+                      "VAT": {
+                        "type": "object",
+                        "properties": {
+                          "amount": {
+                            "type": "number",
+                            "format": "float",
+                            "example": 9.72
+                          },
+                          "rate": {
+                            "type": "number",
+                            "format": "float",
+                            "example": 0.19
+                          }
+                        }
+                      },
+                      "priceWithoutVAT": {
+                        "type": "number",
+                        "format": "float",
+                        "example": 51.37
+                      },
+                      "priceIncludingVAT": {
+                        "type": "number",
+                        "format": "float",
+                        "example": 61.09
+                      },
+                      "currency": {
+                        "$ref": "#/components/schemas/currency"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        ]
+      },
+      "FuelPrice": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "description": "Fuel price",
+            "enum": [
+              "fuelPrice"
+            ]
+          },
+          "id": {
+            "type": "string",
+            "description": "Fuel Price ID",
+            "example": "2a1319c3-c136-495d-b59a-47b3246d08af"
+          },
+          "attributes": {
+            "type": "object",
+            "properties": {
+              "fuelType": {
+                "type": "string",
+                "enum": [
+                  "e85",
+                  "ron91",
+                  "ron95_e5",
+                  "ron95_e10",
+                  "ron98",
+                  "ron98_e5",
+                  "ron100",
+                  "diesel",
+                  "diesel_gtl",
+                  "diesel_b7",
+                  "lpg",
+                  "cng",
+                  "h2",
+                  "Truck Diesel",
+                  "AdBlue"
+                ],
+                "example": "ron95_e10"
+              },
+              "fuelAmountUnit": {
+                "$ref": "#/components/schemas/fuelAmountUnit"
+              },
+              "pricePerUnit": {
+                "type": "number",
+                "format": "float",
+                "example": 1.379
+              },
+              "currency": {
+                "$ref": "#/components/schemas/currency"
+              },
+              "productName": {
+                "type": "string",
+                "example": "Super E10"
+              }
+            }
+          }
+        }
+      },
+      "FuelPriceResponse": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/FuelPrice"
+          }
+        }
+      },
+      "PaymentMethod": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "enum": [
+              "paymentMethod"
+            ]
+          },
+          "id": {
+            "type": "string",
+            "description": "Payment Method ID",
+            "example": "e2e06fb6-5dd8-47d9-a5ac-e28fad440dd1"
+          },
+          "attributes": {
+            "type": "object",
+            "properties": {
+              "kind": {
+                "type": "string",
+                "example": "sepa"
+              }
+            }
+          }
+        }
+      },
+      "PaymentMethodResponse": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/PaymentMethod"
+          }
+        }
+      },
+      "GasStationResponse": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "type": {
+                  "type": "string",
+                  "enum": [
+                    "gasStation"
+                  ]
+                },
+                "id": {
+                  "type": "string",
+                  "format": "uuid",
+                  "description": "Gas Station ID",
+                  "example": "d7101f72-a672-453c-9d36-d5809ef0ded6"
+                },
+                "attributes": {
+                  "type": "object",
+                  "properties": {
+                    "latitude": {
+                      "type": "number",
+                      "format": "float",
+                      "example": 49.013
+                    },
+                    "longitude": {
+                      "type": "number",
+                      "format": "float",
+                      "example": 8.425
+                    },
+                    "stationName": {
+                      "type": "string",
+                      "example": "PACE Station"
+                    },
+                    "address": {
+                      "type": "object",
+                      "properties": {
+                        "street": {
+                          "type": "string",
+                          "example": "Haid-und-Neu-Str."
+                        },
+                        "houseNo": {
+                          "type": "string",
+                          "example": "18"
+                        },
+                        "postalCode": {
+                          "type": "string",
+                          "example": "76131"
+                        },
+                        "city": {
+                          "type": "string",
+                          "example": "Karlsruhe"
+                        },
+                        "countryCode": {
+                          "type": "string",
+                          "example": "DE",
+                          "description": "Country code in as specified in ISO 3166-1."
+                        }
+                      }
+                    },
+                    "openingHours": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "weekdays": {
+                            "type": "array",
+                            "items": {
+                              "type": "string"
+                            },
+                            "example": [
+                              "Montag",
+                              "Dienstag"
+                            ]
+                          },
+                          "openFromTo": {
+                            "type": "array",
+                            "items": {
+                              "type": "string"
+                            },
+                            "example": [
+                              "07:30",
+                              "20:30"
+                            ]
+                          }
+                        }
+                      }
+                    },
+                    "amenities": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      },
+                      "example": [
+                        "restaurant"
+                      ]
+                    },
+                    "paymentMethods": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      },
+                      "example": [
+                        "sepaDirectDebit"
+                      ]
+                    }
+                  }
+                },
+                "relationships": {
+                  "type": "object",
+                  "properties": {
+                    "fuelPrices": {
+                      "type": "object",
+                      "properties": {
+                        "data": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "type": {
+                                "type": "string",
+                                "enum": [
+                                  "fuelPrice"
+                                ]
+                              },
+                              "id": {
+                                "type": "string",
+                                "format": "uuid",
+                                "description": "Fuel Price ID",
+                                "example": "486e1b37-10b5-4089-aa21-15dea6f0e01e"
+                              }
+                            }
+                          }
+                        }
+                      }
+                    },
+                    "paymentMethods": {
+                      "type": "object",
+                      "properties": {
+                        "data": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "type": {
+                                "type": "string",
+                                "enum": [
+                                  "paymentMethod"
+                                ]
+                              },
+                              "id": {
+                                "type": "string",
+                                "format": "uuid",
+                                "description": "Payment Method ID",
+                                "example": "a166d498-a8d6-49f0-83ef-50a42dcf7748"
+                              }
+                            }
+                          }
+                        }
+                      }
+                    },
+                    "pumps": {
+                      "type": "object",
+                      "properties": {
+                        "data": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "type": {
+                                "type": "string",
+                                "enum": [
+                                  "pump"
+                                ]
+                              },
+                              "id": {
+                                "type": "string",
+                                "format": "uuid",
+                                "description": "Pump ID",
+                                "example": "c4bb2c5e-71fd-42ed-a664-471984e28f1f"
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "included": {
+            "type": "array",
+            "items": {
+              "oneOf": [
+                {
+                  "$ref": "#/components/schemas/FuelPrice"
+                },
+                {
+                  "$ref": "#/components/schemas/PaymentMethod"
+                },
+                {
+                  "$ref": "#/components/schemas/Pump"
+                }
+              ]
+            }
+          }
+        }
+      },
+      "currency": {
+        "type": "string",
+        "enum": [
+          "EUR"
+        ],
+        "example": "EUR"
+      },
+      "fuelAmountUnit": {
+        "type": "string",
+        "enum": [
+          "Ltr"
+        ],
+        "example": "Ltr"
+      },
+      "TransactionRequest": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "object",
+            "required": [
+              "type",
+              "attributes"
+            ],
+            "properties": {
+              "type": {
+                "type": "string",
+                "enum": [
+                  "transaction"
+                ]
+              },
+              "id": {
+                "type": "string",
+                "format": "uuid",
+                "description": "Transaction ID",
+                "example": "c3f037ea-492e-4033-9b4b-4efc7beca16c"
+              },
+              "attributes": {
+                "type": "object",
+                "required": [
+                  "paymentMethodId",
+                  "vin",
+                  "mileageInMeters"
+                ],
+                "properties": {
+                  "paymentMethodId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "example": "f106ac99-213c-4cf7-8c1b-1e841516026b"
+                  },
+                  "vin": {
+                    "type": "string",
+                    "example": "1B3EL46R36N102271"
+                  },
+                  "mileageInMeters": {
+                    "type": "integer",
+                    "example": 66435
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "TransactionWithPriceCheckRequest": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/TransactionRequest"
+          },
+          {
+            "type": "object",
+            "properties": {
+              "data": {
+                "type": "object",
+                "required": [
+                  "type",
+                  "attributes"
+                ],
+                "properties": {
+                  "type": {
+                    "type": "string",
+                    "enum": [
+                      "transaction"
+                    ]
+                  },
+                  "attributes": {
+                    "type": "object",
+                    "required": [
+                      "priceIncludingVAT",
+                      "currency"
+                    ],
+                    "properties": {
+                      "priceIncludingVAT": {
+                        "type": "number",
+                        "format": "float",
+                        "example": 69.34
+                      },
+                      "currency": {
+                        "$ref": "#/components/schemas/currency"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        ]
+      }
+    },
+    "responses": {
+      "Unauthorized": {
+        "description": "Unauthorized",
+        "content": {
+          "application/vnd.api+json": {
+            "schema": {
+              "type": "object",
+              "properties": {
+                "errors": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "status": {
+                        "type": "string",
+                        "enum": [
+                          "401"
+                        ]
+                      },
+                      "code": {
+                        "type": "string",
+                        "enum": [
+                          "unauthorized"
+                        ]
+                      },
+                      "title": {
+                        "type": "string",
+                        "example": "OAuth token missing or invalid"
+                      },
+                      "source": {
+                        "type": "object",
+                        "properties": {
+                          "header": {
+                            "type": "string",
+                            "example": "Authorization"
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "NotFound": {
+        "description": "Not found",
+        "content": {
+          "application/vnd.api+json": {
+            "schema": {
+              "type": "object",
+              "properties": {
+                "errors": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "status": {
+                        "type": "string",
+                        "enum": [
+                          "404"
+                        ]
+                      },
+                      "code": {
+                        "type": "string",
+                        "enum": [
+                          "resourceNotFound"
+                        ]
+                      },
+                      "title": {
+                        "type": "string",
+                        "example": "Resource not found"
+                      },
+                      "source": {
+                        "type": "object",
+                        "properties": {
+                          "parameter": {
+                            "type": "string"
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            },
+            "example": {
+              "errors": [
+                {
+                  "status": "404",
+                  "code": "resourceNotFound",
+                  "title": "Location-based app could not be found",
+                  "source": {
+                    "parameter": "fuelingAppId"
+                  }
+                }
+              ]
+            }
+          }
+        }
+      },
+      "NotAcceptable": {
+        "description": "Not acceptable",
+        "content": {
+          "application/vnd.api+json": {
+            "schema": {
+              "type": "object",
+              "properties": {
+                "errors": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "status": {
+                        "type": "string",
+                        "enum": [
+                          "406"
+                        ]
+                      },
+                      "code": {
+                        "type": "string",
+                        "enum": [
+                          "notAcceptable"
+                        ]
+                      },
+                      "title": {
+                        "type": "string",
+                        "example": "The specified Accept header is not valid"
+                      },
+                      "source": {
+                        "type": "object",
+                        "properties": {
+                          "header": {
+                            "type": "string",
+                            "example": "Accept"
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "RequestTimeout": {
+        "description": "Request timeout",
+        "content": {
+          "application/vnd.api+json": {
+            "schema": {
+              "type": "object",
+              "properties": {
+                "errors": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "status": {
+                        "type": "string",
+                        "enum": [
+                          "408"
+                        ]
+                      },
+                      "code": {
+                        "type": "string",
+                        "enum": [
+                          "requestTimeout"
+                        ]
+                      },
+                      "title": {
+                        "type": "string",
+                        "example": "Your request timed out"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "UnprocessableEntity": {
+        "description": "Unprocessable entity",
+        "content": {
+          "application/vnd.api+json": {
+            "schema": {
+              "description": "Unprocessable entity",
+              "properties": {
+                "errors": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "status": {
+                        "type": "string",
+                        "enum": [
+                          "422"
+                        ]
+                      },
+                      "code": {
+                        "type": "string",
+                        "enum": [
+                          "unprocessableEntity"
+                        ]
+                      },
+                      "title": {
+                        "type": "string",
+                        "example": "There was an error processing the request"
+                      },
+                      "source": {
+                        "type": "object",
+                        "properties": {
+                          "pointer": {
+                            "type": "string"
+                          },
+                          "parameter": {
+                            "type": "string"
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            },
+            "example": {
+              "errors": [
+                {
+                  "status": "422",
+                  "code": "unprocessableEntity",
+                  "title": "There was an error processing the request for the given pump",
+                  "source": {
+                    "parameter": "pumpId"
+                  }
+                }
+              ]
+            }
+          }
+        }
+      },
+      "InternalServerError": {
+        "description": "Internal Server Error",
+        "content": {
+          "application/vnd.api+json": {
+            "schema": {
+              "type": "object",
+              "properties": {
+                "errors": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "status": {
+                        "type": "string",
+                        "enum": [
+                          "500"
+                        ]
+                      },
+                      "code": {
+                        "type": "string",
+                        "enum": [
+                          "internalServerError"
+                        ]
+                      },
+                      "title": {
+                        "type": "string",
+                        "example": "Internal server error"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "UnsupportedMediaType": {
+        "description": "Unsupported Media Type",
+        "content": {
+          "application/vnd.api+json": {
+            "schema": {
+              "type": "object",
+              "properties": {
+                "errors": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "status": {
+                        "type": "string",
+                        "enum": [
+                          "415"
+                        ]
+                      },
+                      "code": {
+                        "type": "string",
+                        "enum": [
+                          "unsupportedMediaType"
+                        ]
+                      },
+                      "title": {
+                        "type": "string",
+                        "example": "The specified Content-Type header is not valid"
+                      },
+                      "source": {
+                        "type": "object",
+                        "properties": {
+                          "header": {
+                            "type": "string",
+                            "example": "Content-Type"
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
