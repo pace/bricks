@@ -1,3 +1,6 @@
+// Copyright © 2018 by PACE Telematics GmbH. All rights reserved.
+// Created at 2018/08/10 by Vincent Landgraf
+
 package main
 
 import (
@@ -8,6 +11,7 @@ import (
 
 	"github.com/spf13/cobra"
 	"lab.jamit.de/pace/web/tool/internal/service"
+	"lab.jamit.de/pace/web/tool/internal/service/generate"
 )
 
 func main() {
@@ -136,6 +140,33 @@ func addServiceCommands(cmdService *cobra.Command) {
 		},
 	}
 	cmdService.AddCommand(cmdServiceLint)
+
+	cmdServiceGenerate := &cobra.Command{
+		Use:  "generate",
+		Args: cobra.MaximumNArgs(1),
+	}
+	cmdService.AddCommand(cmdServiceGenerate)
+	addServiceGenerateCommands(cmdServiceGenerate)
+}
+
+// pace service generate ...
+func addServiceGenerateCommands(cmdServiceGenerate *cobra.Command) {
+	var pkgName, path, source string
+	cmdRestTest := &cobra.Command{
+		Use:  "rest",
+		Args: cobra.NoArgs,
+		Run: func(cmd *cobra.Command, args []string) {
+			generate.Rest(generate.RestOptions{
+				PkgName: pkgName,
+				Path:    path,
+				Source:  source,
+			})
+		},
+	}
+	cmdRestTest.Flags().StringVar(&pkgName, "pkg", "", "name for the generated go package")
+	cmdRestTest.Flags().StringVar(&path, "path", "", "path for generated file")
+	cmdRestTest.Flags().StringVar(&source, "source", "", "OpenAPIv3 source to use for generation")
+	cmdServiceGenerate.AddCommand(cmdRestTest)
 }
 
 // mustIdentifyService returns the name of the current service or quits the program
