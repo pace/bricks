@@ -71,13 +71,17 @@ func addRootCommands(rootCmd *cobra.Command) {
 
 // pace service ...
 func addServiceCommands(cmdService *cobra.Command) {
+	var restSource string
 	cmdServiceNew := &cobra.Command{
 		Use:  "new",
 		Args: cobra.ExactArgs(1),
 		Run: func(cmd *cobra.Command, args []string) {
-			service.New(args[0])
+			service.New(args[0], service.NewOptions{
+				RestSource: restSource,
+			})
 		},
 	}
+	cmdServiceNew.Flags().StringVar(&restSource, "source", "", "OpenAPIv3 source (URI / path) to use for generation")
 	cmdService.AddCommand(cmdServiceNew)
 
 	cmdServiceClone := &cobra.Command{

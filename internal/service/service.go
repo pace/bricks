@@ -12,6 +12,8 @@ import (
 	"os/user"
 	"path/filepath"
 	"strings"
+
+	"lab.jamit.de/pace/web/tool/internal/service/generate"
 )
 
 // PaceBase for all go projects
@@ -22,6 +24,15 @@ const ServiceBase = "web/service"
 
 // GitLabTemplate git clone template for cloning repositories
 const GitLabTemplate = "git@lab.jamit.de:pace/web/service/%s.git"
+
+// The gitlab repo paths are not supported by go-get. This is
+// an issue for the dep util. We need to explicitly ignore the
+// repo to avoid errors
+const goMicroserviceIgnore = `ignored = [
+	"lab.jamit.de/pace/web/libs/go-microservice/http/jsonapi/runtime",
+]
+
+`
 
 // GoPath returns the gopath for the current system,
 // uses GOPATH env and fallback to default go dir
@@ -38,8 +49,14 @@ func GoPath() string {
 	return path
 }
 
+// NewOptions collection of options to apply while or
+// after the creation of the new project
+type NewOptions struct {
+	RestSource string // url or path to OpenAPIv3 (json:api) specification
+}
+
 // New creates a new directory in the go path
-func New(name string) {
+func New(name string, options NewOptions) {
 	// get dir for the service
 	dir, err := GoServicePath(name)
 	if err != nil {
@@ -50,8 +67,39 @@ func New(name string) {
 
 	SimpleExec("git", "init", dir)
 	SimpleExecInPath(dir, "git", "remote", "add", "origin", fmt.Sprintf(GitLabTemplate, name))
-	SimpleExecInPath(dir, GoBinCommand("dep"), "init")
-	log.Fatalf("Remember to create the %s repository in gitlab: https://lab.jamit.de/projects/new?namespace_id=296\n", name)
+	log.Printf("Remember to create the %s repository in gitlab: https://lab.jamit.de/projects/new?namespace_id=296\n", name)
+	gopkg := filepath.Join(dir, "Gopkg.toml")
+
+	// add REST API if there was a source specified
+	if options.RestSource != "" {
+		restDir := filepath.Join(dir, "internal", "http", "rest")
+		err := os.MkdirAll(restDir, 0770)
+		if err != nil {
+			log.Fatal(fmt.Printf("Failed to generate dir for rest api %s: %v", restDir, err))
+		}
+
+		generate.Rest(generate.RestOptions{
+			Path:    filepath.Join(restDir, "jsonapi.go"),
+			PkgName: "rest",
+			Source:  options.RestSource,
+		})
+
+		err = AppendTextToFile(gopkg, goMicroserviceIgnore)
+		if err != nil {
+			log.Fatal(fmt.Printf("Failed to append to %s: %v", gopkg, err))
+		}
+	}
+
+	// add hints to keep vendor clean
+	err = AppendTextToFile(gopkg, `[prune]
+	go-tests = true
+	unused-packages = true
+`)
+	if err != nil {
+		log.Fatal(fmt.Printf("Failed to append to %s: %v", gopkg, err))
+	}
+
+	SimpleExecInPath(dir, GoBinCommand("dep"), "ensure")
 }
 
 // Clone the service into gopath
@@ -242,4 +290,16 @@ func GoBinCommandText(w io.Writer, cmdName string, arguments ...string) {
 	if err != nil {
 		log.Fatal(err)
 	}
+}
+
+// AppendTextToFile appends the given text to a file or returns an error
+func AppendTextToFile(path string, text string) error {
+	file, err := os.OpenFile(path, os.O_APPEND|os.O_WRONLY|os.O_CREATE, 0660)
+	if err != nil {
+		return err
+	}
+	defer file.Close()
+
+	_, err = file.WriteString(text)
+	return err
 }
