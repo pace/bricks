@@ -6,6 +6,7 @@ package runtime
 import (
 	"fmt"
 	"net/http"
+	"reflect"
 	"strings"
 )
 
@@ -45,8 +46,33 @@ func ScanParameters(w http.ResponseWriter, r *http.Request, parameters ...*ScanP
 			scanData = param.Input
 		case ScanInQuery:
 			// input may not be filled and needs to be parsed from the request
-			// TODO: if more than one parameter, and array, call this function with recursion
-			scanData = strings.Join(r.URL.Query()[param.Input], " ")
+			input := r.URL.Query()[param.Input]
+
+			// if parameter is a slice
+			reValue := reflect.ValueOf(param.Data).Elem()
+			if reValue.Kind() == reflect.Slice {
+				size := len(input)
+				array := reflect.MakeSlice(reValue.Type(), size, size)
+				for i := 0; i < size; i++ {
+					n, _ := fmt.Sscan(input[i], array.Index(i).Addr().Interface())
+					if n != 1 {
+						WriteError(w, http.StatusBadRequest, &Error{
+							Title: fmt.Sprintf("invalid value, exepcted %s got: %q", array.Index(i).Type(), input[i]),
+							Source: &map[string]interface{}{
+								"parameter": param.Input,
+							},
+						})
+						return false
+					}
+				}
+				reValue.Set(array)
+
+				// skip parsing at the bottom of the loop
+				continue
+			}
+
+			// single parameter scanning
+			scanData = strings.Join(input, " ")
 		default:
 			panic(fmt.Errorf("Impossible scanning location: %d", param.Location))
 		}

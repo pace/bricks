@@ -190,7 +190,7 @@ func TestScanNumericParametersInQueryFloat(t *testing.T) {
 }
 
 func TestScanNumericParametersInQueryFloatArray(t *testing.T) {
-	req := httptest.NewRequest("GET", "/foo?num=-12.123123123123123123123123&num=-12.123123123123123123123123", nil)
+	req := httptest.NewRequest("GET", "/foo?num=-12.123123123123123123123123&num=-987.123123123123123123123123", nil)
 	rec := httptest.NewRecorder()
 	var param []float32
 	ok := ScanParameters(rec, req,
@@ -210,8 +210,47 @@ func TestScanNumericParametersInQueryFloatArray(t *testing.T) {
 	if param[0] != float32(-12.123123123123123123123123) {
 		t.Errorf("expected parsing result %#v got: %#v", float32(-12.123123123123123123123123), param[0])
 	}
-	if param[1] != float32(-12.123123123123123123123123) {
-		t.Errorf("expected parsing result %#v got: %#v", float32(-12.123123123123123123123123), param[1])
+	if param[1] != float32(-987.123123123123123123123123) {
+		t.Errorf("expected parsing result %#v got: %#v", float32(-987.123123123123123123123123), param[1])
+	}
+}
+
+func TestScanNumericParametersInQueryFloatArrayFail(t *testing.T) {
+	req := httptest.NewRequest("GET", "/foo?num=-12.123123123123123123123123&num=stuff", nil)
+	rec := httptest.NewRecorder()
+	var param []float32
+	ok := ScanParameters(rec, req,
+		&ScanParameter{&param, ScanInQuery, "num"},
+	)
+
+	// Parsing
+	if ok {
+		t.Errorf("expected the scanning to be failing")
+	}
+
+	resp := rec.Result()
+	defer resp.Body.Close()
+
+	var errList errorObjects
+	dec := json.NewDecoder(resp.Body)
+	err := dec.Decode(&errList)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if len(errList.List) != 1 {
+		t.Fatal("there must be one error in the list, got none")
+	}
+
+	errObj := errList.List[0]
+	if r := "invalid value, exepcted float32 got: \"stuff\""; errObj.Title != r {
+		t.Errorf("expected title %q got: %q", r, errObj.Title)
+	}
+	if r := "400"; errObj.Status != r {
+		t.Errorf("expected status %q got: %q", r, errObj.Status)
+	}
+	if r := "num"; (*errObj.Source)["parameter"] != r {
+		t.Errorf("expected source parameter %q got: %q", r, (*errObj.Source)["parameter"])
 	}
 }
 
