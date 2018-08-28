@@ -73,7 +73,7 @@ func PostPaymentMethodsPaymentMethodIdAuthorizeHandler(service Service) http.Han
 			Request:              r,
 			ParamPaymentMethodId: vars["paymentMethodId"],
 		}
-		if !runtime.ValidateStruct(w, r, &request) {
+		if !runtime.ValidateParameters(w, r, &request) {
 			return // invalid request stop further processing
 		}
 		if runtime.Unmarshal(w, r, &request.Content) {
@@ -100,7 +100,7 @@ func DeletePaymentMethodsPaymentMethodIdPaymentTokensPaymentTokenIdHandler(servi
 			ParamPaymentTokenId:  vars["paymentTokenId"],
 			ParamPaymentMethodId: vars["paymentMethodId"],
 		}
-		if !runtime.ValidateStruct(w, r, &request) {
+		if !runtime.ValidateParameters(w, r, &request) {
 			return // invalid request stop further processing
 		}
 		err := service.DeletePaymentMethodsPaymentMethodIdPaymentTokensPaymentTokenId(r.Context(), writer, request)
@@ -122,7 +122,7 @@ func PostPaymentMethodsSepaDirectDebitHandler(service Service) http.Handler {
 		request := &PostPaymentMethodsSepaDirectDebitRequest{
 			Request: r,
 		}
-		if !runtime.ValidateStruct(w, r, &request) {
+		if !runtime.ValidateParameters(w, r, &request) {
 			return // invalid request stop further processing
 		}
 		if runtime.Unmarshal(w, r, &request.Content) {
@@ -148,7 +148,7 @@ func DeletePaymentMethodsPaymentMethodIdHandler(service Service) http.Handler {
 			Request:              r,
 			ParamPaymentMethodId: vars["paymentMethodId"],
 		}
-		if !runtime.ValidateStruct(w, r, &request) {
+		if !runtime.ValidateParameters(w, r, &request) {
 			return // invalid request stop further processing
 		}
 		err := service.DeletePaymentMethodsPaymentMethodId(r.Context(), writer, request)
@@ -172,7 +172,7 @@ func GetPaymentMethodsIncludeCreditCheckHandler(service Service) http.Handler {
 			Request:      r,
 			ParamInclude: vars["include"],
 		}
-		if !runtime.ValidateStruct(w, r, &request) {
+		if !runtime.ValidateParameters(w, r, &request) {
 			return // invalid request stop further processing
 		}
 		err := service.GetPaymentMethodsIncludeCreditCheck(r.Context(), writer, request)
@@ -196,7 +196,7 @@ func GetPaymentMethodsIncludePaymentTokensHandler(service Service) http.Handler 
 			Request:      r,
 			ParamInclude: vars["include"],
 		}
-		if !runtime.ValidateStruct(w, r, &request) {
+		if !runtime.ValidateParameters(w, r, &request) {
 			return // invalid request stop further processing
 		}
 		err := service.GetPaymentMethodsIncludePaymentTokens(r.Context(), writer, request)

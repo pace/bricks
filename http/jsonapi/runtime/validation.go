@@ -11,17 +11,32 @@ import (
 	valid "github.com/asaskevich/govalidator"
 )
 
+// ValidateParameters checks the given struct and returns true if the struct
+// is valid according to the specification (declared with go-validator struct tags)
+// In case of an error, an jsonapi error message will be directly send to the client
+func ValidateParameters(w http.ResponseWriter, r *http.Request, data interface{}) bool {
+	return ValidateStruct(w, r, data, "parameter")
+}
+
+// ValidateRequest checks the given struct and returns true if the struct
+// is valid according to the specification (declared with go-validator struct tags)
+// In case of an error, an jsonapi error message will be directly send to the client
+func ValidateRequest(w http.ResponseWriter, r *http.Request, data interface{}) bool {
+	return ValidateStruct(w, r, data, "pointer")
+}
+
 // ValidateStruct checks the given struct and returns true if the struct
 // is valid according to the specification (declared with go-validator struct tags)
 // In case of an error, an jsonapi error message will be directly send to the client
-func ValidateStruct(w http.ResponseWriter, r *http.Request, data interface{}) bool {
+// The passed source is the source for validation errors (e.g. pointer for data or parameter)
+func ValidateStruct(w http.ResponseWriter, r *http.Request, data interface{}, source string) bool {
 	ok, err := valid.ValidateStruct(data)
 
 	if !ok {
 		switch errs := err.(type) {
 		case valid.Errors:
 			var e Errors
-			generateValidationErrors(errs, &e)
+			generateValidationErrors(errs, &e, source)
 			WriteError(w, http.StatusUnprocessableEntity, e)
 		case error:
 			panic(err) // programming error, e.g. not used with struct
@@ -36,13 +51,13 @@ func ValidateStruct(w http.ResponseWriter, r *http.Request, data interface{}) bo
 }
 
 // convert govalidator errors into jsonapi errors
-func generateValidationErrors(validErrors valid.Errors, jsonapiErrors *Errors) {
+func generateValidationErrors(validErrors valid.Errors, jsonapiErrors *Errors, source string) {
 	for _, err := range validErrors {
 		switch e := err.(type) {
 		case valid.Errors:
-			generateValidationErrors(e, jsonapiErrors)
+			generateValidationErrors(e, jsonapiErrors, source)
 		case valid.Error:
-			*jsonapiErrors = append(*jsonapiErrors, generateValidationError(e))
+			*jsonapiErrors = append(*jsonapiErrors, generateValidationError(e, source))
 		default:
 			panic(fmt.Errorf("Unhandled error case: %s", e))
 		}
@@ -57,7 +72,7 @@ func generateValidationErrors(validErrors valid.Errors, jsonapiErrors *Errors) {
 
 // generateValidationError generates a new jsonapi error based
 // on the given govalidator error
-func generateValidationError(e valid.Error) *Error {
+func generateValidationError(e valid.Error, source string) *Error {
 	path := ""
 	for _, p := range append(e.Path, e.Name) {
 		path += "/" + strings.ToLower(p)
@@ -67,7 +82,7 @@ func generateValidationError(e valid.Error) *Error {
 		Title:  fmt.Sprintf("%s is invalid", e.Name),
 		Detail: e.Err.Error(),
 		Source: &map[string]interface{}{
-			"pointer": path,
+			source: path,
 		},
 	}
 }

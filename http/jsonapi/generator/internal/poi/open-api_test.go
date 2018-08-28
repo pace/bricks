@@ -145,7 +145,7 @@ func GetCheckForPaceAppHandler(service Service) http.Handler {
 		}) {
 			return
 		}
-		if !runtime.ValidateStruct(w, r, &request) {
+		if !runtime.ValidateParameters(w, r, &request) {
 			return // invalid request stop further processing
 		}
 		err := service.GetCheckForPaceApp(r.Context(), writer, request)
@@ -206,7 +206,7 @@ func GetSearchHandler(service Service) http.Handler {
 		}) {
 			return
 		}
-		if !runtime.ValidateStruct(w, r, &request) {
+		if !runtime.ValidateParameters(w, r, &request) {
 			return // invalid request stop further processing
 		}
 		err := service.GetSearch(r.Context(), writer, request)

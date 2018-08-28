@@ -463,7 +463,7 @@ func (g *Generator) buildHandler(method string, op *openapi3.Operation, pattern 
 
 				// validate parameters / body
 				if requestBody || len(route.operation.Parameters) > 0 {
-					g.If().Op("!").Qual(httpJsonapi, "ValidateStruct").Call(
+					g.If().Op("!").Qual(httpJsonapi, "ValidateParameters").Call(
 						jen.Id("w"),
 						jen.Id("r"),
 						jen.Op("&").Id("request"),

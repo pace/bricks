@@ -143,7 +143,7 @@ func GetGasStationFuelingAppIdApproachingHandler(service Service) http.Handler {
 		}) {
 			return
 		}
-		if !runtime.ValidateStruct(w, r, &request) {
+		if !runtime.ValidateParameters(w, r, &request) {
 			return // invalid request stop further processing
 		}
 		err := service.GetGasStationFuelingAppIdApproaching(r.Context(), writer, request)
@@ -168,7 +168,7 @@ func GetGasStationFuelingAppIdPumpsPumpIdHandler(service Service) http.Handler {
 			ParamFuelingAppId: vars["fuelingAppId"],
 			ParamPumpId:       vars["pumpId"],
 		}
-		if !runtime.ValidateStruct(w, r, &request) {
+		if !runtime.ValidateParameters(w, r, &request) {
 			return // invalid request stop further processing
 		}
 		err := service.GetGasStationFuelingAppIdPumpsPumpId(r.Context(), writer, request)
@@ -193,7 +193,7 @@ func PostGasStationFuelingAppIdPumpsPumpIdPayHandler(service Service) http.Handl
 			ParamFuelingAppId: vars["fuelingAppId"],
 			ParamPumpId:       vars["pumpId"],
 		}
-		if !runtime.ValidateStruct(w, r, &request) {
+		if !runtime.ValidateParameters(w, r, &request) {
 			return // invalid request stop further processing
 		}
 		if runtime.Unmarshal(w, r, &request.Content) {
@@ -228,7 +228,7 @@ func GetGasStationFuelingAppIdPumpsPumpIdWaitForStatusChangeHandler(service Serv
 		}) {
 			return
 		}
-		if !runtime.ValidateStruct(w, r, &request) {
+		if !runtime.ValidateParameters(w, r, &request) {
 			return // invalid request stop further processing
 		}
 		err := service.GetGasStationFuelingAppIdPumpsPumpIdWaitForStatusChange(r.Context(), writer, request)

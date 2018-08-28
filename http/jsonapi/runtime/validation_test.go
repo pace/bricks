@@ -11,7 +11,7 @@ import (
 	"testing"
 )
 
-func TestValidateStructWithError(t *testing.T) {
+func TestValidateParametersWithError(t *testing.T) {
 	type access struct {
 		Token string `valid:"uuid"`
 	}
@@ -26,7 +26,7 @@ func TestValidateStructWithError(t *testing.T) {
 				"detail": "foo does not validate as uuid",
 				"status": "422",
 				"source": map[string]interface{}{
-					"pointer": "/uuid",
+					"parameter": "/uuid",
 				},
 			},
 			map[string]interface{}{
@@ -34,7 +34,7 @@ func TestValidateStructWithError(t *testing.T) {
 				"detail": "bar does not validate as uuid",
 				"status": "422",
 				"source": map[string]interface{}{
-					"pointer": "/access/token",
+					"parameter": "/access/token",
 				},
 			},
 		},
@@ -49,7 +49,7 @@ func TestValidateStructWithError(t *testing.T) {
 	rec := httptest.NewRecorder()
 	req := httptest.NewRequest("POST", "/", nil)
 
-	ok := ValidateStruct(rec, req, &val)
+	ok := ValidateParameters(rec, req, &val)
 
 	if ok {
 		t.Error("expected to fail the validation")
@@ -73,7 +73,7 @@ func TestValidateStructWithError(t *testing.T) {
 	}
 }
 
-func TestValidateStructWithoutError(t *testing.T) {
+func TestValidateRequest(t *testing.T) {
 	rec := httptest.NewRecorder()
 	req := httptest.NewRequest("POST", "/", nil)
 
@@ -81,7 +81,7 @@ func TestValidateStructWithoutError(t *testing.T) {
 		UUID string `valid:"uuid"`
 	}{"cb855aff-f03c-4307-9a22-ab5fcc6b6d7c"}
 
-	ok := ValidateStruct(rec, req, &val)
+	ok := ValidateRequest(rec, req, &val)
 
 	if !ok {
 		t.Error("expected to succeed with the validation")
