@@ -249,8 +249,8 @@ type GetCheckForPaceAppRequest struct {
 	ParamLongitude float32       `valid:"required"`
 	ParamGpsSource string        `valid:"required,in(raw,mapMatched)"`
 	ParamAppType   string        `valid:"required,in(fueling)"`
-	ParamAccuracy  float32       `valid:"required"`
-	ParamDeviation float32       `valid:"required"`
+	ParamAccuracy  float32       `valid:"optional"`
+	ParamDeviation float32       `valid:"optional"`
 }
 
 /*
@@ -280,13 +280,13 @@ type GetSearchRequest struct {
 	ParamAppType     []string      `valid:"required,in(fueling)"`
 	ParamGpsSource   string        `valid:"required,in(raw,mapMatched)"`
 	ParamInclude     string        `valid:"required,in(insideAppArea)"`
-	ParamLatitude    float32       `valid:"required"`
-	ParamLongitude   float32       `valid:"required"`
-	ParamRadius      float32       `valid:"required"`
-	ParamAccuracy    float32       `valid:"required"`
-	ParamDeviation   float32       `valid:"required"`
-	ParamBoundingBox []float32     `valid:"required"`
-	ParamPath        [][]float32   `valid:"required"`
+	ParamLatitude    float32       `valid:"optional"`
+	ParamLongitude   float32       `valid:"optional"`
+	ParamRadius      float32       `valid:"optional"`
+	ParamAccuracy    float32       `valid:"optional"`
+	ParamDeviation   float32       `valid:"optional"`
+	ParamBoundingBox []float32     `valid:"optional"`
+	ParamPath        [][]float32   `valid:"optional"`
 }
 type Service interface {
 	/*

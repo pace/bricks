@@ -249,8 +249,11 @@ func (g *Generator) generateRequestStruct(route *route, schema *openapi3.Swagger
 	for _, param := range route.operation.Parameters {
 		paramName := generateParamName(param)
 		paramStmt := jen.Id(paramName)
-		tags := map[string]string{
-			"valid": "required",
+		tags := make(map[string]string)
+		if param.Value.Required {
+			tags["valid"] = "required"
+		} else {
+			tags["valid"] = "optional"
 		}
 		err := g.goType(paramStmt, param.Value.Schema.Value, tags)
 		if err != nil {

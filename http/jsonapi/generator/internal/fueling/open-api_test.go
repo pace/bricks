@@ -414,8 +414,8 @@ type GetGasStationFuelingAppIdPumpsPumpIdWaitForStatusChangeRequest struct {
 	Request           *http.Request `valid:"-"`
 	ParamFuelingAppId string        `valid:"required,uuid"`
 	ParamPumpId       string        `valid:"required,uuid"`
-	ParamLastStatus   string        `valid:"required,in(free,inUse,readyToPay,outOfOrder)"`
-	ParamTimeout      int64         `valid:"required"`
+	ParamLastStatus   string        `valid:"optional,in(free,inUse,readyToPay,outOfOrder)"`
+	ParamTimeout      int64         `valid:"optional"`
 }
 type Service interface {
 	/*
