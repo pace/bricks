@@ -3,11 +3,71 @@
 
 package runtime
 
-import "net/http"
+import (
+	"fmt"
+	"net/http"
+	"strings"
+
+	valid "github.com/asaskevich/govalidator"
+)
 
 // ValidateStruct checks the given struct and returns true if the struct
 // is valid according to the specification (declared with go-validator struct tags)
 // In case of an error, an jsonapi error message will be directly send to the client
 func ValidateStruct(w http.ResponseWriter, r *http.Request, data interface{}) bool {
+	ok, err := valid.ValidateStruct(data)
+
+	if !ok {
+		switch errs := err.(type) {
+		case valid.Errors:
+			var e Errors
+			generateValidationErrors(errs, &e)
+			WriteError(w, http.StatusUnprocessableEntity, e)
+		case error:
+			panic(err) // programming error, e.g. not used with struct
+		default:
+			panic(fmt.Errorf("Unhandled error case: %s", err))
+		}
+
+		return false
+	}
+
 	return true
+}
+
+// convert govalidator errors into jsonapi errors
+func generateValidationErrors(validErrors valid.Errors, jsonapiErrors *Errors) {
+	for _, err := range validErrors {
+		switch e := err.(type) {
+		case valid.Errors:
+			generateValidationErrors(e, jsonapiErrors)
+		case valid.Error:
+			*jsonapiErrors = append(*jsonapiErrors, generateValidationError(e))
+		default:
+			panic(fmt.Errorf("Unhandled error case: %s", e))
+		}
+	}
+}
+
+// BUG(vil): the govalidation error has no reference to the
+//	 original StructField. That makes it impossible to generate
+//   correct pointers.
+//   TODO: fork and add struct field tags. Add custom tag
+//   and use custom tag to produce correct source pointer/parameter
+
+// generateValidationError generates a new jsonapi error based
+// on the given govalidator error
+func generateValidationError(e valid.Error) *Error {
+	path := ""
+	for _, p := range append(e.Path, e.Name) {
+		path += "/" + strings.ToLower(p)
+	}
+
+	return &Error{
+		Title:  fmt.Sprintf("%s is invalid", e.Name),
+		Detail: e.Err.Error(),
+		Source: &map[string]interface{}{
+			"pointer": path,
+		},
+	}
 }
