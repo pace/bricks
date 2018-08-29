@@ -6,7 +6,6 @@ package runtime
 import (
 	"fmt"
 	"net/http"
-	"reflect"
 
 	"github.com/google/jsonapi"
 )
@@ -23,17 +22,17 @@ func Unmarshal(w http.ResponseWriter, r *http.Request, data interface{}) bool {
 	//       to prevent stale backend/frontend state we respond before
 	// 		 Additionally, marshal has no access to the request struct
 	accept := r.Header.Get("Accept")
-	if accept != jsonAPIContentType {
+	if accept != JSONAPIContentType {
 		WriteError(w, http.StatusNotAcceptable,
-			fmt.Errorf("Request needs to be send with %q header, containing value: %q", "Accept", jsonAPIContentType))
+			fmt.Errorf("Request needs to be send with %q header, containing value: %q", "Accept", JSONAPIContentType))
 		return false
 	}
 
 	// if the client didn't send a content type, don't verify
 	contentType := r.Header.Get("Content-Type")
-	if contentType != jsonAPIContentType {
+	if contentType != JSONAPIContentType {
 		WriteError(w, http.StatusUnsupportedMediaType,
-			fmt.Errorf("Request needs to be send with %q header, containing value: %q", "Accept", jsonAPIContentType))
+			fmt.Errorf("Request needs to be send with %q header, containing value: %q", "Accept", JSONAPIContentType))
 		return false
 	}
 
@@ -53,12 +52,12 @@ func Unmarshal(w http.ResponseWriter, r *http.Request, data interface{}) bool {
 // the content-type and code as well
 func Marshal(w http.ResponseWriter, data interface{}, code int) {
 	// write response header
-	w.Header().Set("Content-Type", jsonAPIContentType)
+	w.Header().Set("Content-Type", JSONAPIContentType)
 	w.WriteHeader(code)
 
 	// write marshaled response body
 	err := jsonapi.MarshalPayload(w, data)
 	if err != nil {
-		panic(fmt.Errorf("Failed to marshal jsonapi response for %#v: %s", reflect.ValueOf(data), err))
+		panic(fmt.Errorf("Failed to marshal jsonapi response for %#v: %s", data, err))
 	}
 }

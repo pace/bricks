@@ -2,7 +2,7 @@
 // Created at 2018/08/24 by Vincent Landgraf
 
 /*
-The runtime package contains functions for marshalling, error handling,
+Package runtime contains functions for marshalling, error handling,
 parameter parsing and validation. These functions are used by the generator
 to implement the different request handlers.
 */

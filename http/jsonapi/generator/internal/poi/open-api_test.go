@@ -18,7 +18,7 @@ type FuelPrice struct {
 type FuelPriceAttributes struct {
 	Currency       string  `jsonapi:"currency,omitempty" valid:"optional,in(EUR)"`                                                                                                           // Example: "EUR"
 	FuelAmountUnit string  `jsonapi:"fuelAmountUnit,omitempty" valid:"optional,in(Ltr)"`                                                                                                     // Example: "Ltr"
-	FuelType       string  `jsonapi:"fuelType,omitempty" valid:"optional,in(e85,ron91,ron95_e5,ron95_e10,ron98,ron98_e5,ron100,diesel,diesel_gtl,diesel_b7,lpg,cng,h2,Truck Diesel,AdBlue)"` // Example: "ron95_e10"
+	FuelType       string  `jsonapi:"fuelType,omitempty" valid:"optional,in(e85|ron91|ron95_e5|ron95_e10|ron98|ron98_e5|ron100|diesel|diesel_gtl|diesel_b7|lpg|cng|h2|Truck Diesel|AdBlue)"` // Example: "ron95_e10"
 	PricePerUnit   float32 `jsonapi:"pricePerUnit,omitempty" valid:"optional"`                                                                                                               // Example: "1.379"
 	ProductName    string  `jsonapi:"productName,omitempty" valid:"optional"`                                                                                                                // Example: "Super E10"
 }
@@ -28,7 +28,7 @@ type FuelPriceResponse struct {
 	ID             string  `jsonapi:"primary,fuelPrice,omitempty" valid:"optional"`                                                                                                               // Fuel Price ID
 	Currency       string  `jsonapi:"attr,currency,omitempty" valid:"optional,in(EUR)"`                                                                                                           // Example: "EUR"
 	FuelAmountUnit string  `jsonapi:"attr,fuelAmountUnit,omitempty" valid:"optional,in(Ltr)"`                                                                                                     // Example: "Ltr"
-	FuelType       string  `jsonapi:"attr,fuelType,omitempty" valid:"optional,in(e85,ron91,ron95_e5,ron95_e10,ron98,ron98_e5,ron100,diesel,diesel_gtl,diesel_b7,lpg,cng,h2,Truck Diesel,AdBlue)"` // Example: "ron95_e10"
+	FuelType       string  `jsonapi:"attr,fuelType,omitempty" valid:"optional,in(e85|ron91|ron95_e5|ron95_e10|ron98|ron98_e5|ron100|diesel|diesel_gtl|diesel_b7|lpg|cng|h2|Truck Diesel|AdBlue)"` // Example: "ron95_e10"
 	PricePerUnit   float32 `jsonapi:"attr,pricePerUnit,omitempty" valid:"optional"`                                                                                                               // Example: "1.379"
 	ProductName    string  `jsonapi:"attr,productName,omitempty" valid:"optional"`                                                                                                                // Example: "Super E10"
 }
@@ -117,38 +117,50 @@ GetCheckForPaceAppHandler handles request/response marshaling and validation for
 */
 func GetCheckForPaceAppHandler(service Service) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		vars := mux.Vars(r)
-		writer := &getCheckForPaceAppResponseWriter{
+		writer := getCheckForPaceAppResponseWriter{
 			ResponseWriter: w,
 		}
-		request := &GetCheckForPaceAppRequest{
-			Request:        r,
-			ParamGpsSource: vars["gpsSource"],
-			ParamAppType:   vars["appType"],
+		request := GetCheckForPaceAppRequest{
+			Request: r,
 		}
+		vars := mux.Vars(r)
 		if !runtime.ScanParameters(w, r, &runtime.ScanParameter{
 			Data:     &request.ParamLatitude,
 			Location: runtime.ScanInQuery,
 			Input:    vars["latitude"],
+			Name:     "latitude",
 		}, &runtime.ScanParameter{
 			Data:     &request.ParamLongitude,
 			Location: runtime.ScanInQuery,
 			Input:    vars["longitude"],
+			Name:     "longitude",
+		}, &runtime.ScanParameter{
+			Data:     &request.ParamGpsSource,
+			Location: runtime.ScanInQuery,
+			Input:    vars["gpsSource"],
+			Name:     "gpsSource",
+		}, &runtime.ScanParameter{
+			Data:     &request.ParamAppType,
+			Location: runtime.ScanInQuery,
+			Input:    vars["appType"],
+			Name:     "appType",
 		}, &runtime.ScanParameter{
 			Data:     &request.ParamAccuracy,
 			Location: runtime.ScanInQuery,
 			Input:    vars["accuracy"],
+			Name:     "accuracy",
 		}, &runtime.ScanParameter{
 			Data:     &request.ParamDeviation,
 			Location: runtime.ScanInQuery,
 			Input:    vars["deviation"],
+			Name:     "deviation",
 		}) {
 			return
 		}
 		if !runtime.ValidateParameters(w, r, &request) {
 			return // invalid request stop further processing
 		}
-		err := service.GetCheckForPaceApp(r.Context(), writer, request)
+		err := service.GetCheckForPaceApp(r.Context(), &writer, &request)
 		if err != nil {
 			runtime.WriteError(w, http.StatusInternalServerError, err)
 		}
@@ -161,55 +173,75 @@ GetSearchHandler handles request/response marshaling and validation for
 */
 func GetSearchHandler(service Service) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		vars := mux.Vars(r)
-		writer := &getSearchResponseWriter{
+		writer := getSearchResponseWriter{
 			ResponseWriter: w,
 		}
-		request := &GetSearchRequest{
-			Request:        r,
-			ParamPoiType:   vars["poiType"],
-			ParamGpsSource: vars["gpsSource"],
-			ParamInclude:   vars["include"],
+		request := GetSearchRequest{
+			Request: r,
 		}
+		vars := mux.Vars(r)
 		if !runtime.ScanParameters(w, r, &runtime.ScanParameter{
+			Data:     &request.ParamPoiType,
+			Location: runtime.ScanInQuery,
+			Input:    vars["poiType"],
+			Name:     "poiType",
+		}, &runtime.ScanParameter{
 			Data:     &request.ParamAppType,
 			Location: runtime.ScanInQuery,
 			Input:    vars["appType"],
+			Name:     "appType",
+		}, &runtime.ScanParameter{
+			Data:     &request.ParamGpsSource,
+			Location: runtime.ScanInQuery,
+			Input:    vars["gpsSource"],
+			Name:     "gpsSource",
+		}, &runtime.ScanParameter{
+			Data:     &request.ParamInclude,
+			Location: runtime.ScanInQuery,
+			Input:    vars["include"],
+			Name:     "include",
 		}, &runtime.ScanParameter{
 			Data:     &request.ParamLatitude,
 			Location: runtime.ScanInQuery,
 			Input:    vars["latitude"],
+			Name:     "latitude",
 		}, &runtime.ScanParameter{
 			Data:     &request.ParamLongitude,
 			Location: runtime.ScanInQuery,
 			Input:    vars["longitude"],
+			Name:     "longitude",
 		}, &runtime.ScanParameter{
 			Data:     &request.ParamRadius,
 			Location: runtime.ScanInQuery,
 			Input:    vars["radius"],
+			Name:     "radius",
 		}, &runtime.ScanParameter{
 			Data:     &request.ParamAccuracy,
 			Location: runtime.ScanInQuery,
 			Input:    vars["accuracy"],
+			Name:     "accuracy",
 		}, &runtime.ScanParameter{
 			Data:     &request.ParamDeviation,
 			Location: runtime.ScanInQuery,
 			Input:    vars["deviation"],
+			Name:     "deviation",
 		}, &runtime.ScanParameter{
 			Data:     &request.ParamBoundingBox,
 			Location: runtime.ScanInQuery,
 			Input:    vars["boundingBox"],
+			Name:     "boundingBox",
 		}, &runtime.ScanParameter{
 			Data:     &request.ParamPath,
 			Location: runtime.ScanInQuery,
 			Input:    vars["path"],
+			Name:     "path",
 		}) {
 			return
 		}
 		if !runtime.ValidateParameters(w, r, &request) {
 			return // invalid request stop further processing
 		}
-		err := service.GetSearch(r.Context(), writer, request)
+		err := service.GetSearch(r.Context(), &writer, &request)
 		if err != nil {
 			runtime.WriteError(w, http.StatusInternalServerError, err)
 		}
@@ -247,7 +279,7 @@ type GetCheckForPaceAppRequest struct {
 	Request        *http.Request `valid:"-"`
 	ParamLatitude  float32       `valid:"required"`
 	ParamLongitude float32       `valid:"required"`
-	ParamGpsSource string        `valid:"required,in(raw,mapMatched)"`
+	ParamGpsSource string        `valid:"required,in(raw|mapMatched)"`
 	ParamAppType   string        `valid:"required,in(fueling)"`
 	ParamAccuracy  float32       `valid:"optional"`
 	ParamDeviation float32       `valid:"optional"`
@@ -278,7 +310,7 @@ type GetSearchRequest struct {
 	Request          *http.Request `valid:"-"`
 	ParamPoiType     string        `valid:"required,in(gasStation)"`
 	ParamAppType     []string      `valid:"required,in(fueling)"`
-	ParamGpsSource   string        `valid:"required,in(raw,mapMatched)"`
+	ParamGpsSource   string        `valid:"required,in(raw|mapMatched)"`
 	ParamInclude     string        `valid:"required,in(insideAppArea)"`
 	ParamLatitude    float32       `valid:"optional"`
 	ParamLongitude   float32       `valid:"optional"`

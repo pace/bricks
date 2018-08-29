@@ -18,7 +18,7 @@ type FuelPrice struct {
 type FuelPriceAttributes struct {
 	Currency       string  `jsonapi:"currency,omitempty" valid:"optional,in(EUR)"`                                                                                                           // Example: "EUR"
 	FuelAmountUnit string  `jsonapi:"fuelAmountUnit,omitempty" valid:"optional,in(Ltr)"`                                                                                                     // Example: "Ltr"
-	FuelType       string  `jsonapi:"fuelType,omitempty" valid:"optional,in(e85,ron91,ron95_e5,ron95_e10,ron98,ron98_e5,ron100,diesel,diesel_gtl,diesel_b7,lpg,cng,h2,Truck Diesel,AdBlue)"` // Example: "ron95_e10"
+	FuelType       string  `jsonapi:"fuelType,omitempty" valid:"optional,in(e85|ron91|ron95_e5|ron95_e10|ron98|ron98_e5|ron100|diesel|diesel_gtl|diesel_b7|lpg|cng|h2|Truck Diesel|AdBlue)"` // Example: "ron95_e10"
 	PricePerUnit   float32 `jsonapi:"pricePerUnit,omitempty" valid:"optional"`                                                                                                               // Example: "1.379"
 	ProductName    string  `jsonapi:"productName,omitempty" valid:"optional"`                                                                                                                // Example: "Super E10"
 }
@@ -28,7 +28,7 @@ type FuelPriceResponse struct {
 	ID             string  `jsonapi:"primary,fuelPrice,omitempty" valid:"optional"`                                                                                                               // Fuel Price ID
 	Currency       string  `jsonapi:"attr,currency,omitempty" valid:"optional,in(EUR)"`                                                                                                           // Example: "EUR"
 	FuelAmountUnit string  `jsonapi:"attr,fuelAmountUnit,omitempty" valid:"optional,in(Ltr)"`                                                                                                     // Example: "Ltr"
-	FuelType       string  `jsonapi:"attr,fuelType,omitempty" valid:"optional,in(e85,ron91,ron95_e5,ron95_e10,ron98,ron98_e5,ron100,diesel,diesel_gtl,diesel_b7,lpg,cng,h2,Truck Diesel,AdBlue)"` // Example: "ron95_e10"
+	FuelType       string  `jsonapi:"attr,fuelType,omitempty" valid:"optional,in(e85|ron91|ron95_e5|ron95_e10|ron98|ron98_e5|ron100|diesel|diesel_gtl|diesel_b7|lpg|cng|h2|Truck Diesel|AdBlue)"` // Example: "ron95_e10"
 	PricePerUnit   float32 `jsonapi:"attr,pricePerUnit,omitempty" valid:"optional"`                                                                                                               // Example: "1.379"
 	ProductName    string  `jsonapi:"attr,productName,omitempty" valid:"optional"`                                                                                                                // Example: "Super E10"
 }
@@ -88,7 +88,7 @@ type Pump struct {
 // PumpAttributes ...
 type PumpAttributes struct {
 	Identifier string `jsonapi:"identifier,omitempty" valid:"optional"`                                  // Pump identifier
-	Status     string `jsonapi:"status,omitempty" valid:"optional,in(free,inUse,readyToPay,outOfOrder)"` // Current pump status
+	Status     string `jsonapi:"status,omitempty" valid:"optional,in(free|inUse|readyToPay|outOfOrder)"` // Current pump status
 }
 
 // PumpReadyForPaymentResponse ...
@@ -98,7 +98,7 @@ type PumpReadyForPaymentResponse struct{}
 type PumpResponse struct {
 	ID         string `jsonapi:"primary,pump,omitempty" valid:"uuid,optional"`                                // Pump ID
 	Identifier string `jsonapi:"attr,identifier,omitempty" valid:"optional"`                                  // Pump identifier
-	Status     string `jsonapi:"attr,status,omitempty" valid:"optional,in(free,inUse,readyToPay,outOfOrder)"` // Current pump status
+	Status     string `jsonapi:"attr,status,omitempty" valid:"optional,in(free|inUse|readyToPay|outOfOrder)"` // Current pump status
 }
 
 // PumpStatus Current pump status
@@ -127,26 +127,35 @@ GetGasStationFuelingAppIdApproachingHandler handles request/response marshaling 
 */
 func GetGasStationFuelingAppIdApproachingHandler(service Service) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		vars := mux.Vars(r)
-		writer := &getGasStationFuelingAppIdApproachingResponseWriter{
+		writer := getGasStationFuelingAppIdApproachingResponseWriter{
 			ResponseWriter: w,
 		}
-		request := &GetGasStationFuelingAppIdApproachingRequest{
-			Request:           r,
-			ParamFuelingAppId: vars["fuelingAppId"],
-			ParamCarFuelType:  vars["carFuelType"],
+		request := GetGasStationFuelingAppIdApproachingRequest{
+			Request: r,
 		}
+		vars := mux.Vars(r)
 		if !runtime.ScanParameters(w, r, &runtime.ScanParameter{
+			Data:     &request.ParamFuelingAppId,
+			Location: runtime.ScanInPath,
+			Input:    vars["fuelingAppId"],
+			Name:     "fuelingAppId",
+		}, &runtime.ScanParameter{
 			Data:     &request.ParamExpectedAmountInLiters,
 			Location: runtime.ScanInQuery,
 			Input:    vars["expectedAmountInLiters"],
+			Name:     "expectedAmountInLiters",
+		}, &runtime.ScanParameter{
+			Data:     &request.ParamCarFuelType,
+			Location: runtime.ScanInQuery,
+			Input:    vars["carFuelType"],
+			Name:     "carFuelType",
 		}) {
 			return
 		}
 		if !runtime.ValidateParameters(w, r, &request) {
 			return // invalid request stop further processing
 		}
-		err := service.GetGasStationFuelingAppIdApproaching(r.Context(), writer, request)
+		err := service.GetGasStationFuelingAppIdApproaching(r.Context(), &writer, &request)
 		if err != nil {
 			runtime.WriteError(w, http.StatusInternalServerError, err)
 		}
@@ -159,19 +168,30 @@ GetGasStationFuelingAppIdPumpsPumpIdHandler handles request/response marshaling 
 */
 func GetGasStationFuelingAppIdPumpsPumpIdHandler(service Service) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		vars := mux.Vars(r)
-		writer := &getGasStationFuelingAppIdPumpsPumpIdResponseWriter{
+		writer := getGasStationFuelingAppIdPumpsPumpIdResponseWriter{
 			ResponseWriter: w,
 		}
-		request := &GetGasStationFuelingAppIdPumpsPumpIdRequest{
-			Request:           r,
-			ParamFuelingAppId: vars["fuelingAppId"],
-			ParamPumpId:       vars["pumpId"],
+		request := GetGasStationFuelingAppIdPumpsPumpIdRequest{
+			Request: r,
+		}
+		vars := mux.Vars(r)
+		if !runtime.ScanParameters(w, r, &runtime.ScanParameter{
+			Data:     &request.ParamFuelingAppId,
+			Location: runtime.ScanInPath,
+			Input:    vars["fuelingAppId"],
+			Name:     "fuelingAppId",
+		}, &runtime.ScanParameter{
+			Data:     &request.ParamPumpId,
+			Location: runtime.ScanInPath,
+			Input:    vars["pumpId"],
+			Name:     "pumpId",
+		}) {
+			return
 		}
 		if !runtime.ValidateParameters(w, r, &request) {
 			return // invalid request stop further processing
 		}
-		err := service.GetGasStationFuelingAppIdPumpsPumpId(r.Context(), writer, request)
+		err := service.GetGasStationFuelingAppIdPumpsPumpId(r.Context(), &writer, &request)
 		if err != nil {
 			runtime.WriteError(w, http.StatusInternalServerError, err)
 		}
@@ -184,20 +204,31 @@ PostGasStationFuelingAppIdPumpsPumpIdPayHandler handles request/response marshal
 */
 func PostGasStationFuelingAppIdPumpsPumpIdPayHandler(service Service) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		vars := mux.Vars(r)
-		writer := &postGasStationFuelingAppIdPumpsPumpIdPayResponseWriter{
+		writer := postGasStationFuelingAppIdPumpsPumpIdPayResponseWriter{
 			ResponseWriter: w,
 		}
-		request := &PostGasStationFuelingAppIdPumpsPumpIdPayRequest{
-			Request:           r,
-			ParamFuelingAppId: vars["fuelingAppId"],
-			ParamPumpId:       vars["pumpId"],
+		request := PostGasStationFuelingAppIdPumpsPumpIdPayRequest{
+			Request: r,
+		}
+		vars := mux.Vars(r)
+		if !runtime.ScanParameters(w, r, &runtime.ScanParameter{
+			Data:     &request.ParamFuelingAppId,
+			Location: runtime.ScanInPath,
+			Input:    vars["fuelingAppId"],
+			Name:     "fuelingAppId",
+		}, &runtime.ScanParameter{
+			Data:     &request.ParamPumpId,
+			Location: runtime.ScanInPath,
+			Input:    vars["pumpId"],
+			Name:     "pumpId",
+		}) {
+			return
 		}
 		if !runtime.ValidateParameters(w, r, &request) {
 			return // invalid request stop further processing
 		}
 		if runtime.Unmarshal(w, r, &request.Content) {
-			err := service.PostGasStationFuelingAppIdPumpsPumpIdPay(r.Context(), writer, request)
+			err := service.PostGasStationFuelingAppIdPumpsPumpIdPay(r.Context(), &writer, &request)
 			if err != nil {
 				runtime.WriteError(w, http.StatusInternalServerError, err)
 			}
@@ -211,27 +242,40 @@ GetGasStationFuelingAppIdPumpsPumpIdWaitForStatusChangeHandler handles request/r
 */
 func GetGasStationFuelingAppIdPumpsPumpIdWaitForStatusChangeHandler(service Service) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		vars := mux.Vars(r)
-		writer := &getGasStationFuelingAppIdPumpsPumpIdWaitForStatusChangeResponseWriter{
+		writer := getGasStationFuelingAppIdPumpsPumpIdWaitForStatusChangeResponseWriter{
 			ResponseWriter: w,
 		}
-		request := &GetGasStationFuelingAppIdPumpsPumpIdWaitForStatusChangeRequest{
-			Request:           r,
-			ParamFuelingAppId: vars["fuelingAppId"],
-			ParamPumpId:       vars["pumpId"],
-			ParamLastStatus:   vars["lastStatus"],
+		request := GetGasStationFuelingAppIdPumpsPumpIdWaitForStatusChangeRequest{
+			Request: r,
 		}
+		vars := mux.Vars(r)
 		if !runtime.ScanParameters(w, r, &runtime.ScanParameter{
+			Data:     &request.ParamFuelingAppId,
+			Location: runtime.ScanInPath,
+			Input:    vars["fuelingAppId"],
+			Name:     "fuelingAppId",
+		}, &runtime.ScanParameter{
+			Data:     &request.ParamPumpId,
+			Location: runtime.ScanInPath,
+			Input:    vars["pumpId"],
+			Name:     "pumpId",
+		}, &runtime.ScanParameter{
+			Data:     &request.ParamLastStatus,
+			Location: runtime.ScanInQuery,
+			Input:    vars["lastStatus"],
+			Name:     "lastStatus",
+		}, &runtime.ScanParameter{
 			Data:     &request.ParamTimeout,
 			Location: runtime.ScanInQuery,
 			Input:    vars["timeout"],
+			Name:     "timeout",
 		}) {
 			return
 		}
 		if !runtime.ValidateParameters(w, r, &request) {
 			return // invalid request stop further processing
 		}
-		err := service.GetGasStationFuelingAppIdPumpsPumpIdWaitForStatusChange(r.Context(), writer, request)
+		err := service.GetGasStationFuelingAppIdPumpsPumpIdWaitForStatusChange(r.Context(), &writer, &request)
 		if err != nil {
 			runtime.WriteError(w, http.StatusInternalServerError, err)
 		}
@@ -269,7 +313,7 @@ type GetGasStationFuelingAppIdApproachingRequest struct {
 	Request                     *http.Request `valid:"-"`
 	ParamFuelingAppId           string        `valid:"required,uuid"`
 	ParamExpectedAmountInLiters float32       `valid:"required"`
-	ParamCarFuelType            string        `valid:"required,in(e85,ron91,ron95_e5,ron95_e10,ron98,ron98_e5,ron100,diesel,diesel_gtl,diesel_b7,lpg,cng,h2,Truck Diesel,AdBlue)"`
+	ParamCarFuelType            string        `valid:"required,in(e85|ron91|ron95_e5|ron95_e10|ron98|ron98_e5|ron100|diesel|diesel_gtl|diesel_b7|lpg|cng|h2|Truck Diesel|AdBlue)"`
 }
 
 // GetGasStationFuelingAppIdPumpsPumpIdOK ...
@@ -414,7 +458,7 @@ type GetGasStationFuelingAppIdPumpsPumpIdWaitForStatusChangeRequest struct {
 	Request           *http.Request `valid:"-"`
 	ParamFuelingAppId string        `valid:"required,uuid"`
 	ParamPumpId       string        `valid:"required,uuid"`
-	ParamLastStatus   string        `valid:"optional,in(free,inUse,readyToPay,outOfOrder)"`
+	ParamLastStatus   string        `valid:"optional,in(free|inUse|readyToPay|outOfOrder)"`
 	ParamTimeout      int64         `valid:"optional"`
 }
 type Service interface {

@@ -29,7 +29,7 @@ func TestUnmarshalAccept(t *testing.T) {
 func TestUnmarshalContentType(t *testing.T) {
 	rec := httptest.NewRecorder()
 	req := httptest.NewRequest("POST", "/", nil)
-	req.Header.Set("Accept", jsonAPIContentType)
+	req.Header.Set("Accept", JSONAPIContentType)
 
 	ok := Unmarshal(rec, req, nil)
 	if ok {
@@ -45,8 +45,8 @@ func TestUnmarshalContentType(t *testing.T) {
 func TestUnmarshalContent(t *testing.T) {
 	rec := httptest.NewRecorder()
 	req := httptest.NewRequest("POST", "/", strings.NewReader(`{"data": 1}`))
-	req.Header.Set("Accept", jsonAPIContentType)
-	req.Header.Set("Content-Type", jsonAPIContentType)
+	req.Header.Set("Accept", JSONAPIContentType)
+	req.Header.Set("Content-Type", JSONAPIContentType)
 
 	type Article struct {
 		ID    string `jsonapi:"id,articles" valid:"optional,uuid"`
@@ -75,8 +75,8 @@ func TestUnmarshalArticle(t *testing.T) {
 			"title": "This is my first blog"
 		}
 	}}`))
-	req.Header.Set("Accept", jsonAPIContentType)
-	req.Header.Set("Content-Type", jsonAPIContentType)
+	req.Header.Set("Accept", JSONAPIContentType)
+	req.Header.Set("Content-Type", JSONAPIContentType)
 
 	type Article struct {
 		ID    string `jsonapi:"primary,articles" valid:"optional,uuid"`

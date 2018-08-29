@@ -69,7 +69,7 @@ func (g *Generator) goType(stmt *jen.Statement, schema *openapi3.Schema, tags ma
 		for i := 0; i < len(schema.Enum); i++ {
 			strs[i] = fmt.Sprintf("%v", schema.Enum[i])
 		}
-		addValidator(tags, fmt.Sprintf("in(%v)", strings.Join(strs, ",")))
+		addValidator(tags, fmt.Sprintf("in(%v)", strings.Join(strs, "|")))
 	}
 
 	return nil

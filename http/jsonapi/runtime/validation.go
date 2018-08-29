@@ -80,6 +80,12 @@ func generateValidationError(e valid.Error, source string) *Error {
 		path += "/" + strings.ToLower(p)
 	}
 
+	// params are prefixed with param remove this until above
+	// described bug is fixed with this simple string replace
+	if source == "parameter" {
+		path = strings.Replace(path, "/param", "", 1)
+	}
+
 	return &Error{
 		Title:  fmt.Sprintf("%s is invalid", e.Name),
 		Detail: e.Err.Error(),

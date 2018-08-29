@@ -52,8 +52,8 @@ func TestErrorMarshaling(t *testing.T) {
 			if resp.StatusCode != testCase.httpStatus {
 				t.Errorf("expected the response code %d got: %d", testCase.httpStatus, resp.StatusCode)
 			}
-			if ct := resp.Header.Get("Content-Type"); ct != jsonAPIContentType {
-				t.Errorf("expected the response code %q got: %q", jsonAPIContentType, ct)
+			if ct := resp.Header.Get("Content-Type"); ct != JSONAPIContentType {
+				t.Errorf("expected the response code %q got: %q", JSONAPIContentType, ct)
 			}
 
 			var errList errorObjects

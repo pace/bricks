@@ -417,46 +417,31 @@ func (g *Generator) buildHandler(method string, op *openapi3.Operation, pattern 
 				jen.Id("w").Qual("net/http", "ResponseWriter"),
 				jen.Id("r").Op("*").Qual("net/http", "Request"),
 			).BlockFunc(func(g *jen.Group) {
-				// vars in case parameters are given
-				if len(route.operation.Parameters) > 0 {
-					g.Id("vars").Op(":=").Qual(gorillaMux, "Vars").Call(jen.Id("r"))
-				}
-
 				// response writer
-				g.Id("writer").Op(":=").Op("&").Id(route.responseTypeImpl).
+				g.Id("writer").Op(":=").Id(route.responseTypeImpl).
 					Block(jen.Id("ResponseWriter").Op(":").Id("w").Op(","))
 
 				// request
-				nonStringParams := 0
-				g.Id("request").Op(":=").Op("&").Id(route.requestType).
-					BlockFunc(func(g *jen.Group) {
-						g.Id("Request").Op(":").Id("r").Op(",")
-						for _, param := range route.operation.Parameters {
-							// directly assign strings
-							if param.Value.Schema.Value.Type == "string" {
-								name := generateParamName(param)
-								g.Id(name).Op(":").Id("vars").Index(jen.Lit(param.Value.Name)).Op(",")
-							} else {
-								nonStringParams++
-							}
-						}
-					})
+				g.Id("request").Op(":=").Id(route.requestType).
+					Block(jen.Id("Request").Op(":").Id("r").Op(","))
 
-				// all parameters that are no strings need to be parsed
-				if nonStringParams > 0 {
+				// vars in case parameters are given
+				if len(route.operation.Parameters) > 0 {
+					g.Id("vars").Op(":=").Qual(gorillaMux, "Vars").Call(jen.Id("r"))
+
+					// all parameters need to be parsed
 					g.If().Op("!").Qual(httpJsonapi, "ScanParameters").CallFunc(func(g *jen.Group) {
 						g.Id("w")
 						g.Id("r")
 
 						for _, param := range route.operation.Parameters {
-							if param.Value.Schema.Value.Type != "string" {
-								name := generateParamName(param)
-								g.Op("&").Qual(httpJsonapi, "ScanParameter").Block(
-									jen.Id("Data").Op(":").Op("&").Id("request").Dot(name).Op(","),
-									jen.Id("Location").Op(":").Qual(httpJsonapi, "ScanIn"+strings.Title(param.Value.In)).Op(","),
-									jen.Id("Input").Op(":").Id("vars").Index(jen.Lit(param.Value.Name)).Op(","),
-								)
-							}
+							name := generateParamName(param)
+							g.Op("&").Qual(httpJsonapi, "ScanParameter").Block(
+								jen.Id("Data").Op(":").Op("&").Id("request").Dot(name).Op(","),
+								jen.Id("Location").Op(":").Qual(httpJsonapi, "ScanIn"+strings.Title(param.Value.In)).Op(","),
+								jen.Id("Input").Op(":").Id("vars").Index(jen.Lit(param.Value.Name)).Op(","),
+								jen.Id("Name").Op(":").Lit(param.Value.Name).Op(","),
+							)
 						}
 					}).Block(jen.Return())
 				}
@@ -475,8 +460,8 @@ func (g *Generator) buildHandler(method string, op *openapi3.Operation, pattern 
 				// invoke service and handle error with internal server error response
 				invokeService := jen.Id("err").Op(":=").Id("service").Dot(route.serviceFunc).Call(
 					jen.Id("r").Dot("Context").Call(),
-					jen.Id("writer"),
-					jen.Id("request"),
+					jen.Op("&").Id("writer"),
+					jen.Op("&").Id("request"),
 				).Line().If().Id("err").Op("!=").Nil().Block(
 					jen.Qual(httpJsonapi, "WriteError").Call(
 						jen.Id("w"),

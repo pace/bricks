@@ -3,4 +3,6 @@
 
 package runtime
 
-const jsonAPIContentType = "application/vnd.api+json"
+// JSONAPIContentType is the content type required for
+// jsonapi based requests and responses
+const JSONAPIContentType = "application/vnd.api+json"

@@ -25,18 +25,18 @@ func TestScanNumericParametersInPath(t *testing.T) {
 	var param20 float32
 	var param21 float64
 	ok := ScanParameters(rec, req,
-		&ScanParameter{&param0, ScanInPath, "12"},
-		&ScanParameter{&param1, ScanInPath, "12"},
-		&ScanParameter{&param2, ScanInPath, "12"},
-		&ScanParameter{&param3, ScanInPath, "12"},
-		&ScanParameter{&param4, ScanInPath, "12"},
-		&ScanParameter{&param10, ScanInPath, "-12"},
-		&ScanParameter{&param11, ScanInPath, "-12"},
-		&ScanParameter{&param12, ScanInPath, "-12"},
-		&ScanParameter{&param13, ScanInPath, "-12"},
-		&ScanParameter{&param14, ScanInPath, "-12"},
-		&ScanParameter{&param20, ScanInPath, "-12.123123123123123123123123"},
-		&ScanParameter{&param21, ScanInPath, "-12.123123123123123123123123"},
+		&ScanParameter{&param0, ScanInPath, "12", "num"},
+		&ScanParameter{&param1, ScanInPath, "12", "num"},
+		&ScanParameter{&param2, ScanInPath, "12", "num"},
+		&ScanParameter{&param3, ScanInPath, "12", "num"},
+		&ScanParameter{&param4, ScanInPath, "12", "num"},
+		&ScanParameter{&param10, ScanInPath, "-12", "num"},
+		&ScanParameter{&param11, ScanInPath, "-12", "num"},
+		&ScanParameter{&param12, ScanInPath, "-12", "num"},
+		&ScanParameter{&param13, ScanInPath, "-12", "num"},
+		&ScanParameter{&param14, ScanInPath, "-12", "num"},
+		&ScanParameter{&param20, ScanInPath, "-12.123123123123123123123123", "num"},
+		&ScanParameter{&param21, ScanInPath, "-12.123123123123123123123123", "num"},
 	)
 
 	// Parsing
@@ -96,11 +96,11 @@ func TestScanNumericParametersInQueryUint(t *testing.T) {
 	var param3 uint32
 	var param4 uint64
 	ok := ScanParameters(rec, req,
-		&ScanParameter{&param0, ScanInQuery, "num"},
-		&ScanParameter{&param1, ScanInQuery, "num"},
-		&ScanParameter{&param2, ScanInQuery, "num"},
-		&ScanParameter{&param3, ScanInQuery, "num"},
-		&ScanParameter{&param4, ScanInQuery, "num"},
+		&ScanParameter{&param0, ScanInQuery, "", "num"},
+		&ScanParameter{&param1, ScanInQuery, "", "num"},
+		&ScanParameter{&param2, ScanInQuery, "", "num"},
+		&ScanParameter{&param3, ScanInQuery, "", "num"},
+		&ScanParameter{&param4, ScanInQuery, "", "num"},
 	)
 
 	// Parsing
@@ -135,11 +135,11 @@ func TestScanNumericParametersInQueryInt(t *testing.T) {
 	var param13 int32
 	var param14 int64
 	ok := ScanParameters(rec, req,
-		&ScanParameter{&param10, ScanInQuery, "num"},
-		&ScanParameter{&param11, ScanInQuery, "num"},
-		&ScanParameter{&param12, ScanInQuery, "num"},
-		&ScanParameter{&param13, ScanInQuery, "num"},
-		&ScanParameter{&param14, ScanInQuery, "num"},
+		&ScanParameter{&param10, ScanInQuery, "", "num"},
+		&ScanParameter{&param11, ScanInQuery, "", "num"},
+		&ScanParameter{&param12, ScanInQuery, "", "num"},
+		&ScanParameter{&param13, ScanInQuery, "", "num"},
+		&ScanParameter{&param14, ScanInQuery, "", "num"},
 	)
 
 	// Parsing
@@ -171,8 +171,8 @@ func TestScanNumericParametersInQueryFloat(t *testing.T) {
 	var param20 float32
 	var param21 float64
 	ok := ScanParameters(rec, req,
-		&ScanParameter{&param20, ScanInQuery, "num"},
-		&ScanParameter{&param21, ScanInQuery, "num"},
+		&ScanParameter{&param20, ScanInQuery, "", "num"},
+		&ScanParameter{&param21, ScanInQuery, "", "num"},
 	)
 
 	// Parsing
@@ -190,11 +190,11 @@ func TestScanNumericParametersInQueryFloat(t *testing.T) {
 }
 
 func TestScanNumericParametersInQueryFloatArray(t *testing.T) {
-	req := httptest.NewRequest("GET", "/foo?num=-12.123123123123123123123123&num=-987.123123123123123123123123", nil)
+	req := httptest.NewRequest("GET", "/foo?num=-12.123123123123123123123123&num=-987.123123123123123123123123&num=", nil)
 	rec := httptest.NewRecorder()
 	var param []float32
 	ok := ScanParameters(rec, req,
-		&ScanParameter{&param, ScanInQuery, "num"},
+		&ScanParameter{&param, ScanInQuery, "", "num"},
 	)
 
 	// Parsing
@@ -220,7 +220,7 @@ func TestScanNumericParametersInQueryFloatArrayFail(t *testing.T) {
 	rec := httptest.NewRecorder()
 	var param []float32
 	ok := ScanParameters(rec, req,
-		&ScanParameter{&param, ScanInQuery, "num"},
+		&ScanParameter{&param, ScanInQuery, "", "num"},
 	)
 
 	// Parsing
@@ -243,7 +243,7 @@ func TestScanNumericParametersInQueryFloatArrayFail(t *testing.T) {
 	}
 
 	errObj := errList.List[0]
-	if r := "invalid value, exepcted float32 got: \"stuff\""; errObj.Title != r {
+	if r := "invalid value for num"; errObj.Title != r {
 		t.Errorf("expected title %q got: %q", r, errObj.Title)
 	}
 	if r := "400"; errObj.Status != r {
@@ -259,7 +259,7 @@ func TestScanParametersError(t *testing.T) {
 	rec := httptest.NewRecorder()
 	var param uint
 	ok := ScanParameters(rec, req,
-		&ScanParameter{&param, ScanInQuery, "num"},
+		&ScanParameter{&param, ScanInQuery, "", "num"},
 	)
 
 	// Parsing
@@ -282,7 +282,7 @@ func TestScanParametersError(t *testing.T) {
 	}
 
 	errObj := errList.List[0]
-	if r := "expected integer"; errObj.Title != r {
+	if r := "invalid value for num"; errObj.Title != r {
 		t.Errorf("expected title %q got: %q", r, errObj.Title)
 	}
 	if r := "400"; errObj.Status != r {

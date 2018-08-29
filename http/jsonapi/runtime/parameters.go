@@ -28,8 +28,9 @@ type ScanParameter struct {
 	// Where the data can be found for scanning
 	Location ScanIn
 	// Input must contain the value data if location is in ScanInPath
-	// otherwise input contains the name of the query variable
 	Input string
+	// Name of the query variable
+	Name string
 }
 
 // ScanParameters scans the request using the given path parameter objects
@@ -46,24 +47,36 @@ func ScanParameters(w http.ResponseWriter, r *http.Request, parameters ...*ScanP
 			scanData = param.Input
 		case ScanInQuery:
 			// input may not be filled and needs to be parsed from the request
-			input := r.URL.Query()[param.Input]
+			input := r.URL.Query()[param.Name]
 
 			// if parameter is a slice
 			reValue := reflect.ValueOf(param.Data).Elem()
 			if reValue.Kind() == reflect.Slice {
 				size := len(input)
 				array := reflect.MakeSlice(reValue.Type(), size, size)
+				invalid := 0
 				for i := 0; i < size; i++ {
-					n, _ := fmt.Sscan(input[i], array.Index(i).Addr().Interface())
+					if input[i] == "" {
+						invalid++
+						continue
+					}
+
+					arrElem := array.Index(i - invalid)
+					n, _ := fmt.Sscan(input[i], arrElem.Addr().Interface())
 					if n != 1 {
 						WriteError(w, http.StatusBadRequest, &Error{
-							Title: fmt.Sprintf("invalid value, exepcted %s got: %q", array.Index(i).Type(), input[i]),
+							Title:  fmt.Sprintf("invalid value for %s", param.Name),
+							Detail: fmt.Sprintf("invalid value, expected %s got: %q", arrElem.Type(), input[i]),
 							Source: &map[string]interface{}{
-								"parameter": param.Input,
+								"parameter": param.Name,
 							},
 						})
 						return false
 					}
+				}
+				// some of the query parameters where empty, filter them out
+				if invalid > 0 {
+					array = array.Slice(0, size-invalid)
 				}
 				reValue.Set(array)
 
@@ -77,12 +90,14 @@ func ScanParameters(w http.ResponseWriter, r *http.Request, parameters ...*ScanP
 			panic(fmt.Errorf("Impossible scanning location: %d", param.Location))
 		}
 
-		n, err := fmt.Sscan(scanData, param.Data)
-		if n != 1 {
+		n, _ := fmt.Sscan(scanData, param.Data)
+		// only report on non empty data, govalidator will handle the other cases
+		if n != 1 && scanData != "" {
 			WriteError(w, http.StatusBadRequest, &Error{
-				Title: err.Error(),
+				Title:  fmt.Sprintf("invalid value for %s", param.Name),
+				Detail: fmt.Sprintf("invalid value, expected %s got: %q", reflect.ValueOf(param.Data).Type(), scanData),
 				Source: &map[string]interface{}{
-					"parameter": param.Input,
+					"parameter": param.Name,
 				},
 			})
 			return false

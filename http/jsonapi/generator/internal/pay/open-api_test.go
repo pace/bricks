@@ -46,13 +46,13 @@ GetPaymentMethodsHandler handles request/response marshaling and validation for
 */
 func GetPaymentMethodsHandler(service Service) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		writer := &getPaymentMethodsResponseWriter{
+		writer := getPaymentMethodsResponseWriter{
 			ResponseWriter: w,
 		}
-		request := &GetPaymentMethodsRequest{
+		request := GetPaymentMethodsRequest{
 			Request: r,
 		}
-		err := service.GetPaymentMethods(r.Context(), writer, request)
+		err := service.GetPaymentMethods(r.Context(), &writer, &request)
 		if err != nil {
 			runtime.WriteError(w, http.StatusInternalServerError, err)
 		}
@@ -65,19 +65,26 @@ PostPaymentMethodsPaymentMethodIdAuthorizeHandler handles request/response marsh
 */
 func PostPaymentMethodsPaymentMethodIdAuthorizeHandler(service Service) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		vars := mux.Vars(r)
-		writer := &postPaymentMethodsPaymentMethodIdAuthorizeResponseWriter{
+		writer := postPaymentMethodsPaymentMethodIdAuthorizeResponseWriter{
 			ResponseWriter: w,
 		}
-		request := &PostPaymentMethodsPaymentMethodIdAuthorizeRequest{
-			Request:              r,
-			ParamPaymentMethodId: vars["paymentMethodId"],
+		request := PostPaymentMethodsPaymentMethodIdAuthorizeRequest{
+			Request: r,
+		}
+		vars := mux.Vars(r)
+		if !runtime.ScanParameters(w, r, &runtime.ScanParameter{
+			Data:     &request.ParamPaymentMethodId,
+			Location: runtime.ScanInPath,
+			Input:    vars["paymentMethodId"],
+			Name:     "paymentMethodId",
+		}) {
+			return
 		}
 		if !runtime.ValidateParameters(w, r, &request) {
 			return // invalid request stop further processing
 		}
 		if runtime.Unmarshal(w, r, &request.Content) {
-			err := service.PostPaymentMethodsPaymentMethodIdAuthorize(r.Context(), writer, request)
+			err := service.PostPaymentMethodsPaymentMethodIdAuthorize(r.Context(), &writer, &request)
 			if err != nil {
 				runtime.WriteError(w, http.StatusInternalServerError, err)
 			}
@@ -91,19 +98,30 @@ DeletePaymentMethodsPaymentMethodIdPaymentTokensPaymentTokenIdHandler handles re
 */
 func DeletePaymentMethodsPaymentMethodIdPaymentTokensPaymentTokenIdHandler(service Service) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		vars := mux.Vars(r)
-		writer := &deletePaymentMethodsPaymentMethodIdPaymentTokensPaymentTokenIdResponseWriter{
+		writer := deletePaymentMethodsPaymentMethodIdPaymentTokensPaymentTokenIdResponseWriter{
 			ResponseWriter: w,
 		}
-		request := &DeletePaymentMethodsPaymentMethodIdPaymentTokensPaymentTokenIdRequest{
-			Request:              r,
-			ParamPaymentTokenId:  vars["paymentTokenId"],
-			ParamPaymentMethodId: vars["paymentMethodId"],
+		request := DeletePaymentMethodsPaymentMethodIdPaymentTokensPaymentTokenIdRequest{
+			Request: r,
+		}
+		vars := mux.Vars(r)
+		if !runtime.ScanParameters(w, r, &runtime.ScanParameter{
+			Data:     &request.ParamPaymentTokenId,
+			Location: runtime.ScanInPath,
+			Input:    vars["paymentTokenId"],
+			Name:     "paymentTokenId",
+		}, &runtime.ScanParameter{
+			Data:     &request.ParamPaymentMethodId,
+			Location: runtime.ScanInPath,
+			Input:    vars["paymentMethodId"],
+			Name:     "paymentMethodId",
+		}) {
+			return
 		}
 		if !runtime.ValidateParameters(w, r, &request) {
 			return // invalid request stop further processing
 		}
-		err := service.DeletePaymentMethodsPaymentMethodIdPaymentTokensPaymentTokenId(r.Context(), writer, request)
+		err := service.DeletePaymentMethodsPaymentMethodIdPaymentTokensPaymentTokenId(r.Context(), &writer, &request)
 		if err != nil {
 			runtime.WriteError(w, http.StatusInternalServerError, err)
 		}
@@ -116,17 +134,17 @@ PostPaymentMethodsSepaDirectDebitHandler handles request/response marshaling and
 */
 func PostPaymentMethodsSepaDirectDebitHandler(service Service) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		writer := &postPaymentMethodsSepaDirectDebitResponseWriter{
+		writer := postPaymentMethodsSepaDirectDebitResponseWriter{
 			ResponseWriter: w,
 		}
-		request := &PostPaymentMethodsSepaDirectDebitRequest{
+		request := PostPaymentMethodsSepaDirectDebitRequest{
 			Request: r,
 		}
 		if !runtime.ValidateParameters(w, r, &request) {
 			return // invalid request stop further processing
 		}
 		if runtime.Unmarshal(w, r, &request.Content) {
-			err := service.PostPaymentMethodsSepaDirectDebit(r.Context(), writer, request)
+			err := service.PostPaymentMethodsSepaDirectDebit(r.Context(), &writer, &request)
 			if err != nil {
 				runtime.WriteError(w, http.StatusInternalServerError, err)
 			}
@@ -140,18 +158,25 @@ DeletePaymentMethodsPaymentMethodIdHandler handles request/response marshaling a
 */
 func DeletePaymentMethodsPaymentMethodIdHandler(service Service) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		vars := mux.Vars(r)
-		writer := &deletePaymentMethodsPaymentMethodIdResponseWriter{
+		writer := deletePaymentMethodsPaymentMethodIdResponseWriter{
 			ResponseWriter: w,
 		}
-		request := &DeletePaymentMethodsPaymentMethodIdRequest{
-			Request:              r,
-			ParamPaymentMethodId: vars["paymentMethodId"],
+		request := DeletePaymentMethodsPaymentMethodIdRequest{
+			Request: r,
+		}
+		vars := mux.Vars(r)
+		if !runtime.ScanParameters(w, r, &runtime.ScanParameter{
+			Data:     &request.ParamPaymentMethodId,
+			Location: runtime.ScanInPath,
+			Input:    vars["paymentMethodId"],
+			Name:     "paymentMethodId",
+		}) {
+			return
 		}
 		if !runtime.ValidateParameters(w, r, &request) {
 			return // invalid request stop further processing
 		}
-		err := service.DeletePaymentMethodsPaymentMethodId(r.Context(), writer, request)
+		err := service.DeletePaymentMethodsPaymentMethodId(r.Context(), &writer, &request)
 		if err != nil {
 			runtime.WriteError(w, http.StatusInternalServerError, err)
 		}
@@ -164,18 +189,25 @@ GetPaymentMethodsIncludeCreditCheckHandler handles request/response marshaling a
 */
 func GetPaymentMethodsIncludeCreditCheckHandler(service Service) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		vars := mux.Vars(r)
-		writer := &getPaymentMethodsIncludeCreditCheckResponseWriter{
+		writer := getPaymentMethodsIncludeCreditCheckResponseWriter{
 			ResponseWriter: w,
 		}
-		request := &GetPaymentMethodsIncludeCreditCheckRequest{
-			Request:      r,
-			ParamInclude: vars["include"],
+		request := GetPaymentMethodsIncludeCreditCheckRequest{
+			Request: r,
+		}
+		vars := mux.Vars(r)
+		if !runtime.ScanParameters(w, r, &runtime.ScanParameter{
+			Data:     &request.ParamInclude,
+			Location: runtime.ScanInQuery,
+			Input:    vars["include"],
+			Name:     "include",
+		}) {
+			return
 		}
 		if !runtime.ValidateParameters(w, r, &request) {
 			return // invalid request stop further processing
 		}
-		err := service.GetPaymentMethodsIncludeCreditCheck(r.Context(), writer, request)
+		err := service.GetPaymentMethodsIncludeCreditCheck(r.Context(), &writer, &request)
 		if err != nil {
 			runtime.WriteError(w, http.StatusInternalServerError, err)
 		}
@@ -188,18 +220,25 @@ GetPaymentMethodsIncludePaymentTokensHandler handles request/response marshaling
 */
 func GetPaymentMethodsIncludePaymentTokensHandler(service Service) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		vars := mux.Vars(r)
-		writer := &getPaymentMethodsIncludePaymentTokensResponseWriter{
+		writer := getPaymentMethodsIncludePaymentTokensResponseWriter{
 			ResponseWriter: w,
 		}
-		request := &GetPaymentMethodsIncludePaymentTokensRequest{
-			Request:      r,
-			ParamInclude: vars["include"],
+		request := GetPaymentMethodsIncludePaymentTokensRequest{
+			Request: r,
+		}
+		vars := mux.Vars(r)
+		if !runtime.ScanParameters(w, r, &runtime.ScanParameter{
+			Data:     &request.ParamInclude,
+			Location: runtime.ScanInQuery,
+			Input:    vars["include"],
+			Name:     "include",
+		}) {
+			return
 		}
 		if !runtime.ValidateParameters(w, r, &request) {
 			return // invalid request stop further processing
 		}
-		err := service.GetPaymentMethodsIncludePaymentTokens(r.Context(), writer, request)
+		err := service.GetPaymentMethodsIncludePaymentTokens(r.Context(), &writer, &request)
 		if err != nil {
 			runtime.WriteError(w, http.StatusInternalServerError, err)
 		}

@@ -75,7 +75,7 @@ func (e Errors) setHTTPStatus(code int) {
 
 // WriteError writes a jsonapi error message to the client
 func WriteError(w http.ResponseWriter, code int, err error) {
-	w.Header().Set("Content-Type", jsonAPIContentType)
+	w.Header().Set("Content-Type", JSONAPIContentType)
 	w.WriteHeader(code)
 
 	// convert error type for marshaling
