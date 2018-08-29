@@ -51,7 +51,7 @@ func (g *Generator) buildType(name string, schema *openapi3.Schema) error {
 				return err
 			}
 		case "object":
-			err := g.structJsonApi(name, t, data.Value)
+			err := g.structJSONAPI(name, t, data.Value)
 			if err != nil {
 				return err
 			}
@@ -70,7 +70,7 @@ func (g *Generator) buildType(name string, schema *openapi3.Schema) error {
 func (g *Generator) generateArray(prefix string, stmt *jen.Statement, schema *openapi3.Schema) error {
 	// geneate regular arrays of jsonapi structs if id and type are present
 	if schema.Items.Value.Properties["id"] != nil && schema.Items.Value.Properties["type"] != nil {
-		return g.structJsonApi(prefix, stmt.Index(), schema.Items.Value)
+		return g.structJSONAPI(prefix, stmt.Index(), schema.Items.Value)
 	}
 
 	// generate embedded struct
@@ -91,11 +91,11 @@ func (g *Generator) generateArray(prefix string, stmt *jen.Statement, schema *op
 	return nil
 }
 
-func (g *Generator) structJsonApi(prefix string, stmt *jen.Statement, schema *openapi3.Schema) error {
+func (g *Generator) structJSONAPI(prefix string, stmt *jen.Statement, schema *openapi3.Schema) error {
 	var fields []jen.Code
 
 	// add ID
-	id, err := g.generateIdField(schema.Properties["id"].Value, schema.Properties["type"].Value)
+	id, err := g.generateIDField(schema.Properties["id"].Value, schema.Properties["type"].Value)
 	if err != nil {
 		return err
 	}
@@ -112,11 +112,11 @@ func (g *Generator) structJsonApi(prefix string, stmt *jen.Statement, schema *op
 	return nil
 }
 
-func (g *Generator) generateAttrField(prefix, name string, schema *openapi3.Schema, jsonApi bool, tags map[string]string) (*jen.Statement, error) {
+func (g *Generator) generateAttrField(prefix, name string, schema *openapi3.Schema, jsonAPI bool, tags map[string]string) (*jen.Statement, error) {
 	field := jen.Id(goNameHelper(name))
 
 	// Add json-api tag
-	if jsonApi {
+	if jsonAPI {
 		tags["jsonapi"] = fmt.Sprintf("attr,%s,omitempty", name)
 	} else {
 		tags["jsonapi"] = fmt.Sprintf("%s,omitempty", name)
@@ -139,7 +139,7 @@ func (g *Generator) generateAttrField(prefix, name string, schema *openapi3.Sche
 		}
 	}
 	field.Tag(tags)
-	g.CommentOrExample(field, schema)
+	g.commentOrExample(field, schema)
 	return field, nil
 }
 
@@ -156,7 +156,7 @@ func (g *Generator) generateEmbedStruct(prefix string, schema *openapi3.Schema) 
 	return nil
 }
 
-func (g *Generator) generateStructFields(prefix string, schema *openapi3.Schema, jsonApi bool) ([]jen.Code, error) {
+func (g *Generator) generateStructFields(prefix string, schema *openapi3.Schema, jsonAPIObject bool) ([]jen.Code, error) {
 	// sort by key
 	keys := make([]string, 0, len(schema.Properties))
 	for k := range schema.Properties {
@@ -186,7 +186,7 @@ func (g *Generator) generateStructFields(prefix string, schema *openapi3.Schema,
 		}
 
 		// generate attribute field
-		field, err := g.generateAttrField(prefix, attrName, attrSchema.Value, jsonApi, tags)
+		field, err := g.generateAttrField(prefix, attrName, attrSchema.Value, jsonAPIObject, tags)
 		if err != nil {
 			return nil, err
 		}
@@ -195,7 +195,7 @@ func (g *Generator) generateStructFields(prefix string, schema *openapi3.Schema,
 	return fields, nil
 }
 
-func (g *Generator) generateIdField(idType, objectType *openapi3.Schema) (*jen.Statement, error) {
+func (g *Generator) generateIDField(idType, objectType *openapi3.Schema) (*jen.Statement, error) {
 	id := jen.Id("ID")
 	tags := map[string]string{
 		"jsonapi": fmt.Sprintf("primary,%s,omitempty", objectType.Enum[0]),
@@ -206,6 +206,6 @@ func (g *Generator) generateIdField(idType, objectType *openapi3.Schema) (*jen.S
 	}
 	addValidator(tags, "optional")
 	id.Tag(tags)
-	g.CommentOrExample(id, idType)
+	g.commentOrExample(id, idType)
 	return id, nil
 }

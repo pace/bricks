@@ -76,7 +76,7 @@ func (g *Generator) goType(stmt *jen.Statement, schema *openapi3.Schema, tags ma
 	return nil
 }
 
-func (g *Generator) CommentOrExample(stmt *jen.Statement, schema *openapi3.Schema) {
+func (g *Generator) commentOrExample(stmt *jen.Statement, schema *openapi3.Schema) {
 	if schema.Description != "" {
 		stmt.Comment(schema.Description)
 	} else if schema.Example != nil {
