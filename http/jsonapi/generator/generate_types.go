@@ -94,7 +94,13 @@ func (g *Generator) buildTypeStruct(name string, stmt *jen.Statement, schema *op
 	if err != nil {
 		return err
 	}
-	stmt.Struct(fields...)
+
+	// generate struct as separate objects to allow direct creation of those objects
+	g.addGoDoc(name, schema.Description)
+	g.goSource.Type().Id(name).Struct(fields...)
+
+	// use new struct pointer
+	stmt.Op("*").Id(name)
 	return nil
 }
 
@@ -157,26 +163,13 @@ func (g *Generator) generateAttrField(prefix, name string, schema *openapi3.Sche
 	// Add json tag
 	tags["json"] = fmt.Sprintf("%s,omitempty", name)
 
-	err := g.buildType(prefix, field, schema)
+	err := g.buildType(prefix+goNameHelper(name), field, schema)
 	if err != nil {
 		return nil, err
 	}
 	field.Tag(tags)
 	g.commentOrExample(field, schema.Value)
 	return field, nil
-}
-
-func (g *Generator) generateEmbedStruct(prefix string, schema *openapi3.Schema) error {
-	// document type
-	g.addGoDoc(prefix, schema.Description)
-	embed := g.goSource.Type().Id(prefix)
-
-	fields, err := g.generateStructFields(prefix, schema, false)
-	if err != nil {
-		return err
-	}
-	embed.Struct(fields...)
-	return nil
 }
 
 func (g *Generator) generateStructFields(prefix string, schema *openapi3.Schema, jsonAPIObject bool) ([]jen.Code, error) {

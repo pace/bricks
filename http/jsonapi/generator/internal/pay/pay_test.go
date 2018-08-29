@@ -27,6 +27,13 @@ func (s *testService) DeletePaymentMethodsPaymentMethodIDPaymentTokensPaymentTok
 }
 
 func (s *testService) PostPaymentMethodsSepaDirectDebit(ctx context.Context, w PostPaymentMethodsSepaDirectDebitResponseWriter, r *PostPaymentMethodsSepaDirectDebitRequest) error {
+	if str := "Jon"; r.Content.FirstName != str {
+		s.t.Errorf("expected FirstName to be %q, got %q", str, r.Content.FirstName)
+	}
+	if str := "Haid-und-Neu-Str."; r.Content.Address.Street != str {
+		s.t.Errorf("expected Address.Street to be %q, got %q", str, r.Content.Address.Street)
+	}
+
 	w.Created(&PostPaymentMethodsSepaDirectDebitCreated{
 		ID:                   "1",
 		IdentificationString: "d7101f72-a672-453c-9d36-d5809ef0ded6",
@@ -47,7 +54,7 @@ func (s *testService) GetPaymentMethodsIncludeCreditCheck(context.Context, GetPa
 func (s *testService) GetPaymentMethodsIncludePaymentTokens(context.Context, GetPaymentMethodsIncludePaymentTokensResponseWriter, *GetPaymentMethodsIncludePaymentTokensRequest) error {
 	return nil
 }
-func WIPTestHandler(t *testing.T) {
+func TestHandler(t *testing.T) {
 	r := Router(&testService{t})
 	rec := httptest.NewRecorder()
 	req := httptest.NewRequest("POST", "/pay/beta/payment-methods/sepa-direct-debit", strings.NewReader(`{
@@ -61,7 +68,7 @@ func WIPTestHandler(t *testing.T) {
 			"lastName": "Smith",
 			"address": {
 				"street": "Haid-und-Neu-Str.",
-				"houseNo": 18,
+				"houseNo": "18",
 				"postalCode": "76131",
 				"city": "Karlsruhe",
 				"countryCode": "DE"
@@ -84,6 +91,15 @@ func WIPTestHandler(t *testing.T) {
 			t.Fatal(err)
 		}
 		t.Error(string(b[:]))
+	}
+
+	b, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if !strings.Contains(string(b[:]), "d7101f72-a672-453c-9d36-d5809ef0ded6") {
+		t.Error("expected response to contain the generated payment method id")
 	}
 }
 
