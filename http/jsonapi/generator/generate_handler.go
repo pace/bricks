@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"log"
 	"net/url"
-	"path/filepath"
 	"regexp"
 	"sort"
 	"strconv"
@@ -295,23 +294,6 @@ func (g *Generator) buildServiceInterface(routes []*route, schema *openapi3.Swag
 	return nil
 }
 
-// references the type from the schema or generates a new type (inline)
-// and returns
-func (g *Generator) generateTypeReference(fallbackName string, schema *openapi3.SchemaRef) (jen.Code, error) {
-	if schema.Ref != "" {
-		// if there is a reference to a type use it
-		return jen.Op("*").Id(filepath.Base(schema.Ref)), nil
-	}
-
-	// inline type, build the type and reference it
-	err := g.buildType(fallbackName, schema.Value)
-	if err != nil {
-		return nil, err
-	}
-
-	return jen.Op("*").Id(fallbackName), nil
-}
-
 func (g *Generator) buildRouter(routes []*route, schema *openapi3.Swagger) error {
 	routeStmts := make([]jen.Code, 1, (len(routes)+2)*len(schema.Servers)+1)
 
@@ -417,6 +399,22 @@ func (g *Generator) buildHandler(method string, op *openapi3.Operation, pattern 
 				jen.Id("w").Qual("net/http", "ResponseWriter"),
 				jen.Id("r").Op("*").Qual("net/http", "Request"),
 			).BlockFunc(func(g *jen.Group) {
+				// recover panics
+				// TODO: add more context and send to sentry, return error code
+				// that can be correlated with the client
+				g.Defer().Func().Call().BlockFunc(func(g *jen.Group) {
+					g.If(jen.Id("r").Op(":=").Id("recover").Call().Op(";").Id("r").Op("!=").Nil()).Block(
+						jen.Qual("fmt", "Printf").Call(jen.Lit("Panic %s: %v\n"), jen.Lit(handler), jen.Id("r")),
+						jen.Qual("runtime/debug", "PrintStack").Call(),
+						jen.Qual(httpJsonapi, "WriteError").Call(
+							jen.Id("w"),
+							jen.Qual("net/http", "StatusInternalServerError"),
+							// don't leak info about the internal panic
+							jen.Qual("errors", "New").Call(jen.Lit("Error")),
+						),
+					)
+				}).Call()
+
 				// response writer
 				g.Id("writer").Op(":=").Id(route.responseTypeImpl).
 					Block(jen.Id("ResponseWriter").Op(":").Id("w").Op(","))
@@ -463,6 +461,7 @@ func (g *Generator) buildHandler(method string, op *openapi3.Operation, pattern 
 					jen.Op("&").Id("writer"),
 					jen.Op("&").Id("request"),
 				).Line().If().Id("err").Op("!=").Nil().Block(
+					// TODO: add more context and send to sentry
 					jen.Qual(httpJsonapi, "WriteError").Call(
 						jen.Id("w"),
 						jen.Qual("net/http", "StatusInternalServerError"),

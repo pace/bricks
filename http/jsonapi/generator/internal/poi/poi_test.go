@@ -1,10 +1,14 @@
+// Copyright © 2018 by PACE Telematics GmbH. All rights reserved.
+// Created at 2018/08/29 by Vincent Landgraf
+
 package poi
 
 import (
 	"context"
-	"fmt"
+	"encoding/json"
 	"io/ioutil"
 	"net/http/httptest"
+	"strconv"
 	"testing"
 
 	"lab.jamit.de/pace/web/libs/go-microservice/http/jsonapi/runtime"
@@ -28,7 +32,17 @@ func (s *testService) GetCheckForPaceApp(ctx context.Context, w GetCheckForPaceA
 		s.t.Errorf("expected ParamGpsSource to be %q, got: %q", "raw", r.ParamGpsSource)
 	}
 
-	return fmt.Errorf("test")
+	appsResp := make(LocationBasedAppsResponse, 10)
+	for i := 0; i < 10; i++ {
+		appsResp[i] = &LocationBasedAppsResponseItem{}
+		appsResp[i].ID = strconv.Itoa(i)
+		appsResp[i].AndroidInstantAppURL = "https://foobar.com"
+		appsResp[i].Title = "Some app"
+	}
+
+	w.OK(appsResp)
+
+	return nil
 }
 
 func (s *testService) GetSearch(ctx context.Context, w GetSearchResponseWriter, r *GetSearchRequest) error {
@@ -48,12 +62,27 @@ func TestHandler(t *testing.T) {
 	resp := rec.Result()
 	defer resp.Body.Close()
 
-	if resp.StatusCode != 500 {
+	if resp.StatusCode != 200 {
 		t.Errorf("expected OK got: %d", resp.StatusCode)
 		b, err := ioutil.ReadAll(resp.Body)
 		if err != nil {
 			t.Fatal(err)
 		}
 		t.Error(string(b[:]))
+		return
+	}
+
+	var data struct {
+		Data []map[string]interface{} `json:"data"`
+	}
+	err := json.NewDecoder(resp.Body).Decode(&data)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(data.Data) != 10 {
+		t.Error("Expected 10 apps")
+	}
+	if data.Data[0]["type"] != "locationBasedApp" {
+		t.Error("Expected type locationBasedApp")
 	}
 }

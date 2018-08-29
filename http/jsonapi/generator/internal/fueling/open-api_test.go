@@ -2,124 +2,93 @@ package fueling
 
 import (
 	"context"
+	"encoding/json"
+	"errors"
+	"fmt"
 	mux "github.com/gorilla/mux"
 	runtime "lab.jamit.de/pace/web/libs/go-microservice/http/jsonapi/runtime"
 	"net/http"
+	"runtime/debug"
 )
 
 // FuelPrice ...
 type FuelPrice struct {
-	Attributes *FuelPriceAttributes `jsonapi:"attributes,omitempty" valid:"optional"`
-	ID         string               `jsonapi:"id,omitempty" valid:"optional"`                 // Fuel Price ID
-	Type       string               `jsonapi:"type,omitempty" valid:"optional,in(fuelPrice)"` // Fuel price
-}
-
-// FuelPriceAttributes ...
-type FuelPriceAttributes struct {
-	Currency       string  `jsonapi:"currency,omitempty" valid:"optional,in(EUR)"`                                                                                                           // Example: "EUR"
-	FuelAmountUnit string  `jsonapi:"fuelAmountUnit,omitempty" valid:"optional,in(Ltr)"`                                                                                                     // Example: "Ltr"
-	FuelType       string  `jsonapi:"fuelType,omitempty" valid:"optional,in(e85|ron91|ron95_e5|ron95_e10|ron98|ron98_e5|ron100|diesel|diesel_gtl|diesel_b7|lpg|cng|h2|Truck Diesel|AdBlue)"` // Example: "ron95_e10"
-	PricePerUnit   float32 `jsonapi:"pricePerUnit,omitempty" valid:"optional"`                                                                                                               // Example: "1.379"
-	ProductName    string  `jsonapi:"productName,omitempty" valid:"optional"`                                                                                                                // Example: "Super E10"
+	ID             string          `jsonapi:"primary,fuelPrice,omitempty" valid:"optional"`                                   // Fuel Price ID
+	Currency       *Currency       `json:"currency,omitempty" jsonapi:"attr,currency,omitempty" valid:"optional"`             // Example: "EUR"
+	FuelAmountUnit *FuelAmountUnit `json:"fuelAmountUnit,omitempty" jsonapi:"attr,fuelAmountUnit,omitempty" valid:"optional"` // Example: "Ltr"
+	FuelType       string          `json:"fuelType,omitempty" jsonapi:"attr,fuelType,omitempty" valid:"optional"`             // Example: "ron95_e10"
+	PricePerUnit   float32         `json:"pricePerUnit,omitempty" jsonapi:"attr,pricePerUnit,omitempty" valid:"optional"`     // Example: "1.379"
+	ProductName    string          `json:"productName,omitempty" jsonapi:"attr,productName,omitempty" valid:"optional"`       // Example: "Super E10"
 }
 
 // FuelPriceResponse ...
-type FuelPriceResponse struct {
-	ID             string  `jsonapi:"primary,fuelPrice,omitempty" valid:"optional"`                                                                                                               // Fuel Price ID
-	Currency       string  `jsonapi:"attr,currency,omitempty" valid:"optional,in(EUR)"`                                                                                                           // Example: "EUR"
-	FuelAmountUnit string  `jsonapi:"attr,fuelAmountUnit,omitempty" valid:"optional,in(Ltr)"`                                                                                                     // Example: "Ltr"
-	FuelType       string  `jsonapi:"attr,fuelType,omitempty" valid:"optional,in(e85|ron91|ron95_e5|ron95_e10|ron98|ron98_e5|ron100|diesel|diesel_gtl|diesel_b7|lpg|cng|h2|Truck Diesel|AdBlue)"` // Example: "ron95_e10"
-	PricePerUnit   float32 `jsonapi:"attr,pricePerUnit,omitempty" valid:"optional"`                                                                                                               // Example: "1.379"
-	ProductName    string  `jsonapi:"attr,productName,omitempty" valid:"optional"`                                                                                                                // Example: "Super E10"
+type FuelPriceResponse *FuelPrice
+
+// GasStationResponseItem ...
+type GasStationResponseItem struct {
+	ID      string `jsonapi:"primary,gasStation,omitempty" valid:"uuid,optional"` // Gas Station ID
+	Address struct {
+		City        string `json:"city,omitempty" jsonapi:"city,omitempty" valid:"optional"`               // Example: "Karlsruhe"
+		CountryCode string `json:"countryCode,omitempty" jsonapi:"countryCode,omitempty" valid:"optional"` // Country code in as specified in ISO 3166-1.
+		HouseNo     string `json:"houseNo,omitempty" jsonapi:"houseNo,omitempty" valid:"optional"`         // Example: "18"
+		PostalCode  string `json:"postalCode,omitempty" jsonapi:"postalCode,omitempty" valid:"optional"`   // Example: "76131"
+		Street      string `json:"street,omitempty" jsonapi:"street,omitempty" valid:"optional"`           // Example: "Haid-und-Neu-Str."
+	} `json:"address,omitempty" jsonapi:"attr,address,omitempty" valid:"optional"`
+	Amenities    []string `json:"amenities,omitempty" jsonapi:"attr,amenities,omitempty" valid:"optional"` // Example: "[restaurant]"
+	Latitude     float32  `json:"latitude,omitempty" jsonapi:"attr,latitude,omitempty" valid:"optional"`   // Example: "49.013"
+	Longitude    float32  `json:"longitude,omitempty" jsonapi:"attr,longitude,omitempty" valid:"optional"` // Example: "8.425"
+	OpeningHours []struct {
+		OpenFromTo []string `json:"openFromTo,omitempty" jsonapi:"openFromTo,omitempty" valid:"optional"` // Example: "[07:30 20:30]"
+		Weekdays   []string `json:"weekdays,omitempty" jsonapi:"weekdays,omitempty" valid:"optional"`     // Example: "[Montag Dienstag]"
+	} `json:"openingHours,omitempty" jsonapi:"attr,openingHours,omitempty" valid:"optional"`
+	PaymentMethods []string `json:"paymentMethods,omitempty" jsonapi:"attr,paymentMethods,omitempty" valid:"optional"` // Example: "[sepaDirectDebit]"
+	StationName    string   `json:"stationName,omitempty" jsonapi:"attr,stationName,omitempty" valid:"optional"`       // Example: "PACE Station"
 }
 
 // GasStationResponse ...
-type GasStationResponse []struct {
-	ID             string                            `jsonapi:"primary,gasStation,omitempty" valid:"uuid,optional"` // Gas Station ID
-	Address        *GasStationResponseAddress        `jsonapi:"attr,address,omitempty" valid:"optional"`
-	Amenities      []string                          `jsonapi:"attr,amenities,omitempty" valid:"optional"` // Example: "[restaurant]"
-	Latitude       float32                           `jsonapi:"attr,latitude,omitempty" valid:"optional"`  // Example: "49.013"
-	Longitude      float32                           `jsonapi:"attr,longitude,omitempty" valid:"optional"` // Example: "8.425"
-	OpeningHours   []*GasStationResponseOpeningHours `jsonapi:"attr,openingHours,omitempty" valid:"optional"`
-	PaymentMethods []string                          `jsonapi:"attr,paymentMethods,omitempty" valid:"optional"` // Example: "[sepaDirectDebit]"
-	StationName    string                            `jsonapi:"attr,stationName,omitempty" valid:"optional"`    // Example: "PACE Station"
-}
-
-// GasStationResponseAddress ...
-type GasStationResponseAddress struct {
-	City        string `jsonapi:"city,omitempty" valid:"optional"`        // Example: "Karlsruhe"
-	CountryCode string `jsonapi:"countryCode,omitempty" valid:"optional"` // Country code in as specified in ISO 3166-1.
-	HouseNo     string `jsonapi:"houseNo,omitempty" valid:"optional"`     // Example: "18"
-	PostalCode  string `jsonapi:"postalCode,omitempty" valid:"optional"`  // Example: "76131"
-	Street      string `jsonapi:"street,omitempty" valid:"optional"`      // Example: "Haid-und-Neu-Str."
-}
-
-// GasStationResponseOpeningHours ...
-type GasStationResponseOpeningHours struct {
-	OpenFromTo []string `jsonapi:"openFromTo,omitempty" valid:"optional"` // Example: "[07:30 20:30]"
-	Weekdays   []string `jsonapi:"weekdays,omitempty" valid:"optional"`   // Example: "[Montag Dienstag]"
-}
+type GasStationResponse []*GasStationResponseItem
 
 // PaymentMethod ...
 type PaymentMethod struct {
-	Attributes *PaymentMethodAttributes `jsonapi:"attributes,omitempty" valid:"optional"`
-	ID         string                   `jsonapi:"id,omitempty" valid:"optional"` // Payment Method ID
-	Type       string                   `jsonapi:"type,omitempty" valid:"optional,in(paymentMethod)"`
-}
-
-// PaymentMethodAttributes ...
-type PaymentMethodAttributes struct {
-	Kind string `jsonapi:"kind,omitempty" valid:"optional"` // Example: "sepa"
+	ID   string `jsonapi:"primary,paymentMethod,omitempty" valid:"optional"`           // Payment Method ID
+	Kind string `json:"kind,omitempty" jsonapi:"attr,kind,omitempty" valid:"optional"` // Example: "sepa"
 }
 
 // PaymentMethodResponse ...
-type PaymentMethodResponse struct {
-	ID   string `jsonapi:"primary,paymentMethod,omitempty" valid:"optional"` // Payment Method ID
-	Kind string `jsonapi:"attr,kind,omitempty" valid:"optional"`             // Example: "sepa"
-}
+type PaymentMethodResponse *PaymentMethod
 
 // Pump ...
 type Pump struct {
-	Attributes *PumpAttributes `jsonapi:"attributes,omitempty" valid:"optional"`
-	ID         string          `jsonapi:"id,omitempty" valid:"optional,uuid"`       // Pump ID
-	Type       string          `jsonapi:"type,omitempty" valid:"optional,in(pump)"` // Type
-}
-
-// PumpAttributes ...
-type PumpAttributes struct {
-	Identifier string `jsonapi:"identifier,omitempty" valid:"optional"`                                  // Pump identifier
-	Status     string `jsonapi:"status,omitempty" valid:"optional,in(free|inUse|readyToPay|outOfOrder)"` // Current pump status
+	ID         string      `jsonapi:"primary,pump,omitempty" valid:"uuid,optional"`                           // Pump ID
+	Identifier string      `json:"identifier,omitempty" jsonapi:"attr,identifier,omitempty" valid:"optional"` // Pump identifier
+	Status     *PumpStatus `json:"status,omitempty" jsonapi:"attr,status,omitempty" valid:"optional"`         // Current pump status
 }
 
 // PumpReadyForPaymentResponse ...
-type PumpReadyForPaymentResponse struct{}
+type PumpReadyForPaymentResponse json.RawMessage
 
 // PumpResponse ...
-type PumpResponse struct {
-	ID         string `jsonapi:"primary,pump,omitempty" valid:"uuid,optional"`                                // Pump ID
-	Identifier string `jsonapi:"attr,identifier,omitempty" valid:"optional"`                                  // Pump identifier
-	Status     string `jsonapi:"attr,status,omitempty" valid:"optional,in(free|inUse|readyToPay|outOfOrder)"` // Current pump status
-}
+type PumpResponse *Pump
 
 // PumpStatus Current pump status
-type PumpStatus struct{}
+type PumpStatus string
 
 // TransactionRequest ...
 type TransactionRequest struct {
-	ID              string `jsonapi:"primary,transaction,omitempty" valid:"uuid,optional"`  // Transaction ID
-	MileageInMeters int64  `jsonapi:"attr,mileageInMeters,omitempty" valid:"required"`      // Example: "66435"
-	PaymentMethodID string `jsonapi:"attr,paymentMethodId,omitempty" valid:"required,uuid"` // Example: "f106ac99-213c-4cf7-8c1b-1e841516026b"
-	Vin             string `jsonapi:"attr,vin,omitempty" valid:"required"`                  // Example: "1B3EL46R36N102271"
+	ID              string `jsonapi:"primary,transaction,omitempty" valid:"uuid,optional"`                              // Transaction ID
+	MileageInMeters int64  `json:"mileageInMeters,omitempty" jsonapi:"attr,mileageInMeters,omitempty" valid:"required"` // Example: "66435"
+	PaymentMethodID string `json:"paymentMethodId,omitempty" jsonapi:"attr,paymentMethodId,omitempty" valid:"required"` // Example: "f106ac99-213c-4cf7-8c1b-1e841516026b"
+	Vin             string `json:"vin,omitempty" jsonapi:"attr,vin,omitempty" valid:"required"`                         // Example: "1B3EL46R36N102271"
 }
 
 // TransactionWithPriceCheckRequest ...
-type TransactionWithPriceCheckRequest struct{}
+type TransactionWithPriceCheckRequest json.RawMessage
 
-// currency ...
-type currency struct{}
+// Currency ...
+type Currency string
 
-// fuelAmountUnit ...
-type fuelAmountUnit struct{}
+// FuelAmountUnit ...
+type FuelAmountUnit string
 
 /*
 GetGasStationFuelingAppIDApproachingHandler handles request/response marshaling and validation for
@@ -127,6 +96,13 @@ GetGasStationFuelingAppIDApproachingHandler handles request/response marshaling 
 */
 func GetGasStationFuelingAppIDApproachingHandler(service Service) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		defer func() {
+			if r := recover(); r != nil {
+				fmt.Printf("Panic %s: %v\n", "GetGasStationFuelingAppIDApproachingHandler", r)
+				debug.PrintStack()
+				runtime.WriteError(w, http.StatusInternalServerError, errors.New("Error"))
+			}
+		}()
 		writer := getGasStationFuelingAppIDApproachingResponseWriter{
 			ResponseWriter: w,
 		}
@@ -168,6 +144,13 @@ GetGasStationFuelingAppIDPumpsPumpIDHandler handles request/response marshaling 
 */
 func GetGasStationFuelingAppIDPumpsPumpIDHandler(service Service) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		defer func() {
+			if r := recover(); r != nil {
+				fmt.Printf("Panic %s: %v\n", "GetGasStationFuelingAppIDPumpsPumpIDHandler", r)
+				debug.PrintStack()
+				runtime.WriteError(w, http.StatusInternalServerError, errors.New("Error"))
+			}
+		}()
 		writer := getGasStationFuelingAppIDPumpsPumpIDResponseWriter{
 			ResponseWriter: w,
 		}
@@ -204,6 +187,13 @@ PostGasStationFuelingAppIDPumpsPumpIDPayHandler handles request/response marshal
 */
 func PostGasStationFuelingAppIDPumpsPumpIDPayHandler(service Service) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		defer func() {
+			if r := recover(); r != nil {
+				fmt.Printf("Panic %s: %v\n", "PostGasStationFuelingAppIDPumpsPumpIDPayHandler", r)
+				debug.PrintStack()
+				runtime.WriteError(w, http.StatusInternalServerError, errors.New("Error"))
+			}
+		}()
 		writer := postGasStationFuelingAppIDPumpsPumpIDPayResponseWriter{
 			ResponseWriter: w,
 		}
@@ -242,6 +232,13 @@ GetGasStationFuelingAppIDPumpsPumpIDWaitForStatusChangeHandler handles request/r
 */
 func GetGasStationFuelingAppIDPumpsPumpIDWaitForStatusChangeHandler(service Service) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		defer func() {
+			if r := recover(); r != nil {
+				fmt.Printf("Panic %s: %v\n", "GetGasStationFuelingAppIDPumpsPumpIDWaitForStatusChangeHandler", r)
+				debug.PrintStack()
+				runtime.WriteError(w, http.StatusInternalServerError, errors.New("Error"))
+			}
+		}()
 		writer := getGasStationFuelingAppIDPumpsPumpIDWaitForStatusChangeResponseWriter{
 			ResponseWriter: w,
 		}
@@ -288,7 +285,7 @@ to generate the respective responses easily
 */
 type GetGasStationFuelingAppIDApproachingResponseWriter interface {
 	http.ResponseWriter
-	OK(*GasStationResponse)
+	OK(GasStationResponse)
 	NotFound(error)
 }
 type getGasStationFuelingAppIDApproachingResponseWriter struct {
@@ -301,7 +298,7 @@ func (w *getGasStationFuelingAppIDApproachingResponseWriter) NotFound(err error)
 }
 
 // OK responds with jsonapi marshaled data (HTTP code 200)
-func (w *getGasStationFuelingAppIDApproachingResponseWriter) OK(data *GasStationResponse) {
+func (w *getGasStationFuelingAppIDApproachingResponseWriter) OK(data GasStationResponse) {
 	runtime.Marshal(w, data, 200)
 }
 
@@ -317,7 +314,7 @@ type GetGasStationFuelingAppIDApproachingRequest struct {
 }
 
 // GetGasStationFuelingAppIDPumpsPumpIDOK ...
-type GetGasStationFuelingAppIDPumpsPumpIDOK struct{}
+type GetGasStationFuelingAppIDPumpsPumpIDOK json.RawMessage
 
 /*
 GetGasStationFuelingAppIDPumpsPumpIDResponseWriter is a standard http.ResponseWriter extended with methods
@@ -325,7 +322,7 @@ to generate the respective responses easily
 */
 type GetGasStationFuelingAppIDPumpsPumpIDResponseWriter interface {
 	http.ResponseWriter
-	OK(*GetGasStationFuelingAppIDPumpsPumpIDOK)
+	OK(GetGasStationFuelingAppIDPumpsPumpIDOK)
 	NotFound(error)
 }
 type getGasStationFuelingAppIDPumpsPumpIDResponseWriter struct {
@@ -338,7 +335,7 @@ func (w *getGasStationFuelingAppIDPumpsPumpIDResponseWriter) NotFound(err error)
 }
 
 // OK responds with jsonapi marshaled data (HTTP code 200)
-func (w *getGasStationFuelingAppIDPumpsPumpIDResponseWriter) OK(data *GetGasStationFuelingAppIDPumpsPumpIDOK) {
+func (w *getGasStationFuelingAppIDPumpsPumpIDResponseWriter) OK(data GetGasStationFuelingAppIDPumpsPumpIDOK) {
 	runtime.Marshal(w, data, 200)
 }
 
@@ -354,22 +351,19 @@ type GetGasStationFuelingAppIDPumpsPumpIDRequest struct {
 
 // PostGasStationFuelingAppIDPumpsPumpIDPayCreated ...
 type PostGasStationFuelingAppIDPumpsPumpIDPayCreated struct {
-	ID                string                                              `jsonapi:"primary,transaction,omitempty" valid:"optional"` // Transaction ID
-	VAT               *PostGasStationFuelingAppIDPumpsPumpIDPayCreatedVAT `jsonapi:"attr,VAT,omitempty" valid:"optional"`
-	Currency          string                                              `jsonapi:"attr,currency,omitempty" valid:"optional,in(EUR)"`     // Example: "EUR"
-	FuelingAppID      string                                              `jsonapi:"attr,fuelingAppId,omitempty" valid:"optional,uuid"`    // Example: "c30bce97-b732-4390-af38-1ac6b017aa4c"
-	MileageInMeters   int64                                               `jsonapi:"attr,mileageInMeters,omitempty" valid:"optional"`      // Example: "66435"
-	PaymentMethodID   string                                              `jsonapi:"attr,paymentMethodId,omitempty" valid:"optional,uuid"` // Example: "f106ac99-213c-4cf7-8c1b-1e841516026b"
-	PriceIncludingVAT float32                                             `jsonapi:"attr,priceIncludingVAT,omitempty" valid:"optional"`    // Example: "69.34"
-	PriceWithoutVAT   float32                                             `jsonapi:"attr,priceWithoutVAT,omitempty" valid:"optional"`      // Example: "58.27"
-	PumpID            string                                              `jsonapi:"attr,pumpId,omitempty" valid:"optional,uuid"`          // Example: "460ffaad-a3c1-4199-b69e-63949ccda82f"
-	Vin               string                                              `jsonapi:"attr,vin,omitempty" valid:"optional"`                  // Example: "1B3EL46R36N102271"
-}
-
-// PostGasStationFuelingAppIDPumpsPumpIDPayCreatedVAT ...
-type PostGasStationFuelingAppIDPumpsPumpIDPayCreatedVAT struct {
-	Amount float32 `jsonapi:"amount,omitempty" valid:"optional"` // Example: "11.07"
-	Rate   float32 `jsonapi:"rate,omitempty" valid:"optional"`   // Example: "0.19"
+	ID  string `jsonapi:"primary,transaction,omitempty" valid:"optional"` // Transaction ID
+	VAT struct {
+		Amount float32 `json:"amount,omitempty" jsonapi:"amount,omitempty" valid:"optional"` // Example: "11.07"
+		Rate   float32 `json:"rate,omitempty" jsonapi:"rate,omitempty" valid:"optional"`     // Example: "0.19"
+	} `json:"VAT,omitempty" jsonapi:"attr,VAT,omitempty" valid:"optional"`
+	Currency          *Currency `json:"currency,omitempty" jsonapi:"attr,currency,omitempty" valid:"optional"`                   // Example: "EUR"
+	FuelingAppID      string    `json:"fuelingAppId,omitempty" jsonapi:"attr,fuelingAppId,omitempty" valid:"optional"`           // Example: "c30bce97-b732-4390-af38-1ac6b017aa4c"
+	MileageInMeters   int64     `json:"mileageInMeters,omitempty" jsonapi:"attr,mileageInMeters,omitempty" valid:"optional"`     // Example: "66435"
+	PaymentMethodID   string    `json:"paymentMethodId,omitempty" jsonapi:"attr,paymentMethodId,omitempty" valid:"optional"`     // Example: "f106ac99-213c-4cf7-8c1b-1e841516026b"
+	PriceIncludingVAT float32   `json:"priceIncludingVAT,omitempty" jsonapi:"attr,priceIncludingVAT,omitempty" valid:"optional"` // Example: "69.34"
+	PriceWithoutVAT   float32   `json:"priceWithoutVAT,omitempty" jsonapi:"attr,priceWithoutVAT,omitempty" valid:"optional"`     // Example: "58.27"
+	PumpID            string    `json:"pumpId,omitempty" jsonapi:"attr,pumpId,omitempty" valid:"optional"`                       // Example: "460ffaad-a3c1-4199-b69e-63949ccda82f"
+	Vin               string    `json:"vin,omitempty" jsonapi:"attr,vin,omitempty" valid:"optional"`                             // Example: "1B3EL46R36N102271"
 }
 
 /*
@@ -378,7 +372,7 @@ to generate the respective responses easily
 */
 type PostGasStationFuelingAppIDPumpsPumpIDPayResponseWriter interface {
 	http.ResponseWriter
-	Created(*PostGasStationFuelingAppIDPumpsPumpIDPayCreated)
+	Created(PostGasStationFuelingAppIDPumpsPumpIDPayCreated)
 	BadRequest(error)
 	NotFound(error)
 	Conflict(error)
@@ -403,23 +397,23 @@ func (w *postGasStationFuelingAppIDPumpsPumpIDPayResponseWriter) BadRequest(err 
 }
 
 // Created responds with jsonapi marshaled data (HTTP code 201)
-func (w *postGasStationFuelingAppIDPumpsPumpIDPayResponseWriter) Created(data *PostGasStationFuelingAppIDPumpsPumpIDPayCreated) {
+func (w *postGasStationFuelingAppIDPumpsPumpIDPayResponseWriter) Created(data PostGasStationFuelingAppIDPumpsPumpIDPayCreated) {
 	runtime.Marshal(w, data, 201)
 }
 
 // PostGasStationFuelingAppIDPumpsPumpIDPayContent ...
-type PostGasStationFuelingAppIDPumpsPumpIDPayContent struct{}
+type PostGasStationFuelingAppIDPumpsPumpIDPayContent json.RawMessage
 
 // PostGasStationFuelingAppIDPumpsPumpIDPayRequest ...
 type PostGasStationFuelingAppIDPumpsPumpIDPayRequest struct {
-	Request           *http.Request                                    `valid:"-"`
-	Content           *PostGasStationFuelingAppIDPumpsPumpIDPayContent `valid:"-"`
-	ParamFuelingAppID string                                           `valid:"required,uuid"`
-	ParamPumpID       string                                           `valid:"required,uuid"`
+	Request           *http.Request                                   `valid:"-"`
+	Content           PostGasStationFuelingAppIDPumpsPumpIDPayContent `valid:"-"`
+	ParamFuelingAppID string                                          `valid:"required,uuid"`
+	ParamPumpID       string                                          `valid:"required,uuid"`
 }
 
 // GetGasStationFuelingAppIDPumpsPumpIDWaitForStatusChangeOK ...
-type GetGasStationFuelingAppIDPumpsPumpIDWaitForStatusChangeOK struct{}
+type GetGasStationFuelingAppIDPumpsPumpIDWaitForStatusChangeOK json.RawMessage
 
 /*
 GetGasStationFuelingAppIDPumpsPumpIDWaitForStatusChangeResponseWriter is a standard http.ResponseWriter extended with methods
@@ -427,7 +421,7 @@ to generate the respective responses easily
 */
 type GetGasStationFuelingAppIDPumpsPumpIDWaitForStatusChangeResponseWriter interface {
 	http.ResponseWriter
-	OK(*GetGasStationFuelingAppIDPumpsPumpIDWaitForStatusChangeOK)
+	OK(GetGasStationFuelingAppIDPumpsPumpIDWaitForStatusChangeOK)
 	NotFound(error)
 	RequestTimeout(error)
 }
@@ -446,7 +440,7 @@ func (w *getGasStationFuelingAppIDPumpsPumpIDWaitForStatusChangeResponseWriter) 
 }
 
 // OK responds with jsonapi marshaled data (HTTP code 200)
-func (w *getGasStationFuelingAppIDPumpsPumpIDWaitForStatusChangeResponseWriter) OK(data *GetGasStationFuelingAppIDPumpsPumpIDWaitForStatusChangeOK) {
+func (w *getGasStationFuelingAppIDPumpsPumpIDWaitForStatusChangeResponseWriter) OK(data GetGasStationFuelingAppIDPumpsPumpIDWaitForStatusChangeOK) {
 	runtime.Marshal(w, data, 200)
 }
 

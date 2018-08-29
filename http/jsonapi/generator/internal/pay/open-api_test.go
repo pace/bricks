@@ -2,43 +2,49 @@ package pay
 
 import (
 	"context"
+	"errors"
+	"fmt"
 	mux "github.com/gorilla/mux"
 	runtime "lab.jamit.de/pace/web/libs/go-microservice/http/jsonapi/runtime"
 	"net/http"
+	"runtime/debug"
 )
 
-// AllPaymentMethods ...
-type AllPaymentMethods []struct {
-	ID                   string `jsonapi:"primary,paymentMethod,omitempty" valid:"uuid,optional"` // Payment method ID
-	IdentificationString string `jsonapi:"attr,identificationString,omitempty" valid:"optional"`  // Example: "DE89 **** 3000"
-	Kind                 string `jsonapi:"attr,kind,omitempty" valid:"optional,in(sepa)"`         // Example: "sepa"
+// AllPaymentMethodsItem ...
+type AllPaymentMethodsItem struct {
+	ID                   string `jsonapi:"primary,paymentMethod,omitempty" valid:"uuid,optional"`                                      // Payment method ID
+	IdentificationString string `json:"identificationString,omitempty" jsonapi:"attr,identificationString,omitempty" valid:"optional"` // Example: "DE89 **** 3000"
+	Kind                 string `json:"kind,omitempty" jsonapi:"attr,kind,omitempty" valid:"optional"`                                 // Example: "sepa"
 }
+
+// AllPaymentMethods ...
+type AllPaymentMethods []*AllPaymentMethodsItem
 
 // PaymentMethodSEPA ...
 type PaymentMethodSEPA struct {
-	ID        string                    `jsonapi:"primary,paymentMethod,omitempty" valid:"uuid,optional"` // The ID of this payment method.
-	Address   *PaymentMethodSEPAAddress `jsonapi:"attr,address,omitempty" valid:"required"`
-	FirstName string                    `jsonapi:"attr,firstName,omitempty" valid:"required"` // Example: "Jon"
-	Iban      string                    `jsonapi:"attr,iban,omitempty" valid:"required"`      // Example: "DE89370400440532013000"
-	Kind      string                    `jsonapi:"attr,kind,omitempty" valid:"required,in(sepa)"`
-	LastName  string                    `jsonapi:"attr,lastName,omitempty" valid:"required"` // Example: "Smith"
+	ID      string `jsonapi:"primary,paymentMethod,omitempty" valid:"uuid,optional"` // The ID of this payment method.
+	Address struct {
+		City        string `json:"city,omitempty" jsonapi:"city,omitempty" valid:"required"`               // Example: "Karlsruhe"
+		CountryCode string `json:"countryCode,omitempty" jsonapi:"countryCode,omitempty" valid:"required"` // Country code in as specified in ISO 3166-1.
+		HouseNo     string `json:"houseNo,omitempty" jsonapi:"houseNo,omitempty" valid:"required"`         // Example: "18"
+		PostalCode  string `json:"postalCode,omitempty" jsonapi:"postalCode,omitempty" valid:"required"`   // Example: "76131"
+		Street      string `json:"street,omitempty" jsonapi:"street,omitempty" valid:"required"`           // Example: "Haid-und-Neu-Str."
+	} `json:"address,omitempty" jsonapi:"attr,address,omitempty" valid:"required"`
+	FirstName string `json:"firstName,omitempty" jsonapi:"attr,firstName,omitempty" valid:"required"` // Example: "Jon"
+	Iban      string `json:"iban,omitempty" jsonapi:"attr,iban,omitempty" valid:"required"`           // Example: "DE89370400440532013000"
+	Kind      string `json:"kind,omitempty" jsonapi:"attr,kind,omitempty" valid:"required"`
+	LastName  string `json:"lastName,omitempty" jsonapi:"attr,lastName,omitempty" valid:"required"` // Example: "Smith"
 }
 
-// PaymentMethodSEPAAddress ...
-type PaymentMethodSEPAAddress struct {
-	City        string `jsonapi:"city,omitempty" valid:"required"`        // Example: "Karlsruhe"
-	CountryCode string `jsonapi:"countryCode,omitempty" valid:"required"` // Country code in as specified in ISO 3166-1.
-	HouseNo     string `jsonapi:"houseNo,omitempty" valid:"required"`     // Example: "18"
-	PostalCode  string `jsonapi:"postalCode,omitempty" valid:"required"`  // Example: "76131"
-	Street      string `jsonapi:"street,omitempty" valid:"required"`      // Example: "Haid-und-Neu-Str."
+// PaymentMethodsWithPaymentTokensItem ...
+type PaymentMethodsWithPaymentTokensItem struct {
+	ID                   string `jsonapi:"primary,paymentMethod,omitempty" valid:"uuid,optional"`                                      // Payment method ID
+	IdentificationString string `json:"identificationString,omitempty" jsonapi:"attr,identificationString,omitempty" valid:"optional"` // Example: "DE89 **** 3000"
+	Kind                 string `json:"kind,omitempty" jsonapi:"attr,kind,omitempty" valid:"optional"`                                 // Example: "sepa"
 }
 
 // PaymentMethodsWithPaymentTokens ...
-type PaymentMethodsWithPaymentTokens []struct {
-	ID                   string `jsonapi:"primary,paymentMethod,omitempty" valid:"uuid,optional"` // Payment method ID
-	IdentificationString string `jsonapi:"attr,identificationString,omitempty" valid:"optional"`  // Example: "DE89 **** 3000"
-	Kind                 string `jsonapi:"attr,kind,omitempty" valid:"optional,in(sepa)"`         // Example: "sepa"
-}
+type PaymentMethodsWithPaymentTokens []*PaymentMethodsWithPaymentTokensItem
 
 /*
 GetPaymentMethodsHandler handles request/response marshaling and validation for
@@ -46,6 +52,13 @@ GetPaymentMethodsHandler handles request/response marshaling and validation for
 */
 func GetPaymentMethodsHandler(service Service) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		defer func() {
+			if r := recover(); r != nil {
+				fmt.Printf("Panic %s: %v\n", "GetPaymentMethodsHandler", r)
+				debug.PrintStack()
+				runtime.WriteError(w, http.StatusInternalServerError, errors.New("Error"))
+			}
+		}()
 		writer := getPaymentMethodsResponseWriter{
 			ResponseWriter: w,
 		}
@@ -65,6 +78,13 @@ PostPaymentMethodsPaymentMethodIDAuthorizeHandler handles request/response marsh
 */
 func PostPaymentMethodsPaymentMethodIDAuthorizeHandler(service Service) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		defer func() {
+			if r := recover(); r != nil {
+				fmt.Printf("Panic %s: %v\n", "PostPaymentMethodsPaymentMethodIDAuthorizeHandler", r)
+				debug.PrintStack()
+				runtime.WriteError(w, http.StatusInternalServerError, errors.New("Error"))
+			}
+		}()
 		writer := postPaymentMethodsPaymentMethodIDAuthorizeResponseWriter{
 			ResponseWriter: w,
 		}
@@ -98,6 +118,13 @@ DeletePaymentMethodsPaymentMethodIDPaymentTokensPaymentTokenIDHandler handles re
 */
 func DeletePaymentMethodsPaymentMethodIDPaymentTokensPaymentTokenIDHandler(service Service) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		defer func() {
+			if r := recover(); r != nil {
+				fmt.Printf("Panic %s: %v\n", "DeletePaymentMethodsPaymentMethodIDPaymentTokensPaymentTokenIDHandler", r)
+				debug.PrintStack()
+				runtime.WriteError(w, http.StatusInternalServerError, errors.New("Error"))
+			}
+		}()
 		writer := deletePaymentMethodsPaymentMethodIDPaymentTokensPaymentTokenIDResponseWriter{
 			ResponseWriter: w,
 		}
@@ -134,6 +161,13 @@ PostPaymentMethodsSepaDirectDebitHandler handles request/response marshaling and
 */
 func PostPaymentMethodsSepaDirectDebitHandler(service Service) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		defer func() {
+			if r := recover(); r != nil {
+				fmt.Printf("Panic %s: %v\n", "PostPaymentMethodsSepaDirectDebitHandler", r)
+				debug.PrintStack()
+				runtime.WriteError(w, http.StatusInternalServerError, errors.New("Error"))
+			}
+		}()
 		writer := postPaymentMethodsSepaDirectDebitResponseWriter{
 			ResponseWriter: w,
 		}
@@ -158,6 +192,13 @@ DeletePaymentMethodsPaymentMethodIDHandler handles request/response marshaling a
 */
 func DeletePaymentMethodsPaymentMethodIDHandler(service Service) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		defer func() {
+			if r := recover(); r != nil {
+				fmt.Printf("Panic %s: %v\n", "DeletePaymentMethodsPaymentMethodIDHandler", r)
+				debug.PrintStack()
+				runtime.WriteError(w, http.StatusInternalServerError, errors.New("Error"))
+			}
+		}()
 		writer := deletePaymentMethodsPaymentMethodIDResponseWriter{
 			ResponseWriter: w,
 		}
@@ -189,6 +230,13 @@ GetPaymentMethodsIncludeCreditCheckHandler handles request/response marshaling a
 */
 func GetPaymentMethodsIncludeCreditCheckHandler(service Service) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		defer func() {
+			if r := recover(); r != nil {
+				fmt.Printf("Panic %s: %v\n", "GetPaymentMethodsIncludeCreditCheckHandler", r)
+				debug.PrintStack()
+				runtime.WriteError(w, http.StatusInternalServerError, errors.New("Error"))
+			}
+		}()
 		writer := getPaymentMethodsIncludeCreditCheckResponseWriter{
 			ResponseWriter: w,
 		}
@@ -220,6 +268,13 @@ GetPaymentMethodsIncludePaymentTokensHandler handles request/response marshaling
 */
 func GetPaymentMethodsIncludePaymentTokensHandler(service Service) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		defer func() {
+			if r := recover(); r != nil {
+				fmt.Printf("Panic %s: %v\n", "GetPaymentMethodsIncludePaymentTokensHandler", r)
+				debug.PrintStack()
+				runtime.WriteError(w, http.StatusInternalServerError, errors.New("Error"))
+			}
+		}()
 		writer := getPaymentMethodsIncludePaymentTokensResponseWriter{
 			ResponseWriter: w,
 		}
@@ -251,14 +306,14 @@ to generate the respective responses easily
 */
 type GetPaymentMethodsResponseWriter interface {
 	http.ResponseWriter
-	AllThePaymentMethodsForUser(*AllPaymentMethods)
+	AllThePaymentMethodsForUser(AllPaymentMethods)
 }
 type getPaymentMethodsResponseWriter struct {
 	http.ResponseWriter
 }
 
 // AllThePaymentMethodsForUser responds with jsonapi marshaled data (HTTP code 200)
-func (w *getPaymentMethodsResponseWriter) AllThePaymentMethodsForUser(data *AllPaymentMethods) {
+func (w *getPaymentMethodsResponseWriter) AllThePaymentMethodsForUser(data AllPaymentMethods) {
 	runtime.Marshal(w, data, 200)
 }
 
@@ -272,10 +327,10 @@ type GetPaymentMethodsRequest struct {
 
 // PostPaymentMethodsPaymentMethodIDAuthorizeOK ...
 type PostPaymentMethodsPaymentMethodIDAuthorizeOK struct {
-	ID       string  `jsonapi:"primary,paymentToken,omitempty" valid:"optional"` // paymentToken ID (NOT the token value)
-	Amount   float64 `jsonapi:"attr,amount,omitempty" valid:"optional"`          // Example: "65.49"
-	Currency string  `jsonapi:"attr,currency,omitempty" valid:"optional"`        // Currency as specified in ISO-4217.
-	Value    string  `jsonapi:"attr,value,omitempty" valid:"optional"`           // The actual token value. Note that the format is subject to change. Treat transparently.
+	ID       string  `jsonapi:"primary,paymentToken,omitempty" valid:"optional"`                    // paymentToken ID (NOT the token value)
+	Amount   float64 `json:"amount,omitempty" jsonapi:"attr,amount,omitempty" valid:"optional"`     // Example: "65.49"
+	Currency string  `json:"currency,omitempty" jsonapi:"attr,currency,omitempty" valid:"optional"` // Currency as specified in ISO-4217.
+	Value    string  `json:"value,omitempty" jsonapi:"attr,value,omitempty" valid:"optional"`       // The actual token value. Note that the format is subject to change. Treat transparently.
 }
 
 /*
@@ -284,7 +339,7 @@ to generate the respective responses easily
 */
 type PostPaymentMethodsPaymentMethodIDAuthorizeResponseWriter interface {
 	http.ResponseWriter
-	OK(*PostPaymentMethodsPaymentMethodIDAuthorizeOK)
+	OK(PostPaymentMethodsPaymentMethodIDAuthorizeOK)
 	Forbidden(error)
 	NotFound(error)
 	BadGateway(error)
@@ -309,22 +364,22 @@ func (w *postPaymentMethodsPaymentMethodIDAuthorizeResponseWriter) Forbidden(err
 }
 
 // OK responds with jsonapi marshaled data (HTTP code 200)
-func (w *postPaymentMethodsPaymentMethodIDAuthorizeResponseWriter) OK(data *PostPaymentMethodsPaymentMethodIDAuthorizeOK) {
+func (w *postPaymentMethodsPaymentMethodIDAuthorizeResponseWriter) OK(data PostPaymentMethodsPaymentMethodIDAuthorizeOK) {
 	runtime.Marshal(w, data, 200)
 }
 
 // PostPaymentMethodsPaymentMethodIDAuthorizeContent ...
 type PostPaymentMethodsPaymentMethodIDAuthorizeContent struct {
-	ID       string  `jsonapi:"primary,paymentToken,omitempty" valid:"uuid,optional"` // ID of the new paymentToken.
-	Amount   float64 `jsonapi:"attr,amount,omitempty" valid:"required"`               // Example: "65.49"
-	Currency string  `jsonapi:"attr,currency,omitempty" valid:"required"`             // Currency as specified in ISO-4217.
+	ID       string  `jsonapi:"primary,paymentToken,omitempty" valid:"uuid,optional"`               // ID of the new paymentToken.
+	Amount   float64 `json:"amount,omitempty" jsonapi:"attr,amount,omitempty" valid:"required"`     // Example: "65.49"
+	Currency string  `json:"currency,omitempty" jsonapi:"attr,currency,omitempty" valid:"required"` // Currency as specified in ISO-4217.
 }
 
 // PostPaymentMethodsPaymentMethodIDAuthorizeRequest ...
 type PostPaymentMethodsPaymentMethodIDAuthorizeRequest struct {
-	Request              *http.Request                                      `valid:"-"`
-	Content              *PostPaymentMethodsPaymentMethodIDAuthorizeContent `valid:"-"`
-	ParamPaymentMethodID string                                             `valid:"required,uuid"`
+	Request              *http.Request                                     `valid:"-"`
+	Content              PostPaymentMethodsPaymentMethodIDAuthorizeContent `valid:"-"`
+	ParamPaymentMethodID string                                            `valid:"required,uuid"`
 }
 
 /*
@@ -362,9 +417,9 @@ type DeletePaymentMethodsPaymentMethodIDPaymentTokensPaymentTokenIDRequest struc
 
 // PostPaymentMethodsSepaDirectDebitCreated ...
 type PostPaymentMethodsSepaDirectDebitCreated struct {
-	ID                   string `jsonapi:"primary,paymentMethod,omitempty" valid:"uuid,optional"` // Payment method ID
-	IdentificationString string `jsonapi:"attr,identificationString,omitempty" valid:"optional"`  // Example: "DE89 **** 3000"
-	Kind                 string `jsonapi:"attr,kind,omitempty" valid:"optional,in(sepa)"`
+	ID                   string `jsonapi:"primary,paymentMethod,omitempty" valid:"uuid,optional"`                                      // Payment method ID
+	IdentificationString string `json:"identificationString,omitempty" jsonapi:"attr,identificationString,omitempty" valid:"optional"` // Example: "DE89 **** 3000"
+	Kind                 string `json:"kind,omitempty" jsonapi:"attr,kind,omitempty" valid:"optional"`
 }
 
 /*
@@ -373,7 +428,7 @@ to generate the respective responses easily
 */
 type PostPaymentMethodsSepaDirectDebitResponseWriter interface {
 	http.ResponseWriter
-	Created(*PostPaymentMethodsSepaDirectDebitCreated)
+	Created(PostPaymentMethodsSepaDirectDebitCreated)
 	BadRequest(error)
 }
 type postPaymentMethodsSepaDirectDebitResponseWriter struct {
@@ -386,14 +441,14 @@ func (w *postPaymentMethodsSepaDirectDebitResponseWriter) BadRequest(err error) 
 }
 
 // Created responds with jsonapi marshaled data (HTTP code 201)
-func (w *postPaymentMethodsSepaDirectDebitResponseWriter) Created(data *PostPaymentMethodsSepaDirectDebitCreated) {
+func (w *postPaymentMethodsSepaDirectDebitResponseWriter) Created(data PostPaymentMethodsSepaDirectDebitCreated) {
 	runtime.Marshal(w, data, 201)
 }
 
 // PostPaymentMethodsSepaDirectDebitRequest ...
 type PostPaymentMethodsSepaDirectDebitRequest struct {
-	Request *http.Request      `valid:"-"`
-	Content *PaymentMethodSEPA `valid:"-"`
+	Request *http.Request     `valid:"-"`
+	Content PaymentMethodSEPA `valid:"-"`
 }
 
 /*
@@ -428,14 +483,14 @@ to generate the respective responses easily
 */
 type GetPaymentMethodsIncludeCreditCheckResponseWriter interface {
 	http.ResponseWriter
-	AllThePaymentMethodsThatCouldBeUsed(*AllPaymentMethods)
+	AllThePaymentMethodsThatCouldBeUsed(AllPaymentMethods)
 }
 type getPaymentMethodsIncludeCreditCheckResponseWriter struct {
 	http.ResponseWriter
 }
 
 // AllThePaymentMethodsThatCouldBeUsed responds with jsonapi marshaled data (HTTP code 200)
-func (w *getPaymentMethodsIncludeCreditCheckResponseWriter) AllThePaymentMethodsThatCouldBeUsed(data *AllPaymentMethods) {
+func (w *getPaymentMethodsIncludeCreditCheckResponseWriter) AllThePaymentMethodsThatCouldBeUsed(data AllPaymentMethods) {
 	runtime.Marshal(w, data, 200)
 }
 
@@ -454,14 +509,14 @@ to generate the respective responses easily
 */
 type GetPaymentMethodsIncludePaymentTokensResponseWriter interface {
 	http.ResponseWriter
-	AllThePaymentMethodsWithPreAuthorisedAmounts(*PaymentMethodsWithPaymentTokens)
+	AllThePaymentMethodsWithPreAuthorisedAmounts(PaymentMethodsWithPaymentTokens)
 }
 type getPaymentMethodsIncludePaymentTokensResponseWriter struct {
 	http.ResponseWriter
 }
 
 // AllThePaymentMethodsWithPreAuthorisedAmounts responds with jsonapi marshaled data (HTTP code 200)
-func (w *getPaymentMethodsIncludePaymentTokensResponseWriter) AllThePaymentMethodsWithPreAuthorisedAmounts(data *PaymentMethodsWithPaymentTokens) {
+func (w *getPaymentMethodsIncludePaymentTokensResponseWriter) AllThePaymentMethodsWithPreAuthorisedAmounts(data PaymentMethodsWithPaymentTokens) {
 	runtime.Marshal(w, data, 200)
 }
 

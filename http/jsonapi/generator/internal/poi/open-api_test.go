@@ -2,114 +2,88 @@ package poi
 
 import (
 	"context"
+	"errors"
+	"fmt"
 	mux "github.com/gorilla/mux"
 	runtime "lab.jamit.de/pace/web/libs/go-microservice/http/jsonapi/runtime"
 	"net/http"
+	"runtime/debug"
 )
 
 // FuelPrice ...
 type FuelPrice struct {
-	Attributes *FuelPriceAttributes `jsonapi:"attributes,omitempty" valid:"optional"`
-	ID         string               `jsonapi:"id,omitempty" valid:"optional"`                 // Fuel Price ID
-	Type       string               `jsonapi:"type,omitempty" valid:"optional,in(fuelPrice)"` // Fuel price
-}
-
-// FuelPriceAttributes ...
-type FuelPriceAttributes struct {
-	Currency       string  `jsonapi:"currency,omitempty" valid:"optional,in(EUR)"`                                                                                                           // Example: "EUR"
-	FuelAmountUnit string  `jsonapi:"fuelAmountUnit,omitempty" valid:"optional,in(Ltr)"`                                                                                                     // Example: "Ltr"
-	FuelType       string  `jsonapi:"fuelType,omitempty" valid:"optional,in(e85|ron91|ron95_e5|ron95_e10|ron98|ron98_e5|ron100|diesel|diesel_gtl|diesel_b7|lpg|cng|h2|Truck Diesel|AdBlue)"` // Example: "ron95_e10"
-	PricePerUnit   float32 `jsonapi:"pricePerUnit,omitempty" valid:"optional"`                                                                                                               // Example: "1.379"
-	ProductName    string  `jsonapi:"productName,omitempty" valid:"optional"`                                                                                                                // Example: "Super E10"
+	ID             string          `jsonapi:"primary,fuelPrice,omitempty" valid:"optional"`                                   // Fuel Price ID
+	Currency       *Currency       `json:"currency,omitempty" jsonapi:"attr,currency,omitempty" valid:"optional"`             // Example: "EUR"
+	FuelAmountUnit *FuelAmountUnit `json:"fuelAmountUnit,omitempty" jsonapi:"attr,fuelAmountUnit,omitempty" valid:"optional"` // Example: "Ltr"
+	FuelType       string          `json:"fuelType,omitempty" jsonapi:"attr,fuelType,omitempty" valid:"optional"`             // Example: "ron95_e10"
+	PricePerUnit   float32         `json:"pricePerUnit,omitempty" jsonapi:"attr,pricePerUnit,omitempty" valid:"optional"`     // Example: "1.379"
+	ProductName    string          `json:"productName,omitempty" jsonapi:"attr,productName,omitempty" valid:"optional"`       // Example: "Super E10"
 }
 
 // FuelPriceResponse ...
-type FuelPriceResponse struct {
-	ID             string  `jsonapi:"primary,fuelPrice,omitempty" valid:"optional"`                                                                                                               // Fuel Price ID
-	Currency       string  `jsonapi:"attr,currency,omitempty" valid:"optional,in(EUR)"`                                                                                                           // Example: "EUR"
-	FuelAmountUnit string  `jsonapi:"attr,fuelAmountUnit,omitempty" valid:"optional,in(Ltr)"`                                                                                                     // Example: "Ltr"
-	FuelType       string  `jsonapi:"attr,fuelType,omitempty" valid:"optional,in(e85|ron91|ron95_e5|ron95_e10|ron98|ron98_e5|ron100|diesel|diesel_gtl|diesel_b7|lpg|cng|h2|Truck Diesel|AdBlue)"` // Example: "ron95_e10"
-	PricePerUnit   float32 `jsonapi:"attr,pricePerUnit,omitempty" valid:"optional"`                                                                                                               // Example: "1.379"
-	ProductName    string  `jsonapi:"attr,productName,omitempty" valid:"optional"`                                                                                                                // Example: "Super E10"
+type FuelPriceResponse *FuelPrice
+
+// GasStationResponseItem ...
+type GasStationResponseItem struct {
+	ID      string `jsonapi:"primary,gasStation,omitempty" valid:"uuid,optional"` // Gas Station ID
+	Address struct {
+		City        string `json:"city,omitempty" jsonapi:"city,omitempty" valid:"optional"`               // Example: "Karlsruhe"
+		CountryCode string `json:"countryCode,omitempty" jsonapi:"countryCode,omitempty" valid:"optional"` // Country code in as specified in ISO 3166-1.
+		HouseNo     string `json:"houseNo,omitempty" jsonapi:"houseNo,omitempty" valid:"optional"`         // Example: "18"
+		PostalCode  string `json:"postalCode,omitempty" jsonapi:"postalCode,omitempty" valid:"optional"`   // Example: "76131"
+		Street      string `json:"street,omitempty" jsonapi:"street,omitempty" valid:"optional"`           // Example: "Haid-und-Neu-Str."
+	} `json:"address,omitempty" jsonapi:"attr,address,omitempty" valid:"optional"`
+	Amenities    []string `json:"amenities,omitempty" jsonapi:"attr,amenities,omitempty" valid:"optional"` // Example: "[restaurant]"
+	Latitude     float32  `json:"latitude,omitempty" jsonapi:"attr,latitude,omitempty" valid:"optional"`   // Example: "49.013"
+	Longitude    float32  `json:"longitude,omitempty" jsonapi:"attr,longitude,omitempty" valid:"optional"` // Example: "8.425"
+	OpeningHours []struct {
+		OpenFromTo []string `json:"openFromTo,omitempty" jsonapi:"openFromTo,omitempty" valid:"optional"` // Example: "[07:30 20:30]"
+		Weekdays   []string `json:"weekdays,omitempty" jsonapi:"weekdays,omitempty" valid:"optional"`     // Example: "[Montag Dienstag]"
+	} `json:"openingHours,omitempty" jsonapi:"attr,openingHours,omitempty" valid:"optional"`
+	PaymentMethods []string `json:"paymentMethods,omitempty" jsonapi:"attr,paymentMethods,omitempty" valid:"optional"` // Example: "[sepaDirectDebit]"
+	StationName    string   `json:"stationName,omitempty" jsonapi:"attr,stationName,omitempty" valid:"optional"`       // Example: "PACE Station"
 }
 
 // GasStationResponse ...
-type GasStationResponse []struct {
-	ID             string                            `jsonapi:"primary,gasStation,omitempty" valid:"uuid,optional"` // Gas Station ID
-	Address        *GasStationResponseAddress        `jsonapi:"attr,address,omitempty" valid:"optional"`
-	Amenities      []string                          `jsonapi:"attr,amenities,omitempty" valid:"optional"` // Example: "[restaurant]"
-	Latitude       float32                           `jsonapi:"attr,latitude,omitempty" valid:"optional"`  // Example: "49.013"
-	Longitude      float32                           `jsonapi:"attr,longitude,omitempty" valid:"optional"` // Example: "8.425"
-	OpeningHours   []*GasStationResponseOpeningHours `jsonapi:"attr,openingHours,omitempty" valid:"optional"`
-	PaymentMethods []string                          `jsonapi:"attr,paymentMethods,omitempty" valid:"optional"` // Example: "[sepaDirectDebit]"
-	StationName    string                            `jsonapi:"attr,stationName,omitempty" valid:"optional"`    // Example: "PACE Station"
-}
-
-// GasStationResponseAddress ...
-type GasStationResponseAddress struct {
-	City        string `jsonapi:"city,omitempty" valid:"optional"`        // Example: "Karlsruhe"
-	CountryCode string `jsonapi:"countryCode,omitempty" valid:"optional"` // Country code in as specified in ISO 3166-1.
-	HouseNo     string `jsonapi:"houseNo,omitempty" valid:"optional"`     // Example: "18"
-	PostalCode  string `jsonapi:"postalCode,omitempty" valid:"optional"`  // Example: "76131"
-	Street      string `jsonapi:"street,omitempty" valid:"optional"`      // Example: "Haid-und-Neu-Str."
-}
-
-// GasStationResponseOpeningHours ...
-type GasStationResponseOpeningHours struct {
-	OpenFromTo []string `jsonapi:"openFromTo,omitempty" valid:"optional"` // Example: "[07:30 20:30]"
-	Weekdays   []string `jsonapi:"weekdays,omitempty" valid:"optional"`   // Example: "[Montag Dienstag]"
-}
+type GasStationResponse []*GasStationResponseItem
 
 // LocationBasedApp ...
 type LocationBasedApp struct {
-	Attributes *LocationBasedAppAttributes `jsonapi:"attributes,omitempty" valid:"optional"`
-	ID         string                      `jsonapi:"id,omitempty" valid:"optional,uuid"`                   // Location-based app ID
-	Type       string                      `jsonapi:"type,omitempty" valid:"optional,in(locationBasedApp)"` // Type
-}
-
-// LocationBasedAppAttributes ...
-type LocationBasedAppAttributes struct {
-	AndroidInstantAppURL string      `jsonapi:"androidInstantAppUrl,omitempty" valid:"optional"` // Android instant app URL
-	AppArea              [][]float32 `jsonapi:"appArea,omitempty" valid:"optional"`              // Example: "[[49.012 8.424] [49.1 9.34] [48.7 8.92]]"
-	AppType              string      `jsonapi:"appType,omitempty" valid:"optional,in(fueling)"`
-	InsideAppArea        bool        `jsonapi:"insideAppArea,omitempty" valid:"optional"` // Boolean flag if the current position is inside the app area (polygon).
-	LogoURL              string      `jsonapi:"logoUrl,omitempty" valid:"optional"`       // Logo URL
-	PwaURL               string      `jsonapi:"pwaUrl,omitempty" valid:"optional"`        // Progressive web application URL
-	Subtitle             string      `jsonapi:"subtitle,omitempty" valid:"optional"`      // Example: "Zahle bargeldlos mit der PACE Fueling App"
-	Title                string      `jsonapi:"title,omitempty" valid:"optional"`         // Example: "PACE Fueling App"
+	ID                   string      `jsonapi:"primary,locationBasedApp,omitempty" valid:"uuid,optional"`                                   // Location-based app ID
+	AndroidInstantAppURL string      `json:"androidInstantAppUrl,omitempty" jsonapi:"attr,androidInstantAppUrl,omitempty" valid:"optional"` // Android instant app URL
+	AppArea              [][]float32 `json:"appArea,omitempty" jsonapi:"attr,appArea,omitempty" valid:"optional"`                           // Example: "[[49.012 8.424] [49.1 9.34] [48.7 8.92]]"
+	AppType              string      `json:"appType,omitempty" jsonapi:"attr,appType,omitempty" valid:"optional"`
+	InsideAppArea        bool        `json:"insideAppArea,omitempty" jsonapi:"attr,insideAppArea,omitempty" valid:"optional"` // Boolean flag if the current position is inside the app area (polygon).
+	LogoURL              string      `json:"logoUrl,omitempty" jsonapi:"attr,logoUrl,omitempty" valid:"optional"`             // Logo URL
+	PwaURL               string      `json:"pwaUrl,omitempty" jsonapi:"attr,pwaUrl,omitempty" valid:"optional"`               // Progressive web application URL
+	Subtitle             string      `json:"subtitle,omitempty" jsonapi:"attr,subtitle,omitempty" valid:"optional"`           // Example: "Zahle bargeldlos mit der PACE Fueling App"
+	Title                string      `json:"title,omitempty" jsonapi:"attr,title,omitempty" valid:"optional"`                 // Example: "PACE Fueling App"
 }
 
 // LocationBasedAppResponse ...
-type LocationBasedAppResponse struct {
-	ID                   string      `jsonapi:"primary,locationBasedApp,omitempty" valid:"uuid,optional"` // Location-based app ID
-	AndroidInstantAppURL string      `jsonapi:"attr,androidInstantAppUrl,omitempty" valid:"optional"`     // Android instant app URL
-	AppArea              [][]float32 `jsonapi:"attr,appArea,omitempty" valid:"optional"`                  // Example: "[[49.012 8.424] [49.1 9.34] [48.7 8.92]]"
-	AppType              string      `jsonapi:"attr,appType,omitempty" valid:"optional,in(fueling)"`
-	InsideAppArea        bool        `jsonapi:"attr,insideAppArea,omitempty" valid:"optional"` // Boolean flag if the current position is inside the app area (polygon).
-	LogoURL              string      `jsonapi:"attr,logoUrl,omitempty" valid:"optional"`       // Logo URL
-	PwaURL               string      `jsonapi:"attr,pwaUrl,omitempty" valid:"optional"`        // Progressive web application URL
-	Subtitle             string      `jsonapi:"attr,subtitle,omitempty" valid:"optional"`      // Example: "Zahle bargeldlos mit der PACE Fueling App"
-	Title                string      `jsonapi:"attr,title,omitempty" valid:"optional"`         // Example: "PACE Fueling App"
+type LocationBasedAppResponse *LocationBasedApp
+
+// LocationBasedAppsResponseItem ...
+type LocationBasedAppsResponseItem struct {
+	ID                   string      `jsonapi:"primary,locationBasedApp,omitempty" valid:"uuid,optional"`                                   // Location-based app ID
+	AndroidInstantAppURL string      `json:"androidInstantAppUrl,omitempty" jsonapi:"attr,androidInstantAppUrl,omitempty" valid:"optional"` // Android instant app URL
+	AppArea              [][]float32 `json:"appArea,omitempty" jsonapi:"attr,appArea,omitempty" valid:"optional"`                           // Example: "[[49.012 8.424] [49.1 9.34] [49.012 8.424]]"
+	AppType              string      `json:"appType,omitempty" jsonapi:"attr,appType,omitempty" valid:"optional"`
+	InsideAppArea        bool        `json:"insideAppArea,omitempty" jsonapi:"attr,insideAppArea,omitempty" valid:"optional"` // Boolean flag if the current position is inside the app area (polygon).
+	LogoURL              string      `json:"logoUrl,omitempty" jsonapi:"attr,logoUrl,omitempty" valid:"optional"`             // Logo URL
+	PwaURL               string      `json:"pwaUrl,omitempty" jsonapi:"attr,pwaUrl,omitempty" valid:"optional"`               // Progressive web application URL
+	Subtitle             string      `json:"subtitle,omitempty" jsonapi:"attr,subtitle,omitempty" valid:"optional"`           // Example: "Zahle bargeldlos mit der PACE Fueling App"
+	Title                string      `json:"title,omitempty" jsonapi:"attr,title,omitempty" valid:"optional"`                 // Example: "PACE Fueling App"
 }
 
 // LocationBasedAppsResponse ...
-type LocationBasedAppsResponse []struct {
-	ID                   string      `jsonapi:"primary,locationBasedApp,omitempty" valid:"uuid,optional"` // Location-based app ID
-	AndroidInstantAppURL string      `jsonapi:"attr,androidInstantAppUrl,omitempty" valid:"optional"`     // Android instant app URL
-	AppArea              [][]float32 `jsonapi:"attr,appArea,omitempty" valid:"optional"`                  // Example: "[[49.012 8.424] [49.1 9.34] [49.012 8.424]]"
-	AppType              string      `jsonapi:"attr,appType,omitempty" valid:"optional,in(fueling)"`
-	InsideAppArea        bool        `jsonapi:"attr,insideAppArea,omitempty" valid:"optional"` // Boolean flag if the current position is inside the app area (polygon).
-	LogoURL              string      `jsonapi:"attr,logoUrl,omitempty" valid:"optional"`       // Logo URL
-	PwaURL               string      `jsonapi:"attr,pwaUrl,omitempty" valid:"optional"`        // Progressive web application URL
-	Subtitle             string      `jsonapi:"attr,subtitle,omitempty" valid:"optional"`      // Example: "Zahle bargeldlos mit der PACE Fueling App"
-	Title                string      `jsonapi:"attr,title,omitempty" valid:"optional"`         // Example: "PACE Fueling App"
-}
+type LocationBasedAppsResponse []*LocationBasedAppsResponseItem
 
-// currency ...
-type currency struct{}
+// Currency ...
+type Currency string
 
-// fuelAmountUnit ...
-type fuelAmountUnit struct{}
+// FuelAmountUnit ...
+type FuelAmountUnit string
 
 /*
 GetCheckForPaceAppHandler handles request/response marshaling and validation for
@@ -117,6 +91,13 @@ GetCheckForPaceAppHandler handles request/response marshaling and validation for
 */
 func GetCheckForPaceAppHandler(service Service) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		defer func() {
+			if r := recover(); r != nil {
+				fmt.Printf("Panic %s: %v\n", "GetCheckForPaceAppHandler", r)
+				debug.PrintStack()
+				runtime.WriteError(w, http.StatusInternalServerError, errors.New("Error"))
+			}
+		}()
 		writer := getCheckForPaceAppResponseWriter{
 			ResponseWriter: w,
 		}
@@ -173,6 +154,13 @@ GetSearchHandler handles request/response marshaling and validation for
 */
 func GetSearchHandler(service Service) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		defer func() {
+			if r := recover(); r != nil {
+				fmt.Printf("Panic %s: %v\n", "GetSearchHandler", r)
+				debug.PrintStack()
+				runtime.WriteError(w, http.StatusInternalServerError, errors.New("Error"))
+			}
+		}()
 		writer := getSearchResponseWriter{
 			ResponseWriter: w,
 		}
@@ -254,7 +242,7 @@ to generate the respective responses easily
 */
 type GetCheckForPaceAppResponseWriter interface {
 	http.ResponseWriter
-	OK(*LocationBasedAppsResponse)
+	OK(LocationBasedAppsResponse)
 	BadRequest(error)
 }
 type getCheckForPaceAppResponseWriter struct {
@@ -267,7 +255,7 @@ func (w *getCheckForPaceAppResponseWriter) BadRequest(err error) {
 }
 
 // OK responds with jsonapi marshaled data (HTTP code 200)
-func (w *getCheckForPaceAppResponseWriter) OK(data *LocationBasedAppsResponse) {
+func (w *getCheckForPaceAppResponseWriter) OK(data LocationBasedAppsResponse) {
 	runtime.Marshal(w, data, 200)
 }
 
@@ -291,14 +279,14 @@ to generate the respective responses easily
 */
 type GetSearchResponseWriter interface {
 	http.ResponseWriter
-	OK(*GasStationResponse)
+	OK(GasStationResponse)
 }
 type getSearchResponseWriter struct {
 	http.ResponseWriter
 }
 
 // OK responds with jsonapi marshaled data (HTTP code 200)
-func (w *getSearchResponseWriter) OK(data *GasStationResponse) {
+func (w *getSearchResponseWriter) OK(data GasStationResponse) {
 	runtime.Marshal(w, data, 200)
 }
 
