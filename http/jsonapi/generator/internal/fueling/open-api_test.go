@@ -322,7 +322,7 @@ to generate the respective responses easily
 */
 type GetGasStationFuelingAppIDPumpsPumpIDResponseWriter interface {
 	http.ResponseWriter
-	OK(GetGasStationFuelingAppIDPumpsPumpIDOK)
+	OK(*GetGasStationFuelingAppIDPumpsPumpIDOK)
 	NotFound(error)
 }
 type getGasStationFuelingAppIDPumpsPumpIDResponseWriter struct {
@@ -335,7 +335,7 @@ func (w *getGasStationFuelingAppIDPumpsPumpIDResponseWriter) NotFound(err error)
 }
 
 // OK responds with jsonapi marshaled data (HTTP code 200)
-func (w *getGasStationFuelingAppIDPumpsPumpIDResponseWriter) OK(data GetGasStationFuelingAppIDPumpsPumpIDOK) {
+func (w *getGasStationFuelingAppIDPumpsPumpIDResponseWriter) OK(data *GetGasStationFuelingAppIDPumpsPumpIDOK) {
 	runtime.Marshal(w, data, 200)
 }
 
@@ -372,7 +372,7 @@ to generate the respective responses easily
 */
 type PostGasStationFuelingAppIDPumpsPumpIDPayResponseWriter interface {
 	http.ResponseWriter
-	Created(PostGasStationFuelingAppIDPumpsPumpIDPayCreated)
+	Created(*PostGasStationFuelingAppIDPumpsPumpIDPayCreated)
 	BadRequest(error)
 	NotFound(error)
 	Conflict(error)
@@ -397,7 +397,7 @@ func (w *postGasStationFuelingAppIDPumpsPumpIDPayResponseWriter) BadRequest(err 
 }
 
 // Created responds with jsonapi marshaled data (HTTP code 201)
-func (w *postGasStationFuelingAppIDPumpsPumpIDPayResponseWriter) Created(data PostGasStationFuelingAppIDPumpsPumpIDPayCreated) {
+func (w *postGasStationFuelingAppIDPumpsPumpIDPayResponseWriter) Created(data *PostGasStationFuelingAppIDPumpsPumpIDPayCreated) {
 	runtime.Marshal(w, data, 201)
 }
 
@@ -406,10 +406,10 @@ type PostGasStationFuelingAppIDPumpsPumpIDPayContent json.RawMessage
 
 // PostGasStationFuelingAppIDPumpsPumpIDPayRequest ...
 type PostGasStationFuelingAppIDPumpsPumpIDPayRequest struct {
-	Request           *http.Request                                   `valid:"-"`
-	Content           PostGasStationFuelingAppIDPumpsPumpIDPayContent `valid:"-"`
-	ParamFuelingAppID string                                          `valid:"required,uuid"`
-	ParamPumpID       string                                          `valid:"required,uuid"`
+	Request           *http.Request                                    `valid:"-"`
+	Content           *PostGasStationFuelingAppIDPumpsPumpIDPayContent `valid:"-"`
+	ParamFuelingAppID string                                           `valid:"required,uuid"`
+	ParamPumpID       string                                           `valid:"required,uuid"`
 }
 
 // GetGasStationFuelingAppIDPumpsPumpIDWaitForStatusChangeOK ...
@@ -421,7 +421,7 @@ to generate the respective responses easily
 */
 type GetGasStationFuelingAppIDPumpsPumpIDWaitForStatusChangeResponseWriter interface {
 	http.ResponseWriter
-	OK(GetGasStationFuelingAppIDPumpsPumpIDWaitForStatusChangeOK)
+	OK(*GetGasStationFuelingAppIDPumpsPumpIDWaitForStatusChangeOK)
 	NotFound(error)
 	RequestTimeout(error)
 }
@@ -440,7 +440,7 @@ func (w *getGasStationFuelingAppIDPumpsPumpIDWaitForStatusChangeResponseWriter) 
 }
 
 // OK responds with jsonapi marshaled data (HTTP code 200)
-func (w *getGasStationFuelingAppIDPumpsPumpIDWaitForStatusChangeResponseWriter) OK(data GetGasStationFuelingAppIDPumpsPumpIDWaitForStatusChangeOK) {
+func (w *getGasStationFuelingAppIDPumpsPumpIDWaitForStatusChangeResponseWriter) OK(data *GetGasStationFuelingAppIDPumpsPumpIDWaitForStatusChangeOK) {
 	runtime.Marshal(w, data, 200)
 }
 

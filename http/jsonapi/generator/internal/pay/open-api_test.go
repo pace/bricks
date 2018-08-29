@@ -339,7 +339,7 @@ to generate the respective responses easily
 */
 type PostPaymentMethodsPaymentMethodIDAuthorizeResponseWriter interface {
 	http.ResponseWriter
-	OK(PostPaymentMethodsPaymentMethodIDAuthorizeOK)
+	OK(*PostPaymentMethodsPaymentMethodIDAuthorizeOK)
 	Forbidden(error)
 	NotFound(error)
 	BadGateway(error)
@@ -364,7 +364,7 @@ func (w *postPaymentMethodsPaymentMethodIDAuthorizeResponseWriter) Forbidden(err
 }
 
 // OK responds with jsonapi marshaled data (HTTP code 200)
-func (w *postPaymentMethodsPaymentMethodIDAuthorizeResponseWriter) OK(data PostPaymentMethodsPaymentMethodIDAuthorizeOK) {
+func (w *postPaymentMethodsPaymentMethodIDAuthorizeResponseWriter) OK(data *PostPaymentMethodsPaymentMethodIDAuthorizeOK) {
 	runtime.Marshal(w, data, 200)
 }
 
@@ -377,9 +377,9 @@ type PostPaymentMethodsPaymentMethodIDAuthorizeContent struct {
 
 // PostPaymentMethodsPaymentMethodIDAuthorizeRequest ...
 type PostPaymentMethodsPaymentMethodIDAuthorizeRequest struct {
-	Request              *http.Request                                     `valid:"-"`
-	Content              PostPaymentMethodsPaymentMethodIDAuthorizeContent `valid:"-"`
-	ParamPaymentMethodID string                                            `valid:"required,uuid"`
+	Request              *http.Request                                      `valid:"-"`
+	Content              *PostPaymentMethodsPaymentMethodIDAuthorizeContent `valid:"-"`
+	ParamPaymentMethodID string                                             `valid:"required,uuid"`
 }
 
 /*
@@ -428,7 +428,7 @@ to generate the respective responses easily
 */
 type PostPaymentMethodsSepaDirectDebitResponseWriter interface {
 	http.ResponseWriter
-	Created(PostPaymentMethodsSepaDirectDebitCreated)
+	Created(*PostPaymentMethodsSepaDirectDebitCreated)
 	BadRequest(error)
 }
 type postPaymentMethodsSepaDirectDebitResponseWriter struct {
@@ -441,7 +441,7 @@ func (w *postPaymentMethodsSepaDirectDebitResponseWriter) BadRequest(err error) 
 }
 
 // Created responds with jsonapi marshaled data (HTTP code 201)
-func (w *postPaymentMethodsSepaDirectDebitResponseWriter) Created(data PostPaymentMethodsSepaDirectDebitCreated) {
+func (w *postPaymentMethodsSepaDirectDebitResponseWriter) Created(data *PostPaymentMethodsSepaDirectDebitCreated) {
 	runtime.Marshal(w, data, 201)
 }
 

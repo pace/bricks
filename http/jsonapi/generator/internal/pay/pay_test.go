@@ -27,7 +27,7 @@ func (s *testService) DeletePaymentMethodsPaymentMethodIDPaymentTokensPaymentTok
 }
 
 func (s *testService) PostPaymentMethodsSepaDirectDebit(ctx context.Context, w PostPaymentMethodsSepaDirectDebitResponseWriter, r *PostPaymentMethodsSepaDirectDebitRequest) error {
-	w.Created(PostPaymentMethodsSepaDirectDebitCreated{
+	w.Created(&PostPaymentMethodsSepaDirectDebitCreated{
 		ID:                   "1",
 		IdentificationString: "d7101f72-a672-453c-9d36-d5809ef0ded6",
 		Kind:                 "sepa",

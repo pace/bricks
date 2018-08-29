@@ -114,7 +114,7 @@ func (g *Generator) generateTypeReference(fallbackName string, schema *openapi3.
 		return nil, err
 	}
 
-	return jen.Id(fallbackName), nil
+	return jen.Op("*").Id(fallbackName), nil
 }
 
 func (g *Generator) structJSONAPI(prefix string, stmt *jen.Statement, schema *openapi3.Schema) error {
