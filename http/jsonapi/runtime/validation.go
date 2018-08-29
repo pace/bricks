@@ -65,10 +65,12 @@ func generateValidationErrors(validErrors valid.Errors, jsonapiErrors *Errors, s
 }
 
 // BUG(vil): the govalidation error has no reference to the
-//	 original StructField. That makes it impossible to generate
-//   correct pointers.
-//   TODO: fork and add struct field tags. Add custom tag
-//   and use custom tag to produce correct source pointer/parameter
+// original StructField. That makes it impossible to generate
+// correct pointers.
+// Since the actual data structure and the incoming JSON are very
+// different, fork and add struct field tags. Add custom tag
+// and use a custom tag to produce correct source pointer/parameter.
+// https://lab.jamit.de/pace/web/libs/go-microservice/issues/10
 
 // generateValidationError generates a new jsonapi error based
 // on the given govalidator error
