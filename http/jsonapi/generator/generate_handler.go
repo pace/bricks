@@ -493,20 +493,20 @@ func generateName(method string, op *openapi3.Operation, pattern string) string 
 	name := method
 	parts := strings.Split(asciiName.ReplaceAllString(pattern, "/"), "/")
 	for _, part := range parts {
-		name += strings.Title(part)
+		name += goNameHelper(part)
 	}
 
-	return name
+	return goNameHelper(name)
 }
 
 func generateMethodName(description string) string {
 	parts := strings.Split(asciiName.ReplaceAllString(description, " "), " ")
 	for i := 0; i < len(parts); i++ {
-		parts[i] = strings.Title(parts[i])
+		parts[i] = goNameHelper(parts[i])
 	}
-	return strings.Join(parts, "")
+	return goNameHelper(strings.Join(parts, ""))
 }
 
 func generateParamName(param *openapi3.ParameterRef) string {
-	return "Param" + strings.Title(param.Value.Name)
+	return "Param" + goNameHelper(param.Value.Name)
 }

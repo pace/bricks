@@ -60,20 +60,20 @@ func GetPaymentMethodsHandler(service Service) http.Handler {
 }
 
 /*
-PostPaymentMethodsPaymentMethodIdAuthorizeHandler handles request/response marshaling and validation for
+PostPaymentMethodsPaymentMethodIDAuthorizeHandler handles request/response marshaling and validation for
  Post /payment-methods/:paymentMethodId/authorize
 */
-func PostPaymentMethodsPaymentMethodIdAuthorizeHandler(service Service) http.Handler {
+func PostPaymentMethodsPaymentMethodIDAuthorizeHandler(service Service) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		writer := postPaymentMethodsPaymentMethodIdAuthorizeResponseWriter{
+		writer := postPaymentMethodsPaymentMethodIDAuthorizeResponseWriter{
 			ResponseWriter: w,
 		}
-		request := PostPaymentMethodsPaymentMethodIdAuthorizeRequest{
+		request := PostPaymentMethodsPaymentMethodIDAuthorizeRequest{
 			Request: r,
 		}
 		vars := mux.Vars(r)
 		if !runtime.ScanParameters(w, r, &runtime.ScanParameter{
-			Data:     &request.ParamPaymentMethodId,
+			Data:     &request.ParamPaymentMethodID,
 			Location: runtime.ScanInPath,
 			Input:    vars["paymentMethodId"],
 			Name:     "paymentMethodId",
@@ -84,7 +84,7 @@ func PostPaymentMethodsPaymentMethodIdAuthorizeHandler(service Service) http.Han
 			return // invalid request stop further processing
 		}
 		if runtime.Unmarshal(w, r, &request.Content) {
-			err := service.PostPaymentMethodsPaymentMethodIdAuthorize(r.Context(), &writer, &request)
+			err := service.PostPaymentMethodsPaymentMethodIDAuthorize(r.Context(), &writer, &request)
 			if err != nil {
 				runtime.WriteError(w, http.StatusInternalServerError, err)
 			}
@@ -93,25 +93,25 @@ func PostPaymentMethodsPaymentMethodIdAuthorizeHandler(service Service) http.Han
 }
 
 /*
-DeletePaymentMethodsPaymentMethodIdPaymentTokensPaymentTokenIdHandler handles request/response marshaling and validation for
+DeletePaymentMethodsPaymentMethodIDPaymentTokensPaymentTokenIDHandler handles request/response marshaling and validation for
  Delete /payment-methods/:paymentMethodId/paymentTokens/:paymentTokenId
 */
-func DeletePaymentMethodsPaymentMethodIdPaymentTokensPaymentTokenIdHandler(service Service) http.Handler {
+func DeletePaymentMethodsPaymentMethodIDPaymentTokensPaymentTokenIDHandler(service Service) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		writer := deletePaymentMethodsPaymentMethodIdPaymentTokensPaymentTokenIdResponseWriter{
+		writer := deletePaymentMethodsPaymentMethodIDPaymentTokensPaymentTokenIDResponseWriter{
 			ResponseWriter: w,
 		}
-		request := DeletePaymentMethodsPaymentMethodIdPaymentTokensPaymentTokenIdRequest{
+		request := DeletePaymentMethodsPaymentMethodIDPaymentTokensPaymentTokenIDRequest{
 			Request: r,
 		}
 		vars := mux.Vars(r)
 		if !runtime.ScanParameters(w, r, &runtime.ScanParameter{
-			Data:     &request.ParamPaymentTokenId,
+			Data:     &request.ParamPaymentTokenID,
 			Location: runtime.ScanInPath,
 			Input:    vars["paymentTokenId"],
 			Name:     "paymentTokenId",
 		}, &runtime.ScanParameter{
-			Data:     &request.ParamPaymentMethodId,
+			Data:     &request.ParamPaymentMethodID,
 			Location: runtime.ScanInPath,
 			Input:    vars["paymentMethodId"],
 			Name:     "paymentMethodId",
@@ -121,7 +121,7 @@ func DeletePaymentMethodsPaymentMethodIdPaymentTokensPaymentTokenIdHandler(servi
 		if !runtime.ValidateParameters(w, r, &request) {
 			return // invalid request stop further processing
 		}
-		err := service.DeletePaymentMethodsPaymentMethodIdPaymentTokensPaymentTokenId(r.Context(), &writer, &request)
+		err := service.DeletePaymentMethodsPaymentMethodIDPaymentTokensPaymentTokenID(r.Context(), &writer, &request)
 		if err != nil {
 			runtime.WriteError(w, http.StatusInternalServerError, err)
 		}
@@ -153,20 +153,20 @@ func PostPaymentMethodsSepaDirectDebitHandler(service Service) http.Handler {
 }
 
 /*
-DeletePaymentMethodsPaymentMethodIdHandler handles request/response marshaling and validation for
+DeletePaymentMethodsPaymentMethodIDHandler handles request/response marshaling and validation for
  Delete /payment-methods/{paymentMethodId}
 */
-func DeletePaymentMethodsPaymentMethodIdHandler(service Service) http.Handler {
+func DeletePaymentMethodsPaymentMethodIDHandler(service Service) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		writer := deletePaymentMethodsPaymentMethodIdResponseWriter{
+		writer := deletePaymentMethodsPaymentMethodIDResponseWriter{
 			ResponseWriter: w,
 		}
-		request := DeletePaymentMethodsPaymentMethodIdRequest{
+		request := DeletePaymentMethodsPaymentMethodIDRequest{
 			Request: r,
 		}
 		vars := mux.Vars(r)
 		if !runtime.ScanParameters(w, r, &runtime.ScanParameter{
-			Data:     &request.ParamPaymentMethodId,
+			Data:     &request.ParamPaymentMethodID,
 			Location: runtime.ScanInPath,
 			Input:    vars["paymentMethodId"],
 			Name:     "paymentMethodId",
@@ -176,7 +176,7 @@ func DeletePaymentMethodsPaymentMethodIdHandler(service Service) http.Handler {
 		if !runtime.ValidateParameters(w, r, &request) {
 			return // invalid request stop further processing
 		}
-		err := service.DeletePaymentMethodsPaymentMethodId(r.Context(), &writer, &request)
+		err := service.DeletePaymentMethodsPaymentMethodID(r.Context(), &writer, &request)
 		if err != nil {
 			runtime.WriteError(w, http.StatusInternalServerError, err)
 		}
@@ -270,8 +270,8 @@ type GetPaymentMethodsRequest struct {
 	Request *http.Request `valid:"-"`
 }
 
-// PostPaymentMethodsPaymentMethodIdAuthorizeOK ...
-type PostPaymentMethodsPaymentMethodIdAuthorizeOK struct {
+// PostPaymentMethodsPaymentMethodIDAuthorizeOK ...
+type PostPaymentMethodsPaymentMethodIDAuthorizeOK struct {
 	ID       string  `jsonapi:"primary,paymentToken,omitempty" valid:"optional"` // paymentToken ID (NOT the token value)
 	Amount   float64 `jsonapi:"attr,amount,omitempty" valid:"optional"`          // Example: "65.49"
 	Currency string  `jsonapi:"attr,currency,omitempty" valid:"optional"`        // Currency as specified in ISO-4217.
@@ -279,85 +279,85 @@ type PostPaymentMethodsPaymentMethodIdAuthorizeOK struct {
 }
 
 /*
-PostPaymentMethodsPaymentMethodIdAuthorizeResponseWriter is a standard http.ResponseWriter extended with methods
+PostPaymentMethodsPaymentMethodIDAuthorizeResponseWriter is a standard http.ResponseWriter extended with methods
 to generate the respective responses easily
 */
-type PostPaymentMethodsPaymentMethodIdAuthorizeResponseWriter interface {
+type PostPaymentMethodsPaymentMethodIDAuthorizeResponseWriter interface {
 	http.ResponseWriter
-	OK(*PostPaymentMethodsPaymentMethodIdAuthorizeOK)
+	OK(*PostPaymentMethodsPaymentMethodIDAuthorizeOK)
 	Forbidden(error)
 	NotFound(error)
 	BadGateway(error)
 }
-type postPaymentMethodsPaymentMethodIdAuthorizeResponseWriter struct {
+type postPaymentMethodsPaymentMethodIDAuthorizeResponseWriter struct {
 	http.ResponseWriter
 }
 
 // BadGateway responds with jsonapi error (HTTP code 502)
-func (w *postPaymentMethodsPaymentMethodIdAuthorizeResponseWriter) BadGateway(err error) {
+func (w *postPaymentMethodsPaymentMethodIDAuthorizeResponseWriter) BadGateway(err error) {
 	runtime.WriteError(w, 502, err)
 }
 
 // NotFound responds with jsonapi error (HTTP code 404)
-func (w *postPaymentMethodsPaymentMethodIdAuthorizeResponseWriter) NotFound(err error) {
+func (w *postPaymentMethodsPaymentMethodIDAuthorizeResponseWriter) NotFound(err error) {
 	runtime.WriteError(w, 404, err)
 }
 
 // Forbidden responds with jsonapi error (HTTP code 403)
-func (w *postPaymentMethodsPaymentMethodIdAuthorizeResponseWriter) Forbidden(err error) {
+func (w *postPaymentMethodsPaymentMethodIDAuthorizeResponseWriter) Forbidden(err error) {
 	runtime.WriteError(w, 403, err)
 }
 
 // OK responds with jsonapi marshaled data (HTTP code 200)
-func (w *postPaymentMethodsPaymentMethodIdAuthorizeResponseWriter) OK(data *PostPaymentMethodsPaymentMethodIdAuthorizeOK) {
+func (w *postPaymentMethodsPaymentMethodIDAuthorizeResponseWriter) OK(data *PostPaymentMethodsPaymentMethodIDAuthorizeOK) {
 	runtime.Marshal(w, data, 200)
 }
 
-// PostPaymentMethodsPaymentMethodIdAuthorizeContent ...
-type PostPaymentMethodsPaymentMethodIdAuthorizeContent struct {
+// PostPaymentMethodsPaymentMethodIDAuthorizeContent ...
+type PostPaymentMethodsPaymentMethodIDAuthorizeContent struct {
 	ID       string  `jsonapi:"primary,paymentToken,omitempty" valid:"uuid,optional"` // ID of the new paymentToken.
 	Amount   float64 `jsonapi:"attr,amount,omitempty" valid:"required"`               // Example: "65.49"
 	Currency string  `jsonapi:"attr,currency,omitempty" valid:"required"`             // Currency as specified in ISO-4217.
 }
 
-// PostPaymentMethodsPaymentMethodIdAuthorizeRequest ...
-type PostPaymentMethodsPaymentMethodIdAuthorizeRequest struct {
+// PostPaymentMethodsPaymentMethodIDAuthorizeRequest ...
+type PostPaymentMethodsPaymentMethodIDAuthorizeRequest struct {
 	Request              *http.Request                                      `valid:"-"`
-	Content              *PostPaymentMethodsPaymentMethodIdAuthorizeContent `valid:"-"`
-	ParamPaymentMethodId string                                             `valid:"required,uuid"`
+	Content              *PostPaymentMethodsPaymentMethodIDAuthorizeContent `valid:"-"`
+	ParamPaymentMethodID string                                             `valid:"required,uuid"`
 }
 
 /*
-DeletePaymentMethodsPaymentMethodIdPaymentTokensPaymentTokenIdResponseWriter is a standard http.ResponseWriter extended with methods
+DeletePaymentMethodsPaymentMethodIDPaymentTokensPaymentTokenIDResponseWriter is a standard http.ResponseWriter extended with methods
 to generate the respective responses easily
 */
-type DeletePaymentMethodsPaymentMethodIdPaymentTokensPaymentTokenIdResponseWriter interface {
+type DeletePaymentMethodsPaymentMethodIDPaymentTokensPaymentTokenIDResponseWriter interface {
 	http.ResponseWriter
 	ThePaymentTokenWasRemovedSuccessfully()
 	NotFound(error)
 }
-type deletePaymentMethodsPaymentMethodIdPaymentTokensPaymentTokenIdResponseWriter struct {
+type deletePaymentMethodsPaymentMethodIDPaymentTokensPaymentTokenIDResponseWriter struct {
 	http.ResponseWriter
 }
 
 // NotFound responds with jsonapi error (HTTP code 404)
-func (w *deletePaymentMethodsPaymentMethodIdPaymentTokensPaymentTokenIdResponseWriter) NotFound(err error) {
+func (w *deletePaymentMethodsPaymentMethodIDPaymentTokensPaymentTokenIDResponseWriter) NotFound(err error) {
 	runtime.WriteError(w, 404, err)
 }
 
 // ThePaymentTokenWasRemovedSuccessfully responds with empty response (HTTP code 204)
-func (w *deletePaymentMethodsPaymentMethodIdPaymentTokensPaymentTokenIdResponseWriter) ThePaymentTokenWasRemovedSuccessfully() {
+func (w *deletePaymentMethodsPaymentMethodIDPaymentTokensPaymentTokenIDResponseWriter) ThePaymentTokenWasRemovedSuccessfully() {
 	w.WriteHeader(204)
 }
 
 /*
-DeletePaymentMethodsPaymentMethodIdPaymentTokensPaymentTokenIdResponseWriter is a standard http.Request extended with the
+DeletePaymentMethodsPaymentMethodIDPaymentTokensPaymentTokenIDResponseWriter is a standard http.Request extended with the
 un-marshaled content object
 */
-type DeletePaymentMethodsPaymentMethodIdPaymentTokensPaymentTokenIdRequest struct {
+type DeletePaymentMethodsPaymentMethodIDPaymentTokensPaymentTokenIDRequest struct {
 	Request              *http.Request `valid:"-"`
-	ParamPaymentTokenId  string        `valid:"required"`
-	ParamPaymentMethodId string        `valid:"required,uuid"`
+	ParamPaymentTokenID  string        `valid:"required"`
+	ParamPaymentMethodID string        `valid:"required,uuid"`
 }
 
 // PostPaymentMethodsSepaDirectDebitCreated ...
@@ -397,29 +397,29 @@ type PostPaymentMethodsSepaDirectDebitRequest struct {
 }
 
 /*
-DeletePaymentMethodsPaymentMethodIdResponseWriter is a standard http.ResponseWriter extended with methods
+DeletePaymentMethodsPaymentMethodIDResponseWriter is a standard http.ResponseWriter extended with methods
 to generate the respective responses easily
 */
-type DeletePaymentMethodsPaymentMethodIdResponseWriter interface {
+type DeletePaymentMethodsPaymentMethodIDResponseWriter interface {
 	http.ResponseWriter
 	ThePaymentMethodWasDeletedSuccessfully()
 }
-type deletePaymentMethodsPaymentMethodIdResponseWriter struct {
+type deletePaymentMethodsPaymentMethodIDResponseWriter struct {
 	http.ResponseWriter
 }
 
 // ThePaymentMethodWasDeletedSuccessfully responds with empty response (HTTP code 204)
-func (w *deletePaymentMethodsPaymentMethodIdResponseWriter) ThePaymentMethodWasDeletedSuccessfully() {
+func (w *deletePaymentMethodsPaymentMethodIDResponseWriter) ThePaymentMethodWasDeletedSuccessfully() {
 	w.WriteHeader(204)
 }
 
 /*
-DeletePaymentMethodsPaymentMethodIdResponseWriter is a standard http.Request extended with the
+DeletePaymentMethodsPaymentMethodIDResponseWriter is a standard http.Request extended with the
 un-marshaled content object
 */
-type DeletePaymentMethodsPaymentMethodIdRequest struct {
+type DeletePaymentMethodsPaymentMethodIDRequest struct {
 	Request              *http.Request `valid:"-"`
-	ParamPaymentMethodId string        `valid:"required,uuid"`
+	ParamPaymentMethodID string        `valid:"required,uuid"`
 }
 
 /*
@@ -477,13 +477,13 @@ type Service interface {
 	// GetPaymentMethods Get all payment methods for user
 	GetPaymentMethods(context.Context, GetPaymentMethodsResponseWriter, *GetPaymentMethodsRequest) error
 	/*
-	   PostPaymentMethodsPaymentMethodIdAuthorize Authorize a payment using the payment method whose ID is paymentMethodId
+	   PostPaymentMethodsPaymentMethodIDAuthorize Authorize a payment using the payment method whose ID is paymentMethodId
 
 	   When successful, returns a paymentToken value.
 	*/
-	PostPaymentMethodsPaymentMethodIdAuthorize(context.Context, PostPaymentMethodsPaymentMethodIdAuthorizeResponseWriter, *PostPaymentMethodsPaymentMethodIdAuthorizeRequest) error
-	// DeletePaymentMethodsPaymentMethodIdPaymentTokensPaymentTokenId Delete the paymentToken record.
-	DeletePaymentMethodsPaymentMethodIdPaymentTokensPaymentTokenId(context.Context, DeletePaymentMethodsPaymentMethodIdPaymentTokensPaymentTokenIdResponseWriter, *DeletePaymentMethodsPaymentMethodIdPaymentTokensPaymentTokenIdRequest) error
+	PostPaymentMethodsPaymentMethodIDAuthorize(context.Context, PostPaymentMethodsPaymentMethodIDAuthorizeResponseWriter, *PostPaymentMethodsPaymentMethodIDAuthorizeRequest) error
+	// DeletePaymentMethodsPaymentMethodIDPaymentTokensPaymentTokenID Delete the paymentToken record.
+	DeletePaymentMethodsPaymentMethodIDPaymentTokensPaymentTokenID(context.Context, DeletePaymentMethodsPaymentMethodIDPaymentTokensPaymentTokenIDResponseWriter, *DeletePaymentMethodsPaymentMethodIDPaymentTokensPaymentTokenIDRequest) error
 	/*
 	   PostPaymentMethodsSepaDirectDebit Register SEPA direct debit as a payment method
 
@@ -491,8 +491,8 @@ type Service interface {
 	   The payment method ID is optional when posting data.
 	*/
 	PostPaymentMethodsSepaDirectDebit(context.Context, PostPaymentMethodsSepaDirectDebitResponseWriter, *PostPaymentMethodsSepaDirectDebitRequest) error
-	// DeletePaymentMethodsPaymentMethodId Delete a payment method
-	DeletePaymentMethodsPaymentMethodId(context.Context, DeletePaymentMethodsPaymentMethodIdResponseWriter, *DeletePaymentMethodsPaymentMethodIdRequest) error
+	// DeletePaymentMethodsPaymentMethodID Delete a payment method
+	DeletePaymentMethodsPaymentMethodID(context.Context, DeletePaymentMethodsPaymentMethodIDResponseWriter, *DeletePaymentMethodsPaymentMethodIDRequest) error
 	/*
 	   GetPaymentMethodsIncludeCreditCheck Get all ready-to-use payment methods for user
 
@@ -522,10 +522,10 @@ func Router(service Service) *mux.Router {
 	router := mux.NewRouter()
 	// Subrouter s1 - https://api.pace.cloud/pay/beta
 	s1 := router.PathPrefix("/pay/beta").Subrouter()
-	s1.Methods("DELETE").Path("/payment-methods/:paymentMethodId/paymentTokens/:paymentTokenId").Handler(DeletePaymentMethodsPaymentMethodIdPaymentTokensPaymentTokenIdHandler(service)).Name("DeletePaymentMethodsPaymentMethodIdPaymentTokensPaymentTokenId")
-	s1.Methods("POST").Path("/payment-methods/:paymentMethodId/authorize").Handler(PostPaymentMethodsPaymentMethodIdAuthorizeHandler(service)).Name("PostPaymentMethodsPaymentMethodIdAuthorize")
+	s1.Methods("DELETE").Path("/payment-methods/:paymentMethodId/paymentTokens/:paymentTokenId").Handler(DeletePaymentMethodsPaymentMethodIDPaymentTokensPaymentTokenIDHandler(service)).Name("DeletePaymentMethodsPaymentMethodIDPaymentTokensPaymentTokenID")
+	s1.Methods("POST").Path("/payment-methods/:paymentMethodId/authorize").Handler(PostPaymentMethodsPaymentMethodIDAuthorizeHandler(service)).Name("PostPaymentMethodsPaymentMethodIDAuthorize")
 	s1.Methods("POST").Path("/payment-methods/sepa-direct-debit").Handler(PostPaymentMethodsSepaDirectDebitHandler(service)).Name("PostPaymentMethodsSepaDirectDebit")
-	s1.Methods("DELETE").Path("/payment-methods/{paymentMethodId}").Handler(DeletePaymentMethodsPaymentMethodIdHandler(service)).Name("DeletePaymentMethodsPaymentMethodId")
+	s1.Methods("DELETE").Path("/payment-methods/{paymentMethodId}").Handler(DeletePaymentMethodsPaymentMethodIDHandler(service)).Name("DeletePaymentMethodsPaymentMethodID")
 	s1.Methods("GET").Path("/payment-methods").Handler(GetPaymentMethodsIncludePaymentTokensHandler(service)).Queries("include", "paymentTokens").Name("GetPaymentMethodsIncludePaymentTokens")
 	s1.Methods("GET").Path("/payment-methods").Handler(GetPaymentMethodsIncludeCreditCheckHandler(service)).Queries("include", "creditCheck").Name("GetPaymentMethodsIncludeCreditCheck")
 	s1.Methods("GET").Path("/payment-methods").Handler(GetPaymentMethodsHandler(service)).Name("GetPaymentMethods")

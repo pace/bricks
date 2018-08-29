@@ -113,7 +113,7 @@ func (g *Generator) structJsonApi(prefix string, stmt *jen.Statement, schema *op
 }
 
 func (g *Generator) generateAttrField(prefix, name string, schema *openapi3.Schema, jsonApi bool, tags map[string]string) (*jen.Statement, error) {
-	field := jen.Id(strings.Title(name))
+	field := jen.Id(goNameHelper(name))
 
 	// Add json-api tag
 	if jsonApi {

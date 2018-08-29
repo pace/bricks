@@ -5,6 +5,7 @@ package generator
 
 import (
 	"fmt"
+	"regexp"
 	"strings"
 
 	"github.com/dave/jennifer/jen"
@@ -89,4 +90,13 @@ func addValidator(tags map[string]string, validator string) {
 		validator = tags["valid"] + "," + validator
 	}
 	tags["valid"] = validator
+}
+
+var idRegex = regexp.MustCompile("Id$")
+
+func goNameHelper(name string) string {
+	name = strings.Title(name)
+	name = strings.Replace(name, "Url", "URL", -1)
+	name = idRegex.ReplaceAllString(name, "ID")
+	return name
 }

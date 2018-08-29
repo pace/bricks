@@ -10,7 +10,7 @@ import (
 // FuelPrice ...
 type FuelPrice struct {
 	Attributes *FuelPriceAttributes `jsonapi:"attributes,omitempty" valid:"optional"`
-	Id         string               `jsonapi:"id,omitempty" valid:"optional"`                 // Fuel Price ID
+	ID         string               `jsonapi:"id,omitempty" valid:"optional"`                 // Fuel Price ID
 	Type       string               `jsonapi:"type,omitempty" valid:"optional,in(fuelPrice)"` // Fuel price
 }
 
@@ -63,18 +63,18 @@ type GasStationResponseOpeningHours struct {
 // LocationBasedApp ...
 type LocationBasedApp struct {
 	Attributes *LocationBasedAppAttributes `jsonapi:"attributes,omitempty" valid:"optional"`
-	Id         string                      `jsonapi:"id,omitempty" valid:"optional,uuid"`                   // Location-based app ID
+	ID         string                      `jsonapi:"id,omitempty" valid:"optional,uuid"`                   // Location-based app ID
 	Type       string                      `jsonapi:"type,omitempty" valid:"optional,in(locationBasedApp)"` // Type
 }
 
 // LocationBasedAppAttributes ...
 type LocationBasedAppAttributes struct {
-	AndroidInstantAppUrl string      `jsonapi:"androidInstantAppUrl,omitempty" valid:"optional"` // Android instant app URL
+	AndroidInstantAppURL string      `jsonapi:"androidInstantAppUrl,omitempty" valid:"optional"` // Android instant app URL
 	AppArea              [][]float32 `jsonapi:"appArea,omitempty" valid:"optional"`              // Example: "[[49.012 8.424] [49.1 9.34] [48.7 8.92]]"
 	AppType              string      `jsonapi:"appType,omitempty" valid:"optional,in(fueling)"`
 	InsideAppArea        bool        `jsonapi:"insideAppArea,omitempty" valid:"optional"` // Boolean flag if the current position is inside the app area (polygon).
-	LogoUrl              string      `jsonapi:"logoUrl,omitempty" valid:"optional"`       // Logo URL
-	PwaUrl               string      `jsonapi:"pwaUrl,omitempty" valid:"optional"`        // Progressive web application URL
+	LogoURL              string      `jsonapi:"logoUrl,omitempty" valid:"optional"`       // Logo URL
+	PwaURL               string      `jsonapi:"pwaUrl,omitempty" valid:"optional"`        // Progressive web application URL
 	Subtitle             string      `jsonapi:"subtitle,omitempty" valid:"optional"`      // Example: "Zahle bargeldlos mit der PACE Fueling App"
 	Title                string      `jsonapi:"title,omitempty" valid:"optional"`         // Example: "PACE Fueling App"
 }
@@ -82,12 +82,12 @@ type LocationBasedAppAttributes struct {
 // LocationBasedAppResponse ...
 type LocationBasedAppResponse struct {
 	ID                   string      `jsonapi:"primary,locationBasedApp,omitempty" valid:"uuid,optional"` // Location-based app ID
-	AndroidInstantAppUrl string      `jsonapi:"attr,androidInstantAppUrl,omitempty" valid:"optional"`     // Android instant app URL
+	AndroidInstantAppURL string      `jsonapi:"attr,androidInstantAppUrl,omitempty" valid:"optional"`     // Android instant app URL
 	AppArea              [][]float32 `jsonapi:"attr,appArea,omitempty" valid:"optional"`                  // Example: "[[49.012 8.424] [49.1 9.34] [48.7 8.92]]"
 	AppType              string      `jsonapi:"attr,appType,omitempty" valid:"optional,in(fueling)"`
 	InsideAppArea        bool        `jsonapi:"attr,insideAppArea,omitempty" valid:"optional"` // Boolean flag if the current position is inside the app area (polygon).
-	LogoUrl              string      `jsonapi:"attr,logoUrl,omitempty" valid:"optional"`       // Logo URL
-	PwaUrl               string      `jsonapi:"attr,pwaUrl,omitempty" valid:"optional"`        // Progressive web application URL
+	LogoURL              string      `jsonapi:"attr,logoUrl,omitempty" valid:"optional"`       // Logo URL
+	PwaURL               string      `jsonapi:"attr,pwaUrl,omitempty" valid:"optional"`        // Progressive web application URL
 	Subtitle             string      `jsonapi:"attr,subtitle,omitempty" valid:"optional"`      // Example: "Zahle bargeldlos mit der PACE Fueling App"
 	Title                string      `jsonapi:"attr,title,omitempty" valid:"optional"`         // Example: "PACE Fueling App"
 }
@@ -95,12 +95,12 @@ type LocationBasedAppResponse struct {
 // LocationBasedAppsResponse ...
 type LocationBasedAppsResponse []struct {
 	ID                   string      `jsonapi:"primary,locationBasedApp,omitempty" valid:"uuid,optional"` // Location-based app ID
-	AndroidInstantAppUrl string      `jsonapi:"attr,androidInstantAppUrl,omitempty" valid:"optional"`     // Android instant app URL
+	AndroidInstantAppURL string      `jsonapi:"attr,androidInstantAppUrl,omitempty" valid:"optional"`     // Android instant app URL
 	AppArea              [][]float32 `jsonapi:"attr,appArea,omitempty" valid:"optional"`                  // Example: "[[49.012 8.424] [49.1 9.34] [49.012 8.424]]"
 	AppType              string      `jsonapi:"attr,appType,omitempty" valid:"optional,in(fueling)"`
 	InsideAppArea        bool        `jsonapi:"attr,insideAppArea,omitempty" valid:"optional"` // Boolean flag if the current position is inside the app area (polygon).
-	LogoUrl              string      `jsonapi:"attr,logoUrl,omitempty" valid:"optional"`       // Logo URL
-	PwaUrl               string      `jsonapi:"attr,pwaUrl,omitempty" valid:"optional"`        // Progressive web application URL
+	LogoURL              string      `jsonapi:"attr,logoUrl,omitempty" valid:"optional"`       // Logo URL
+	PwaURL               string      `jsonapi:"attr,pwaUrl,omitempty" valid:"optional"`        // Progressive web application URL
 	Subtitle             string      `jsonapi:"attr,subtitle,omitempty" valid:"optional"`      // Example: "Zahle bargeldlos mit der PACE Fueling App"
 	Title                string      `jsonapi:"attr,title,omitempty" valid:"optional"`         // Example: "PACE Fueling App"
 }
