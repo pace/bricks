@@ -26,15 +26,6 @@ const ServiceBase = "web/service"
 // GitLabTemplate git clone template for cloning repositories
 const GitLabTemplate = "git@lab.jamit.de:pace/web/service/%s.git"
 
-// The gitlab repo paths are not supported by go-get. This is
-// an issue for the dep util. We need to explicitly ignore the
-// repo to avoid errors
-const goMicroserviceIgnore = `ignored = [
-	"lab.jamit.de/pace/web/libs/go-microservice/http/jsonapi/runtime",
-]
-
-`
-
 // GoPath returns the gopath for the current system,
 // uses GOPATH env and fallback to default go dir
 func GoPath() string {
@@ -45,6 +36,21 @@ func GoPath() string {
 			log.Fatal(err)
 		}
 		return filepath.Join(usr.HomeDir, "go")
+	}
+
+	return path
+}
+
+// PacePath returns the pace path for the current system,
+// uses PACE_PATH env and fallback to default go dir
+func PacePath() string {
+	path, ok := os.LookupEnv("PACE_PATH")
+	if !ok {
+		usr, err := user.Current()
+		if err != nil {
+			log.Fatal(err)
+		}
+		return filepath.Join(usr.HomeDir, "PACE")
 	}
 
 	return path
@@ -64,12 +70,9 @@ func New(name string, options NewOptions) {
 		log.Fatal(err)
 	}
 
-	AutoInstallDep()
-
 	SimpleExec("git", "init", dir)
 	SimpleExecInPath(dir, "git", "remote", "add", "origin", fmt.Sprintf(GitLabTemplate, name))
 	log.Printf("Remember to create the %s repository in gitlab: https://lab.jamit.de/projects/new?namespace_id=296\n", name)
-	gopkg := filepath.Join(dir, "Gopkg.toml")
 
 	// add REST API if there was a source specified
 	if options.RestSource != "" {
@@ -84,26 +87,12 @@ func New(name string, options NewOptions) {
 			PkgName: "rest",
 			Source:  options.RestSource,
 		})
-
-		err = AppendTextToFile(gopkg, goMicroserviceIgnore)
-		if err != nil {
-			log.Fatal(fmt.Printf("Failed to append to %s: %v", gopkg, err))
-		}
 	}
 
-	// add hints to keep vendor clean
-	err = AppendTextToFile(gopkg, `[prune]
-	go-tests = true
-	unused-packages = true
-`)
-	if err != nil {
-		log.Fatal(fmt.Printf("Failed to append to %s: %v", gopkg, err))
-	}
-
-	SimpleExecInPath(dir, GoBinCommand("dep"), "ensure")
+	SimpleExecInPath(dir, "go", "mod", "init", GoServicePackagePath(name))
 }
 
-// Clone the service into gopath
+// Clone the service into pace path
 func Clone(name string) {
 	// get dir for the service
 	dir, err := GoServicePath(name)
@@ -111,10 +100,7 @@ func Clone(name string) {
 		log.Fatal(err)
 	}
 
-	AutoInstallDep()
-
 	SimpleExec("git", "clone", fmt.Sprintf(GitLabTemplate, name), dir)
-	SimpleExecInPath(dir, GoBinCommand("dep"), "ensure", "-v")
 }
 
 // Path prints the path of the service identified by name to STDOUT
@@ -164,8 +150,6 @@ func Run(name string, options RunOptions) {
 		log.Fatal(err)
 	}
 
-	AutoInstallDep()
-
 	// identify the go files to run
 	var args []string
 	if options.CmdName == "" {
@@ -181,7 +165,6 @@ func Run(name string, options RunOptions) {
 	args = append([]string{"run"}, args...)
 	args = append(args, options.Args...)
 	SimpleExec("go", args...)
-	SimpleExecInPath(dir, GoBinCommand("dep"), "ensure")
 }
 
 // TestOptions options to respect when starting a test
@@ -227,17 +210,12 @@ func Lint(name string) {
 
 // GoServicePath returns the path of the go service for given name
 func GoServicePath(name string) (string, error) {
-	return filepath.Abs(filepath.Join(GoPath(), "src", PaceBase, ServiceBase, name))
+	return filepath.Abs(filepath.Join(PacePath(), ServiceBase, name))
 }
 
 // GoServicePackagePath returns a go package path for given service name
 func GoServicePackagePath(name string) string {
 	return filepath.Join(PaceBase, ServiceBase, name)
-}
-
-// AutoInstallDep installs the go dep tool (will be removed if vgo available)
-func AutoInstallDep() {
-	AutoInstall("dep", "github.com/golang/dep/cmd/dep")
 }
 
 // AutoInstall cmdName if not installed already using go get -u goGetPath
@@ -291,16 +269,4 @@ func GoBinCommandText(w io.Writer, cmdName string, arguments ...string) {
 	if err != nil {
 		log.Fatal(err)
 	}
-}
-
-// AppendTextToFile appends the given text to a file or returns an error
-func AppendTextToFile(path string, text string) error {
-	file, err := os.OpenFile(path, os.O_APPEND|os.O_WRONLY|os.O_CREATE, 0660)
-	if err != nil {
-		return err
-	}
-	defer file.Close()
-
-	_, err = file.WriteString(text)
-	return err
 }
