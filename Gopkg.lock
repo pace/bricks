@@ -2,6 +2,14 @@
 
 
 [[projects]]
+  branch = "master"
+  digest = "1:5264e1bb1289de58fd25724e060fe45524a9c2b39bad8562a6fd9d6a62d7a3b6"
+  name = "github.com/asaskevich/govalidator"
+  packages = ["."]
+  pruneopts = "UT"
+  revision = "f9ffefc3facfbe0caee3fea233cbb6e8208f4541"
+
+[[projects]]
   digest = "1:707d51a23715ea3353106fba1865f7824556cf569e923cef3224a0794264cc18"
   name = "github.com/dave/jennifer"
   packages = ["jen"]
@@ -27,6 +35,15 @@
   pruneopts = "UT"
   revision = "0ca9ea5df5451ffdf184b4428c902747c2c11cd7"
   version = "v1.0.0"
+
+[[projects]]
+  branch = "master"
+  digest = "1:ebcdf6cc382a94c0bd8e2233062a4111569dc6bfcf1e40ca24d49d177f7b83b7"
+  name = "github.com/google/jsonapi"
+  packages = ["."]
+  pruneopts = "UT"
+  revision = "1e4c7a7b7ffeec44fe9deba5dc63b14eff4aca30"
+  source = "github.com/pace/jsonapi"
 
 [[projects]]
   digest = "1:c79fb010be38a59d657c48c6ba1d003a8aa651fa56b579d959d74573b7dff8e1"
@@ -64,8 +81,10 @@
   analyzer-name = "dep"
   analyzer-version = 1
   input-imports = [
+    "github.com/asaskevich/govalidator",
     "github.com/dave/jennifer/jen",
     "github.com/getkin/kin-openapi/openapi3",
+    "github.com/google/jsonapi",
     "github.com/gorilla/mux",
     "github.com/pmezard/go-difflib/difflib",
   ]

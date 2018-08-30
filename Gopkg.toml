@@ -30,8 +30,17 @@
   version = "1.0.2"
 
 [[constraint]]
+  name = "github.com/asaskevich/govalidator"
+  branch = "master"
+
+[[constraint]]
   branch = "master"
   name = "github.com/getkin/kin-openapi"
+
+[[constraint]]
+  name = "github.com/google/jsonapi"
+  branch = "master"
+  source = "github.com/pace/jsonapi"
 
 [prune]
   go-tests = true
