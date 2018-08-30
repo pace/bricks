@@ -4,7 +4,7 @@ A tool to help the go developer to stick to pace standards and fasten certain pr
 
 ## Install
 
-    go get -u lab.jamit.de/pace/tool
+    go get -u lab.jamit.de/pace/tool/cmd/pace
 
 ## Usage
 
