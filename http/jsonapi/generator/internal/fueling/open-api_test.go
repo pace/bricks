@@ -6,7 +6,7 @@ import (
 	"errors"
 	"fmt"
 	mux "github.com/gorilla/mux"
-	runtime "lab.jamit.de/pace/web/libs/go-microservice/http/jsonapi/runtime"
+	runtime "lab.jamit.de/pace/go-microservice/http/jsonapi/runtime"
 	"net/http"
 	"runtime/debug"
 )

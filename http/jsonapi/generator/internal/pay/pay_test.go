@@ -7,7 +7,7 @@ import (
 	"strings"
 	"testing"
 
-	"lab.jamit.de/pace/web/libs/go-microservice/http/jsonapi/runtime"
+	"lab.jamit.de/pace/go-microservice/http/jsonapi/runtime"
 )
 
 type testService struct {

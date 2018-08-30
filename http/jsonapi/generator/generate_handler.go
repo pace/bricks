@@ -18,7 +18,7 @@ import (
 )
 
 const gorillaMux = "github.com/gorilla/mux"
-const httpJsonapi = "lab.jamit.de/pace/web/libs/go-microservice/http/jsonapi/runtime"
+const httpJsonapi = "lab.jamit.de/pace/go-microservice/http/jsonapi/runtime"
 const govalidator = "github.com/asaskevich/govalidator"
 
 const serviceInterface = "Service"
