@@ -7,7 +7,7 @@ import (
 	"log"
 	"os"
 
-	"lab.jamit.de/pace/web/libs/go-microservice/http/jsonapi/generator"
+	"lab.jamit.de/pace/go-microservice/http/jsonapi/generator"
 )
 
 // RestOptions options to respect when generating the rest api
