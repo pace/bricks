@@ -18,3 +18,5 @@ lab.jamit.de/pace/go-microservice v0.0.0-20180830054907-9fa202c85c3a h1:TZMXjtRf
 lab.jamit.de/pace/go-microservice v0.0.0-20180830054907-9fa202c85c3a/go.mod h1:Qm7P9dOD5g4tLcqwBQbt/xIbOBsPCtYbyceFeJzFziA=
 lab.jamit.de/pace/go-microservice v0.0.0-20180830065758-2560a02ea263 h1:Uem9rKQvEhR/CDqWpQhyorX26eDoqJFoCg879gb/4+s=
 lab.jamit.de/pace/go-microservice v0.0.0-20180830065758-2560a02ea263/go.mod h1:Qm7P9dOD5g4tLcqwBQbt/xIbOBsPCtYbyceFeJzFziA=
+lab.jamit.de/pace/tool v0.0.0-20180814132721-3a729f98253a h1:dRDEvHlHo1LEq+KMV5PRkYm9jLZGZoewGD8w86fUgWw=
+lab.jamit.de/pace/tool v0.0.0-20180814132721-3a729f98253a/go.mod h1:cWFedt3dVhdt2pXUs2vVUbY6b6weLW2gVaNsNyAWntk=

@@ -10,8 +10,8 @@ import (
 	"strings"
 
 	"github.com/spf13/cobra"
-	"lab.jamit.de/pace/web/tool/internal/service"
-	"lab.jamit.de/pace/web/tool/internal/service/generate"
+	"lab.jamit.de/pace/tool/internal/service"
+	"lab.jamit.de/pace/tool/internal/service/generate"
 )
 
 func main() {

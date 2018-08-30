@@ -1,4 +1,4 @@
-module lab.jamit.de/pace/web/tool
+module lab.jamit.de/pace/tool
 
 require (
 	github.com/dave/jennifer v1.0.2 // indirect

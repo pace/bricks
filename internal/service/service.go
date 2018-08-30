@@ -14,7 +14,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	"lab.jamit.de/pace/web/tool/internal/service/generate"
+	"lab.jamit.de/pace/tool/internal/service/generate"
 )
 
 // PaceBase for all go projects
