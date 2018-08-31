@@ -1,3 +1,6 @@
+// Copyright © 2018 by PACE Telematics GmbH. All rights reserved.
+// Created at 2018/08/10 by Vincent Landgraf
+
 package service
 
 import (
@@ -10,6 +13,8 @@ import (
 	"os/user"
 	"path/filepath"
 	"strings"
+
+	"lab.jamit.de/pace/tool/internal/service/generate"
 )
 
 // PaceBase for all go projects
@@ -36,23 +41,58 @@ func GoPath() string {
 	return path
 }
 
+// PacePath returns the pace path for the current system,
+// uses PACE_PATH env and fallback to default go dir
+func PacePath() string {
+	path, ok := os.LookupEnv("PACE_PATH")
+	if !ok {
+		usr, err := user.Current()
+		if err != nil {
+			log.Fatal(err)
+		}
+		return filepath.Join(usr.HomeDir, "PACE")
+	}
+
+	return path
+}
+
+// NewOptions collection of options to apply while or
+// after the creation of the new project
+type NewOptions struct {
+	RestSource string // url or path to OpenAPIv3 (json:api) specification
+}
+
 // New creates a new directory in the go path
-func New(name string) {
+func New(name string, options NewOptions) {
 	// get dir for the service
 	dir, err := GoServicePath(name)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	AutoInstallDep()
-
 	SimpleExec("git", "init", dir)
 	SimpleExecInPath(dir, "git", "remote", "add", "origin", fmt.Sprintf(GitLabTemplate, name))
-	SimpleExecInPath(dir, GoBinCommand("dep"), "init")
-	log.Fatalf("Remember to create the %s repository in gitlab: https://lab.jamit.de/projects/new?namespace_id=296\n", name)
+	log.Printf("Remember to create the %s repository in gitlab: https://lab.jamit.de/projects/new?namespace_id=296\n", name)
+
+	// add REST API if there was a source specified
+	if options.RestSource != "" {
+		restDir := filepath.Join(dir, "internal", "http", "rest")
+		err := os.MkdirAll(restDir, 0770)
+		if err != nil {
+			log.Fatal(fmt.Printf("Failed to generate dir for rest api %s: %v", restDir, err))
+		}
+
+		generate.Rest(generate.RestOptions{
+			Path:    filepath.Join(restDir, "jsonapi.go"),
+			PkgName: "rest",
+			Source:  options.RestSource,
+		})
+	}
+
+	SimpleExecInPath(dir, "go", "mod", "init", GoServicePackagePath(name))
 }
 
-// Clone the service into gopath
+// Clone the service into pace path
 func Clone(name string) {
 	// get dir for the service
 	dir, err := GoServicePath(name)
@@ -60,10 +100,7 @@ func Clone(name string) {
 		log.Fatal(err)
 	}
 
-	AutoInstallDep()
-
 	SimpleExec("git", "clone", fmt.Sprintf(GitLabTemplate, name), dir)
-	SimpleExecInPath(dir, GoBinCommand("dep"), "ensure", "-v")
 }
 
 // Path prints the path of the service identified by name to STDOUT
@@ -113,8 +150,6 @@ func Run(name string, options RunOptions) {
 		log.Fatal(err)
 	}
 
-	AutoInstallDep()
-
 	// identify the go files to run
 	var args []string
 	if options.CmdName == "" {
@@ -130,7 +165,6 @@ func Run(name string, options RunOptions) {
 	args = append([]string{"run"}, args...)
 	args = append(args, options.Args...)
 	SimpleExec("go", args...)
-	SimpleExecInPath(dir, GoBinCommand("dep"), "ensure")
 }
 
 // TestOptions options to respect when starting a test
@@ -176,17 +210,12 @@ func Lint(name string) {
 
 // GoServicePath returns the path of the go service for given name
 func GoServicePath(name string) (string, error) {
-	return filepath.Abs(filepath.Join(GoPath(), "src", PaceBase, ServiceBase, name))
+	return filepath.Abs(filepath.Join(PacePath(), ServiceBase, name))
 }
 
 // GoServicePackagePath returns a go package path for given service name
 func GoServicePackagePath(name string) string {
 	return filepath.Join(PaceBase, ServiceBase, name)
-}
-
-// AutoInstallDep installs the go dep tool (will be removed if vgo available)
-func AutoInstallDep() {
-	AutoInstall("dep", "github.com/golang/dep/cmd/dep")
 }
 
 // AutoInstall cmdName if not installed already using go get -u goGetPath

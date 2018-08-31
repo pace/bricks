@@ -1,0 +1,17 @@
+# github.com/dave/jennifer v1.0.2
+github.com/dave/jennifer/jen
+# github.com/getkin/kin-openapi v0.0.0-20180824092124-11d1c01c053b
+github.com/getkin/kin-openapi/openapi3
+github.com/getkin/kin-openapi/jsoninfo
+# github.com/ghodss/yaml v1.0.0
+github.com/ghodss/yaml
+# github.com/inconshreveable/mousetrap v1.0.0
+github.com/inconshreveable/mousetrap
+# github.com/spf13/cobra v0.0.3
+github.com/spf13/cobra
+# github.com/spf13/pflag v1.0.2
+github.com/spf13/pflag
+# gopkg.in/yaml.v2 v2.2.1
+gopkg.in/yaml.v2
+# lab.jamit.de/pace/go-microservice v0.0.0-20180830065758-2560a02ea263
+lab.jamit.de/pace/go-microservice/http/jsonapi/generator
