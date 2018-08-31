@@ -17,16 +17,7 @@ type testService struct {
 func (s *testService) GetPaymentMethods(context.Context, GetPaymentMethodsResponseWriter, *GetPaymentMethodsRequest) error {
 	panic("Some error!")
 }
-
-func (s *testService) PostPaymentMethodsPaymentMethodIDAuthorize(context.Context, PostPaymentMethodsPaymentMethodIDAuthorizeResponseWriter, *PostPaymentMethodsPaymentMethodIDAuthorizeRequest) error {
-	return nil
-}
-
-func (s *testService) DeletePaymentMethodsPaymentMethodIDPaymentTokensPaymentTokenID(context.Context, DeletePaymentMethodsPaymentMethodIDPaymentTokensPaymentTokenIDResponseWriter, *DeletePaymentMethodsPaymentMethodIDPaymentTokensPaymentTokenIDRequest) error {
-	return nil
-}
-
-func (s *testService) PostPaymentMethodsSepaDirectDebit(ctx context.Context, w PostPaymentMethodsSepaDirectDebitResponseWriter, r *PostPaymentMethodsSepaDirectDebitRequest) error {
+func (s *testService) CreatePaymentMethodSEPA(ctx context.Context, w CreatePaymentMethodSEPAResponseWriter, r *CreatePaymentMethodSEPARequest) error {
 	if str := "Jon"; r.Content.FirstName != str {
 		s.t.Errorf("expected FirstName to be %q, got %q", str, r.Content.FirstName)
 	}
@@ -34,7 +25,7 @@ func (s *testService) PostPaymentMethodsSepaDirectDebit(ctx context.Context, w P
 		s.t.Errorf("expected Address.Street to be %q, got %q", str, r.Content.Address.Street)
 	}
 
-	w.Created(&PostPaymentMethodsSepaDirectDebitCreated{
+	w.Created(&CreatePaymentMethodSEPACreated{
 		ID:                   "1",
 		IdentificationString: "d7101f72-a672-453c-9d36-d5809ef0ded6",
 		Kind:                 "sepa",
@@ -42,18 +33,22 @@ func (s *testService) PostPaymentMethodsSepaDirectDebit(ctx context.Context, w P
 
 	return nil
 }
-
-func (s *testService) DeletePaymentMethodsPaymentMethodID(context.Context, DeletePaymentMethodsPaymentMethodIDResponseWriter, *DeletePaymentMethodsPaymentMethodIDRequest) error {
+func (s *testService) DeletePaymentMethod(context.Context, DeletePaymentMethodResponseWriter, *DeletePaymentMethodRequest) error {
+	return nil
+}
+func (s *testService) AuthorizePaymentMethod(context.Context, AuthorizePaymentMethodResponseWriter, *AuthorizePaymentMethodRequest) error {
+	return nil
+}
+func (s *testService) DeletePaymentToken(context.Context, DeletePaymentTokenResponseWriter, *DeletePaymentTokenRequest) error {
+	return nil
+}
+func (s *testService) GetPaymentMethodsIncludingCreditCheck(context.Context, GetPaymentMethodsIncludingCreditCheckResponseWriter, *GetPaymentMethodsIncludingCreditCheckRequest) error {
+	return nil
+}
+func (s *testService) GetPaymentMethodsIncludingPaymentToken(context.Context, GetPaymentMethodsIncludingPaymentTokenResponseWriter, *GetPaymentMethodsIncludingPaymentTokenRequest) error {
 	return nil
 }
 
-func (s *testService) GetPaymentMethodsIncludeCreditCheck(context.Context, GetPaymentMethodsIncludeCreditCheckResponseWriter, *GetPaymentMethodsIncludeCreditCheckRequest) error {
-	return nil
-}
-
-func (s *testService) GetPaymentMethodsIncludePaymentTokens(context.Context, GetPaymentMethodsIncludePaymentTokensResponseWriter, *GetPaymentMethodsIncludePaymentTokensRequest) error {
-	return nil
-}
 func TestHandler(t *testing.T) {
 	r := Router(&testService{t})
 	rec := httptest.NewRecorder()

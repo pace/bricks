@@ -3,22 +3,23 @@
   "info": {
     "title": "PACE Fueling API",
     "description": "Fueling API",
-    "version": "0.0.1",
+    "version": "0.1.0",
     "x-logo": {
       "url": "https://developer.pace.car/images/logo_black.svg"
     }
   },
   "servers": [
     {
-      "url": "https://api.pace.cloud/fueling/beta"
+      "url": "https://api.pace.cloud/fueling"
     }
   ],
   "paths": {
-    "/gas-station/{fuelingAppId}/approaching": {
+    "/beta/gas-station/{fuelingAppId}/approaching": {
       "get": {
         "tags": [
           "Fueling"
         ],
+        "operationId": "ApproachingAtTheForecourt",
         "summary": "Gather information when approaching at the forecourt\n",
         "description": "This request will:\n* Return a list of available paymentMethodIds\n* Return up-to-date price information (price structure) at the gas station\n* Return a list of pumps available at the gas station together with the current status (free, inUse, readyToPay, outOfOrder)\n* Create payment tokens for all paymentMethods of the user and pre-authorise the calculated maximum amount of money (background task)\n",
         "parameters": [
@@ -240,6 +241,9 @@
               }
             }
           },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
           "401": {
             "$ref": "#/components/responses/Unauthorized"
           },
@@ -255,11 +259,12 @@
         }
       }
     },
-    "/gas-station/{fuelingAppId}/pumps/{pumpId}": {
+    "/beta/gas-station/{fuelingAppId}/pumps/{pumpId}": {
       "get": {
         "tags": [
           "Fueling"
         ],
+        "operationId": "GetPump",
         "summary": "Return current pump information",
         "description": "Returns the current pump status (free, inUse, readyToPay, outOfOrder) and identifier. If the status is readyToPay, the result also contains fuelType, productName, fuelAmount, fuelAmountUnit, VAT (amount & rate), priceWithoutVAT, priceIncludingVAT, currency.\n",
         "parameters": [
@@ -319,11 +324,12 @@
         }
       }
     },
-    "/gas-station/{fuelingAppId}/pumps/{pumpId}/waitForStatusChange": {
+    "/beta/gas-station/{fuelingAppId}/pumps/{pumpId}/wait-for-status-change": {
       "get": {
         "tags": [
           "Fueling"
         ],
+        "operationId": "WaitOnPumpStatusChange",
         "summary": "Wait for a status change on a given pump",
         "description": "Uses **long polling** to wait for a status change on a given pump. Returns as soon as the status has changed or after the number of seconds provided by the optional `timeout` query parameter (default timeout is 30 seconds). In case of timeout (408 status code) you're safe to start the request again. Instantaneously returns if `lastStatus` was given and already changed between request. If successful, it returns the same structure as the normal status call\n",
         "parameters": [
@@ -388,6 +394,9 @@
               }
             }
           },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
           "401": {
             "$ref": "#/components/responses/Unauthorized"
           },
@@ -406,11 +415,12 @@
         }
       }
     },
-    "/gas-station/{fuelingAppId}/pumps/{pumpId}/pay": {
+    "/beta/gas-station/{fuelingAppId}/pumps/{pumpId}/pay": {
       "post": {
         "tags": [
           "Fueling"
         ],
+        "operationId": "ProcessPayment",
         "summary": "Process payment",
         "description": "Process payment and notify user if transaction is finished successfully. You can optionally provide `priceIncludingVAT`and `currency` in the request body to check if the price the user has seen is still correct.\n",
         "parameters": [
@@ -473,6 +483,7 @@
                         },
                         "id": {
                           "type": "string",
+                          "format": "uuid",
                           "description": "Transaction ID",
                           "example": "c3f037ea-492e-4033-9b4b-4efc7beca16c"
                         },
@@ -540,63 +551,7 @@
             }
           },
           "400": {
-            "description": "Bad Request",
-            "content": {
-              "application/vnd.api+json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "errors": {
-                      "type": "array",
-                      "items": {
-                        "type": "object",
-                        "properties": {
-                          "status": {
-                            "type": "string",
-                            "enum": [
-                              "400"
-                            ]
-                          },
-                          "code": {
-                            "type": "string",
-                            "enum": [
-                              "badRequest"
-                            ]
-                          },
-                          "title": {
-                            "type": "string",
-                            "example": "The server cannot or will not process the request due to an apparent client error"
-                          },
-                          "source": {
-                            "type": "object",
-                            "properties": {
-                              "pointer": {
-                                "type": "string"
-                              },
-                              "parameter": {
-                                "type": "string"
-                              }
-                            }
-                          }
-                        }
-                      }
-                    }
-                  }
-                },
-                "example": {
-                  "errors": [
-                    {
-                      "status": "400",
-                      "code": "badRequest",
-                      "title": "Payment method ID missing",
-                      "source": {
-                        "pointer": "/data/attributes/paymentMethodId"
-                      }
-                    }
-                  ]
-                }
-              }
-            }
+            "$ref": "#/components/responses/BadRequest"
           },
           "401": {
             "$ref": "#/components/responses/Unauthorized"
@@ -608,59 +563,7 @@
             "$ref": "#/components/responses/NotAcceptable"
           },
           "409": {
-            "description": "Conflict",
-            "content": {
-              "application/vnd.api+json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "errors": {
-                      "type": "array",
-                      "items": {
-                        "type": "object",
-                        "properties": {
-                          "status": {
-                            "type": "string",
-                            "enum": [
-                              "409"
-                            ]
-                          },
-                          "code": {
-                            "type": "string",
-                            "example": "priceCheckFailed"
-                          },
-                          "title": {
-                            "type": "string",
-                            "example": "The provided priceIncludingVAT does not match the actual price"
-                          },
-                          "source": {
-                            "type": "object",
-                            "properties": {
-                              "pointer": {
-                                "type": "string",
-                                "example": "/data/attributes/priceIncludingVAT"
-                              }
-                            }
-                          }
-                        }
-                      }
-                    }
-                  }
-                },
-                "example": {
-                  "errors": [
-                    {
-                      "status": "409",
-                      "code": "priceCheckFailed",
-                      "title": "The provided priceIncludingVAT does not match the actual price",
-                      "source": {
-                        "pointer": "/data/attributes/priceIncludingVAT"
-                      }
-                    }
-                  ]
-                }
-              }
-            }
+            "$ref": "#/components/responses/Conflict"
           },
           "415": {
             "$ref": "#/components/responses/UnsupportedMediaType"
@@ -1225,246 +1128,150 @@
             }
           }
         ]
+      },
+      "Errors": {
+        "type": "object",
+        "description": "Error objects provide additional information about problems  encountered while performing an operation.\n",
+        "properties": {
+          "errors": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "description": "A unique identifier for this particular occurrence of the problem."
+                },
+                "links": {
+                  "type": "object",
+                  "properties": {
+                    "about": {
+                      "type": "string",
+                      "description": "A link that leads to further details about this particular occurrence of the problem.\n"
+                    }
+                  }
+                },
+                "status": {
+                  "type": "string",
+                  "description": "the HTTP status code applicable to this problem, expressed as a string value.\n"
+                },
+                "code": {
+                  "type": "string",
+                  "description": "an application-specific error code, expressed as a string value.\n"
+                },
+                "title": {
+                  "type": "string",
+                  "description": "A short, human-readable summary of the problem that SHOULD NOT change from occurrence to occurrence of the problem, except for purposes of localization.\n"
+                },
+                "detail": {
+                  "type": "string",
+                  "description": "a human-readable explanation specific to this occurrence of the problem. Like title, this field’s value can be localized.\n"
+                },
+                "source": {
+                  "type": "object",
+                  "desciption": "An object containing references to the source of the error.\n",
+                  "properties": {
+                    "pointer": {
+                      "type": "string",
+                      "description": "A JSON Pointer [RFC6901] to the associated entity in the request document [e.g. \"/data\" for a primary data object, or \"/data/attributes/title\" for a specific attribute].\n"
+                    },
+                    "parameter": {
+                      "type": "string",
+                      "description": "A string indicating which URI query parameter caused the error.\n"
+                    }
+                  }
+                },
+                "meta": {
+                  "type": "object",
+                  "description": "a meta object containing non-standard meta-information about the error.\n",
+                  "properties": {},
+                  "additionalProperties": true
+                }
+              }
+            }
+          }
+        }
       }
     },
     "responses": {
-      "Unauthorized": {
-        "description": "Unauthorized",
+      "Conflict": {
+        "description": "The provided priceIncludingVAT does not match the actual price",
         "content": {
           "application/vnd.api+json": {
             "schema": {
-              "type": "object",
-              "properties": {
-                "errors": {
-                  "type": "array",
-                  "items": {
-                    "type": "object",
-                    "properties": {
-                      "status": {
-                        "type": "string",
-                        "enum": [
-                          "401"
-                        ]
-                      },
-                      "code": {
-                        "type": "string",
-                        "enum": [
-                          "unauthorized"
-                        ]
-                      },
-                      "title": {
-                        "type": "string",
-                        "example": "OAuth token missing or invalid"
-                      },
-                      "source": {
-                        "type": "object",
-                        "properties": {
-                          "header": {
-                            "type": "string",
-                            "example": "Authorization"
-                          }
-                        }
-                      }
-                    }
+              "$ref": "#/components/schemas/Errors"
+            },
+            "example": {
+              "errors": [
+                {
+                  "status": "409",
+                  "code": "priceCheckFailed",
+                  "title": "The provided priceIncludingVAT does not match the actual price",
+                  "source": {
+                    "pointer": "/data/attributes/priceIncludingVAT"
                   }
                 }
-              }
+              ]
+            }
+          }
+        }
+      },
+      "Unauthorized": {
+        "description": "OAuth token missing or invalid",
+        "content": {
+          "application/vnd.api+json": {
+            "schema": {
+              "$ref": "#/components/schemas/Errors"
             }
           }
         }
       },
       "NotFound": {
-        "description": "Not found",
+        "description": "Resource not found",
         "content": {
           "application/vnd.api+json": {
             "schema": {
-              "type": "object",
-              "properties": {
-                "errors": {
-                  "type": "array",
-                  "items": {
-                    "type": "object",
-                    "properties": {
-                      "status": {
-                        "type": "string",
-                        "enum": [
-                          "404"
-                        ]
-                      },
-                      "code": {
-                        "type": "string",
-                        "enum": [
-                          "resourceNotFound"
-                        ]
-                      },
-                      "title": {
-                        "type": "string",
-                        "example": "Resource not found"
-                      },
-                      "source": {
-                        "type": "object",
-                        "properties": {
-                          "parameter": {
-                            "type": "string"
-                          }
-                        }
-                      }
-                    }
-                  }
-                }
-              }
-            },
-            "example": {
-              "errors": [
-                {
-                  "status": "404",
-                  "code": "resourceNotFound",
-                  "title": "Location-based app could not be found",
-                  "source": {
-                    "parameter": "fuelingAppId"
-                  }
-                }
-              ]
+              "$ref": "#/components/schemas/Errors"
+            }
+          }
+        }
+      },
+      "BadRequest": {
+        "description": "The server cannot or will not process the request due to an apparent client error\n",
+        "content": {
+          "application/vnd.api+json": {
+            "schema": {
+              "$ref": "#/components/schemas/Errors"
             }
           }
         }
       },
       "NotAcceptable": {
-        "description": "Not acceptable",
+        "description": "The specified Accept header is not valid",
         "content": {
           "application/vnd.api+json": {
             "schema": {
-              "type": "object",
-              "properties": {
-                "errors": {
-                  "type": "array",
-                  "items": {
-                    "type": "object",
-                    "properties": {
-                      "status": {
-                        "type": "string",
-                        "enum": [
-                          "406"
-                        ]
-                      },
-                      "code": {
-                        "type": "string",
-                        "enum": [
-                          "notAcceptable"
-                        ]
-                      },
-                      "title": {
-                        "type": "string",
-                        "example": "The specified Accept header is not valid"
-                      },
-                      "source": {
-                        "type": "object",
-                        "properties": {
-                          "header": {
-                            "type": "string",
-                            "example": "Accept"
-                          }
-                        }
-                      }
-                    }
-                  }
-                }
-              }
+              "$ref": "#/components/schemas/Errors"
             }
           }
         }
       },
       "RequestTimeout": {
-        "description": "Request timeout",
+        "description": "Your request timed out",
         "content": {
           "application/vnd.api+json": {
             "schema": {
-              "type": "object",
-              "properties": {
-                "errors": {
-                  "type": "array",
-                  "items": {
-                    "type": "object",
-                    "properties": {
-                      "status": {
-                        "type": "string",
-                        "enum": [
-                          "408"
-                        ]
-                      },
-                      "code": {
-                        "type": "string",
-                        "enum": [
-                          "requestTimeout"
-                        ]
-                      },
-                      "title": {
-                        "type": "string",
-                        "example": "Your request timed out"
-                      }
-                    }
-                  }
-                }
-              }
+              "$ref": "#/components/schemas/Errors"
             }
           }
         }
       },
       "UnprocessableEntity": {
-        "description": "Unprocessable entity",
+        "description": "Unprocessable entity, due to malformed or invalid json",
         "content": {
           "application/vnd.api+json": {
             "schema": {
-              "description": "Unprocessable entity",
-              "properties": {
-                "errors": {
-                  "type": "array",
-                  "items": {
-                    "type": "object",
-                    "properties": {
-                      "status": {
-                        "type": "string",
-                        "enum": [
-                          "422"
-                        ]
-                      },
-                      "code": {
-                        "type": "string",
-                        "enum": [
-                          "unprocessableEntity"
-                        ]
-                      },
-                      "title": {
-                        "type": "string",
-                        "example": "There was an error processing the request"
-                      },
-                      "source": {
-                        "type": "object",
-                        "properties": {
-                          "pointer": {
-                            "type": "string"
-                          },
-                          "parameter": {
-                            "type": "string"
-                          }
-                        }
-                      }
-                    }
-                  }
-                }
-              }
-            },
-            "example": {
-              "errors": [
-                {
-                  "status": "422",
-                  "code": "unprocessableEntity",
-                  "title": "There was an error processing the request for the given pump",
-                  "source": {
-                    "parameter": "pumpId"
-                  }
-                }
-              ]
+              "$ref": "#/components/schemas/Errors"
             }
           }
         }
@@ -1474,78 +1281,17 @@
         "content": {
           "application/vnd.api+json": {
             "schema": {
-              "type": "object",
-              "properties": {
-                "errors": {
-                  "type": "array",
-                  "items": {
-                    "type": "object",
-                    "properties": {
-                      "status": {
-                        "type": "string",
-                        "enum": [
-                          "500"
-                        ]
-                      },
-                      "code": {
-                        "type": "string",
-                        "enum": [
-                          "internalServerError"
-                        ]
-                      },
-                      "title": {
-                        "type": "string",
-                        "example": "Internal server error"
-                      }
-                    }
-                  }
-                }
-              }
+              "$ref": "#/components/schemas/Errors"
             }
           }
         }
       },
       "UnsupportedMediaType": {
-        "description": "Unsupported Media Type",
+        "description": "The specified Content-Type header is not valid",
         "content": {
           "application/vnd.api+json": {
             "schema": {
-              "type": "object",
-              "properties": {
-                "errors": {
-                  "type": "array",
-                  "items": {
-                    "type": "object",
-                    "properties": {
-                      "status": {
-                        "type": "string",
-                        "enum": [
-                          "415"
-                        ]
-                      },
-                      "code": {
-                        "type": "string",
-                        "enum": [
-                          "unsupportedMediaType"
-                        ]
-                      },
-                      "title": {
-                        "type": "string",
-                        "example": "The specified Content-Type header is not valid"
-                      },
-                      "source": {
-                        "type": "object",
-                        "properties": {
-                          "header": {
-                            "type": "string",
-                            "example": "Content-Type"
-                          }
-                        }
-                      }
-                    }
-                  }
-                }
-              }
+              "$ref": "#/components/schemas/Errors"
             }
           }
         }

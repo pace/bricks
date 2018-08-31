@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"log"
 	"net/url"
+	"path/filepath"
 	"regexp"
 	"sort"
 	"strconv"
@@ -158,7 +159,14 @@ func (g *Generator) generateResponseInterface(route *route, schema *openapi3.Swa
 			return fmt.Errorf("Failed to parse response code %s: %v", code, err)
 		}
 
-		methodName := generateMethodName(response.Value.Description)
+		// generate method name
+		var methodName string
+		if response.Ref != "" {
+			methodName = generateMethodName(filepath.Base(response.Ref))
+		} else {
+			methodName = generateMethodName(response.Value.Description)
+		}
+
 		method := jen.Id(methodName)
 		if codeNum >= 400 {
 			method.Params(jen.Error())
@@ -254,10 +262,17 @@ func (g *Generator) generateRequestStruct(route *route, schema *openapi3.Swagger
 		} else {
 			tags["valid"] = "optional"
 		}
-		err := g.goType(paramStmt, param.Value.Schema.Value, tags)
-		if err != nil {
-			return err
+
+		// add go type
+		if param.Value.Schema.Ref != "" {
+			paramStmt.Id(goNameHelper(filepath.Base(param.Value.Schema.Ref)))
+		} else {
+			err := g.goType(paramStmt, param.Value.Schema.Value, tags)
+			if err != nil {
+				return err
+			}
 		}
+
 		fields = append(fields, paramStmt.Tag(tags))
 	}
 

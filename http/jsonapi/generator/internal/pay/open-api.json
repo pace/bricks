@@ -10,15 +10,16 @@
   },
   "servers": [
     {
-      "url": "https://api.pace.cloud/pay/beta"
+      "url": "https://api.pace.cloud/pay"
     }
   ],
   "paths": {
-    "/payment-methods/sepa-direct-debit": {
+    "/beta/payment-methods/sepa-direct-debit": {
       "post": {
         "tags": [
           "Payment"
         ],
+        "operationId": "CreatePaymentMethodSEPA",
         "summary": "Register SEPA direct debit as a payment method",
         "description": "By registering you allow the user to use SEPA direct debit as a payment method.\nThe payment method ID is optional when posting data.\n",
         "requestBody": {
@@ -77,51 +78,7 @@
             }
           },
           "400": {
-            "description": "Bad Request",
-            "content": {
-              "application/vnd.api+json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "errors": {
-                      "type": "array",
-                      "items": {
-                        "type": "object",
-                        "properties": {
-                          "status": {
-                            "type": "string",
-                            "enum": [
-                              "400"
-                            ]
-                          },
-                          "code": {
-                            "type": "string",
-                            "enum": [
-                              "badRequest"
-                            ]
-                          },
-                          "title": {
-                            "type": "string",
-                            "example": "The server cannot or will not process the request due to an apparent client error"
-                          },
-                          "source": {
-                            "type": "object",
-                            "properties": {
-                              "pointer": {
-                                "type": "string"
-                              },
-                              "parameter": {
-                                "type": "string"
-                              }
-                            }
-                          }
-                        }
-                      }
-                    }
-                  }
-                }
-              }
-            }
+            "$ref": "#/components/responses/BadRequest"
           },
           "401": {
             "$ref": "#/components/responses/Unauthorized"
@@ -141,11 +98,12 @@
         }
       }
     },
-    "/payment-methods/{paymentMethodId}": {
+    "/beta/payment-methods/{paymentMethodId}": {
       "delete": {
         "tags": [
           "Payment"
         ],
+        "operationId": "DeletePaymentMethod",
         "summary": "Delete a payment method",
         "parameters": [
           {
@@ -167,6 +125,9 @@
           "401": {
             "$ref": "#/components/responses/Unauthorized"
           },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
           "406": {
             "$ref": "#/components/responses/NotAcceptable"
           },
@@ -179,11 +140,12 @@
         }
       }
     },
-    "/payment-methods": {
+    "/beta/payment-methods": {
       "get": {
         "tags": [
           "Payment"
         ],
+        "operationId": "GetPaymentMethods",
         "summary": "Get all payment methods for user",
         "responses": {
           "200": {
@@ -223,11 +185,12 @@
         }
       }
     },
-    "/payment-methods?include=creditCheck": {
+    "/beta/payment-methods?include=creditCheck": {
       "get": {
         "tags": [
           "Payment"
         ],
+        "operationId": "GetPaymentMethodsIncludingCreditCheck",
         "summary": "Get all ready-to-use payment methods for user",
         "description": "This request will return a list of supported payment methods for the current user that they can, in theory, use. That is, ones that are valid and can immediately be used.</br></br>\nThis is as opposed to the regular `/payment-methods`, which does not categorize payment methods as valid for use.</br></br>\nYou should trigger this when the user is approaching on a gas station with fueling support to get a list of available payment methods.</br></br>\nIf the list is empty, you can ask the user to add a payment method to use PACE fueling.",
         "parameters": [
@@ -270,11 +233,12 @@
         }
       }
     },
-    "/payment-methods?include=paymentTokens": {
+    "/beta/payment-methods?include=paymentTokens": {
       "get": {
         "tags": [
           "Payment"
         ],
+        "operationId": "GetPaymentMethodsIncludingPaymentToken",
         "summary": "Get all payment methods with pre-authorized amounts",
         "description": "This request returns all payment methods with pre-authorized amounts.</br></br>\nThe list will contain the pre-authorized amount (incl. currency), all information about the payment method and the paymentToken that can be used to complete the payment.</br></br>\nEmpty list if there are no pre-authorized amounts.",
         "parameters": [
@@ -317,11 +281,12 @@
         }
       }
     },
-    "/payment-methods/:paymentMethodId/authorize": {
+    "/beta/payment-methods/{paymentMethodId}/authorize": {
       "post": {
         "tags": [
           "Payment"
         ],
+        "operationId": "AuthorizePaymentMethod",
         "summary": "Authorize a payment using the payment method whose ID is paymentMethodId",
         "description": "When successful, returns a paymentToken value.",
         "parameters": [
@@ -407,6 +372,7 @@
                         },
                         "id": {
                           "type": "string",
+                          "format": "uuid",
                           "description": "paymentToken ID (NOT the token value)",
                           "example": "c3f037ea-492e-4033-9b4b-4efc7beca16c"
                         },
@@ -440,84 +406,21 @@
             "$ref": "#/components/responses/Unauthorized"
           },
           "403": {
-            "description": "Forbidden",
+            "description": "Amount cannot be authorized",
             "content": {
               "application/vnd.api+json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "errors": {
-                      "type": "array",
-                      "items": {
-                        "type": "object",
-                        "properties": {
-                          "status": {
-                            "type": "string",
-                            "enum": [
-                              "403"
-                            ]
-                          },
-                          "code": {
-                            "type": "string",
-                            "enum": [
-                              "amountCannotBeAuthorized"
-                            ]
-                          },
-                          "title": {
-                            "type": "string",
-                            "example": "Amount cannot be authorized"
-                          }
-                        }
-                      }
-                    }
-                  }
+                  "$ref": "#/components/schemas/Errors"
                 }
               }
             }
           },
           "404": {
-            "description": "Not found",
+            "description": "Payment method is unknown",
             "content": {
               "application/vnd.api+json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "errors": {
-                      "type": "array",
-                      "items": {
-                        "type": "object",
-                        "properties": {
-                          "status": {
-                            "type": "string",
-                            "enum": [
-                              "404"
-                            ]
-                          },
-                          "code": {
-                            "type": "string",
-                            "enum": [
-                              "paymentMethodUnknown"
-                            ]
-                          },
-                          "title": {
-                            "type": "string",
-                            "example": "Payment method is unknown"
-                          },
-                          "source": {
-                            "type": "object",
-                            "properties": {
-                              "parameter": {
-                                "type": "string",
-                                "enum": [
-                                  "paymentMethodId"
-                                ]
-                              }
-                            }
-                          }
-                        }
-                      }
-                    }
-                  }
+                  "$ref": "#/components/schemas/Errors"
                 }
               }
             }
@@ -532,49 +435,17 @@
             "$ref": "#/components/responses/InternalServerError"
           },
           "502": {
-            "description": "Bad Gateway",
-            "content": {
-              "application/vnd.api+json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "errors": {
-                      "type": "array",
-                      "items": {
-                        "type": "object",
-                        "properties": {
-                          "status": {
-                            "type": "string",
-                            "enum": [
-                              "502"
-                            ]
-                          },
-                          "code": {
-                            "type": "string",
-                            "enum": [
-                              "upstreamCommunicationError"
-                            ]
-                          },
-                          "title": {
-                            "type": "string",
-                            "example": "Error occurred while communicating with upstream services"
-                          }
-                        }
-                      }
-                    }
-                  }
-                }
-              }
-            }
+            "$ref": "#/components/responses/BadGateway"
           }
         }
       }
     },
-    "/payment-methods/:paymentMethodId/paymentTokens/:paymentTokenId": {
+    "/beta/payment-methods/{paymentMethodId}/paymentTokens/{paymentTokenId}": {
       "delete": {
         "tags": [
           "Payment"
         ],
+        "operationId": "DeletePaymentToken",
         "summary": "Delete the paymentToken record.",
         "parameters": [
           {
@@ -717,8 +588,8 @@
                               },
                               "id": {
                                 "type": "string",
-                                "example": "33331f72-a672-453c-9d36-d5809ef0ded6",
-                                "format": "uuid"
+                                "format": "uuid",
+                                "example": "33331f72-a672-453c-9d36-d5809ef0ded6"
                               }
                             }
                           }
@@ -743,8 +614,8 @@
                 },
                 "id": {
                   "type": "string",
-                  "example": "33331f72-a672-453c-9d36-d5809ef0ded6",
-                  "format": "uuid"
+                  "format": "uuid",
+                  "example": "33331f72-a672-453c-9d36-d5809ef0ded6"
                 },
                 "attributes": {
                   "type": "object",
@@ -863,187 +734,128 @@
             }
           }
         }
+      },
+      "Errors": {
+        "type": "object",
+        "description": "Error objects provide additional information about problems  encountered while performing an operation.\n",
+        "properties": {
+          "errors": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "description": "A unique identifier for this particular occurrence of the problem."
+                },
+                "links": {
+                  "type": "object",
+                  "properties": {
+                    "about": {
+                      "type": "string",
+                      "description": "A link that leads to further details about this particular occurrence of the problem.\n"
+                    }
+                  }
+                },
+                "status": {
+                  "type": "string",
+                  "description": "the HTTP status code applicable to this problem, expressed as a string value.\n"
+                },
+                "code": {
+                  "type": "string",
+                  "description": "an application-specific error code, expressed as a string value.\n"
+                },
+                "title": {
+                  "type": "string",
+                  "description": "A short, human-readable summary of the problem that SHOULD NOT change from occurrence to occurrence of the problem, except for purposes of localization.\n"
+                },
+                "detail": {
+                  "type": "string",
+                  "description": "a human-readable explanation specific to this occurrence of the problem. Like title, this field’s value can be localized.\n"
+                },
+                "source": {
+                  "type": "object",
+                  "desciption": "An object containing references to the source of the error.\n",
+                  "properties": {
+                    "pointer": {
+                      "type": "string",
+                      "description": "A JSON Pointer [RFC6901] to the associated entity in the request document [e.g. \"/data\" for a primary data object, or \"/data/attributes/title\" for a specific attribute].\n"
+                    },
+                    "parameter": {
+                      "type": "string",
+                      "description": "A string indicating which URI query parameter caused the error.\n"
+                    }
+                  }
+                },
+                "meta": {
+                  "type": "object",
+                  "description": "a meta object containing non-standard meta-information about the error.\n",
+                  "properties": {},
+                  "additionalProperties": true
+                }
+              }
+            }
+          }
+        }
       }
     },
     "responses": {
-      "Unauthorized": {
-        "description": "Unauthorized",
+      "BadGateway": {
+        "description": "Error occurred while communicating with upstream services",
         "content": {
           "application/vnd.api+json": {
             "schema": {
-              "type": "object",
-              "properties": {
-                "errors": {
-                  "type": "array",
-                  "items": {
-                    "type": "object",
-                    "properties": {
-                      "status": {
-                        "type": "string",
-                        "enum": [
-                          "401"
-                        ]
-                      },
-                      "code": {
-                        "type": "string",
-                        "enum": [
-                          "unauthorized"
-                        ]
-                      },
-                      "title": {
-                        "type": "string",
-                        "example": "OAuth token missing or invalid"
-                      },
-                      "source": {
-                        "type": "object",
-                        "properties": {
-                          "header": {
-                            "type": "string",
-                            "example": "Authorization"
-                          }
-                        }
-                      }
-                    }
-                  }
-                }
-              }
+              "$ref": "#/components/schemas/Errors"
+            }
+          }
+        }
+      },
+      "Unauthorized": {
+        "description": "OAuth token missing or invalid",
+        "content": {
+          "application/vnd.api+json": {
+            "schema": {
+              "$ref": "#/components/schemas/Errors"
             }
           }
         }
       },
       "RequestTimeout": {
-        "description": "Request timeout",
+        "description": "Your request timed out",
         "content": {
           "application/vnd.api+json": {
             "schema": {
-              "type": "object",
-              "properties": {
-                "errors": {
-                  "type": "array",
-                  "items": {
-                    "type": "object",
-                    "properties": {
-                      "status": {
-                        "type": "string",
-                        "enum": [
-                          "408"
-                        ]
-                      },
-                      "code": {
-                        "type": "string",
-                        "enum": [
-                          "requestTimeout"
-                        ]
-                      },
-                      "title": {
-                        "type": "string",
-                        "example": "Your request timed out"
-                      }
-                    }
-                  }
-                }
-              }
+              "$ref": "#/components/schemas/Errors"
+            }
+          }
+        }
+      },
+      "BadRequest": {
+        "description": "The server cannot or will not process the request due to an apparent client error\n",
+        "content": {
+          "application/vnd.api+json": {
+            "schema": {
+              "$ref": "#/components/schemas/Errors"
             }
           }
         }
       },
       "UnprocessableEntity": {
-        "description": "Unprocessable entity",
+        "description": "Unprocessable entity, due to malformed or invalid json",
         "content": {
           "application/vnd.api+json": {
             "schema": {
-              "description": "Unprocessable entity",
-              "properties": {
-                "errors": {
-                  "type": "array",
-                  "items": {
-                    "type": "object",
-                    "properties": {
-                      "status": {
-                        "type": "string",
-                        "enum": [
-                          "422"
-                        ]
-                      },
-                      "code": {
-                        "type": "string",
-                        "enum": [
-                          "unprocessableEntity"
-                        ]
-                      },
-                      "title": {
-                        "type": "string",
-                        "example": "There was an error processing the request"
-                      },
-                      "source": {
-                        "type": "object",
-                        "properties": {
-                          "pointer": {
-                            "type": "string"
-                          },
-                          "parameter": {
-                            "type": "string"
-                          }
-                        }
-                      }
-                    }
-                  }
-                }
-              }
-            },
-            "example": {
-              "errors": [
-                {
-                  "status": "422",
-                  "code": "unprocessableEntity",
-                  "title": "There was an error processing the request for SEPA direct debit"
-                }
-              ]
+              "$ref": "#/components/schemas/Errors"
             }
           }
         }
       },
       "NotAcceptable": {
-        "description": "Not acceptable",
+        "description": "The specified Accept header is not valid",
         "content": {
           "application/vnd.api+json": {
             "schema": {
-              "type": "object",
-              "properties": {
-                "errors": {
-                  "type": "array",
-                  "items": {
-                    "type": "object",
-                    "properties": {
-                      "status": {
-                        "type": "string",
-                        "enum": [
-                          "406"
-                        ]
-                      },
-                      "code": {
-                        "type": "string",
-                        "enum": [
-                          "notAcceptable"
-                        ]
-                      },
-                      "title": {
-                        "type": "string",
-                        "example": "The specified Accept header is not valid"
-                      },
-                      "source": {
-                        "type": "object",
-                        "properties": {
-                          "header": {
-                            "type": "string",
-                            "example": "Accept"
-                          }
-                        }
-                      }
-                    }
-                  }
-                }
-              }
+              "$ref": "#/components/schemas/Errors"
             }
           }
         }
@@ -1053,134 +865,27 @@
         "content": {
           "application/vnd.api+json": {
             "schema": {
-              "type": "object",
-              "properties": {
-                "errors": {
-                  "type": "array",
-                  "items": {
-                    "type": "object",
-                    "properties": {
-                      "status": {
-                        "type": "string",
-                        "enum": [
-                          "500"
-                        ]
-                      },
-                      "code": {
-                        "type": "string",
-                        "enum": [
-                          "internalServerError"
-                        ]
-                      },
-                      "title": {
-                        "type": "string",
-                        "example": "Internal server error"
-                      }
-                    }
-                  }
-                }
-              }
+              "$ref": "#/components/schemas/Errors"
             }
           }
         }
       },
       "NotFound": {
-        "description": "Not found",
+        "description": "Resource not found",
         "content": {
           "application/vnd.api+json": {
             "schema": {
-              "type": "object",
-              "properties": {
-                "errors": {
-                  "type": "array",
-                  "items": {
-                    "type": "object",
-                    "properties": {
-                      "status": {
-                        "type": "string",
-                        "enum": [
-                          "404"
-                        ]
-                      },
-                      "code": {
-                        "type": "string",
-                        "enum": [
-                          "resourceNotFound"
-                        ]
-                      },
-                      "title": {
-                        "type": "string",
-                        "example": "Resource not found"
-                      },
-                      "source": {
-                        "type": "object",
-                        "properties": {
-                          "parameter": {
-                            "type": "string"
-                          }
-                        }
-                      }
-                    }
-                  }
-                }
-              }
-            },
-            "example": {
-              "errors": [
-                {
-                  "status": "404",
-                  "code": "resourceNotFound",
-                  "title": "paymentTokenId could not be found",
-                  "source": {
-                    "parameter": "paymentTokenId"
-                  }
-                }
-              ]
+              "$ref": "#/components/schemas/Errors"
             }
           }
         }
       },
       "UnsupportedMediaType": {
-        "description": "Unsupported Media Type",
+        "description": "The specified Content-Type header is not valid",
         "content": {
           "application/vnd.api+json": {
             "schema": {
-              "type": "object",
-              "properties": {
-                "errors": {
-                  "type": "array",
-                  "items": {
-                    "type": "object",
-                    "properties": {
-                      "status": {
-                        "type": "string",
-                        "enum": [
-                          "415"
-                        ]
-                      },
-                      "code": {
-                        "type": "string",
-                        "enum": [
-                          "unsupportedMediaType"
-                        ]
-                      },
-                      "title": {
-                        "type": "string",
-                        "example": "The specified Content-Type header is not valid"
-                      },
-                      "source": {
-                        "type": "object",
-                        "properties": {
-                          "header": {
-                            "type": "string",
-                            "example": "Content-Type"
-                          }
-                        }
-                      }
-                    }
-                  }
-                }
-              }
+              "$ref": "#/components/schemas/Errors"
             }
           }
         }

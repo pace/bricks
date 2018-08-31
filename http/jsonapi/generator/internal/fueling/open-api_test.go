@@ -13,12 +13,12 @@ import (
 
 // FuelPrice ...
 type FuelPrice struct {
-	ID             string          `jsonapi:"primary,fuelPrice,omitempty" valid:"optional"`                                   // Fuel Price ID
-	Currency       *Currency       `json:"currency,omitempty" jsonapi:"attr,currency,omitempty" valid:"optional"`             // Example: "EUR"
-	FuelAmountUnit *FuelAmountUnit `json:"fuelAmountUnit,omitempty" jsonapi:"attr,fuelAmountUnit,omitempty" valid:"optional"` // Example: "Ltr"
-	FuelType       string          `json:"fuelType,omitempty" jsonapi:"attr,fuelType,omitempty" valid:"optional"`             // Example: "ron95_e10"
-	PricePerUnit   float32         `json:"pricePerUnit,omitempty" jsonapi:"attr,pricePerUnit,omitempty" valid:"optional"`     // Example: "1.379"
-	ProductName    string          `json:"productName,omitempty" jsonapi:"attr,productName,omitempty" valid:"optional"`       // Example: "Super E10"
+	ID             string          `jsonapi:"primary,fuelPrice,omitempty" valid:"optional"` // Fuel Price ID
+	Currency       *Currency       `json:"currency,omitempty" jsonapi:"attr,currency,omitempty" valid:"optional"`
+	FuelAmountUnit *FuelAmountUnit `json:"fuelAmountUnit,omitempty" jsonapi:"attr,fuelAmountUnit,omitempty" valid:"optional"`
+	FuelType       string          `json:"fuelType,omitempty" jsonapi:"attr,fuelType,omitempty" valid:"optional"`         // Example: "ron95_e10"
+	PricePerUnit   float32         `json:"pricePerUnit,omitempty" jsonapi:"attr,pricePerUnit,omitempty" valid:"optional"` // Example: "1.379"
+	ProductName    string          `json:"productName,omitempty" jsonapi:"attr,productName,omitempty" valid:"optional"`   // Example: "Super E10"
 }
 
 // FuelPriceResponse ...
@@ -67,7 +67,7 @@ type PaymentMethodResponse *PaymentMethod
 type Pump struct {
 	ID         string      `jsonapi:"primary,pump,omitempty" valid:"uuid,optional"`                           // Pump ID
 	Identifier string      `json:"identifier,omitempty" jsonapi:"attr,identifier,omitempty" valid:"optional"` // Pump identifier
-	Status     *PumpStatus `json:"status,omitempty" jsonapi:"attr,status,omitempty" valid:"optional"`         // Current pump status
+	Status     *PumpStatus `json:"status,omitempty" jsonapi:"attr,status,omitempty" valid:"optional"`
 }
 
 // PumpReadyForPaymentResponse ...
@@ -97,22 +97,22 @@ type Currency string
 type FuelAmountUnit string
 
 /*
-GetGasStationFuelingAppIDApproachingHandler handles request/response marshaling and validation for
- Get /gas-station/{fuelingAppId}/approaching
+ApproachingAtTheForecourtHandler handles request/response marshaling and validation for
+ Get /beta/gas-station/{fuelingAppId}/approaching
 */
-func GetGasStationFuelingAppIDApproachingHandler(service Service) http.Handler {
+func ApproachingAtTheForecourtHandler(service Service) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		defer func() {
 			if r := recover(); r != nil {
-				fmt.Printf("Panic %s: %v\n", "GetGasStationFuelingAppIDApproachingHandler", r)
+				fmt.Printf("Panic %s: %v\n", "ApproachingAtTheForecourtHandler", r)
 				debug.PrintStack()
 				runtime.WriteError(w, http.StatusInternalServerError, errors.New("Error"))
 			}
 		}()
-		writer := getGasStationFuelingAppIDApproachingResponseWriter{
+		writer := approachingAtTheForecourtResponseWriter{
 			ResponseWriter: w,
 		}
-		request := GetGasStationFuelingAppIDApproachingRequest{
+		request := ApproachingAtTheForecourtRequest{
 			Request: r,
 		}
 		vars := mux.Vars(r)
@@ -137,7 +137,7 @@ func GetGasStationFuelingAppIDApproachingHandler(service Service) http.Handler {
 		if !runtime.ValidateParameters(w, r, &request) {
 			return // invalid request stop further processing
 		}
-		err := service.GetGasStationFuelingAppIDApproaching(r.Context(), &writer, &request)
+		err := service.ApproachingAtTheForecourt(r.Context(), &writer, &request)
 		if err != nil {
 			runtime.WriteError(w, http.StatusInternalServerError, err)
 		}
@@ -145,22 +145,22 @@ func GetGasStationFuelingAppIDApproachingHandler(service Service) http.Handler {
 }
 
 /*
-GetGasStationFuelingAppIDPumpsPumpIDHandler handles request/response marshaling and validation for
- Get /gas-station/{fuelingAppId}/pumps/{pumpId}
+GetPumpHandler handles request/response marshaling and validation for
+ Get /beta/gas-station/{fuelingAppId}/pumps/{pumpId}
 */
-func GetGasStationFuelingAppIDPumpsPumpIDHandler(service Service) http.Handler {
+func GetPumpHandler(service Service) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		defer func() {
 			if r := recover(); r != nil {
-				fmt.Printf("Panic %s: %v\n", "GetGasStationFuelingAppIDPumpsPumpIDHandler", r)
+				fmt.Printf("Panic %s: %v\n", "GetPumpHandler", r)
 				debug.PrintStack()
 				runtime.WriteError(w, http.StatusInternalServerError, errors.New("Error"))
 			}
 		}()
-		writer := getGasStationFuelingAppIDPumpsPumpIDResponseWriter{
+		writer := getPumpResponseWriter{
 			ResponseWriter: w,
 		}
-		request := GetGasStationFuelingAppIDPumpsPumpIDRequest{
+		request := GetPumpRequest{
 			Request: r,
 		}
 		vars := mux.Vars(r)
@@ -180,7 +180,7 @@ func GetGasStationFuelingAppIDPumpsPumpIDHandler(service Service) http.Handler {
 		if !runtime.ValidateParameters(w, r, &request) {
 			return // invalid request stop further processing
 		}
-		err := service.GetGasStationFuelingAppIDPumpsPumpID(r.Context(), &writer, &request)
+		err := service.GetPump(r.Context(), &writer, &request)
 		if err != nil {
 			runtime.WriteError(w, http.StatusInternalServerError, err)
 		}
@@ -188,22 +188,22 @@ func GetGasStationFuelingAppIDPumpsPumpIDHandler(service Service) http.Handler {
 }
 
 /*
-PostGasStationFuelingAppIDPumpsPumpIDPayHandler handles request/response marshaling and validation for
- Post /gas-station/{fuelingAppId}/pumps/{pumpId}/pay
+ProcessPaymentHandler handles request/response marshaling and validation for
+ Post /beta/gas-station/{fuelingAppId}/pumps/{pumpId}/pay
 */
-func PostGasStationFuelingAppIDPumpsPumpIDPayHandler(service Service) http.Handler {
+func ProcessPaymentHandler(service Service) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		defer func() {
 			if r := recover(); r != nil {
-				fmt.Printf("Panic %s: %v\n", "PostGasStationFuelingAppIDPumpsPumpIDPayHandler", r)
+				fmt.Printf("Panic %s: %v\n", "ProcessPaymentHandler", r)
 				debug.PrintStack()
 				runtime.WriteError(w, http.StatusInternalServerError, errors.New("Error"))
 			}
 		}()
-		writer := postGasStationFuelingAppIDPumpsPumpIDPayResponseWriter{
+		writer := processPaymentResponseWriter{
 			ResponseWriter: w,
 		}
-		request := PostGasStationFuelingAppIDPumpsPumpIDPayRequest{
+		request := ProcessPaymentRequest{
 			Request: r,
 		}
 		vars := mux.Vars(r)
@@ -224,7 +224,7 @@ func PostGasStationFuelingAppIDPumpsPumpIDPayHandler(service Service) http.Handl
 			return // invalid request stop further processing
 		}
 		if runtime.Unmarshal(w, r, &request.Content) {
-			err := service.PostGasStationFuelingAppIDPumpsPumpIDPay(r.Context(), &writer, &request)
+			err := service.ProcessPayment(r.Context(), &writer, &request)
 			if err != nil {
 				runtime.WriteError(w, http.StatusInternalServerError, err)
 			}
@@ -233,22 +233,22 @@ func PostGasStationFuelingAppIDPumpsPumpIDPayHandler(service Service) http.Handl
 }
 
 /*
-GetGasStationFuelingAppIDPumpsPumpIDWaitForStatusChangeHandler handles request/response marshaling and validation for
- Get /gas-station/{fuelingAppId}/pumps/{pumpId}/waitForStatusChange
+WaitOnPumpStatusChangeHandler handles request/response marshaling and validation for
+ Get /beta/gas-station/{fuelingAppId}/pumps/{pumpId}/wait-for-status-change
 */
-func GetGasStationFuelingAppIDPumpsPumpIDWaitForStatusChangeHandler(service Service) http.Handler {
+func WaitOnPumpStatusChangeHandler(service Service) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		defer func() {
 			if r := recover(); r != nil {
-				fmt.Printf("Panic %s: %v\n", "GetGasStationFuelingAppIDPumpsPumpIDWaitForStatusChangeHandler", r)
+				fmt.Printf("Panic %s: %v\n", "WaitOnPumpStatusChangeHandler", r)
 				debug.PrintStack()
 				runtime.WriteError(w, http.StatusInternalServerError, errors.New("Error"))
 			}
 		}()
-		writer := getGasStationFuelingAppIDPumpsPumpIDWaitForStatusChangeResponseWriter{
+		writer := waitOnPumpStatusChangeResponseWriter{
 			ResponseWriter: w,
 		}
-		request := GetGasStationFuelingAppIDPumpsPumpIDWaitForStatusChangeRequest{
+		request := WaitOnPumpStatusChangeRequest{
 			Request: r,
 		}
 		vars := mux.Vars(r)
@@ -278,7 +278,7 @@ func GetGasStationFuelingAppIDPumpsPumpIDWaitForStatusChangeHandler(service Serv
 		if !runtime.ValidateParameters(w, r, &request) {
 			return // invalid request stop further processing
 		}
-		err := service.GetGasStationFuelingAppIDPumpsPumpIDWaitForStatusChange(r.Context(), &writer, &request)
+		err := service.WaitOnPumpStatusChange(r.Context(), &writer, &request)
 		if err != nil {
 			runtime.WriteError(w, http.StatusInternalServerError, err)
 		}
@@ -286,187 +286,199 @@ func GetGasStationFuelingAppIDPumpsPumpIDWaitForStatusChangeHandler(service Serv
 }
 
 /*
-GetGasStationFuelingAppIDApproachingResponseWriter is a standard http.ResponseWriter extended with methods
+ApproachingAtTheForecourtResponseWriter is a standard http.ResponseWriter extended with methods
 to generate the respective responses easily
 */
-type GetGasStationFuelingAppIDApproachingResponseWriter interface {
+type ApproachingAtTheForecourtResponseWriter interface {
 	http.ResponseWriter
 	OK(GasStationResponse)
+	BadRequest(error)
 	NotFound(error)
 }
-type getGasStationFuelingAppIDApproachingResponseWriter struct {
+type approachingAtTheForecourtResponseWriter struct {
 	http.ResponseWriter
 }
 
 // NotFound responds with jsonapi error (HTTP code 404)
-func (w *getGasStationFuelingAppIDApproachingResponseWriter) NotFound(err error) {
+func (w *approachingAtTheForecourtResponseWriter) NotFound(err error) {
 	runtime.WriteError(w, 404, err)
 }
 
+// BadRequest responds with jsonapi error (HTTP code 400)
+func (w *approachingAtTheForecourtResponseWriter) BadRequest(err error) {
+	runtime.WriteError(w, 400, err)
+}
+
 // OK responds with jsonapi marshaled data (HTTP code 200)
-func (w *getGasStationFuelingAppIDApproachingResponseWriter) OK(data GasStationResponse) {
+func (w *approachingAtTheForecourtResponseWriter) OK(data GasStationResponse) {
 	runtime.Marshal(w, data, 200)
 }
 
 /*
-GetGasStationFuelingAppIDApproachingResponseWriter is a standard http.Request extended with the
+ApproachingAtTheForecourtResponseWriter is a standard http.Request extended with the
 un-marshaled content object
 */
-type GetGasStationFuelingAppIDApproachingRequest struct {
+type ApproachingAtTheForecourtRequest struct {
 	Request                     *http.Request `valid:"-"`
 	ParamFuelingAppID           string        `valid:"required,uuid"`
 	ParamExpectedAmountInLiters float32       `valid:"required"`
 	ParamCarFuelType            string        `valid:"required,in(e85|ron91|ron95_e5|ron95_e10|ron98|ron98_e5|ron100|diesel|diesel_gtl|diesel_b7|lpg|cng|h2|Truck Diesel|AdBlue)"`
 }
 
-// GetGasStationFuelingAppIDPumpsPumpIDOK ...
-type GetGasStationFuelingAppIDPumpsPumpIDOK json.RawMessage
+// GetPumpOK ...
+type GetPumpOK json.RawMessage
 
 /*
-GetGasStationFuelingAppIDPumpsPumpIDResponseWriter is a standard http.ResponseWriter extended with methods
+GetPumpResponseWriter is a standard http.ResponseWriter extended with methods
 to generate the respective responses easily
 */
-type GetGasStationFuelingAppIDPumpsPumpIDResponseWriter interface {
+type GetPumpResponseWriter interface {
 	http.ResponseWriter
-	OK(*GetGasStationFuelingAppIDPumpsPumpIDOK)
+	OK(*GetPumpOK)
 	NotFound(error)
 }
-type getGasStationFuelingAppIDPumpsPumpIDResponseWriter struct {
+type getPumpResponseWriter struct {
 	http.ResponseWriter
 }
 
 // NotFound responds with jsonapi error (HTTP code 404)
-func (w *getGasStationFuelingAppIDPumpsPumpIDResponseWriter) NotFound(err error) {
+func (w *getPumpResponseWriter) NotFound(err error) {
 	runtime.WriteError(w, 404, err)
 }
 
 // OK responds with jsonapi marshaled data (HTTP code 200)
-func (w *getGasStationFuelingAppIDPumpsPumpIDResponseWriter) OK(data *GetGasStationFuelingAppIDPumpsPumpIDOK) {
+func (w *getPumpResponseWriter) OK(data *GetPumpOK) {
 	runtime.Marshal(w, data, 200)
 }
 
 /*
-GetGasStationFuelingAppIDPumpsPumpIDResponseWriter is a standard http.Request extended with the
+GetPumpResponseWriter is a standard http.Request extended with the
 un-marshaled content object
 */
-type GetGasStationFuelingAppIDPumpsPumpIDRequest struct {
+type GetPumpRequest struct {
 	Request           *http.Request `valid:"-"`
 	ParamFuelingAppID string        `valid:"required,uuid"`
 	ParamPumpID       string        `valid:"required,uuid"`
 }
 
-// PostGasStationFuelingAppIDPumpsPumpIDPayCreated ...
-type PostGasStationFuelingAppIDPumpsPumpIDPayCreated struct {
-	ID                string                                              `jsonapi:"primary,transaction,omitempty" valid:"optional"` // Transaction ID
-	VAT               *PostGasStationFuelingAppIDPumpsPumpIDPayCreatedVAT `json:"VAT,omitempty" jsonapi:"attr,VAT,omitempty" valid:"optional"`
-	Currency          *Currency                                           `json:"currency,omitempty" jsonapi:"attr,currency,omitempty" valid:"optional"`                   // Example: "EUR"
-	FuelingAppID      string                                              `json:"fuelingAppId,omitempty" jsonapi:"attr,fuelingAppId,omitempty" valid:"optional"`           // Example: "c30bce97-b732-4390-af38-1ac6b017aa4c"
-	MileageInMeters   int64                                               `json:"mileageInMeters,omitempty" jsonapi:"attr,mileageInMeters,omitempty" valid:"optional"`     // Example: "66435"
-	PaymentMethodID   string                                              `json:"paymentMethodId,omitempty" jsonapi:"attr,paymentMethodId,omitempty" valid:"optional"`     // Example: "f106ac99-213c-4cf7-8c1b-1e841516026b"
-	PriceIncludingVAT float32                                             `json:"priceIncludingVAT,omitempty" jsonapi:"attr,priceIncludingVAT,omitempty" valid:"optional"` // Example: "69.34"
-	PriceWithoutVAT   float32                                             `json:"priceWithoutVAT,omitempty" jsonapi:"attr,priceWithoutVAT,omitempty" valid:"optional"`     // Example: "58.27"
-	PumpID            string                                              `json:"pumpId,omitempty" jsonapi:"attr,pumpId,omitempty" valid:"optional"`                       // Example: "460ffaad-a3c1-4199-b69e-63949ccda82f"
-	Vin               string                                              `json:"vin,omitempty" jsonapi:"attr,vin,omitempty" valid:"optional"`                             // Example: "1B3EL46R36N102271"
+// ProcessPaymentCreated ...
+type ProcessPaymentCreated struct {
+	ID                string                    `jsonapi:"primary,transaction,omitempty" valid:"uuid,optional"` // Transaction ID
+	VAT               *ProcessPaymentCreatedVAT `json:"VAT,omitempty" jsonapi:"attr,VAT,omitempty" valid:"optional"`
+	Currency          *Currency                 `json:"currency,omitempty" jsonapi:"attr,currency,omitempty" valid:"optional"`
+	FuelingAppID      string                    `json:"fuelingAppId,omitempty" jsonapi:"attr,fuelingAppId,omitempty" valid:"optional"`           // Example: "c30bce97-b732-4390-af38-1ac6b017aa4c"
+	MileageInMeters   int64                     `json:"mileageInMeters,omitempty" jsonapi:"attr,mileageInMeters,omitempty" valid:"optional"`     // Example: "66435"
+	PaymentMethodID   string                    `json:"paymentMethodId,omitempty" jsonapi:"attr,paymentMethodId,omitempty" valid:"optional"`     // Example: "f106ac99-213c-4cf7-8c1b-1e841516026b"
+	PriceIncludingVAT float32                   `json:"priceIncludingVAT,omitempty" jsonapi:"attr,priceIncludingVAT,omitempty" valid:"optional"` // Example: "69.34"
+	PriceWithoutVAT   float32                   `json:"priceWithoutVAT,omitempty" jsonapi:"attr,priceWithoutVAT,omitempty" valid:"optional"`     // Example: "58.27"
+	PumpID            string                    `json:"pumpId,omitempty" jsonapi:"attr,pumpId,omitempty" valid:"optional"`                       // Example: "460ffaad-a3c1-4199-b69e-63949ccda82f"
+	Vin               string                    `json:"vin,omitempty" jsonapi:"attr,vin,omitempty" valid:"optional"`                             // Example: "1B3EL46R36N102271"
 }
 
-// PostGasStationFuelingAppIDPumpsPumpIDPayCreatedVAT ...
-type PostGasStationFuelingAppIDPumpsPumpIDPayCreatedVAT struct {
+// ProcessPaymentCreatedVAT ...
+type ProcessPaymentCreatedVAT struct {
 	Amount float32 `json:"amount,omitempty" jsonapi:"amount,omitempty" valid:"optional"` // Example: "11.07"
 	Rate   float32 `json:"rate,omitempty" jsonapi:"rate,omitempty" valid:"optional"`     // Example: "0.19"
 }
 
 /*
-PostGasStationFuelingAppIDPumpsPumpIDPayResponseWriter is a standard http.ResponseWriter extended with methods
+ProcessPaymentResponseWriter is a standard http.ResponseWriter extended with methods
 to generate the respective responses easily
 */
-type PostGasStationFuelingAppIDPumpsPumpIDPayResponseWriter interface {
+type ProcessPaymentResponseWriter interface {
 	http.ResponseWriter
-	Created(*PostGasStationFuelingAppIDPumpsPumpIDPayCreated)
+	Created(*ProcessPaymentCreated)
 	BadRequest(error)
 	NotFound(error)
 	Conflict(error)
 }
-type postGasStationFuelingAppIDPumpsPumpIDPayResponseWriter struct {
+type processPaymentResponseWriter struct {
 	http.ResponseWriter
 }
 
 // Conflict responds with jsonapi error (HTTP code 409)
-func (w *postGasStationFuelingAppIDPumpsPumpIDPayResponseWriter) Conflict(err error) {
+func (w *processPaymentResponseWriter) Conflict(err error) {
 	runtime.WriteError(w, 409, err)
 }
 
 // NotFound responds with jsonapi error (HTTP code 404)
-func (w *postGasStationFuelingAppIDPumpsPumpIDPayResponseWriter) NotFound(err error) {
+func (w *processPaymentResponseWriter) NotFound(err error) {
 	runtime.WriteError(w, 404, err)
 }
 
 // BadRequest responds with jsonapi error (HTTP code 400)
-func (w *postGasStationFuelingAppIDPumpsPumpIDPayResponseWriter) BadRequest(err error) {
+func (w *processPaymentResponseWriter) BadRequest(err error) {
 	runtime.WriteError(w, 400, err)
 }
 
 // Created responds with jsonapi marshaled data (HTTP code 201)
-func (w *postGasStationFuelingAppIDPumpsPumpIDPayResponseWriter) Created(data *PostGasStationFuelingAppIDPumpsPumpIDPayCreated) {
+func (w *processPaymentResponseWriter) Created(data *ProcessPaymentCreated) {
 	runtime.Marshal(w, data, 201)
 }
 
-// PostGasStationFuelingAppIDPumpsPumpIDPayContent ...
-type PostGasStationFuelingAppIDPumpsPumpIDPayContent json.RawMessage
+// ProcessPaymentContent ...
+type ProcessPaymentContent json.RawMessage
 
-// PostGasStationFuelingAppIDPumpsPumpIDPayRequest ...
-type PostGasStationFuelingAppIDPumpsPumpIDPayRequest struct {
-	Request           *http.Request                                    `valid:"-"`
-	Content           *PostGasStationFuelingAppIDPumpsPumpIDPayContent `valid:"-"`
-	ParamFuelingAppID string                                           `valid:"required,uuid"`
-	ParamPumpID       string                                           `valid:"required,uuid"`
+// ProcessPaymentRequest ...
+type ProcessPaymentRequest struct {
+	Request           *http.Request          `valid:"-"`
+	Content           *ProcessPaymentContent `valid:"-"`
+	ParamFuelingAppID string                 `valid:"required,uuid"`
+	ParamPumpID       string                 `valid:"required,uuid"`
 }
 
-// GetGasStationFuelingAppIDPumpsPumpIDWaitForStatusChangeOK ...
-type GetGasStationFuelingAppIDPumpsPumpIDWaitForStatusChangeOK json.RawMessage
+// WaitOnPumpStatusChangeOK ...
+type WaitOnPumpStatusChangeOK json.RawMessage
 
 /*
-GetGasStationFuelingAppIDPumpsPumpIDWaitForStatusChangeResponseWriter is a standard http.ResponseWriter extended with methods
+WaitOnPumpStatusChangeResponseWriter is a standard http.ResponseWriter extended with methods
 to generate the respective responses easily
 */
-type GetGasStationFuelingAppIDPumpsPumpIDWaitForStatusChangeResponseWriter interface {
+type WaitOnPumpStatusChangeResponseWriter interface {
 	http.ResponseWriter
-	OK(*GetGasStationFuelingAppIDPumpsPumpIDWaitForStatusChangeOK)
+	OK(*WaitOnPumpStatusChangeOK)
+	BadRequest(error)
 	NotFound(error)
 	RequestTimeout(error)
 }
-type getGasStationFuelingAppIDPumpsPumpIDWaitForStatusChangeResponseWriter struct {
+type waitOnPumpStatusChangeResponseWriter struct {
 	http.ResponseWriter
 }
 
 // RequestTimeout responds with jsonapi error (HTTP code 408)
-func (w *getGasStationFuelingAppIDPumpsPumpIDWaitForStatusChangeResponseWriter) RequestTimeout(err error) {
+func (w *waitOnPumpStatusChangeResponseWriter) RequestTimeout(err error) {
 	runtime.WriteError(w, 408, err)
 }
 
 // NotFound responds with jsonapi error (HTTP code 404)
-func (w *getGasStationFuelingAppIDPumpsPumpIDWaitForStatusChangeResponseWriter) NotFound(err error) {
+func (w *waitOnPumpStatusChangeResponseWriter) NotFound(err error) {
 	runtime.WriteError(w, 404, err)
 }
 
+// BadRequest responds with jsonapi error (HTTP code 400)
+func (w *waitOnPumpStatusChangeResponseWriter) BadRequest(err error) {
+	runtime.WriteError(w, 400, err)
+}
+
 // OK responds with jsonapi marshaled data (HTTP code 200)
-func (w *getGasStationFuelingAppIDPumpsPumpIDWaitForStatusChangeResponseWriter) OK(data *GetGasStationFuelingAppIDPumpsPumpIDWaitForStatusChangeOK) {
+func (w *waitOnPumpStatusChangeResponseWriter) OK(data *WaitOnPumpStatusChangeOK) {
 	runtime.Marshal(w, data, 200)
 }
 
 /*
-GetGasStationFuelingAppIDPumpsPumpIDWaitForStatusChangeResponseWriter is a standard http.Request extended with the
+WaitOnPumpStatusChangeResponseWriter is a standard http.Request extended with the
 un-marshaled content object
 */
-type GetGasStationFuelingAppIDPumpsPumpIDWaitForStatusChangeRequest struct {
+type WaitOnPumpStatusChangeRequest struct {
 	Request           *http.Request `valid:"-"`
 	ParamFuelingAppID string        `valid:"required,uuid"`
 	ParamPumpID       string        `valid:"required,uuid"`
-	ParamLastStatus   string        `valid:"optional,in(free|inUse|readyToPay|outOfOrder)"`
+	ParamLastStatus   PumpStatus    `valid:"optional"`
 	ParamTimeout      int64         `valid:"optional"`
 }
 type Service interface {
 	/*
-	   GetGasStationFuelingAppIDApproaching Gather information when approaching at the forecourt
+	   ApproachingAtTheForecourt Gather information when approaching at the forecourt
 
 
 	   This request will:
@@ -475,25 +487,25 @@ type Service interface {
 	   * Return a list of pumps available at the gas station together with the current status (free, inUse, readyToPay, outOfOrder)
 	   * Create payment tokens for all paymentMethods of the user and pre-authorise the calculated maximum amount of money (background task)
 	*/
-	GetGasStationFuelingAppIDApproaching(context.Context, GetGasStationFuelingAppIDApproachingResponseWriter, *GetGasStationFuelingAppIDApproachingRequest) error
+	ApproachingAtTheForecourt(context.Context, ApproachingAtTheForecourtResponseWriter, *ApproachingAtTheForecourtRequest) error
 	/*
-	   GetGasStationFuelingAppIDPumpsPumpID Return current pump information
+	   GetPump Return current pump information
 
 	   Returns the current pump status (free, inUse, readyToPay, outOfOrder) and identifier. If the status is readyToPay, the result also contains fuelType, productName, fuelAmount, fuelAmountUnit, VAT (amount & rate), priceWithoutVAT, priceIncludingVAT, currency.
 	*/
-	GetGasStationFuelingAppIDPumpsPumpID(context.Context, GetGasStationFuelingAppIDPumpsPumpIDResponseWriter, *GetGasStationFuelingAppIDPumpsPumpIDRequest) error
+	GetPump(context.Context, GetPumpResponseWriter, *GetPumpRequest) error
 	/*
-	   PostGasStationFuelingAppIDPumpsPumpIDPay Process payment
+	   ProcessPayment Process payment
 
 	   Process payment and notify user if transaction is finished successfully. You can optionally provide `priceIncludingVAT`and `currency` in the request body to check if the price the user has seen is still correct.
 	*/
-	PostGasStationFuelingAppIDPumpsPumpIDPay(context.Context, PostGasStationFuelingAppIDPumpsPumpIDPayResponseWriter, *PostGasStationFuelingAppIDPumpsPumpIDPayRequest) error
+	ProcessPayment(context.Context, ProcessPaymentResponseWriter, *ProcessPaymentRequest) error
 	/*
-	   GetGasStationFuelingAppIDPumpsPumpIDWaitForStatusChange Wait for a status change on a given pump
+	   WaitOnPumpStatusChange Wait for a status change on a given pump
 
 	   Uses **long polling** to wait for a status change on a given pump. Returns as soon as the status has changed or after the number of seconds provided by the optional `timeout` query parameter (default timeout is 30 seconds). In case of timeout (408 status code) you're safe to start the request again. Instantaneously returns if `lastStatus` was given and already changed between request. If successful, it returns the same structure as the normal status call
 	*/
-	GetGasStationFuelingAppIDPumpsPumpIDWaitForStatusChange(context.Context, GetGasStationFuelingAppIDPumpsPumpIDWaitForStatusChangeResponseWriter, *GetGasStationFuelingAppIDPumpsPumpIDWaitForStatusChangeRequest) error
+	WaitOnPumpStatusChange(context.Context, WaitOnPumpStatusChangeResponseWriter, *WaitOnPumpStatusChangeRequest) error
 }
 
 /*
@@ -503,11 +515,11 @@ Fueling API
 */
 func Router(service Service) *mux.Router {
 	router := mux.NewRouter()
-	// Subrouter s1 - https://api.pace.cloud/fueling/beta
-	s1 := router.PathPrefix("/fueling/beta").Subrouter()
-	s1.Methods("POST").Path("/gas-station/{fuelingAppId}/pumps/{pumpId}/pay").Handler(PostGasStationFuelingAppIDPumpsPumpIDPayHandler(service)).Name("PostGasStationFuelingAppIDPumpsPumpIDPay")
-	s1.Methods("GET").Path("/gas-station/{fuelingAppId}/pumps/{pumpId}/waitForStatusChange").Handler(GetGasStationFuelingAppIDPumpsPumpIDWaitForStatusChangeHandler(service)).Name("GetGasStationFuelingAppIDPumpsPumpIDWaitForStatusChange")
-	s1.Methods("GET").Path("/gas-station/{fuelingAppId}/pumps/{pumpId}").Handler(GetGasStationFuelingAppIDPumpsPumpIDHandler(service)).Name("GetGasStationFuelingAppIDPumpsPumpID")
-	s1.Methods("GET").Path("/gas-station/{fuelingAppId}/approaching").Handler(GetGasStationFuelingAppIDApproachingHandler(service)).Name("GetGasStationFuelingAppIDApproaching")
+	// Subrouter s1 - https://api.pace.cloud/fueling
+	s1 := router.PathPrefix("/fueling").Subrouter()
+	s1.Methods("POST").Path("/beta/gas-station/{fuelingAppId}/pumps/{pumpId}/pay").Handler(ProcessPaymentHandler(service)).Name("ProcessPayment")
+	s1.Methods("GET").Path("/beta/gas-station/{fuelingAppId}/pumps/{pumpId}/wait-for-status-change").Handler(WaitOnPumpStatusChangeHandler(service)).Name("WaitOnPumpStatusChange")
+	s1.Methods("GET").Path("/beta/gas-station/{fuelingAppId}/pumps/{pumpId}").Handler(GetPumpHandler(service)).Name("GetPump")
+	s1.Methods("GET").Path("/beta/gas-station/{fuelingAppId}/approaching").Handler(ApproachingAtTheForecourtHandler(service)).Name("ApproachingAtTheForecourt")
 	return router
 }

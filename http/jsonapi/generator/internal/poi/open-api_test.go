@@ -12,12 +12,12 @@ import (
 
 // FuelPrice ...
 type FuelPrice struct {
-	ID             string          `jsonapi:"primary,fuelPrice,omitempty" valid:"optional"`                                   // Fuel Price ID
-	Currency       *Currency       `json:"currency,omitempty" jsonapi:"attr,currency,omitempty" valid:"optional"`             // Example: "EUR"
-	FuelAmountUnit *FuelAmountUnit `json:"fuelAmountUnit,omitempty" jsonapi:"attr,fuelAmountUnit,omitempty" valid:"optional"` // Example: "Ltr"
-	FuelType       string          `json:"fuelType,omitempty" jsonapi:"attr,fuelType,omitempty" valid:"optional"`             // Example: "ron95_e10"
-	PricePerUnit   float32         `json:"pricePerUnit,omitempty" jsonapi:"attr,pricePerUnit,omitempty" valid:"optional"`     // Example: "1.379"
-	ProductName    string          `json:"productName,omitempty" jsonapi:"attr,productName,omitempty" valid:"optional"`       // Example: "Super E10"
+	ID             string          `jsonapi:"primary,fuelPrice,omitempty" valid:"uuid,optional"` // Fuel Price ID
+	Currency       *Currency       `json:"currency,omitempty" jsonapi:"attr,currency,omitempty" valid:"optional"`
+	FuelAmountUnit *FuelAmountUnit `json:"fuelAmountUnit,omitempty" jsonapi:"attr,fuelAmountUnit,omitempty" valid:"optional"`
+	FuelType       string          `json:"fuelType,omitempty" jsonapi:"attr,fuelType,omitempty" valid:"optional"`         // Example: "ron95_e10"
+	PricePerUnit   float32         `json:"pricePerUnit,omitempty" jsonapi:"attr,pricePerUnit,omitempty" valid:"optional"` // Example: "1.379"
+	ProductName    string          `json:"productName,omitempty" jsonapi:"attr,productName,omitempty" valid:"optional"`   // Example: "Super E10"
 }
 
 // FuelPriceResponse ...
@@ -92,22 +92,22 @@ type Currency string
 type FuelAmountUnit string
 
 /*
-GetCheckForPaceAppHandler handles request/response marshaling and validation for
- Get /check-for-pace-app
+CheckForPaceAppHandler handles request/response marshaling and validation for
+ Get /beta/check-for-pace-app
 */
-func GetCheckForPaceAppHandler(service Service) http.Handler {
+func CheckForPaceAppHandler(service Service) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		defer func() {
 			if r := recover(); r != nil {
-				fmt.Printf("Panic %s: %v\n", "GetCheckForPaceAppHandler", r)
+				fmt.Printf("Panic %s: %v\n", "CheckForPaceAppHandler", r)
 				debug.PrintStack()
 				runtime.WriteError(w, http.StatusInternalServerError, errors.New("Error"))
 			}
 		}()
-		writer := getCheckForPaceAppResponseWriter{
+		writer := checkForPaceAppResponseWriter{
 			ResponseWriter: w,
 		}
-		request := GetCheckForPaceAppRequest{
+		request := CheckForPaceAppRequest{
 			Request: r,
 		}
 		vars := mux.Vars(r)
@@ -147,7 +147,7 @@ func GetCheckForPaceAppHandler(service Service) http.Handler {
 		if !runtime.ValidateParameters(w, r, &request) {
 			return // invalid request stop further processing
 		}
-		err := service.GetCheckForPaceApp(r.Context(), &writer, &request)
+		err := service.CheckForPaceApp(r.Context(), &writer, &request)
 		if err != nil {
 			runtime.WriteError(w, http.StatusInternalServerError, err)
 		}
@@ -155,22 +155,22 @@ func GetCheckForPaceAppHandler(service Service) http.Handler {
 }
 
 /*
-GetSearchHandler handles request/response marshaling and validation for
- Get /search
+SearchHandler handles request/response marshaling and validation for
+ Get /beta/search
 */
-func GetSearchHandler(service Service) http.Handler {
+func SearchHandler(service Service) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		defer func() {
 			if r := recover(); r != nil {
-				fmt.Printf("Panic %s: %v\n", "GetSearchHandler", r)
+				fmt.Printf("Panic %s: %v\n", "SearchHandler", r)
 				debug.PrintStack()
 				runtime.WriteError(w, http.StatusInternalServerError, errors.New("Error"))
 			}
 		}()
-		writer := getSearchResponseWriter{
+		writer := searchResponseWriter{
 			ResponseWriter: w,
 		}
-		request := GetSearchRequest{
+		request := SearchRequest{
 			Request: r,
 		}
 		vars := mux.Vars(r)
@@ -235,7 +235,7 @@ func GetSearchHandler(service Service) http.Handler {
 		if !runtime.ValidateParameters(w, r, &request) {
 			return // invalid request stop further processing
 		}
-		err := service.GetSearch(r.Context(), &writer, &request)
+		err := service.Search(r.Context(), &writer, &request)
 		if err != nil {
 			runtime.WriteError(w, http.StatusInternalServerError, err)
 		}
@@ -243,33 +243,33 @@ func GetSearchHandler(service Service) http.Handler {
 }
 
 /*
-GetCheckForPaceAppResponseWriter is a standard http.ResponseWriter extended with methods
+CheckForPaceAppResponseWriter is a standard http.ResponseWriter extended with methods
 to generate the respective responses easily
 */
-type GetCheckForPaceAppResponseWriter interface {
+type CheckForPaceAppResponseWriter interface {
 	http.ResponseWriter
 	OK(LocationBasedAppsResponse)
 	BadRequest(error)
 }
-type getCheckForPaceAppResponseWriter struct {
+type checkForPaceAppResponseWriter struct {
 	http.ResponseWriter
 }
 
 // BadRequest responds with jsonapi error (HTTP code 400)
-func (w *getCheckForPaceAppResponseWriter) BadRequest(err error) {
+func (w *checkForPaceAppResponseWriter) BadRequest(err error) {
 	runtime.WriteError(w, 400, err)
 }
 
 // OK responds with jsonapi marshaled data (HTTP code 200)
-func (w *getCheckForPaceAppResponseWriter) OK(data LocationBasedAppsResponse) {
+func (w *checkForPaceAppResponseWriter) OK(data LocationBasedAppsResponse) {
 	runtime.Marshal(w, data, 200)
 }
 
 /*
-GetCheckForPaceAppResponseWriter is a standard http.Request extended with the
+CheckForPaceAppResponseWriter is a standard http.Request extended with the
 un-marshaled content object
 */
-type GetCheckForPaceAppRequest struct {
+type CheckForPaceAppRequest struct {
 	Request        *http.Request `valid:"-"`
 	ParamLatitude  float32       `valid:"required"`
 	ParamLongitude float32       `valid:"required"`
@@ -280,27 +280,33 @@ type GetCheckForPaceAppRequest struct {
 }
 
 /*
-GetSearchResponseWriter is a standard http.ResponseWriter extended with methods
+SearchResponseWriter is a standard http.ResponseWriter extended with methods
 to generate the respective responses easily
 */
-type GetSearchResponseWriter interface {
+type SearchResponseWriter interface {
 	http.ResponseWriter
 	OK(GasStationResponse)
+	BadRequest(error)
 }
-type getSearchResponseWriter struct {
+type searchResponseWriter struct {
 	http.ResponseWriter
 }
 
+// BadRequest responds with jsonapi error (HTTP code 400)
+func (w *searchResponseWriter) BadRequest(err error) {
+	runtime.WriteError(w, 400, err)
+}
+
 // OK responds with jsonapi marshaled data (HTTP code 200)
-func (w *getSearchResponseWriter) OK(data GasStationResponse) {
+func (w *searchResponseWriter) OK(data GasStationResponse) {
 	runtime.Marshal(w, data, 200)
 }
 
 /*
-GetSearchResponseWriter is a standard http.Request extended with the
+SearchResponseWriter is a standard http.Request extended with the
 un-marshaled content object
 */
-type GetSearchRequest struct {
+type SearchRequest struct {
 	Request          *http.Request `valid:"-"`
 	ParamPoiType     string        `valid:"required,in(gasStation)"`
 	ParamAppType     []string      `valid:"required,in(fueling)"`
@@ -316,7 +322,7 @@ type GetSearchRequest struct {
 }
 type Service interface {
 	/*
-	   GetCheckForPaceApp Get location-based apps
+	   CheckForPaceApp Get location-based apps
 
 
 	   These location-based PACE apps deliver additional services for PACE customers based on their current position.
@@ -327,9 +333,9 @@ type Service interface {
 
 	   Please note that calling this API is very cheap and can be done regularly.
 	*/
-	GetCheckForPaceApp(context.Context, GetCheckForPaceAppResponseWriter, *GetCheckForPaceAppRequest) error
+	CheckForPaceApp(context.Context, CheckForPaceAppResponseWriter, *CheckForPaceAppRequest) error
 	/*
-	   GetSearch Search for gas stations
+	   Search Search for gas stations
 
 	   There are three possibilities to search for gas stations. If you want to search in a specific radius around a given longitude and latitude you have to provide the following query parameters:
 
@@ -348,7 +354,7 @@ type Service interface {
 
 	   If you have map-matched GPS data you can also provide a `deviation` query parameter. By using this query type, the evaluation if the user is inside the polygon of a specific location-based PACE app needs to be done by the client.
 	*/
-	GetSearch(context.Context, GetSearchResponseWriter, *GetSearchRequest) error
+	Search(context.Context, SearchResponseWriter, *SearchRequest) error
 }
 
 /*
@@ -358,9 +364,9 @@ POI API
 */
 func Router(service Service) *mux.Router {
 	router := mux.NewRouter()
-	// Subrouter s1 - https://api.pace.cloud/poi/beta
-	s1 := router.PathPrefix("/poi/beta").Subrouter()
-	s1.Methods("GET").Path("/check-for-pace-app").Handler(GetCheckForPaceAppHandler(service)).Name("GetCheckForPaceApp")
-	s1.Methods("GET").Path("/search").Handler(GetSearchHandler(service)).Name("GetSearch")
+	// Subrouter s1 - https://api.pace.cloud/poi
+	s1 := router.PathPrefix("/poi").Subrouter()
+	s1.Methods("GET").Path("/beta/check-for-pace-app").Handler(CheckForPaceAppHandler(service)).Name("CheckForPaceApp")
+	s1.Methods("GET").Path("/beta/search").Handler(SearchHandler(service)).Name("Search")
 	return router
 }

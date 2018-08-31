@@ -10,15 +10,16 @@
   },
   "servers": [
     {
-      "url": "https://api.pace.cloud/poi/beta"
+      "url": "https://api.pace.cloud/poi"
     }
   ],
   "paths": {
-    "/check-for-pace-app": {
+    "/beta/check-for-pace-app": {
       "get": {
         "tags": [
           "POI"
         ],
+        "operationId": "CheckForPaceApp",
         "summary": "Get location-based apps\n",
         "description": "These location-based PACE apps deliver additional services for PACE customers based on their current position.\nYou can (or should) trigger this whenever:\n* A longer stand-still is detected\n* The engine is turned off\n* Every 5 seconds if the user \"left the road\"\n\nPlease note that calling this API is very cheap and can be done regularly.\n",
         "parameters": [
@@ -105,63 +106,7 @@
             }
           },
           "400": {
-            "description": "Bad Request",
-            "content": {
-              "application/vnd.api+json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "errors": {
-                      "type": "array",
-                      "items": {
-                        "type": "object",
-                        "properties": {
-                          "status": {
-                            "type": "string",
-                            "enum": [
-                              "400"
-                            ]
-                          },
-                          "code": {
-                            "type": "string",
-                            "enum": [
-                              "badRequest"
-                            ]
-                          },
-                          "title": {
-                            "type": "string",
-                            "example": "The server cannot or will not process the request due to an apparent client error"
-                          },
-                          "source": {
-                            "type": "object",
-                            "properties": {
-                              "pointer": {
-                                "type": "string"
-                              },
-                              "parameter": {
-                                "type": "string"
-                              }
-                            }
-                          }
-                        }
-                      }
-                    }
-                  }
-                },
-                "example": {
-                  "errors": [
-                    {
-                      "status": "400",
-                      "code": "badRequest",
-                      "title": "No latitude provided",
-                      "source": {
-                        "parameter": "latitude"
-                      }
-                    }
-                  ]
-                }
-              }
-            }
+            "$ref": "#/components/responses/BadRequest"
           },
           "401": {
             "$ref": "#/components/responses/Unauthorized"
@@ -175,11 +120,12 @@
         }
       }
     },
-    "/search": {
+    "/beta/search": {
       "get": {
         "tags": [
           "POI"
         ],
+        "operationId": "Search",
         "summary": "Search for gas stations",
         "description": "There are three possibilities to search for gas stations. If you want to search in a specific radius around a given longitude and latitude you have to provide the following query parameters:\n\n* latitude (required)\n* longitude (required)\n* radius (required)\n* accuracy (optional)\n\nIf you want to search in a given bounding box you have to provide the following query parameters:\n\n* boundingBox (required)\n\nIf you want to search along a given path you have to provide the following query parameters:\n* path (required)\n* radius (required)\n\nIf you have map-matched GPS data you can also provide a `deviation` query parameter. By using this query type, the evaluation if the user is inside the polygon of a specific location-based PACE app needs to be done by the client.\n",
         "parameters": [
@@ -508,6 +454,9 @@
               }
             }
           },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
           "401": {
             "$ref": "#/components/responses/Unauthorized"
           },
@@ -713,6 +662,7 @@
           },
           "id": {
             "type": "string",
+            "format": "uuid",
             "description": "Fuel Price ID",
             "example": "2a1319c3-c136-495d-b59a-47b3246d08af"
           },
@@ -964,95 +914,98 @@
           "Ltr"
         ],
         "example": "Ltr"
-      }
-    },
-    "responses": {
-      "Unauthorized": {
-        "description": "Unauthorized",
-        "content": {
-          "application/vnd.api+json": {
-            "schema": {
+      },
+      "Errors": {
+        "type": "object",
+        "description": "Error objects provide additional information about problems  encountered while performing an operation.\n",
+        "properties": {
+          "errors": {
+            "type": "array",
+            "items": {
               "type": "object",
               "properties": {
-                "errors": {
-                  "type": "array",
-                  "items": {
-                    "type": "object",
-                    "properties": {
-                      "status": {
-                        "type": "string",
-                        "enum": [
-                          "401"
-                        ]
-                      },
-                      "code": {
-                        "type": "string",
-                        "enum": [
-                          "unauthorized"
-                        ]
-                      },
-                      "title": {
-                        "type": "string",
-                        "example": "OAuth token missing or invalid"
-                      },
-                      "source": {
-                        "type": "object",
-                        "properties": {
-                          "header": {
-                            "type": "string",
-                            "example": "Authorization"
-                          }
-                        }
-                      }
+                "id": {
+                  "type": "string",
+                  "description": "A unique identifier for this particular occurrence of the problem."
+                },
+                "links": {
+                  "type": "object",
+                  "properties": {
+                    "about": {
+                      "type": "string",
+                      "description": "A link that leads to further details about this particular occurrence of the problem.\n"
                     }
                   }
+                },
+                "status": {
+                  "type": "string",
+                  "description": "the HTTP status code applicable to this problem, expressed as a string value.\n"
+                },
+                "code": {
+                  "type": "string",
+                  "description": "an application-specific error code, expressed as a string value.\n"
+                },
+                "title": {
+                  "type": "string",
+                  "description": "A short, human-readable summary of the problem that SHOULD NOT change from occurrence to occurrence of the problem, except for purposes of localization.\n"
+                },
+                "detail": {
+                  "type": "string",
+                  "description": "a human-readable explanation specific to this occurrence of the problem. Like title, this field’s value can be localized.\n"
+                },
+                "source": {
+                  "type": "object",
+                  "desciption": "An object containing references to the source of the error.\n",
+                  "properties": {
+                    "pointer": {
+                      "type": "string",
+                      "description": "A JSON Pointer [RFC6901] to the associated entity in the request document [e.g. \"/data\" for a primary data object, or \"/data/attributes/title\" for a specific attribute].\n"
+                    },
+                    "parameter": {
+                      "type": "string",
+                      "description": "A string indicating which URI query parameter caused the error.\n"
+                    }
+                  }
+                },
+                "meta": {
+                  "type": "object",
+                  "description": "a meta object containing non-standard meta-information about the error.\n",
+                  "properties": {},
+                  "additionalProperties": true
                 }
               }
             }
           }
         }
-      },
-      "NotAcceptable": {
-        "description": "Not acceptable",
+      }
+    },
+    "responses": {
+      "BadRequest": {
+        "description": "The server cannot or will not process the request due to an apparent client error\n",
         "content": {
           "application/vnd.api+json": {
             "schema": {
-              "type": "object",
-              "properties": {
-                "errors": {
-                  "type": "array",
-                  "items": {
-                    "type": "object",
-                    "properties": {
-                      "status": {
-                        "type": "string",
-                        "enum": [
-                          "406"
-                        ]
-                      },
-                      "code": {
-                        "type": "string",
-                        "enum": [
-                          "notAcceptable"
-                        ]
-                      },
-                      "title": {
-                        "type": "string",
-                        "example": "The specified Accept header is not valid"
-                      },
-                      "source": {
-                        "type": "object",
-                        "properties": {
-                          "header": {
-                            "type": "string",
-                            "example": "Accept"
-                          }
-                        }
-                      }
-                    }
-                  }
-                }
-              }
+              "$ref": "#/components/schemas/Errors"
+            }
+          }
+        }
+      },
+      "Unauthorized": {
+        "description": "OAuth token missing or invalid",
+        "content": {
+          "application/vnd.api+json": {
+            "schema": {
+              "$ref": "#/components/schemas/Errors"
+            }
+          }
+        }
+      },
+      "NotAcceptable": {
+        "description": "The specified Accept header is not valid",
+        "content": {
+          "application/vnd.api+json": {
+            "schema": {
+              "$ref": "#/components/schemas/Errors"
             }
           }
         }
@@ -1062,33 +1015,7 @@
         "content": {
           "application/vnd.api+json": {
             "schema": {
-              "type": "object",
-              "properties": {
-                "errors": {
-                  "type": "array",
-                  "items": {
-                    "type": "object",
-                    "properties": {
-                      "status": {
-                        "type": "string",
-                        "enum": [
-                          "500"
-                        ]
-                      },
-                      "code": {
-                        "type": "string",
-                        "enum": [
-                          "internalServerError"
-                        ]
-                      },
-                      "title": {
-                        "type": "string",
-                        "example": "Internal server error"
-                      }
-                    }
-                  }
-                }
-              }
+              "$ref": "#/components/schemas/Errors"
             }
           }
         }

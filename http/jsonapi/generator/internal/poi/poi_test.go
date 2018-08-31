@@ -18,7 +18,7 @@ type testService struct {
 	t *testing.T
 }
 
-func (s *testService) GetCheckForPaceApp(ctx context.Context, w GetCheckForPaceAppResponseWriter, r *GetCheckForPaceAppRequest) error {
+func (s *testService) CheckForPaceApp(ctx context.Context, w CheckForPaceAppResponseWriter, r *CheckForPaceAppRequest) error {
 	if r.ParamLatitude != 41.859194 {
 		s.t.Errorf("expected ParamLatitude to be %f, got: %f", r.ParamLatitude, 41.859194)
 	}
@@ -45,7 +45,7 @@ func (s *testService) GetCheckForPaceApp(ctx context.Context, w GetCheckForPaceA
 	return nil
 }
 
-func (s *testService) GetSearch(ctx context.Context, w GetSearchResponseWriter, r *GetSearchRequest) error {
+func (s *testService) Search(context.Context, SearchResponseWriter, *SearchRequest) error {
 	return nil
 }
 
