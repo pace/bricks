@@ -12,8 +12,7 @@ import (
 // DockerfileOptions configure the output of the generated docker
 // file
 type DockerfileOptions struct {
-	DaemonCmd  string
-	ControlCmd string
+	Commands CommandOptions
 }
 
 // Dockerfile generate a dockerfile using the given options
@@ -38,15 +37,15 @@ WORKDIR /tmp/service
 ADD . .
 RUN gometalinter.v2 ./...
 RUN go test -v -race -cover ./...
-RUN go install ./cmd/{{ .DaemonCmd }}
-RUN go install ./cmd/{{ .ControlCmd }}
+RUN go install ./cmd/{{ .Commands.DaemonName }}
+RUN go install ./cmd/{{ .Commands.ControlName }}
 
 FROM alpine
 RUN apk update && apk add ca-certificates && apk add tzdata && rm -rf /var/cache/apk/*
-COPY --from=builder /go/bin/{{ .DaemonCmd }} /usr/local/bin/
-COPY --from=builder /go/bin/{{ .ControlCmd }} /usr/local/bin/
+COPY --from=builder /go/bin/{{ .Commands.DaemonName }} /usr/local/bin/
+COPY --from=builder /go/bin/{{ .Commands.ControlName }} /usr/local/bin/
 
 EXPOSE 3000
 ENV PORT 3000
-ENTRYPOINT ["/usr/local/bin/{{ .DaemonCmd }}"]
+ENTRYPOINT ["/usr/local/bin/{{ .Commands.DaemonName }}"]
 `))

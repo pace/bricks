@@ -47,10 +47,11 @@ func New(name string, options NewOptions) {
 
 	SimpleExecInPath(dir, "go", "mod", "init", GoServicePackagePath(name))
 
-	// Generate docker- and makefile
+	// Generate commands, docker- and makefile
+	commands := generate.NewCommandOptions(name)
+	generate.Commands(dir, commands)
 	generate.Dockerfile(filepath.Join(dir, "Dockerfile"), generate.DockerfileOptions{
-		DaemonCmd:  name + "d",
-		ControlCmd: name + "ctl",
+		Commands: commands,
 	})
 	generate.Makefile(filepath.Join(dir, "Makefile"), generate.MakefileOptions{
 		Name: name,

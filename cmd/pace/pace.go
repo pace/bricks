@@ -172,14 +172,25 @@ func addServiceGenerateCommands(cmdServiceGenerate *cobra.Command) {
 	cmdRest.Flags().StringVar(&source, "source", "", "OpenAPIv3 source to use for generation")
 	cmdServiceGenerate.AddCommand(cmdRest)
 
+	var commandsPath string
+	cmdCommands := &cobra.Command{
+		Use:  "commands [name]",
+		Args: cobra.ExactArgs(1),
+		Run: func(cmd *cobra.Command, args []string) {
+			generate.Commands(commandsPath,
+				generate.NewCommandOptions(args[0]))
+		},
+	}
+	cmdCommands.Flags().StringVar(&commandsPath, "path", "", "path directory in which to create the commands")
+	cmdServiceGenerate.AddCommand(cmdCommands)
+
 	var dockerfilePath string
 	cmdDockerfile := &cobra.Command{
 		Use:  "dockerfile [name]",
 		Args: cobra.ExactArgs(1),
 		Run: func(cmd *cobra.Command, args []string) {
 			generate.Dockerfile(dockerfilePath, generate.DockerfileOptions{
-				DaemonCmd:  args[0] + "d",
-				ControlCmd: args[0] + "ctl",
+				Commands: generate.NewCommandOptions(args[0]),
 			})
 		},
 	}
