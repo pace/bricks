@@ -73,7 +73,7 @@ func addRootCommands(rootCmd *cobra.Command) {
 func addServiceCommands(cmdService *cobra.Command) {
 	var restSource string
 	cmdServiceNew := &cobra.Command{
-		Use:  "new",
+		Use:  "new [name]",
 		Args: cobra.ExactArgs(1),
 		Run: func(cmd *cobra.Command, args []string) {
 			service.New(args[0], service.NewOptions{
@@ -85,7 +85,7 @@ func addServiceCommands(cmdService *cobra.Command) {
 	cmdService.AddCommand(cmdServiceNew)
 
 	cmdServiceClone := &cobra.Command{
-		Use:  "clone",
+		Use:  "clone [name]",
 		Args: cobra.ExactArgs(1),
 		Run: func(cmd *cobra.Command, args []string) {
 			service.Clone(args[0])
@@ -94,7 +94,7 @@ func addServiceCommands(cmdService *cobra.Command) {
 	cmdService.AddCommand(cmdServiceClone)
 
 	cmdServicePath := &cobra.Command{
-		Use:  "path",
+		Use:  "path [name]",
 		Args: cobra.ExactArgs(1),
 		Run: func(cmd *cobra.Command, args []string) {
 			service.Path(args[0])
@@ -103,7 +103,7 @@ func addServiceCommands(cmdService *cobra.Command) {
 	cmdService.AddCommand(cmdServicePath)
 
 	cmdServiceEdit := &cobra.Command{
-		Use:  "edit",
+		Use:  "edit [name]",
 		Args: cobra.ExactArgs(1),
 		Run: func(cmd *cobra.Command, args []string) {
 			service.Edit(args[0])
@@ -113,8 +113,8 @@ func addServiceCommands(cmdService *cobra.Command) {
 
 	var runCmd string
 	cmdServiceRun := &cobra.Command{
-		Use:  "run",
-		Args: cobra.MinimumNArgs(1),
+		Use:  "run [name]",
+		Args: cobra.ExactArgs(1),
 		Run: func(cmd *cobra.Command, args []string) {
 			service.Run(args[0], service.RunOptions{
 				CmdName: runCmd,
@@ -127,7 +127,7 @@ func addServiceCommands(cmdService *cobra.Command) {
 
 	var testGoConvey bool
 	cmdServiceTest := &cobra.Command{
-		Use:  "test",
+		Use:  "test [name]",
 		Args: cobra.ExactArgs(1),
 		Run: func(cmd *cobra.Command, args []string) {
 			service.Test(args[0], service.TestOptions{GoConvey: testGoConvey})
@@ -137,7 +137,7 @@ func addServiceCommands(cmdService *cobra.Command) {
 	cmdService.AddCommand(cmdServiceTest)
 
 	cmdServiceLint := &cobra.Command{
-		Use:  "lint",
+		Use:  "lint [name]",
 		Args: cobra.ExactArgs(1),
 		Run: func(cmd *cobra.Command, args []string) {
 			service.Lint(args[0])
@@ -146,7 +146,7 @@ func addServiceCommands(cmdService *cobra.Command) {
 	cmdService.AddCommand(cmdServiceLint)
 
 	cmdServiceGenerate := &cobra.Command{
-		Use:  "generate",
+		Use:  "generate [command]",
 		Args: cobra.MaximumNArgs(1),
 	}
 	cmdService.AddCommand(cmdServiceGenerate)
@@ -156,7 +156,7 @@ func addServiceCommands(cmdService *cobra.Command) {
 // pace service generate ...
 func addServiceGenerateCommands(cmdServiceGenerate *cobra.Command) {
 	var pkgName, path, source string
-	cmdRestTest := &cobra.Command{
+	cmdRest := &cobra.Command{
 		Use:  "rest",
 		Args: cobra.NoArgs,
 		Run: func(cmd *cobra.Command, args []string) {
@@ -167,10 +167,37 @@ func addServiceGenerateCommands(cmdServiceGenerate *cobra.Command) {
 			})
 		},
 	}
-	cmdRestTest.Flags().StringVar(&pkgName, "pkg", "", "name for the generated go package")
-	cmdRestTest.Flags().StringVar(&path, "path", "", "path for generated file")
-	cmdRestTest.Flags().StringVar(&source, "source", "", "OpenAPIv3 source to use for generation")
-	cmdServiceGenerate.AddCommand(cmdRestTest)
+	cmdRest.Flags().StringVar(&pkgName, "pkg", "", "name for the generated go package")
+	cmdRest.Flags().StringVar(&path, "path", "", "path for generated file")
+	cmdRest.Flags().StringVar(&source, "source", "", "OpenAPIv3 source to use for generation")
+	cmdServiceGenerate.AddCommand(cmdRest)
+
+	var dockerfilePath string
+	cmdDockerfile := &cobra.Command{
+		Use:  "dockerfile [name]",
+		Args: cobra.ExactArgs(1),
+		Run: func(cmd *cobra.Command, args []string) {
+			generate.Dockerfile(dockerfilePath, generate.DockerfileOptions{
+				DaemonCmd:  args[0] + "d",
+				ControlCmd: args[0] + "ctl",
+			})
+		},
+	}
+	cmdDockerfile.Flags().StringVar(&dockerfilePath, "path", "./Dockerfile", "path to Dockerfile location")
+	cmdServiceGenerate.AddCommand(cmdDockerfile)
+
+	var makefilePath string
+	cmdMakefile := &cobra.Command{
+		Use:  "makefile [name]",
+		Args: cobra.ExactArgs(1),
+		Run: func(cmd *cobra.Command, args []string) {
+			generate.Makefile(makefilePath, generate.MakefileOptions{
+				Name: args[0],
+			})
+		},
+	}
+	cmdMakefile.Flags().StringVar(&makefilePath, "path", "./Makefile", "path to Makefile location")
+	cmdServiceGenerate.AddCommand(cmdMakefile)
 }
 
 // mustIdentifyService returns the name of the current service or quits the program

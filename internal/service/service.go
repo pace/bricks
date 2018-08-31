@@ -6,91 +6,11 @@ package service
 import (
 	"bytes"
 	"fmt"
-	"io"
 	"log"
 	"os"
-	"os/exec"
-	"os/user"
 	"path/filepath"
 	"strings"
-
-	"lab.jamit.de/pace/tool/internal/service/generate"
 )
-
-// PaceBase for all go projects
-const PaceBase = "lab.jamit.de/pace"
-
-// ServiceBase for all go microservices
-const ServiceBase = "web/service"
-
-// GitLabTemplate git clone template for cloning repositories
-const GitLabTemplate = "git@lab.jamit.de:pace/web/service/%s.git"
-
-// GoPath returns the gopath for the current system,
-// uses GOPATH env and fallback to default go dir
-func GoPath() string {
-	path, ok := os.LookupEnv("GOPATH")
-	if !ok {
-		usr, err := user.Current()
-		if err != nil {
-			log.Fatal(err)
-		}
-		return filepath.Join(usr.HomeDir, "go")
-	}
-
-	return path
-}
-
-// PacePath returns the pace path for the current system,
-// uses PACE_PATH env and fallback to default go dir
-func PacePath() string {
-	path, ok := os.LookupEnv("PACE_PATH")
-	if !ok {
-		usr, err := user.Current()
-		if err != nil {
-			log.Fatal(err)
-		}
-		return filepath.Join(usr.HomeDir, "PACE")
-	}
-
-	return path
-}
-
-// NewOptions collection of options to apply while or
-// after the creation of the new project
-type NewOptions struct {
-	RestSource string // url or path to OpenAPIv3 (json:api) specification
-}
-
-// New creates a new directory in the go path
-func New(name string, options NewOptions) {
-	// get dir for the service
-	dir, err := GoServicePath(name)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	SimpleExec("git", "init", dir)
-	SimpleExecInPath(dir, "git", "remote", "add", "origin", fmt.Sprintf(GitLabTemplate, name))
-	log.Printf("Remember to create the %s repository in gitlab: https://lab.jamit.de/projects/new?namespace_id=296\n", name)
-
-	// add REST API if there was a source specified
-	if options.RestSource != "" {
-		restDir := filepath.Join(dir, "internal", "http", "rest")
-		err := os.MkdirAll(restDir, 0770)
-		if err != nil {
-			log.Fatal(fmt.Printf("Failed to generate dir for rest api %s: %v", restDir, err))
-		}
-
-		generate.Rest(generate.RestOptions{
-			Path:    filepath.Join(restDir, "jsonapi.go"),
-			PkgName: "rest",
-			Source:  options.RestSource,
-		})
-	}
-
-	SimpleExecInPath(dir, "go", "mod", "init", GoServicePackagePath(name))
-}
 
 // Clone the service into pace path
 func Clone(name string) {
@@ -206,67 +126,4 @@ func Lint(name string) {
 
 	// start go run
 	SimpleExec(GoBinCommand("golint"), paths...)
-}
-
-// GoServicePath returns the path of the go service for given name
-func GoServicePath(name string) (string, error) {
-	return filepath.Abs(filepath.Join(PacePath(), ServiceBase, name))
-}
-
-// GoServicePackagePath returns a go package path for given service name
-func GoServicePackagePath(name string) string {
-	return filepath.Join(PaceBase, ServiceBase, name)
-}
-
-// AutoInstall cmdName if not installed already using go get -u goGetPath
-func AutoInstall(cmdName, goGetPath string) {
-	if _, err := os.Stat(GoBinCommand(cmdName)); os.IsNotExist(err) {
-		fmt.Fprintf(os.Stderr, "Installing %s using: go get -u %s\n", cmdName, goGetPath)
-		// assume error means no file
-		SimpleExec("go", "get", "-u", goGetPath)
-	} else if err != nil {
-		log.Fatal(err)
-	}
-}
-
-// GoBinCommand returns the path to a binary installed in the gopath
-func GoBinCommand(cmdName string) string {
-	return filepath.Join(GoPath(), "bin", cmdName)
-}
-
-// SimpleExec executes the command and uses the parent process STDIN,STDOUT,STDERR
-func SimpleExec(cmdName string, arguments ...string) {
-	cmd := exec.Command(cmdName, arguments...)
-	cmd.Stdin = os.Stdin
-	cmd.Stdout = os.Stdout
-	cmd.Stderr = os.Stderr
-	err := cmd.Run()
-	if err != nil {
-		log.Fatal(err)
-	}
-}
-
-// SimpleExecInPath executes the command and uses the parent process STDIN,STDOUT,STDERR in passed dir
-func SimpleExecInPath(dir, cmdName string, arguments ...string) {
-	cmd := exec.Command(cmdName, arguments...)
-	cmd.Stdin = os.Stdin
-	cmd.Stdout = os.Stdout
-	cmd.Stderr = os.Stderr
-	cmd.Dir = dir
-	err := cmd.Run()
-	if err != nil {
-		log.Fatal(err)
-	}
-}
-
-// GoBinCommandText writes the command output to the passed writer
-func GoBinCommandText(w io.Writer, cmdName string, arguments ...string) {
-	cmd := exec.Command(cmdName, arguments...)
-	cmd.Stdin = os.Stdin
-	cmd.Stdout = w
-	cmd.Stderr = os.Stderr
-	err := cmd.Run()
-	if err != nil {
-		log.Fatal(err)
-	}
 }
