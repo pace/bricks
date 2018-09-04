@@ -1,0 +1,895 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "PACE Payment API",
+    "description": "Welcome to the PACE Payment API documentation.\nThis API is responsible for managing payment methods for users as well as authorizing payments on behalf of PACE services.\n",
+    "version": "0.0.1",
+    "x-logo": {
+      "url": "https://developer.pace.car/images/logo_black.svg"
+    }
+  },
+  "servers": [
+    {
+      "url": "https://api.pace.cloud/pay"
+    }
+  ],
+  "paths": {
+    "/beta/payment-methods/sepa-direct-debit": {
+      "post": {
+        "tags": [
+          "Payment"
+        ],
+        "operationId": "CreatePaymentMethodSEPA",
+        "summary": "Register SEPA direct debit as a payment method",
+        "description": "By registering you allow the user to use SEPA direct debit as a payment method.\nThe payment method ID is optional when posting data.\n",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/vnd.api+json": {
+              "schema": {
+                "$ref": "#/components/schemas/PaymentMethodSEPA"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/vnd.api+json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "type": {
+                          "type": "string",
+                          "enum": [
+                            "paymentMethod"
+                          ]
+                        },
+                        "id": {
+                          "type": "string",
+                          "format": "uuid",
+                          "description": "Payment method ID",
+                          "example": "d7101f72-a672-453c-9d36-d5809ef0ded6"
+                        },
+                        "attributes": {
+                          "type": "object",
+                          "properties": {
+                            "kind": {
+                              "type": "string",
+                              "enum": [
+                                "sepa"
+                              ]
+                            },
+                            "identificationString": {
+                              "type": "string",
+                              "example": "DE89 **** 3000"
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "406": {
+            "$ref": "#/components/responses/NotAcceptable"
+          },
+          "415": {
+            "$ref": "#/components/responses/UnsupportedMediaType"
+          },
+          "422": {
+            "$ref": "#/components/responses/UnprocessableEntity"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        }
+      }
+    },
+    "/beta/payment-methods/{paymentMethodId}": {
+      "delete": {
+        "tags": [
+          "Payment"
+        ],
+        "operationId": "DeletePaymentMethod",
+        "summary": "Delete a payment method",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "paymentMethodId",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "required": true,
+            "description": "ID of the paymentMethod",
+            "example": "93db55b6-a9ab-4597-a253-49a1718cea0a"
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "The payment method was deleted successfully."
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "406": {
+            "$ref": "#/components/responses/NotAcceptable"
+          },
+          "422": {
+            "$ref": "#/components/responses/UnprocessableEntity"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        }
+      }
+    },
+    "/beta/payment-methods": {
+      "get": {
+        "tags": [
+          "Payment"
+        ],
+        "operationId": "GetPaymentMethods",
+        "summary": "Get all payment methods for user",
+        "responses": {
+          "200": {
+            "description": "All the payment methods for user.",
+            "content": {
+              "application/vnd.api+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AllPaymentMethods"
+                },
+                "example": {
+                  "data": [
+                    {
+                      "type": "paymentMethod",
+                      "id": "b86b67e9-7fae-4500-8885-45c8032056cc",
+                      "attributes": {
+                        "kind": "sepa",
+                        "identificationString": "DE89 **** 3000"
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "406": {
+            "$ref": "#/components/responses/NotAcceptable"
+          },
+          "422": {
+            "$ref": "#/components/responses/UnprocessableEntity"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        }
+      }
+    },
+    "/beta/payment-methods?include=creditCheck": {
+      "get": {
+        "tags": [
+          "Payment"
+        ],
+        "operationId": "GetPaymentMethodsIncludingCreditCheck",
+        "summary": "Get all ready-to-use payment methods for user",
+        "description": "This request will return a list of supported payment methods for the current user that they can, in theory, use. That is, ones that are valid and can immediately be used.</br></br>\nThis is as opposed to the regular `/payment-methods`, which does not categorize payment methods as valid for use.</br></br>\nYou should trigger this when the user is approaching on a gas station with fueling support to get a list of available payment methods.</br></br>\nIf the list is empty, you can ask the user to add a payment method to use PACE fueling.",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "include",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "creditCheck"
+              ]
+            },
+            "required": true,
+            "example": "creditCheck"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "All the payment methods that could be used.",
+            "content": {
+              "application/vnd.api+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AllPaymentMethods"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "406": {
+            "$ref": "#/components/responses/NotAcceptable"
+          },
+          "422": {
+            "$ref": "#/components/responses/UnprocessableEntity"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        }
+      }
+    },
+    "/beta/payment-methods?include=paymentTokens": {
+      "get": {
+        "tags": [
+          "Payment"
+        ],
+        "operationId": "GetPaymentMethodsIncludingPaymentToken",
+        "summary": "Get all payment methods with pre-authorized amounts",
+        "description": "This request returns all payment methods with pre-authorized amounts.</br></br>\nThe list will contain the pre-authorized amount (incl. currency), all information about the payment method and the paymentToken that can be used to complete the payment.</br></br>\nEmpty list if there are no pre-authorized amounts.",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "include",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "paymentToken"
+              ]
+            },
+            "required": true,
+            "example": "paymentToken"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "All the payment methods with pre-authorised amounts.",
+            "content": {
+              "application/vnd.api+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PaymentMethodsWithPaymentTokens"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "406": {
+            "$ref": "#/components/responses/NotAcceptable"
+          },
+          "422": {
+            "$ref": "#/components/responses/UnprocessableEntity"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        }
+      }
+    },
+    "/beta/payment-methods/{paymentMethodId}/authorize": {
+      "post": {
+        "tags": [
+          "Payment"
+        ],
+        "operationId": "AuthorizePaymentMethod",
+        "summary": "Authorize a payment using the payment method whose ID is paymentMethodId",
+        "description": "When successful, returns a paymentToken value.",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "paymentMethodId",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "required": true,
+            "description": "ID of the paymentMethod",
+            "example": "93db55b6-a9ab-4597-a253-49a1718cea0a"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/vnd.api+json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "data": {
+                    "type": "object",
+                    "required": [
+                      "type",
+                      "attributes"
+                    ],
+                    "properties": {
+                      "type": {
+                        "type": "string",
+                        "enum": [
+                          "paymentToken"
+                        ]
+                      },
+                      "id": {
+                        "type": "string",
+                        "format": "uuid",
+                        "description": "ID of the new paymentToken.",
+                        "example": "f4267aea-2567-4a3c-934d-b8355a76abe9"
+                      },
+                      "attributes": {
+                        "type": "object",
+                        "required": [
+                          "currency",
+                          "amount"
+                        ],
+                        "properties": {
+                          "currency": {
+                            "type": "string",
+                            "example": "USD",
+                            "description": "Currency as specified in ISO-4217."
+                          },
+                          "amount": {
+                            "type": "number",
+                            "example": 65.49
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/vnd.api+json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "type": {
+                          "type": "string",
+                          "enum": [
+                            "paymentToken"
+                          ]
+                        },
+                        "id": {
+                          "type": "string",
+                          "format": "uuid",
+                          "description": "paymentToken ID (NOT the token value)",
+                          "example": "c3f037ea-492e-4033-9b4b-4efc7beca16c"
+                        },
+                        "attributes": {
+                          "type": "object",
+                          "properties": {
+                            "value": {
+                              "type": "string",
+                              "description": "The actual token value. Note that the format is subject to change. Treat transparently.",
+                              "example": "8871737079258bfade42af87b9449f8b"
+                            },
+                            "currency": {
+                              "type": "string",
+                              "example": "USD",
+                              "description": "Currency as specified in ISO-4217."
+                            },
+                            "amount": {
+                              "type": "number",
+                              "example": 65.49
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "description": "Amount cannot be authorized",
+            "content": {
+              "application/vnd.api+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Errors"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Payment method is unknown",
+            "content": {
+              "application/vnd.api+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Errors"
+                }
+              }
+            }
+          },
+          "406": {
+            "$ref": "#/components/responses/NotAcceptable"
+          },
+          "415": {
+            "$ref": "#/components/responses/UnsupportedMediaType"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          },
+          "502": {
+            "$ref": "#/components/responses/BadGateway"
+          }
+        }
+      }
+    },
+    "/beta/payment-methods/{paymentMethodId}/paymentTokens/{paymentTokenId}": {
+      "delete": {
+        "tags": [
+          "Payment"
+        ],
+        "operationId": "DeletePaymentToken",
+        "summary": "Delete the paymentToken record.",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "paymentTokenId",
+            "schema": {
+              "type": "string"
+            },
+            "required": true,
+            "description": "paymentToken ID.",
+            "example": "88db55b6-a9ab-4597-a253-49a1718cea0a"
+          },
+          {
+            "in": "path",
+            "name": "paymentMethodId",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "required": true,
+            "description": "ID of the paymentMethod",
+            "example": "93db55b6-a9ab-4597-a253-49a1718cea0a"
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "The paymentToken was removed successfully."
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "406": {
+            "$ref": "#/components/responses/NotAcceptable"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "AllPaymentMethods": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "type": {
+                  "type": "string",
+                  "enum": [
+                    "paymentMethod"
+                  ]
+                },
+                "id": {
+                  "type": "string",
+                  "format": "uuid",
+                  "description": "Payment method ID",
+                  "example": "d7101f72-a672-453c-9d36-d5809ef0ded6"
+                },
+                "attributes": {
+                  "type": "object",
+                  "properties": {
+                    "kind": {
+                      "type": "string",
+                      "example": "sepa",
+                      "enum": [
+                        "sepa"
+                      ]
+                    },
+                    "identificationString": {
+                      "type": "string",
+                      "example": "DE89 **** 3000"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "PaymentMethodsWithPaymentTokens": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "type": {
+                  "type": "string",
+                  "enum": [
+                    "paymentMethod"
+                  ]
+                },
+                "id": {
+                  "type": "string",
+                  "format": "uuid",
+                  "description": "Payment method ID",
+                  "example": "d7101f72-a672-453c-9d36-d5809ef0ded6"
+                },
+                "attributes": {
+                  "type": "object",
+                  "properties": {
+                    "kind": {
+                      "type": "string",
+                      "example": "sepa",
+                      "enum": [
+                        "sepa"
+                      ]
+                    },
+                    "identificationString": {
+                      "type": "string",
+                      "example": "DE89 **** 3000"
+                    }
+                  }
+                },
+                "relationships": {
+                  "type": "object",
+                  "properties": {
+                    "paymentTokens": {
+                      "type": "object",
+                      "properties": {
+                        "data": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "type": {
+                                "type": "string",
+                                "enum": [
+                                  "paymentToken"
+                                ]
+                              },
+                              "id": {
+                                "type": "string",
+                                "format": "uuid",
+                                "example": "33331f72-a672-453c-9d36-d5809ef0ded6"
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "included": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "type": {
+                  "type": "string",
+                  "enum": [
+                    "paymentToken"
+                  ]
+                },
+                "id": {
+                  "type": "string",
+                  "format": "uuid",
+                  "example": "33331f72-a672-453c-9d36-d5809ef0ded6"
+                },
+                "attributes": {
+                  "type": "object",
+                  "properties": {
+                    "amount": {
+                      "type": "number",
+                      "example": 23,
+                      "description": "The amount that this token represents."
+                    },
+                    "currency": {
+                      "type": "string",
+                      "example": "EUR",
+                      "description": "Currency as specified in ISO-4217."
+                    },
+                    "value": {
+                      "type": "string",
+                      "example": "12c52345c1x34",
+                      "description": "paymentToken value. Format might change."
+                    },
+                    "validUntil": {
+                      "type": "integer",
+                      "example": 1232344234,
+                      "description": "The datetime (as unix timestamp) after which the token is no longer valid."
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "PaymentMethodSEPA": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "object",
+            "required": [
+              "type"
+            ],
+            "properties": {
+              "id": {
+                "type": "string",
+                "format": "uuid",
+                "description": "The ID of this payment method.",
+                "example": "2a1319c3-c136-495d-b59a-47b3246d08af"
+              },
+              "type": {
+                "type": "string",
+                "enum": [
+                  "paymentMethod"
+                ]
+              },
+              "attributes": {
+                "type": "object",
+                "required": [
+                  "kind",
+                  "iban",
+                  "firstName",
+                  "lastName",
+                  "address"
+                ],
+                "properties": {
+                  "kind": {
+                    "type": "string",
+                    "enum": [
+                      "sepa"
+                    ]
+                  },
+                  "iban": {
+                    "type": "string",
+                    "example": "DE89370400440532013000"
+                  },
+                  "firstName": {
+                    "type": "string",
+                    "example": "Jon"
+                  },
+                  "lastName": {
+                    "type": "string",
+                    "example": "Smith"
+                  },
+                  "address": {
+                    "type": "object",
+                    "required": [
+                      "street",
+                      "houseNo",
+                      "postalCode",
+                      "city",
+                      "countryCode"
+                    ],
+                    "properties": {
+                      "street": {
+                        "type": "string",
+                        "example": "Haid-und-Neu-Str."
+                      },
+                      "houseNo": {
+                        "type": "string",
+                        "example": 18
+                      },
+                      "postalCode": {
+                        "type": "string",
+                        "example": "76131"
+                      },
+                      "city": {
+                        "type": "string",
+                        "example": "Karlsruhe"
+                      },
+                      "countryCode": {
+                        "type": "string",
+                        "example": "DE",
+                        "description": "Country code in as specified in ISO 3166-1."
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "Errors": {
+        "type": "object",
+        "description": "Error objects provide additional information about problems  encountered while performing an operation.\n",
+        "properties": {
+          "errors": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "description": "A unique identifier for this particular occurrence of the problem."
+                },
+                "links": {
+                  "type": "object",
+                  "properties": {
+                    "about": {
+                      "type": "string",
+                      "description": "A link that leads to further details about this particular occurrence of the problem.\n"
+                    }
+                  }
+                },
+                "status": {
+                  "type": "string",
+                  "description": "the HTTP status code applicable to this problem, expressed as a string value.\n"
+                },
+                "code": {
+                  "type": "string",
+                  "description": "an application-specific error code, expressed as a string value.\n"
+                },
+                "title": {
+                  "type": "string",
+                  "description": "A short, human-readable summary of the problem that SHOULD NOT change from occurrence to occurrence of the problem, except for purposes of localization.\n"
+                },
+                "detail": {
+                  "type": "string",
+                  "description": "a human-readable explanation specific to this occurrence of the problem. Like title, this field’s value can be localized.\n"
+                },
+                "source": {
+                  "type": "object",
+                  "desciption": "An object containing references to the source of the error.\n",
+                  "properties": {
+                    "pointer": {
+                      "type": "string",
+                      "description": "A JSON Pointer [RFC6901] to the associated entity in the request document [e.g. \"/data\" for a primary data object, or \"/data/attributes/title\" for a specific attribute].\n"
+                    },
+                    "parameter": {
+                      "type": "string",
+                      "description": "A string indicating which URI query parameter caused the error.\n"
+                    }
+                  }
+                },
+                "meta": {
+                  "type": "object",
+                  "description": "a meta object containing non-standard meta-information about the error.\n",
+                  "properties": {},
+                  "additionalProperties": true
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "responses": {
+      "BadGateway": {
+        "description": "Error occurred while communicating with upstream services",
+        "content": {
+          "application/vnd.api+json": {
+            "schema": {
+              "$ref": "#/components/schemas/Errors"
+            }
+          }
+        }
+      },
+      "Unauthorized": {
+        "description": "OAuth token missing or invalid",
+        "content": {
+          "application/vnd.api+json": {
+            "schema": {
+              "$ref": "#/components/schemas/Errors"
+            }
+          }
+        }
+      },
+      "RequestTimeout": {
+        "description": "Your request timed out",
+        "content": {
+          "application/vnd.api+json": {
+            "schema": {
+              "$ref": "#/components/schemas/Errors"
+            }
+          }
+        }
+      },
+      "BadRequest": {
+        "description": "The server cannot or will not process the request due to an apparent client error\n",
+        "content": {
+          "application/vnd.api+json": {
+            "schema": {
+              "$ref": "#/components/schemas/Errors"
+            }
+          }
+        }
+      },
+      "UnprocessableEntity": {
+        "description": "Unprocessable entity, due to malformed or invalid json",
+        "content": {
+          "application/vnd.api+json": {
+            "schema": {
+              "$ref": "#/components/schemas/Errors"
+            }
+          }
+        }
+      },
+      "NotAcceptable": {
+        "description": "The specified Accept header is not valid",
+        "content": {
+          "application/vnd.api+json": {
+            "schema": {
+              "$ref": "#/components/schemas/Errors"
+            }
+          }
+        }
+      },
+      "InternalServerError": {
+        "description": "Internal Server Error",
+        "content": {
+          "application/vnd.api+json": {
+            "schema": {
+              "$ref": "#/components/schemas/Errors"
+            }
+          }
+        }
+      },
+      "NotFound": {
+        "description": "Resource not found",
+        "content": {
+          "application/vnd.api+json": {
+            "schema": {
+              "$ref": "#/components/schemas/Errors"
+            }
+          }
+        }
+      },
+      "UnsupportedMediaType": {
+        "description": "The specified Content-Type header is not valid",
+        "content": {
+          "application/vnd.api+json": {
+            "schema": {
+              "$ref": "#/components/schemas/Errors"
+            }
+          }
+        }
+      }
+    }
+  }
+}

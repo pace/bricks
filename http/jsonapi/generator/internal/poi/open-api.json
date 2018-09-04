@@ -1,0 +1,1025 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "PACE POI API",
+    "description": "POI API",
+    "version": "0.0.1",
+    "x-logo": {
+      "url": "https://developer.pace.car/images/logo_black.svg"
+    }
+  },
+  "servers": [
+    {
+      "url": "https://api.pace.cloud/poi"
+    }
+  ],
+  "paths": {
+    "/beta/check-for-pace-app": {
+      "get": {
+        "tags": [
+          "POI"
+        ],
+        "operationId": "CheckForPaceApp",
+        "summary": "Get location-based apps\n",
+        "description": "These location-based PACE apps deliver additional services for PACE customers based on their current position.\nYou can (or should) trigger this whenever:\n* A longer stand-still is detected\n* The engine is turned off\n* Every 5 seconds if the user \"left the road\"\n\nPlease note that calling this API is very cheap and can be done regularly.\n",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "latitude",
+            "schema": {
+              "type": "number",
+              "format": "float"
+            },
+            "required": true,
+            "description": "Latitude",
+            "example": 48.123
+          },
+          {
+            "in": "query",
+            "name": "longitude",
+            "schema": {
+              "type": "number",
+              "format": "float"
+            },
+            "required": true,
+            "description": "Longitude",
+            "example": 9.456
+          },
+          {
+            "in": "query",
+            "name": "gpsSource",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "raw",
+                "mapMatched"
+              ]
+            },
+            "required": true,
+            "description": "GPS Source",
+            "example": "mapMatched"
+          },
+          {
+            "in": "query",
+            "name": "appType",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "fueling"
+              ]
+            },
+            "required": true,
+            "description": "Type of location-based app"
+          },
+          {
+            "in": "query",
+            "name": "accuracy",
+            "schema": {
+              "type": "number",
+              "format": "float"
+            },
+            "required": false,
+            "description": "GPS accuracy",
+            "example": 0.7
+          },
+          {
+            "in": "query",
+            "name": "deviation",
+            "schema": {
+              "type": "number",
+              "format": "float"
+            },
+            "required": false,
+            "description": "Deviation in case of map-matched GPS data",
+            "example": 0.35
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/vnd.api+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LocationBasedAppsResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "406": {
+            "$ref": "#/components/responses/NotAcceptable"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        }
+      }
+    },
+    "/beta/search": {
+      "get": {
+        "tags": [
+          "POI"
+        ],
+        "operationId": "Search",
+        "summary": "Search for gas stations",
+        "description": "There are three possibilities to search for gas stations. If you want to search in a specific radius around a given longitude and latitude you have to provide the following query parameters:\n\n* latitude (required)\n* longitude (required)\n* radius (required)\n* accuracy (optional)\n\nIf you want to search in a given bounding box you have to provide the following query parameters:\n\n* boundingBox (required)\n\nIf you want to search along a given path you have to provide the following query parameters:\n* path (required)\n* radius (required)\n\nIf you have map-matched GPS data you can also provide a `deviation` query parameter. By using this query type, the evaluation if the user is inside the polygon of a specific location-based PACE app needs to be done by the client.\n",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "poiType",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "gasStation"
+              ]
+            },
+            "example": "gasStation",
+            "required": true,
+            "description": "POI type you are searching for (in this case gas stations)"
+          },
+          {
+            "in": "query",
+            "name": "appType",
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "enum": [
+                  "fueling"
+                ]
+              }
+            },
+            "required": true,
+            "description": "Search only gas stations with fueling app available",
+            "example": [
+              "fueling"
+            ],
+            "style": "form",
+            "explode": false
+          },
+          {
+            "in": "query",
+            "name": "gpsSource",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "raw",
+                "mapMatched"
+              ]
+            },
+            "required": true,
+            "description": "GPS Source",
+            "example": "mapMatched"
+          },
+          {
+            "in": "query",
+            "name": "include",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "insideAppArea"
+              ]
+            },
+            "required": true,
+            "description": "Include boolean field `insideAppArea` to response indicating that we are inside an app's area",
+            "example": "insideAppArea"
+          },
+          {
+            "in": "query",
+            "name": "latitude",
+            "schema": {
+              "type": "number",
+              "format": "float"
+            },
+            "required": false,
+            "description": "Latitude",
+            "example": 49.16
+          },
+          {
+            "in": "query",
+            "name": "longitude",
+            "schema": {
+              "type": "number",
+              "format": "float"
+            },
+            "required": false,
+            "description": "Longitude",
+            "example": 8.23
+          },
+          {
+            "in": "query",
+            "name": "radius",
+            "schema": {
+              "type": "number",
+              "format": "float"
+            },
+            "required": false,
+            "description": "Radius",
+            "example": 5.4
+          },
+          {
+            "in": "query",
+            "name": "accuracy",
+            "schema": {
+              "type": "number",
+              "format": "float",
+              "minimum": 0,
+              "maximum": 1
+            },
+            "required": false,
+            "description": "GPS Accuracy",
+            "example": 0.8
+          },
+          {
+            "in": "query",
+            "name": "deviation",
+            "schema": {
+              "type": "number",
+              "format": "float"
+            },
+            "required": false,
+            "description": "Deviation in case of map-matched GPS data",
+            "example": 0.35
+          },
+          {
+            "in": "query",
+            "name": "boundingBox",
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "number",
+                "format": "float"
+              }
+            },
+            "required": false,
+            "description": "Bounding box representing [left, bottom, right, top]",
+            "example": [
+              8.23,
+              48.91,
+              8.59,
+              49.08
+            ],
+            "style": "form",
+            "explode": false
+          },
+          {
+            "in": "query",
+            "name": "path",
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "array",
+                "items": {
+                  "type": "number",
+                  "format": "float"
+                }
+              }
+            },
+            "required": false,
+            "description": "Path",
+            "example": [
+              [
+                49.13,
+                9.89
+              ],
+              [
+                49.5,
+                9.12
+              ]
+            ]
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/vnd.api+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GasStationResponse"
+                },
+                "example": {
+                  "data": [
+                    {
+                      "type": "gasStation",
+                      "id": "b86b67e9-7fae-4500-8885-45c8032056cc",
+                      "attributes": {
+                        "latitude": 49.013,
+                        "longitude": 8.425,
+                        "stationName": "PACE Station",
+                        "address": {
+                          "street": "Haid-und-Neu-Str.",
+                          "houseNo": "18",
+                          "postalCode": "76131",
+                          "city": "Karlsruhe",
+                          "countryCode": "DE"
+                        },
+                        "openingHours": [
+                          {
+                            "weekdays": [
+                              "Montag",
+                              "Dienstag",
+                              "Mittwoch",
+                              "Donnerstag",
+                              "Freitag"
+                            ],
+                            "openFromTo": [
+                              "06:00",
+                              "23:00"
+                            ]
+                          },
+                          {
+                            "weekdays": [
+                              "Samstag"
+                            ],
+                            "openFromTo": [
+                              "07:00",
+                              "23:00"
+                            ]
+                          },
+                          {
+                            "weekdays": [
+                              "Sonntag"
+                            ],
+                            "openFromTo": [
+                              "07:00",
+                              "22:00"
+                            ]
+                          }
+                        ],
+                        "amenities": [
+                          "restaurant",
+                          "wifi",
+                          "toilets"
+                        ],
+                        "paymentMethods": [
+                          "sepaDirectDebit"
+                        ]
+                      },
+                      "relationships": {
+                        "fuelPrices": {
+                          "data": [
+                            {
+                              "type": "fuelPrice",
+                              "id": "6b5bff6f-74e1-40a1-9da0-72305292d939"
+                            },
+                            {
+                              "type": "fuelPrice",
+                              "id": "f563e0ee-ba9a-4869-8fe7-42639fcf375d"
+                            },
+                            {
+                              "type": "fuelPrice",
+                              "id": "cb1afd35-f531-4606-abc8-e1cfbc1f96f5"
+                            }
+                          ]
+                        },
+                        "locationBasedApps": {
+                          "data": [
+                            {
+                              "type": "locationBasedApp",
+                              "id": "89a072d1-0255-4abb-b863-c463e4b78453"
+                            }
+                          ]
+                        }
+                      }
+                    }
+                  ],
+                  "included": [
+                    {
+                      "type": "fuelPrice",
+                      "id": "6b5bff6f-74e1-40a1-9da0-72305292d939",
+                      "attributes": {
+                        "fuelType": "ron95_e5",
+                        "fuelAmountUnit": "Ltr",
+                        "pricePerUnit": 1.399,
+                        "currency": "EUR",
+                        "productName": "Super E5"
+                      }
+                    },
+                    {
+                      "type": "fuelPrice",
+                      "id": "f563e0ee-ba9a-4869-8fe7-42639fcf375d",
+                      "attributes": {
+                        "fuelType": "ron95_e10",
+                        "fuelAmountUnit": "Ltr",
+                        "pricePerUnit": 1.379,
+                        "currency": "EUR",
+                        "productName": "Super E10"
+                      }
+                    },
+                    {
+                      "type": "fuelPrice",
+                      "id": "cb1afd35-f531-4606-abc8-e1cfbc1f96f5",
+                      "attributes": {
+                        "fuelType": "diesel",
+                        "fuelAmountUnit": "Ltr",
+                        "pricePerUnit": 1.239,
+                        "currency": "EUR",
+                        "productName": "Diesel"
+                      }
+                    },
+                    {
+                      "type": "locationBasedApp",
+                      "id": "89a072d1-0255-4abb-b863-c463e4b78453",
+                      "attributes": {
+                        "appType": "fueling",
+                        "title": "PACE Fueling App",
+                        "subtitle": "Zahle bargeldlos mit der PACE Fueling App",
+                        "insideAppArea": true,
+                        "appArea": [
+                          [
+                            49.012,
+                            8.424
+                          ],
+                          [
+                            49.1,
+                            9.34
+                          ],
+                          [
+                            48.7,
+                            8.92
+                          ]
+                        ],
+                        "logoUrl": "http://via.placeholder.com/200x200",
+                        "pwaUrl": "http://via.placeholder.com/150x150",
+                        "androidInstantAppUrl": "http://via.placeholder.com/150x150"
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "406": {
+            "$ref": "#/components/responses/NotAcceptable"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "LocationBasedApp": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "description": "Type",
+            "enum": [
+              "locationBasedApp"
+            ]
+          },
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Location-based app ID",
+            "example": "f106ac99-213c-4cf7-8c1b-1e841516026b"
+          },
+          "attributes": {
+            "type": "object",
+            "properties": {
+              "appType": {
+                "type": "string",
+                "enum": [
+                  "fueling"
+                ]
+              },
+              "title": {
+                "type": "string",
+                "example": "PACE Fueling App"
+              },
+              "subtitle": {
+                "type": "string",
+                "example": "Zahle bargeldlos mit der PACE Fueling App"
+              },
+              "insideAppArea": {
+                "type": "boolean",
+                "description": "Boolean flag if the current position is inside the app area (polygon).",
+                "example": true
+              },
+              "appArea": {
+                "type": "array",
+                "items": {
+                  "type": "array",
+                  "items": {
+                    "type": "number",
+                    "format": "float"
+                  }
+                },
+                "example": [
+                  [
+                    49.012,
+                    8.424
+                  ],
+                  [
+                    49.1,
+                    9.34
+                  ],
+                  [
+                    48.7,
+                    8.92
+                  ]
+                ]
+              },
+              "logoUrl": {
+                "type": "string",
+                "description": "Logo URL",
+                "example": "http://via.placeholder.com/200x200"
+              },
+              "pwaUrl": {
+                "type": "string",
+                "description": "Progressive web application URL",
+                "example": "http://via.placeholder.com/200x200"
+              },
+              "androidInstantAppUrl": {
+                "type": "string",
+                "description": "Android instant app URL",
+                "example": "http://via.placeholder.com/200x200"
+              }
+            }
+          }
+        }
+      },
+      "LocationBasedAppResponse": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/LocationBasedApp"
+          }
+        }
+      },
+      "LocationBasedAppsResponse": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "type": {
+                  "type": "string",
+                  "description": "Type",
+                  "enum": [
+                    "locationBasedApp"
+                  ]
+                },
+                "id": {
+                  "type": "string",
+                  "format": "uuid",
+                  "description": "Location-based app ID",
+                  "example": "f106ac99-213c-4cf7-8c1b-1e841516026b"
+                },
+                "attributes": {
+                  "type": "object",
+                  "properties": {
+                    "appType": {
+                      "type": "string",
+                      "enum": [
+                        "fueling"
+                      ]
+                    },
+                    "title": {
+                      "type": "string",
+                      "example": "PACE Fueling App"
+                    },
+                    "subtitle": {
+                      "type": "string",
+                      "example": "Zahle bargeldlos mit der PACE Fueling App"
+                    },
+                    "insideAppArea": {
+                      "type": "boolean",
+                      "description": "Boolean flag if the current position is inside the app area (polygon).",
+                      "example": true
+                    },
+                    "appArea": {
+                      "type": "array",
+                      "items": {
+                        "type": "array",
+                        "items": {
+                          "type": "number",
+                          "format": "float"
+                        }
+                      },
+                      "example": [
+                        [
+                          49.012,
+                          8.424
+                        ],
+                        [
+                          49.1,
+                          9.34
+                        ],
+                        [
+                          49.012,
+                          8.424
+                        ]
+                      ]
+                    },
+                    "logoUrl": {
+                      "type": "string",
+                      "description": "Logo URL",
+                      "example": "http://via.placeholder.com/200x200"
+                    },
+                    "pwaUrl": {
+                      "type": "string",
+                      "description": "Progressive web application URL",
+                      "example": "http://via.placeholder.com/200x200"
+                    },
+                    "androidInstantAppUrl": {
+                      "type": "string",
+                      "description": "Android instant app URL",
+                      "example": "http://via.placeholder.com/200x200"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "FuelPrice": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "description": "Fuel price",
+            "enum": [
+              "fuelPrice"
+            ]
+          },
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Fuel Price ID",
+            "example": "2a1319c3-c136-495d-b59a-47b3246d08af"
+          },
+          "attributes": {
+            "type": "object",
+            "properties": {
+              "fuelType": {
+                "type": "string",
+                "enum": [
+                  "e85",
+                  "ron91",
+                  "ron95_e5",
+                  "ron95_e10",
+                  "ron98",
+                  "ron98_e5",
+                  "ron100",
+                  "diesel",
+                  "diesel_gtl",
+                  "diesel_b7",
+                  "lpg",
+                  "cng",
+                  "h2",
+                  "Truck Diesel",
+                  "AdBlue"
+                ],
+                "example": "ron95_e10"
+              },
+              "fuelAmountUnit": {
+                "$ref": "#/components/schemas/fuelAmountUnit"
+              },
+              "pricePerUnit": {
+                "type": "number",
+                "format": "float",
+                "example": 1.379
+              },
+              "currency": {
+                "$ref": "#/components/schemas/currency"
+              },
+              "productName": {
+                "type": "string",
+                "example": "Super E10"
+              }
+            }
+          }
+        }
+      },
+      "FuelPriceResponse": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/FuelPrice"
+          }
+        }
+      },
+      "GasStationResponse": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "type": {
+                  "type": "string",
+                  "enum": [
+                    "gasStation"
+                  ]
+                },
+                "id": {
+                  "type": "string",
+                  "format": "uuid",
+                  "description": "Gas Station ID",
+                  "example": "d7101f72-a672-453c-9d36-d5809ef0ded6"
+                },
+                "attributes": {
+                  "type": "object",
+                  "properties": {
+                    "latitude": {
+                      "type": "number",
+                      "format": "float",
+                      "example": 49.013
+                    },
+                    "longitude": {
+                      "type": "number",
+                      "format": "float",
+                      "example": 8.425
+                    },
+                    "stationName": {
+                      "type": "string",
+                      "example": "PACE Station"
+                    },
+                    "address": {
+                      "type": "object",
+                      "properties": {
+                        "street": {
+                          "type": "string",
+                          "example": "Haid-und-Neu-Str."
+                        },
+                        "houseNo": {
+                          "type": "string",
+                          "example": "18"
+                        },
+                        "postalCode": {
+                          "type": "string",
+                          "example": "76131"
+                        },
+                        "city": {
+                          "type": "string",
+                          "example": "Karlsruhe"
+                        },
+                        "countryCode": {
+                          "type": "string",
+                          "example": "DE",
+                          "description": "Country code in as specified in ISO 3166-1."
+                        }
+                      }
+                    },
+                    "openingHours": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "weekdays": {
+                            "type": "array",
+                            "items": {
+                              "type": "string"
+                            },
+                            "example": [
+                              "Montag",
+                              "Dienstag"
+                            ]
+                          },
+                          "openFromTo": {
+                            "type": "array",
+                            "items": {
+                              "type": "string"
+                            },
+                            "example": [
+                              "07:30",
+                              "20:30"
+                            ]
+                          }
+                        }
+                      }
+                    },
+                    "amenities": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      },
+                      "example": [
+                        "restaurant"
+                      ]
+                    },
+                    "paymentMethods": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      },
+                      "example": [
+                        "sepaDirectDebit"
+                      ]
+                    }
+                  }
+                },
+                "relationships": {
+                  "type": "object",
+                  "properties": {
+                    "fuelPrices": {
+                      "type": "object",
+                      "properties": {
+                        "data": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "type": {
+                                "type": "string",
+                                "enum": [
+                                  "fuelPrice"
+                                ]
+                              },
+                              "id": {
+                                "type": "string",
+                                "format": "uuid",
+                                "description": "Fuel Price ID",
+                                "example": "486e1b37-10b5-4089-aa21-15dea6f0e01e"
+                              }
+                            }
+                          }
+                        }
+                      }
+                    },
+                    "locationBasedApps": {
+                      "type": "object",
+                      "properties": {
+                        "data": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "type": {
+                                "type": "string",
+                                "enum": [
+                                  "locationBasedApp"
+                                ]
+                              },
+                              "id": {
+                                "type": "string",
+                                "format": "uuid",
+                                "description": "Location-based app ID",
+                                "example": "819fe1f6-9056-43d4-af3f-a7a712793339"
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "included": {
+            "type": "array",
+            "items": {
+              "oneOf": [
+                {
+                  "$ref": "#/components/schemas/FuelPrice"
+                },
+                {
+                  "$ref": "#/components/schemas/LocationBasedApp"
+                }
+              ]
+            }
+          }
+        }
+      },
+      "currency": {
+        "type": "string",
+        "enum": [
+          "EUR"
+        ],
+        "example": "EUR"
+      },
+      "fuelAmountUnit": {
+        "type": "string",
+        "enum": [
+          "Ltr"
+        ],
+        "example": "Ltr"
+      },
+      "Errors": {
+        "type": "object",
+        "description": "Error objects provide additional information about problems  encountered while performing an operation.\n",
+        "properties": {
+          "errors": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "description": "A unique identifier for this particular occurrence of the problem."
+                },
+                "links": {
+                  "type": "object",
+                  "properties": {
+                    "about": {
+                      "type": "string",
+                      "description": "A link that leads to further details about this particular occurrence of the problem.\n"
+                    }
+                  }
+                },
+                "status": {
+                  "type": "string",
+                  "description": "the HTTP status code applicable to this problem, expressed as a string value.\n"
+                },
+                "code": {
+                  "type": "string",
+                  "description": "an application-specific error code, expressed as a string value.\n"
+                },
+                "title": {
+                  "type": "string",
+                  "description": "A short, human-readable summary of the problem that SHOULD NOT change from occurrence to occurrence of the problem, except for purposes of localization.\n"
+                },
+                "detail": {
+                  "type": "string",
+                  "description": "a human-readable explanation specific to this occurrence of the problem. Like title, this field’s value can be localized.\n"
+                },
+                "source": {
+                  "type": "object",
+                  "desciption": "An object containing references to the source of the error.\n",
+                  "properties": {
+                    "pointer": {
+                      "type": "string",
+                      "description": "A JSON Pointer [RFC6901] to the associated entity in the request document [e.g. \"/data\" for a primary data object, or \"/data/attributes/title\" for a specific attribute].\n"
+                    },
+                    "parameter": {
+                      "type": "string",
+                      "description": "A string indicating which URI query parameter caused the error.\n"
+                    }
+                  }
+                },
+                "meta": {
+                  "type": "object",
+                  "description": "a meta object containing non-standard meta-information about the error.\n",
+                  "properties": {},
+                  "additionalProperties": true
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "responses": {
+      "BadRequest": {
+        "description": "The server cannot or will not process the request due to an apparent client error\n",
+        "content": {
+          "application/vnd.api+json": {
+            "schema": {
+              "$ref": "#/components/schemas/Errors"
+            }
+          }
+        }
+      },
+      "Unauthorized": {
+        "description": "OAuth token missing or invalid",
+        "content": {
+          "application/vnd.api+json": {
+            "schema": {
+              "$ref": "#/components/schemas/Errors"
+            }
+          }
+        }
+      },
+      "NotAcceptable": {
+        "description": "The specified Accept header is not valid",
+        "content": {
+          "application/vnd.api+json": {
+            "schema": {
+              "$ref": "#/components/schemas/Errors"
+            }
+          }
+        }
+      },
+      "InternalServerError": {
+        "description": "Internal Server Error",
+        "content": {
+          "application/vnd.api+json": {
+            "schema": {
+              "$ref": "#/components/schemas/Errors"
+            }
+          }
+        }
+      }
+    }
+  }
+}
