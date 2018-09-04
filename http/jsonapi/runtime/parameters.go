@@ -35,7 +35,7 @@ type ScanParameter struct {
 
 // ScanParameters scans the request using the given path parameter objects
 // in case an error is encountered a 400 along with a jsonapi errors object
-// is send to the ResponseWriter and false is returned. Returns true if all
+// is sent to the ResponseWriter and false is returned. Returns true if all
 // values were scanned successfully. The used scanning function is fmt.Sscan
 func ScanParameters(w http.ResponseWriter, r *http.Request, parameters ...*ScanParameter) bool {
 	for _, param := range parameters {
