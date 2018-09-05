@@ -6,6 +6,7 @@ import (
 	"fmt"
 	mux "github.com/gorilla/mux"
 	runtime "lab.jamit.de/pace/go-microservice/http/jsonapi/runtime"
+	jsonapimetrics "lab.jamit.de/pace/go-microservice/maintenance/metrics/jsonapi"
 	"net/http"
 	"runtime/debug"
 )
@@ -63,7 +64,7 @@ func GetPaymentMethodsHandler(service Service) http.Handler {
 			}
 		}()
 		writer := getPaymentMethodsResponseWriter{
-			ResponseWriter: w,
+			ResponseWriter: jsonapimetrics.NewMetric("pay", "/beta/payment-methods", w, r),
 		}
 		request := GetPaymentMethodsRequest{
 			Request: r,
@@ -89,7 +90,7 @@ func CreatePaymentMethodSEPAHandler(service Service) http.Handler {
 			}
 		}()
 		writer := createPaymentMethodSEPAResponseWriter{
-			ResponseWriter: w,
+			ResponseWriter: jsonapimetrics.NewMetric("pay", "/beta/payment-methods/sepa-direct-debit", w, r),
 		}
 		request := CreatePaymentMethodSEPARequest{
 			Request: r,
@@ -120,7 +121,7 @@ func DeletePaymentMethodHandler(service Service) http.Handler {
 			}
 		}()
 		writer := deletePaymentMethodResponseWriter{
-			ResponseWriter: w,
+			ResponseWriter: jsonapimetrics.NewMetric("pay", "/beta/payment-methods/{paymentMethodId}", w, r),
 		}
 		request := DeletePaymentMethodRequest{
 			Request: r,
@@ -158,7 +159,7 @@ func AuthorizePaymentMethodHandler(service Service) http.Handler {
 			}
 		}()
 		writer := authorizePaymentMethodResponseWriter{
-			ResponseWriter: w,
+			ResponseWriter: jsonapimetrics.NewMetric("pay", "/beta/payment-methods/{paymentMethodId}/authorize", w, r),
 		}
 		request := AuthorizePaymentMethodRequest{
 			Request: r,
@@ -198,7 +199,7 @@ func DeletePaymentTokenHandler(service Service) http.Handler {
 			}
 		}()
 		writer := deletePaymentTokenResponseWriter{
-			ResponseWriter: w,
+			ResponseWriter: jsonapimetrics.NewMetric("pay", "/beta/payment-methods/{paymentMethodId}/paymentTokens/{paymentTokenId}", w, r),
 		}
 		request := DeletePaymentTokenRequest{
 			Request: r,
@@ -241,7 +242,7 @@ func GetPaymentMethodsIncludingCreditCheckHandler(service Service) http.Handler 
 			}
 		}()
 		writer := getPaymentMethodsIncludingCreditCheckResponseWriter{
-			ResponseWriter: w,
+			ResponseWriter: jsonapimetrics.NewMetric("pay", "/beta/payment-methods?include=creditCheck", w, r),
 		}
 		request := GetPaymentMethodsIncludingCreditCheckRequest{
 			Request: r,
@@ -279,7 +280,7 @@ func GetPaymentMethodsIncludingPaymentTokenHandler(service Service) http.Handler
 			}
 		}()
 		writer := getPaymentMethodsIncludingPaymentTokenResponseWriter{
-			ResponseWriter: w,
+			ResponseWriter: jsonapimetrics.NewMetric("pay", "/beta/payment-methods?include=paymentTokens", w, r),
 		}
 		request := GetPaymentMethodsIncludingPaymentTokenRequest{
 			Request: r,

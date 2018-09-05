@@ -7,6 +7,7 @@ import (
 	"fmt"
 	mux "github.com/gorilla/mux"
 	runtime "lab.jamit.de/pace/go-microservice/http/jsonapi/runtime"
+	jsonapimetrics "lab.jamit.de/pace/go-microservice/maintenance/metrics/jsonapi"
 	"net/http"
 	"runtime/debug"
 )
@@ -110,7 +111,7 @@ func ApproachingAtTheForecourtHandler(service Service) http.Handler {
 			}
 		}()
 		writer := approachingAtTheForecourtResponseWriter{
-			ResponseWriter: w,
+			ResponseWriter: jsonapimetrics.NewMetric("fueling", "/beta/gas-station/{fuelingAppId}/approaching", w, r),
 		}
 		request := ApproachingAtTheForecourtRequest{
 			Request: r,
@@ -158,7 +159,7 @@ func GetPumpHandler(service Service) http.Handler {
 			}
 		}()
 		writer := getPumpResponseWriter{
-			ResponseWriter: w,
+			ResponseWriter: jsonapimetrics.NewMetric("fueling", "/beta/gas-station/{fuelingAppId}/pumps/{pumpId}", w, r),
 		}
 		request := GetPumpRequest{
 			Request: r,
@@ -201,7 +202,7 @@ func ProcessPaymentHandler(service Service) http.Handler {
 			}
 		}()
 		writer := processPaymentResponseWriter{
-			ResponseWriter: w,
+			ResponseWriter: jsonapimetrics.NewMetric("fueling", "/beta/gas-station/{fuelingAppId}/pumps/{pumpId}/pay", w, r),
 		}
 		request := ProcessPaymentRequest{
 			Request: r,
@@ -246,7 +247,7 @@ func WaitOnPumpStatusChangeHandler(service Service) http.Handler {
 			}
 		}()
 		writer := waitOnPumpStatusChangeResponseWriter{
-			ResponseWriter: w,
+			ResponseWriter: jsonapimetrics.NewMetric("fueling", "/beta/gas-station/{fuelingAppId}/pumps/{pumpId}/wait-for-status-change", w, r),
 		}
 		request := WaitOnPumpStatusChangeRequest{
 			Request: r,

@@ -6,6 +6,7 @@ import (
 	"fmt"
 	mux "github.com/gorilla/mux"
 	runtime "lab.jamit.de/pace/go-microservice/http/jsonapi/runtime"
+	jsonapimetrics "lab.jamit.de/pace/go-microservice/maintenance/metrics/jsonapi"
 	"net/http"
 	"runtime/debug"
 )
@@ -105,7 +106,7 @@ func CheckForPaceAppHandler(service Service) http.Handler {
 			}
 		}()
 		writer := checkForPaceAppResponseWriter{
-			ResponseWriter: w,
+			ResponseWriter: jsonapimetrics.NewMetric("poi", "/beta/check-for-pace-app", w, r),
 		}
 		request := CheckForPaceAppRequest{
 			Request: r,
@@ -168,7 +169,7 @@ func SearchHandler(service Service) http.Handler {
 			}
 		}()
 		writer := searchResponseWriter{
-			ResponseWriter: w,
+			ResponseWriter: jsonapimetrics.NewMetric("poi", "/beta/search", w, r),
 		}
 		request := SearchRequest{
 			Request: r,

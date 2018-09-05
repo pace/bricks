@@ -18,9 +18,12 @@ import (
 	"github.com/getkin/kin-openapi/openapi3"
 )
 
-const gorillaMux = "github.com/gorilla/mux"
-const httpJsonapi = "lab.jamit.de/pace/go-microservice/http/jsonapi/runtime"
-const govalidator = "github.com/asaskevich/govalidator"
+const (
+	gorillaMux     = "github.com/gorilla/mux"
+	httpJsonapi    = "lab.jamit.de/pace/go-microservice/http/jsonapi/runtime"
+	jsonAPIMetrics = "lab.jamit.de/pace/go-microservice/maintenance/metrics/jsonapi"
+	govalidator    = "github.com/asaskevich/govalidator"
+)
 
 const serviceInterface = "Service"
 const jsonapiContent = "application/vnd.api+json"
@@ -404,6 +407,7 @@ func (g *Generator) buildHandler(method string, op *openapi3.Operation, pattern 
 	}
 
 	// generate handler function
+	gen := g // generator is used less frequent then the jen group, make available with longer name
 	g.addGoDoc(handler, fmt.Sprintf("handles request/response marshaling and validation for \n %s %s",
 		method, pattern))
 	g.goSource.Func().Id(handler).Params(
@@ -432,7 +436,12 @@ func (g *Generator) buildHandler(method string, op *openapi3.Operation, pattern 
 
 				// response writer
 				g.Id("writer").Op(":=").Id(route.responseTypeImpl).
-					Block(jen.Id("ResponseWriter").Op(":").Id("w").Op(","))
+					Block(jen.Id("ResponseWriter").Op(":").
+						Qual(jsonAPIMetrics, "NewMetric").Call(
+						jen.Lit(gen.serviceName),
+						jen.Lit(route.pattern),
+						jen.Id("w"),
+						jen.Id("r")).Op(","))
 
 				// request
 				g.Id("request").Op(":=").Id(route.requestType).
