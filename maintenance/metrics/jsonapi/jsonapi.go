@@ -5,7 +5,13 @@
 // https://lab.jamit.de/pace/web/meta/wikis/concept/metrics#m2-microservice-any-pace-microservice
 package jsonapi
 
-import "github.com/prometheus/client_golang/prometheus"
+import (
+	"net/http"
+	"strconv"
+	"time"
+
+	"github.com/prometheus/client_golang/prometheus"
+)
 
 var (
 	paceAPIHTTPRequestTotal = prometheus.NewCounterVec(
@@ -23,6 +29,40 @@ var (
 		[]string{"method", "path", "service"},
 	)
 )
+
+// Metric is an http.ResponseWriter implementing metrics collector
+// because the metrics depend on the http StatusCode.
+type Metric struct {
+	serviceName string
+	path        string // path is the patten path (not the request path)
+	http.ResponseWriter
+	request      *http.Request
+	requestStart time.Time
+}
+
+// NewMetric creates a new metric collector (per request) with given
+// service and path (pattern! not the request path)
+func NewMetric(serviceName, path string, w http.ResponseWriter, r *http.Request) *Metric {
+	return &Metric{
+		serviceName:    serviceName,
+		path:           path,
+		ResponseWriter: w,
+		request:        r,
+		requestStart:   time.Now(),
+	}
+}
+
+// WriteHeader captures the status code for metric submission and
+// collects the pace_api_http_request_total counter and
+// pace_api_http_request_duration_seconds histogram metric
+func (m *Metric) WriteHeader(statusCode int) {
+	// TODO: when oauth2 package is ready, decode clientID from request
+	clientID := "none"
+	IncPaceAPIHTTPRequestTotal(strconv.Itoa(statusCode), m.request.Method, m.path, m.serviceName, clientID)
+	duration := float64(time.Now().Sub(m.requestStart).Nanoseconds()) / float64(time.Second)
+	AddPaceAPIHTTPRequestDurationSeconds(duration, m.request.Method, m.path, m.serviceName)
+	m.ResponseWriter.WriteHeader(statusCode)
+}
 
 // IncPaceAPIHTTPRequestTotal increments the pace_api_http_request_total counter metric
 func IncPaceAPIHTTPRequestTotal(code, method, path, service, clientID string) {
