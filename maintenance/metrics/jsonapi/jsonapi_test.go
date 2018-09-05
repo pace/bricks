@@ -21,6 +21,7 @@ func TestCaptureStatus(t *testing.T) {
 	handler(rec, req)
 
 	resp := rec.Result()
+	defer resp.Body.Close()
 
 	if resp.StatusCode != 204 {
 		t.Errorf("Failed to return correct 204 response status, got: %v", resp.StatusCode)

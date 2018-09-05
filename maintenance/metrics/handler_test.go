@@ -15,6 +15,7 @@ func TestHandler(t *testing.T) {
 	Handler().ServeHTTP(rec, req)
 
 	resp := rec.Result()
+	defer resp.Body.Close()
 
 	if resp.StatusCode != 200 {
 		t.Errorf("Failed to respond with prometheus metrics: %v", resp.StatusCode)
