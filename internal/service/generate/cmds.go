@@ -5,10 +5,13 @@ package generate
 
 import (
 	"fmt"
-	"html/template"
 	"log"
 	"os"
+	"os/user"
 	"path/filepath"
+	"time"
+
+	"github.com/dave/jennifer/jen"
 )
 
 // CommandOptions are applied when generating the different
@@ -48,28 +51,44 @@ func Commands(path string, options CommandOptions) {
 			log.Fatal(err)
 		}
 
-		templateData := struct {
-			Name string
-		}{
-			Name: filepath.Base(dir),
-		}
+		code := jen.NewFilePathName("", "main")
+		cmdName := filepath.Base(dir)
 
-		err = mainTemplate.Execute(f, templateData)
-		if err != nil {
-			log.Fatal(err)
+		if cmdName == options.DaemonName {
+			generateDaemonMain(code)
+		} else {
+			generateControlMain(cmdName, code)
 		}
+		f.WriteString(copyright())
+		f.WriteString(code.GoString())
 	}
 }
 
-var mainTemplate = template.Must(template.New("Makefile").
-	Parse(`// Copyright © YYYY by PACE Telematics GmbH. All rights reserved.
-// Created at YYYY/MM/DD by <NAME OF AUTHOR>
-
-package main
-
-import "fmt"
-
-func main() {
-	fmt.Printf("{{ .Name }}")
+func generateDaemonMain(f *jen.File) {
+	httpPkg := "lab.jamit.de/pace/go-microservice/http"
+	f.ImportAlias(httpPkg, "pacehttp")
+	f.Func().Id("main").Params().BlockFunc(func(g *jen.Group) {
+		g.Id("handler").Op(":=").Qual(httpPkg, "Handler").Call()
+		g.Id("s").Op(":=").Qual(httpPkg, "Server").Call(jen.Id("handler"))
+		g.Qual("log", "Fatal").Call(jen.Id("s").Dot("ListenAndServe").Call())
+	})
 }
-`))
+
+func generateControlMain(cmdName string, f *jen.File) {
+	f.Func().Id("main").Params().Block(
+		jen.Qual("fmt", "Printf").Call(jen.Lit(cmdName)))
+}
+
+// copyright generates copyright statement
+func copyright() string {
+	stmt := ""
+	now := time.Now()
+	stmt += fmt.Sprintf("// Copyright © %04d by PACE Telematics GmbH. All rights reserved.\n", now.Year())
+
+	u, err := user.Current()
+	if err != nil {
+		log.Fatal(err)
+	}
+	stmt += fmt.Sprintf("// Created at %04d/%02d/%02d by %s\n\n", now.Year(), now.Month(), now.Day(), u.Name)
+	return stmt
+}
