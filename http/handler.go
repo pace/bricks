@@ -1,7 +1,6 @@
 // Copyright © 2018 by PACE Telematics GmbH. All rights reserved.
 // Created at 2018/09/05 by Vincent Landgraf
 
-// Package http implement the basic pace mircoservice handlers
 package http
 
 import (
