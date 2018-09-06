@@ -5,9 +5,10 @@ package health
 
 import (
 	"io/ioutil"
-	"log"
 	"net/http/httptest"
 	"testing"
+
+	"lab.jamit.de/pace/go-microservice/maintenance/log"
 )
 
 func TestHandler(t *testing.T) {

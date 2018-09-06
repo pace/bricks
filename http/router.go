@@ -8,6 +8,7 @@ import (
 
 	"github.com/gorilla/mux"
 	"lab.jamit.de/pace/go-microservice/maintenance/health"
+	"lab.jamit.de/pace/go-microservice/maintenance/log"
 	"lab.jamit.de/pace/go-microservice/maintenance/metrics"
 )
 
@@ -15,6 +16,9 @@ import (
 // health, metrics and debuging
 func Router() *mux.Router {
 	r := mux.NewRouter()
+
+	// for logging
+	r.Use(log.Handler())
 
 	// for prometheus
 	r.Handle("/metrics", metrics.Handler())

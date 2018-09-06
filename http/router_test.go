@@ -5,12 +5,12 @@ package http
 
 import (
 	"io/ioutil"
-	"log"
 	"net/http"
 	"net/http/httptest"
 	"testing"
 
 	"github.com/gorilla/mux"
+	"lab.jamit.de/pace/go-microservice/maintenance/log"
 )
 
 func TestHealthHandler(t *testing.T) {
@@ -32,6 +32,9 @@ func TestHealthHandler(t *testing.T) {
 	}
 	if string(data[:]) != "OK\n" {
 		t.Errorf("Expected health to return OK, got: %q", string(data[:]))
+	}
+	if resp.Header.Get("Request-Id") == "" {
+		t.Errorf("Expected response to contain Request-Id, got: %#v", resp.Header)
 	}
 }
 

@@ -5,7 +5,6 @@ package generator
 
 import (
 	"fmt"
-	"log"
 	"net/url"
 	"path/filepath"
 	"regexp"
@@ -14,8 +13,8 @@ import (
 	"strings"
 
 	"github.com/dave/jennifer/jen"
-
 	"github.com/getkin/kin-openapi/openapi3"
+	"lab.jamit.de/pace/go-microservice/maintenance/log"
 )
 
 const (
@@ -39,7 +38,7 @@ var generatorResponseBlacklist = map[string]bool{
 	"422": true, // handled by go-validator
 	"500": true, // if service returns an error
 
-	// TODO: maybe more 500 errors depending on the context result
+	// TODO(vil): maybe more 500 errors depending on the context result
 	// e.g. Temporary errors (implementing the temporary interface)
 	// result in retry later / also rate limiting
 }
@@ -382,13 +381,13 @@ func (g *Generator) buildHandler(method string, op *openapi3.Operation, pattern 
 
 	// avoid ruby style path parameters
 	if strings.Contains(pattern, "/:") {
-		log.Printf("Note: Don't use ruby style path parameters: %s", pattern)
+		log.Warnf("Note: Don't use ruby style path parameters: %s", pattern)
 	}
 
 	// use OperationID for go function names or generate the name
 	oid := strings.Title(op.OperationID)
 	if oid == "" {
-		log.Printf("Note: Avoid automatic method name generation for path (use OperationID): %s", pattern)
+		log.Warnf("Note: Avoid automatic method name generation for path (use OperationID): %s", pattern)
 		oid = generateName(method, op, pattern)
 	}
 	handler := oid + "Handler"
@@ -419,7 +418,7 @@ func (g *Generator) buildHandler(method string, op *openapi3.Operation, pattern 
 				jen.Id("r").Op("*").Qual("net/http", "Request"),
 			).BlockFunc(func(g *jen.Group) {
 				// recover panics
-				// TODO: add more context and send to sentry, return error code
+				// TODO(vil): add more context and send to sentry, return error code
 				// that can be correlated with the client
 				g.Defer().Func().Call().BlockFunc(func(g *jen.Group) {
 					g.If(jen.Id("r").Op(":=").Id("recover").Call().Op(";").Id("r").Op("!=").Nil()).Block(
@@ -485,7 +484,7 @@ func (g *Generator) buildHandler(method string, op *openapi3.Operation, pattern 
 					jen.Op("&").Id("writer"),
 					jen.Op("&").Id("request"),
 				).Line().If().Id("err").Op("!=").Nil().Block(
-					// TODO: add more context and send to sentry
+					// TODO(vil): add more context and send to sentry
 					jen.Qual(httpJsonapi, "WriteError").Call(
 						jen.Id("w"),
 						jen.Qual("net/http", "StatusInternalServerError"),

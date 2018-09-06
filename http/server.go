@@ -4,12 +4,12 @@
 package http
 
 import (
-	"log"
 	"net/http"
 	"strconv"
 	"time"
 
 	"github.com/caarlos0/env"
+	"lab.jamit.de/pace/go-microservice/maintenance/log"
 )
 
 func init() {

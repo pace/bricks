@@ -5,10 +5,11 @@ package runtime
 
 import (
 	"encoding/json"
-	"log"
 	"net/http"
 	"strconv"
 	"strings"
+
+	"lab.jamit.de/pace/go-microservice/maintenance/log"
 )
 
 // Note: we don't use the jsonapi.ErrorObject because it doesn't implement the
