@@ -15,6 +15,9 @@ func TestLoggingHandler(t *testing.T) {
 
 	mux := http.NewServeMux()
 	mux.HandleFunc("/test", func(w http.ResponseWriter, r *http.Request) {
+		if RequestID(r) == "" {
+			t.Error("Request should have request id")
+		}
 		w.WriteHeader(201)
 	})
 	Handler()(mux).ServeHTTP(rec, req)

@@ -30,6 +30,15 @@ func init() {
 	zerolog.TimestampFunc = func() time.Time { return time.Now().UTC() }
 }
 
+// RequestID returns a unique request id or an empty string if there is none
+func RequestID(r *http.Request) string {
+	id, ok := hlog.IDFromRequest(r)
+	if ok {
+		return id.String()
+	}
+	return ""
+}
+
 // Req returns the logger for the passed request
 func Req(r *http.Request) *zerolog.Logger {
 	return hlog.FromRequest(r)
