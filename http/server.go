@@ -4,6 +4,7 @@
 package http
 
 import (
+	golog "log"
 	"net/http"
 	"strconv"
 	"time"
@@ -53,7 +54,7 @@ func Server(handler http.Handler) *http.Server {
 		WriteTimeout:   cfg.WriteTimeout,
 		MaxHeaderBytes: cfg.MaxHeaderBytes,
 		IdleTimeout:    cfg.IdleTimeout,
-		// TODO(vil): set ErrorLog using go-microservice logger
+		ErrorLog:       golog.New(log.Logger(), "[http.Server] ", 0),
 	}
 }
 
