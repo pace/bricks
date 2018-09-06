@@ -55,26 +55,33 @@ func Commands(path string, options CommandOptions) {
 		cmdName := filepath.Base(dir)
 
 		if cmdName == options.DaemonName {
-			generateDaemonMain(code)
+			generateDaemonMain(code, cmdName)
 		} else {
-			generateControlMain(cmdName, code)
+			generateControlMain(code, cmdName)
 		}
 		f.WriteString(copyright())
 		f.WriteString(code.GoString())
 	}
 }
 
-func generateDaemonMain(f *jen.File) {
+func generateDaemonMain(f *jen.File, cmdName string) {
 	httpPkg := "lab.jamit.de/pace/go-microservice/http"
+	logPkg := "lab.jamit.de/pace/go-microservice/maintenance/log"
 	f.ImportAlias(httpPkg, "pacehttp")
 	f.Func().Id("main").Params().BlockFunc(func(g *jen.Group) {
-		g.Id("handler").Op(":=").Qual(httpPkg, "Handler").Call()
-		g.Id("s").Op(":=").Qual(httpPkg, "Server").Call(jen.Id("handler"))
-		g.Qual("log", "Fatal").Call(jen.Id("s").Dot("ListenAndServe").Call())
+		g.Id("router").Op(":=").Qual(httpPkg, "Router").Call()
+		g.Id("s").Op(":=").Qual(httpPkg, "Server").Call(jen.Id("router"))
+
+		g.Qual(logPkg, "Logger").Call().Dot("Info").Call().Dot("Str").Call(
+			jen.Id("addr"),
+			jen.Id("s").Dot("Addr"),
+		).Dot("Msg").Call(jen.Lit(fmt.Sprintf("Starting %s ...", cmdName)))
+
+		g.Qual(logPkg, "Fatal").Call(jen.Id("s").Dot("ListenAndServe").Call())
 	})
 }
 
-func generateControlMain(cmdName string, f *jen.File) {
+func generateControlMain(f *jen.File, cmdName string) {
 	f.Func().Id("main").Params().Block(
 		jen.Qual("fmt", "Printf").Call(jen.Lit(cmdName)))
 }
