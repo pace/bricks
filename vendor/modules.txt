@@ -13,5 +13,5 @@ github.com/spf13/cobra
 github.com/spf13/pflag
 # gopkg.in/yaml.v2 v2.2.1
 gopkg.in/yaml.v2
-# lab.jamit.de/pace/go-microservice v0.0.0-20180830065758-2560a02ea263
+# lab.jamit.de/pace/go-microservice v0.0.0-20180905094911-98f015332536
 lab.jamit.de/pace/go-microservice/http/jsonapi/generator

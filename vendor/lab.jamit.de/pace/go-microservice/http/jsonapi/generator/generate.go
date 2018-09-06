@@ -22,7 +22,8 @@ type buildFunc func(schema *openapi3.Swagger) error
 // be ignored during generation.
 // The Generator doesn't validate necessarily.
 type Generator struct {
-	goSource *jen.File
+	goSource    *jen.File
+	serviceName string
 }
 
 // BuildSource generates the go code in the specified path with specified package name
@@ -59,7 +60,8 @@ func (g *Generator) BuildSource(source, packagePath, packageName string) (string
 // based on the passed schema
 func (g *Generator) BuildSchema(schema *openapi3.Swagger, packagePath, packageName string) (string, error) {
 	g.goSource = jen.NewFilePathName(packagePath, packageName)
-	g.goSource.ImportName("github.com/google/jsonapi", "jsonapi")
+	g.goSource.ImportAlias(jsonAPIMetrics, "jsonapimetrics")
+	g.serviceName = packageName
 
 	buildFuncs := []buildFunc{
 		g.BuildTypes,
