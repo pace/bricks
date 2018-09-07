@@ -5,12 +5,12 @@ package generator
 
 import (
 	"fmt"
-	"log"
 	"path/filepath"
 	"sort"
 
 	"github.com/dave/jennifer/jen"
 	"github.com/getkin/kin-openapi/openapi3"
+	"lab.jamit.de/pace/go-microservice/maintenance/log"
 )
 
 // BuildTypes transforms all component schemas into go types
@@ -83,7 +83,7 @@ func (g *Generator) buildType(prefix string, stmt *jen.Statement, schema *openap
 	default:
 		// skip allOf, anyOf and oneOf, as they can't be generated
 		if len(val.AllOf)+len(val.AnyOf)+len(val.OneOf) > 0 {
-			log.Printf("Can't generate allOf, anyOf and oneOf for type %q", prefix)
+			log.Warnf("Can't generate allOf, anyOf and oneOf for type %q", prefix)
 			stmt.Qual("encoding/json", "RawMessage")
 			return nil
 		}

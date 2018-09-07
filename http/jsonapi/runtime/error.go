@@ -5,10 +5,11 @@ package runtime
 
 import (
 	"encoding/json"
-	"log"
 	"net/http"
 	"strconv"
 	"strings"
+
+	"lab.jamit.de/pace/go-microservice/maintenance/log"
 )
 
 // Note: we don't use the jsonapi.ErrorObject because it doesn't implement the
@@ -73,6 +74,13 @@ func (e Errors) setHTTPStatus(code int) {
 	}
 }
 
+// setID sets the error id on the request
+func (e Errors) setID(errorID string) {
+	for _, err := range e {
+		err.ID = errorID
+	}
+}
+
 // WriteError writes a jsonapi error message to the client
 func WriteError(w http.ResponseWriter, code int, err error) {
 	w.Header().Set("Content-Type", JSONAPIContentType)
@@ -96,6 +104,7 @@ func WriteError(w http.ResponseWriter, code int, err error) {
 
 	// update the http status code of the error
 	errList.List.setHTTPStatus(code)
+	errList.List.setID(w.Header().Get("Request-ID"))
 
 	// render the error to the client
 	enc := json.NewEncoder(w)

@@ -3,12 +3,11 @@ package pay
 import (
 	"context"
 	"errors"
-	"fmt"
 	mux "github.com/gorilla/mux"
 	runtime "lab.jamit.de/pace/go-microservice/http/jsonapi/runtime"
+	log "lab.jamit.de/pace/go-microservice/maintenance/log"
 	jsonapimetrics "lab.jamit.de/pace/go-microservice/maintenance/metrics/jsonapi"
 	"net/http"
-	"runtime/debug"
 )
 
 // AllPaymentMethodsItem ...
@@ -57,9 +56,9 @@ GetPaymentMethodsHandler handles request/response marshaling and validation for
 func GetPaymentMethodsHandler(service Service) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		defer func() {
-			if r := recover(); r != nil {
-				fmt.Printf("Panic %s: %v\n", "GetPaymentMethodsHandler", r)
-				debug.PrintStack()
+			if rp := recover(); rp != nil {
+				log.Ctx(r.Context()).Error().Str("handler", "GetPaymentMethodsHandler").Msgf("Panic: %v", rp)
+				log.Stack(r.Context())
 				runtime.WriteError(w, http.StatusInternalServerError, errors.New("Error"))
 			}
 		}()
@@ -83,9 +82,9 @@ CreatePaymentMethodSEPAHandler handles request/response marshaling and validatio
 func CreatePaymentMethodSEPAHandler(service Service) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		defer func() {
-			if r := recover(); r != nil {
-				fmt.Printf("Panic %s: %v\n", "CreatePaymentMethodSEPAHandler", r)
-				debug.PrintStack()
+			if rp := recover(); rp != nil {
+				log.Ctx(r.Context()).Error().Str("handler", "CreatePaymentMethodSEPAHandler").Msgf("Panic: %v", rp)
+				log.Stack(r.Context())
 				runtime.WriteError(w, http.StatusInternalServerError, errors.New("Error"))
 			}
 		}()
@@ -114,9 +113,9 @@ DeletePaymentMethodHandler handles request/response marshaling and validation fo
 func DeletePaymentMethodHandler(service Service) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		defer func() {
-			if r := recover(); r != nil {
-				fmt.Printf("Panic %s: %v\n", "DeletePaymentMethodHandler", r)
-				debug.PrintStack()
+			if rp := recover(); rp != nil {
+				log.Ctx(r.Context()).Error().Str("handler", "DeletePaymentMethodHandler").Msgf("Panic: %v", rp)
+				log.Stack(r.Context())
 				runtime.WriteError(w, http.StatusInternalServerError, errors.New("Error"))
 			}
 		}()
@@ -152,9 +151,9 @@ AuthorizePaymentMethodHandler handles request/response marshaling and validation
 func AuthorizePaymentMethodHandler(service Service) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		defer func() {
-			if r := recover(); r != nil {
-				fmt.Printf("Panic %s: %v\n", "AuthorizePaymentMethodHandler", r)
-				debug.PrintStack()
+			if rp := recover(); rp != nil {
+				log.Ctx(r.Context()).Error().Str("handler", "AuthorizePaymentMethodHandler").Msgf("Panic: %v", rp)
+				log.Stack(r.Context())
 				runtime.WriteError(w, http.StatusInternalServerError, errors.New("Error"))
 			}
 		}()
@@ -192,9 +191,9 @@ DeletePaymentTokenHandler handles request/response marshaling and validation for
 func DeletePaymentTokenHandler(service Service) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		defer func() {
-			if r := recover(); r != nil {
-				fmt.Printf("Panic %s: %v\n", "DeletePaymentTokenHandler", r)
-				debug.PrintStack()
+			if rp := recover(); rp != nil {
+				log.Ctx(r.Context()).Error().Str("handler", "DeletePaymentTokenHandler").Msgf("Panic: %v", rp)
+				log.Stack(r.Context())
 				runtime.WriteError(w, http.StatusInternalServerError, errors.New("Error"))
 			}
 		}()
@@ -235,9 +234,9 @@ GetPaymentMethodsIncludingCreditCheckHandler handles request/response marshaling
 func GetPaymentMethodsIncludingCreditCheckHandler(service Service) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		defer func() {
-			if r := recover(); r != nil {
-				fmt.Printf("Panic %s: %v\n", "GetPaymentMethodsIncludingCreditCheckHandler", r)
-				debug.PrintStack()
+			if rp := recover(); rp != nil {
+				log.Ctx(r.Context()).Error().Str("handler", "GetPaymentMethodsIncludingCreditCheckHandler").Msgf("Panic: %v", rp)
+				log.Stack(r.Context())
 				runtime.WriteError(w, http.StatusInternalServerError, errors.New("Error"))
 			}
 		}()
@@ -273,9 +272,9 @@ GetPaymentMethodsIncludingPaymentTokenHandler handles request/response marshalin
 func GetPaymentMethodsIncludingPaymentTokenHandler(service Service) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		defer func() {
-			if r := recover(); r != nil {
-				fmt.Printf("Panic %s: %v\n", "GetPaymentMethodsIncludingPaymentTokenHandler", r)
-				debug.PrintStack()
+			if rp := recover(); rp != nil {
+				log.Ctx(r.Context()).Error().Str("handler", "GetPaymentMethodsIncludingPaymentTokenHandler").Msgf("Panic: %v", rp)
+				log.Stack(r.Context())
 				runtime.WriteError(w, http.StatusInternalServerError, errors.New("Error"))
 			}
 		}()

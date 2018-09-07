@@ -5,11 +5,11 @@ package main
 
 import (
 	"flag"
-	"log"
 	"os"
 	"path/filepath"
 
 	"lab.jamit.de/pace/go-microservice/http/jsonapi/generator"
+	"lab.jamit.de/pace/go-microservice/maintenance/log"
 )
 
 var pkg, path, source string

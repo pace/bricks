@@ -4,13 +4,16 @@
 package http
 
 import (
+	"encoding/json"
+	"fmt"
 	"io/ioutil"
-	"log"
 	"net/http"
 	"net/http/httptest"
 	"testing"
 
 	"github.com/gorilla/mux"
+	"lab.jamit.de/pace/go-microservice/http/jsonapi/runtime"
+	"lab.jamit.de/pace/go-microservice/maintenance/log"
 )
 
 func TestHealthHandler(t *testing.T) {
@@ -33,6 +36,9 @@ func TestHealthHandler(t *testing.T) {
 	if string(data[:]) != "OK\n" {
 		t.Errorf("Expected health to return OK, got: %q", string(data[:]))
 	}
+	if resp.Header.Get("Request-Id") == "" {
+		t.Errorf("Expected response to contain Request-Id, got: %#v", resp.Header)
+	}
 }
 
 func TestCustomRoutes(t *testing.T) {
@@ -42,7 +48,7 @@ func TestCustomRoutes(t *testing.T) {
 	// example of a service foo exposing api bar
 	fooRouter := mux.NewRouter()
 	fooRouter.HandleFunc("/foo/bar", func(w http.ResponseWriter, r *http.Request) {
-		w.WriteHeader(http.StatusNotImplemented)
+		runtime.WriteError(w, http.StatusNotImplemented, fmt.Errorf("Some error"))
 	}).Methods("GET")
 
 	r := Router()
@@ -56,5 +62,17 @@ func TestCustomRoutes(t *testing.T) {
 
 	if resp.StatusCode != 501 {
 		t.Errorf("Expected /foo/bar to respond with 501, got: %d", resp.StatusCode)
+	}
+
+	var e struct {
+		List runtime.Errors `json:"errors"`
+	}
+
+	err := json.NewDecoder(resp.Body).Decode(&e)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if e.List[0].ID == "" {
+		t.Errorf("Expected first error to contain request ID, got: %#v", e.List[0])
 	}
 }

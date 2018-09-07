@@ -4,12 +4,13 @@
 package http
 
 import (
-	"log"
+	golog "log"
 	"net/http"
 	"strconv"
 	"time"
 
 	"github.com/caarlos0/env"
+	"lab.jamit.de/pace/go-microservice/maintenance/log"
 )
 
 func init() {
@@ -53,7 +54,7 @@ func Server(handler http.Handler) *http.Server {
 		WriteTimeout:   cfg.WriteTimeout,
 		MaxHeaderBytes: cfg.MaxHeaderBytes,
 		IdleTimeout:    cfg.IdleTimeout,
-		// TODO(vil): set ErrorLog using go-microservice logger
+		ErrorLog:       golog.New(log.Logger(), "[http.Server] ", 0),
 	}
 }
 

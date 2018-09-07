@@ -56,7 +56,7 @@ func NewMetric(serviceName, path string, w http.ResponseWriter, r *http.Request)
 // collects the pace_api_http_request_total counter and
 // pace_api_http_request_duration_seconds histogram metric
 func (m *Metric) WriteHeader(statusCode int) {
-	// TODO: when oauth2 package is ready, decode clientID from request
+	// TODO(vil): when oauth2 package is ready, decode clientID from request
 	clientID := "none"
 	IncPaceAPIHTTPRequestTotal(strconv.Itoa(statusCode), m.request.Method, m.path, m.serviceName, clientID)
 	duration := float64(time.Now().Sub(m.requestStart).Nanoseconds()) / float64(time.Second)
