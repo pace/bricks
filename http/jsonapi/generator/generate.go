@@ -61,6 +61,9 @@ func (g *Generator) BuildSource(source, packagePath, packageName string) (string
 func (g *Generator) BuildSchema(schema *openapi3.Swagger, packagePath, packageName string) (string, error) {
 	g.goSource = jen.NewFilePathName(packagePath, packageName)
 	g.goSource.ImportAlias(jsonAPIMetrics, "jsonapimetrics")
+	g.goSource.ImportAlias(opentracing, "opentracing")
+	g.goSource.Anon("lab.jamit.de/pace/go-microservice/maintenance/tracing")
+
 	g.serviceName = packageName
 
 	buildFuncs := []buildFunc{

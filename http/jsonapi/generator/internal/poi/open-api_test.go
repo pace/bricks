@@ -4,9 +4,11 @@ import (
 	"context"
 	"errors"
 	mux "github.com/gorilla/mux"
+	opentracing "github.com/opentracing/opentracing-go"
 	runtime "lab.jamit.de/pace/go-microservice/http/jsonapi/runtime"
 	log "lab.jamit.de/pace/go-microservice/maintenance/log"
 	jsonapimetrics "lab.jamit.de/pace/go-microservice/maintenance/metrics/jsonapi"
+	_ "lab.jamit.de/pace/go-microservice/maintenance/tracing"
 	"net/http"
 )
 
@@ -97,19 +99,34 @@ CheckForPaceAppHandler handles request/response marshaling and validation for
 */
 func CheckForPaceAppHandler(service Service) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		ctx := r.Context()
 		defer func() {
 			if rp := recover(); rp != nil {
-				log.Ctx(r.Context()).Error().Str("handler", "CheckForPaceAppHandler").Msgf("Panic: %v", rp)
-				log.Stack(r.Context())
+				log.Ctx(ctx).Error().Str("handler", "CheckForPaceAppHandler").Msgf("Panic: %v", rp)
+				log.Stack(ctx)
 				runtime.WriteError(w, http.StatusInternalServerError, errors.New("Error"))
 			}
 		}()
+
+		// Trace the service function handler execution
+		var handlerSpan opentracing.Span
+		wireContext, err := opentracing.GlobalTracer().Extract(opentracing.HTTPHeaders, opentracing.HTTPHeadersCarrier(r.Header))
+		if err != nil {
+			log.Ctx(ctx).Debug().Err(err).Msg("Couldn't get span from request header")
+		}
+		handlerSpan = opentracing.StartSpan("CheckForPaceAppHandler", opentracing.ChildOf(wireContext))
+		defer handlerSpan.Finish()
+
+		// Setup context, response writer and request type
+		ctx = opentracing.ContextWithSpan(r.Context(), handlerSpan)
 		writer := checkForPaceAppResponseWriter{
 			ResponseWriter: jsonapimetrics.NewMetric("poi", "/beta/check-for-pace-app", w, r),
 		}
 		request := CheckForPaceAppRequest{
-			Request: r,
+			Request: r.WithContext(ctx),
 		}
+
+		// Scan and validate incoming request parameters
 		vars := mux.Vars(r)
 		if !runtime.ScanParameters(w, r, &runtime.ScanParameter{
 			Data:     &request.ParamLatitude,
@@ -147,7 +164,9 @@ func CheckForPaceAppHandler(service Service) http.Handler {
 		if !runtime.ValidateParameters(w, r, &request) {
 			return // invalid request stop further processing
 		}
-		err := service.CheckForPaceApp(r.Context(), &writer, &request)
+
+		// Invoke service that implements the business logic
+		err = service.CheckForPaceApp(ctx, &writer, &request)
 		if err != nil {
 			runtime.WriteError(w, http.StatusInternalServerError, err)
 		}
@@ -160,19 +179,34 @@ SearchHandler handles request/response marshaling and validation for
 */
 func SearchHandler(service Service) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		ctx := r.Context()
 		defer func() {
 			if rp := recover(); rp != nil {
-				log.Ctx(r.Context()).Error().Str("handler", "SearchHandler").Msgf("Panic: %v", rp)
-				log.Stack(r.Context())
+				log.Ctx(ctx).Error().Str("handler", "SearchHandler").Msgf("Panic: %v", rp)
+				log.Stack(ctx)
 				runtime.WriteError(w, http.StatusInternalServerError, errors.New("Error"))
 			}
 		}()
+
+		// Trace the service function handler execution
+		var handlerSpan opentracing.Span
+		wireContext, err := opentracing.GlobalTracer().Extract(opentracing.HTTPHeaders, opentracing.HTTPHeadersCarrier(r.Header))
+		if err != nil {
+			log.Ctx(ctx).Debug().Err(err).Msg("Couldn't get span from request header")
+		}
+		handlerSpan = opentracing.StartSpan("SearchHandler", opentracing.ChildOf(wireContext))
+		defer handlerSpan.Finish()
+
+		// Setup context, response writer and request type
+		ctx = opentracing.ContextWithSpan(r.Context(), handlerSpan)
 		writer := searchResponseWriter{
 			ResponseWriter: jsonapimetrics.NewMetric("poi", "/beta/search", w, r),
 		}
 		request := SearchRequest{
-			Request: r,
+			Request: r.WithContext(ctx),
 		}
+
+		// Scan and validate incoming request parameters
 		vars := mux.Vars(r)
 		if !runtime.ScanParameters(w, r, &runtime.ScanParameter{
 			Data:     &request.ParamPoiType,
@@ -235,7 +269,9 @@ func SearchHandler(service Service) http.Handler {
 		if !runtime.ValidateParameters(w, r, &request) {
 			return // invalid request stop further processing
 		}
-		err := service.Search(r.Context(), &writer, &request)
+
+		// Invoke service that implements the business logic
+		err = service.Search(ctx, &writer, &request)
 		if err != nil {
 			runtime.WriteError(w, http.StatusInternalServerError, err)
 		}

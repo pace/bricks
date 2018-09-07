@@ -4,9 +4,11 @@ import (
 	"context"
 	"errors"
 	mux "github.com/gorilla/mux"
+	opentracing "github.com/opentracing/opentracing-go"
 	runtime "lab.jamit.de/pace/go-microservice/http/jsonapi/runtime"
 	log "lab.jamit.de/pace/go-microservice/maintenance/log"
 	jsonapimetrics "lab.jamit.de/pace/go-microservice/maintenance/metrics/jsonapi"
+	_ "lab.jamit.de/pace/go-microservice/maintenance/tracing"
 	"net/http"
 )
 
@@ -55,20 +57,37 @@ GetPaymentMethodsHandler handles request/response marshaling and validation for
 */
 func GetPaymentMethodsHandler(service Service) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		ctx := r.Context()
 		defer func() {
 			if rp := recover(); rp != nil {
-				log.Ctx(r.Context()).Error().Str("handler", "GetPaymentMethodsHandler").Msgf("Panic: %v", rp)
-				log.Stack(r.Context())
+				log.Ctx(ctx).Error().Str("handler", "GetPaymentMethodsHandler").Msgf("Panic: %v", rp)
+				log.Stack(ctx)
 				runtime.WriteError(w, http.StatusInternalServerError, errors.New("Error"))
 			}
 		}()
+
+		// Trace the service function handler execution
+		var handlerSpan opentracing.Span
+		wireContext, err := opentracing.GlobalTracer().Extract(opentracing.HTTPHeaders, opentracing.HTTPHeadersCarrier(r.Header))
+		if err != nil {
+			log.Ctx(ctx).Debug().Err(err).Msg("Couldn't get span from request header")
+		}
+		handlerSpan = opentracing.StartSpan("GetPaymentMethodsHandler", opentracing.ChildOf(wireContext))
+		defer handlerSpan.Finish()
+
+		// Setup context, response writer and request type
+		ctx = opentracing.ContextWithSpan(r.Context(), handlerSpan)
 		writer := getPaymentMethodsResponseWriter{
 			ResponseWriter: jsonapimetrics.NewMetric("pay", "/beta/payment-methods", w, r),
 		}
 		request := GetPaymentMethodsRequest{
-			Request: r,
+			Request: r.WithContext(ctx),
 		}
-		err := service.GetPaymentMethods(r.Context(), &writer, &request)
+
+		// Scan and validate incoming request parameters
+
+		// Invoke service that implements the business logic
+		err = service.GetPaymentMethods(ctx, &writer, &request)
 		if err != nil {
 			runtime.WriteError(w, http.StatusInternalServerError, err)
 		}
@@ -81,24 +100,42 @@ CreatePaymentMethodSEPAHandler handles request/response marshaling and validatio
 */
 func CreatePaymentMethodSEPAHandler(service Service) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		ctx := r.Context()
 		defer func() {
 			if rp := recover(); rp != nil {
-				log.Ctx(r.Context()).Error().Str("handler", "CreatePaymentMethodSEPAHandler").Msgf("Panic: %v", rp)
-				log.Stack(r.Context())
+				log.Ctx(ctx).Error().Str("handler", "CreatePaymentMethodSEPAHandler").Msgf("Panic: %v", rp)
+				log.Stack(ctx)
 				runtime.WriteError(w, http.StatusInternalServerError, errors.New("Error"))
 			}
 		}()
+
+		// Trace the service function handler execution
+		var handlerSpan opentracing.Span
+		wireContext, err := opentracing.GlobalTracer().Extract(opentracing.HTTPHeaders, opentracing.HTTPHeadersCarrier(r.Header))
+		if err != nil {
+			log.Ctx(ctx).Debug().Err(err).Msg("Couldn't get span from request header")
+		}
+		handlerSpan = opentracing.StartSpan("CreatePaymentMethodSEPAHandler", opentracing.ChildOf(wireContext))
+		defer handlerSpan.Finish()
+
+		// Setup context, response writer and request type
+		ctx = opentracing.ContextWithSpan(r.Context(), handlerSpan)
 		writer := createPaymentMethodSEPAResponseWriter{
 			ResponseWriter: jsonapimetrics.NewMetric("pay", "/beta/payment-methods/sepa-direct-debit", w, r),
 		}
 		request := CreatePaymentMethodSEPARequest{
-			Request: r,
+			Request: r.WithContext(ctx),
 		}
+
+		// Scan and validate incoming request parameters
 		if !runtime.ValidateParameters(w, r, &request) {
 			return // invalid request stop further processing
 		}
+
+		// Unmarshal the service request body
 		if runtime.Unmarshal(w, r, &request.Content) {
-			err := service.CreatePaymentMethodSEPA(r.Context(), &writer, &request)
+			// Invoke service that implements the business logic
+			err = service.CreatePaymentMethodSEPA(ctx, &writer, &request)
 			if err != nil {
 				runtime.WriteError(w, http.StatusInternalServerError, err)
 			}
@@ -112,19 +149,34 @@ DeletePaymentMethodHandler handles request/response marshaling and validation fo
 */
 func DeletePaymentMethodHandler(service Service) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		ctx := r.Context()
 		defer func() {
 			if rp := recover(); rp != nil {
-				log.Ctx(r.Context()).Error().Str("handler", "DeletePaymentMethodHandler").Msgf("Panic: %v", rp)
-				log.Stack(r.Context())
+				log.Ctx(ctx).Error().Str("handler", "DeletePaymentMethodHandler").Msgf("Panic: %v", rp)
+				log.Stack(ctx)
 				runtime.WriteError(w, http.StatusInternalServerError, errors.New("Error"))
 			}
 		}()
+
+		// Trace the service function handler execution
+		var handlerSpan opentracing.Span
+		wireContext, err := opentracing.GlobalTracer().Extract(opentracing.HTTPHeaders, opentracing.HTTPHeadersCarrier(r.Header))
+		if err != nil {
+			log.Ctx(ctx).Debug().Err(err).Msg("Couldn't get span from request header")
+		}
+		handlerSpan = opentracing.StartSpan("DeletePaymentMethodHandler", opentracing.ChildOf(wireContext))
+		defer handlerSpan.Finish()
+
+		// Setup context, response writer and request type
+		ctx = opentracing.ContextWithSpan(r.Context(), handlerSpan)
 		writer := deletePaymentMethodResponseWriter{
 			ResponseWriter: jsonapimetrics.NewMetric("pay", "/beta/payment-methods/{paymentMethodId}", w, r),
 		}
 		request := DeletePaymentMethodRequest{
-			Request: r,
+			Request: r.WithContext(ctx),
 		}
+
+		// Scan and validate incoming request parameters
 		vars := mux.Vars(r)
 		if !runtime.ScanParameters(w, r, &runtime.ScanParameter{
 			Data:     &request.ParamPaymentMethodID,
@@ -137,7 +189,9 @@ func DeletePaymentMethodHandler(service Service) http.Handler {
 		if !runtime.ValidateParameters(w, r, &request) {
 			return // invalid request stop further processing
 		}
-		err := service.DeletePaymentMethod(r.Context(), &writer, &request)
+
+		// Invoke service that implements the business logic
+		err = service.DeletePaymentMethod(ctx, &writer, &request)
 		if err != nil {
 			runtime.WriteError(w, http.StatusInternalServerError, err)
 		}
@@ -150,19 +204,34 @@ AuthorizePaymentMethodHandler handles request/response marshaling and validation
 */
 func AuthorizePaymentMethodHandler(service Service) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		ctx := r.Context()
 		defer func() {
 			if rp := recover(); rp != nil {
-				log.Ctx(r.Context()).Error().Str("handler", "AuthorizePaymentMethodHandler").Msgf("Panic: %v", rp)
-				log.Stack(r.Context())
+				log.Ctx(ctx).Error().Str("handler", "AuthorizePaymentMethodHandler").Msgf("Panic: %v", rp)
+				log.Stack(ctx)
 				runtime.WriteError(w, http.StatusInternalServerError, errors.New("Error"))
 			}
 		}()
+
+		// Trace the service function handler execution
+		var handlerSpan opentracing.Span
+		wireContext, err := opentracing.GlobalTracer().Extract(opentracing.HTTPHeaders, opentracing.HTTPHeadersCarrier(r.Header))
+		if err != nil {
+			log.Ctx(ctx).Debug().Err(err).Msg("Couldn't get span from request header")
+		}
+		handlerSpan = opentracing.StartSpan("AuthorizePaymentMethodHandler", opentracing.ChildOf(wireContext))
+		defer handlerSpan.Finish()
+
+		// Setup context, response writer and request type
+		ctx = opentracing.ContextWithSpan(r.Context(), handlerSpan)
 		writer := authorizePaymentMethodResponseWriter{
 			ResponseWriter: jsonapimetrics.NewMetric("pay", "/beta/payment-methods/{paymentMethodId}/authorize", w, r),
 		}
 		request := AuthorizePaymentMethodRequest{
-			Request: r,
+			Request: r.WithContext(ctx),
 		}
+
+		// Scan and validate incoming request parameters
 		vars := mux.Vars(r)
 		if !runtime.ScanParameters(w, r, &runtime.ScanParameter{
 			Data:     &request.ParamPaymentMethodID,
@@ -175,8 +244,11 @@ func AuthorizePaymentMethodHandler(service Service) http.Handler {
 		if !runtime.ValidateParameters(w, r, &request) {
 			return // invalid request stop further processing
 		}
+
+		// Unmarshal the service request body
 		if runtime.Unmarshal(w, r, &request.Content) {
-			err := service.AuthorizePaymentMethod(r.Context(), &writer, &request)
+			// Invoke service that implements the business logic
+			err = service.AuthorizePaymentMethod(ctx, &writer, &request)
 			if err != nil {
 				runtime.WriteError(w, http.StatusInternalServerError, err)
 			}
@@ -190,19 +262,34 @@ DeletePaymentTokenHandler handles request/response marshaling and validation for
 */
 func DeletePaymentTokenHandler(service Service) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		ctx := r.Context()
 		defer func() {
 			if rp := recover(); rp != nil {
-				log.Ctx(r.Context()).Error().Str("handler", "DeletePaymentTokenHandler").Msgf("Panic: %v", rp)
-				log.Stack(r.Context())
+				log.Ctx(ctx).Error().Str("handler", "DeletePaymentTokenHandler").Msgf("Panic: %v", rp)
+				log.Stack(ctx)
 				runtime.WriteError(w, http.StatusInternalServerError, errors.New("Error"))
 			}
 		}()
+
+		// Trace the service function handler execution
+		var handlerSpan opentracing.Span
+		wireContext, err := opentracing.GlobalTracer().Extract(opentracing.HTTPHeaders, opentracing.HTTPHeadersCarrier(r.Header))
+		if err != nil {
+			log.Ctx(ctx).Debug().Err(err).Msg("Couldn't get span from request header")
+		}
+		handlerSpan = opentracing.StartSpan("DeletePaymentTokenHandler", opentracing.ChildOf(wireContext))
+		defer handlerSpan.Finish()
+
+		// Setup context, response writer and request type
+		ctx = opentracing.ContextWithSpan(r.Context(), handlerSpan)
 		writer := deletePaymentTokenResponseWriter{
 			ResponseWriter: jsonapimetrics.NewMetric("pay", "/beta/payment-methods/{paymentMethodId}/paymentTokens/{paymentTokenId}", w, r),
 		}
 		request := DeletePaymentTokenRequest{
-			Request: r,
+			Request: r.WithContext(ctx),
 		}
+
+		// Scan and validate incoming request parameters
 		vars := mux.Vars(r)
 		if !runtime.ScanParameters(w, r, &runtime.ScanParameter{
 			Data:     &request.ParamPaymentTokenID,
@@ -220,7 +307,9 @@ func DeletePaymentTokenHandler(service Service) http.Handler {
 		if !runtime.ValidateParameters(w, r, &request) {
 			return // invalid request stop further processing
 		}
-		err := service.DeletePaymentToken(r.Context(), &writer, &request)
+
+		// Invoke service that implements the business logic
+		err = service.DeletePaymentToken(ctx, &writer, &request)
 		if err != nil {
 			runtime.WriteError(w, http.StatusInternalServerError, err)
 		}
@@ -233,19 +322,34 @@ GetPaymentMethodsIncludingCreditCheckHandler handles request/response marshaling
 */
 func GetPaymentMethodsIncludingCreditCheckHandler(service Service) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		ctx := r.Context()
 		defer func() {
 			if rp := recover(); rp != nil {
-				log.Ctx(r.Context()).Error().Str("handler", "GetPaymentMethodsIncludingCreditCheckHandler").Msgf("Panic: %v", rp)
-				log.Stack(r.Context())
+				log.Ctx(ctx).Error().Str("handler", "GetPaymentMethodsIncludingCreditCheckHandler").Msgf("Panic: %v", rp)
+				log.Stack(ctx)
 				runtime.WriteError(w, http.StatusInternalServerError, errors.New("Error"))
 			}
 		}()
+
+		// Trace the service function handler execution
+		var handlerSpan opentracing.Span
+		wireContext, err := opentracing.GlobalTracer().Extract(opentracing.HTTPHeaders, opentracing.HTTPHeadersCarrier(r.Header))
+		if err != nil {
+			log.Ctx(ctx).Debug().Err(err).Msg("Couldn't get span from request header")
+		}
+		handlerSpan = opentracing.StartSpan("GetPaymentMethodsIncludingCreditCheckHandler", opentracing.ChildOf(wireContext))
+		defer handlerSpan.Finish()
+
+		// Setup context, response writer and request type
+		ctx = opentracing.ContextWithSpan(r.Context(), handlerSpan)
 		writer := getPaymentMethodsIncludingCreditCheckResponseWriter{
 			ResponseWriter: jsonapimetrics.NewMetric("pay", "/beta/payment-methods?include=creditCheck", w, r),
 		}
 		request := GetPaymentMethodsIncludingCreditCheckRequest{
-			Request: r,
+			Request: r.WithContext(ctx),
 		}
+
+		// Scan and validate incoming request parameters
 		vars := mux.Vars(r)
 		if !runtime.ScanParameters(w, r, &runtime.ScanParameter{
 			Data:     &request.ParamInclude,
@@ -258,7 +362,9 @@ func GetPaymentMethodsIncludingCreditCheckHandler(service Service) http.Handler 
 		if !runtime.ValidateParameters(w, r, &request) {
 			return // invalid request stop further processing
 		}
-		err := service.GetPaymentMethodsIncludingCreditCheck(r.Context(), &writer, &request)
+
+		// Invoke service that implements the business logic
+		err = service.GetPaymentMethodsIncludingCreditCheck(ctx, &writer, &request)
 		if err != nil {
 			runtime.WriteError(w, http.StatusInternalServerError, err)
 		}
@@ -271,19 +377,34 @@ GetPaymentMethodsIncludingPaymentTokenHandler handles request/response marshalin
 */
 func GetPaymentMethodsIncludingPaymentTokenHandler(service Service) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		ctx := r.Context()
 		defer func() {
 			if rp := recover(); rp != nil {
-				log.Ctx(r.Context()).Error().Str("handler", "GetPaymentMethodsIncludingPaymentTokenHandler").Msgf("Panic: %v", rp)
-				log.Stack(r.Context())
+				log.Ctx(ctx).Error().Str("handler", "GetPaymentMethodsIncludingPaymentTokenHandler").Msgf("Panic: %v", rp)
+				log.Stack(ctx)
 				runtime.WriteError(w, http.StatusInternalServerError, errors.New("Error"))
 			}
 		}()
+
+		// Trace the service function handler execution
+		var handlerSpan opentracing.Span
+		wireContext, err := opentracing.GlobalTracer().Extract(opentracing.HTTPHeaders, opentracing.HTTPHeadersCarrier(r.Header))
+		if err != nil {
+			log.Ctx(ctx).Debug().Err(err).Msg("Couldn't get span from request header")
+		}
+		handlerSpan = opentracing.StartSpan("GetPaymentMethodsIncludingPaymentTokenHandler", opentracing.ChildOf(wireContext))
+		defer handlerSpan.Finish()
+
+		// Setup context, response writer and request type
+		ctx = opentracing.ContextWithSpan(r.Context(), handlerSpan)
 		writer := getPaymentMethodsIncludingPaymentTokenResponseWriter{
 			ResponseWriter: jsonapimetrics.NewMetric("pay", "/beta/payment-methods?include=paymentTokens", w, r),
 		}
 		request := GetPaymentMethodsIncludingPaymentTokenRequest{
-			Request: r,
+			Request: r.WithContext(ctx),
 		}
+
+		// Scan and validate incoming request parameters
 		vars := mux.Vars(r)
 		if !runtime.ScanParameters(w, r, &runtime.ScanParameter{
 			Data:     &request.ParamInclude,
@@ -296,7 +417,9 @@ func GetPaymentMethodsIncludingPaymentTokenHandler(service Service) http.Handler
 		if !runtime.ValidateParameters(w, r, &request) {
 			return // invalid request stop further processing
 		}
-		err := service.GetPaymentMethodsIncludingPaymentToken(r.Context(), &writer, &request)
+
+		// Invoke service that implements the business logic
+		err = service.GetPaymentMethodsIncludingPaymentToken(ctx, &writer, &request)
 		if err != nil {
 			runtime.WriteError(w, http.StatusInternalServerError, err)
 		}
