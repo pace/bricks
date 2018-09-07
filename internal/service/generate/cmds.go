@@ -73,7 +73,7 @@ func generateDaemonMain(f *jen.File, cmdName string) {
 		g.Id("s").Op(":=").Qual(httpPkg, "Server").Call(jen.Id("router"))
 
 		g.Qual(logPkg, "Logger").Call().Dot("Info").Call().Dot("Str").Call(
-			jen.Id("addr"),
+			jen.Lit("addr"),
 			jen.Id("s").Dot("Addr"),
 		).Dot("Msg").Call(jen.Lit(fmt.Sprintf("Starting %s ...", cmdName)))
 
