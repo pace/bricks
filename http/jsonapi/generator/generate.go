@@ -32,18 +32,18 @@ func loadSwaggerFromURI(loader *openapi3.SwaggerLoader, url *url.URL) (*openapi3
 
 	resp, err := http.Get(url.String())
 	if err != nil {
-		return schema, err
+		return nil, err
 	}
 	defer resp.Body.Close()
 
 	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
-		return schema, err
+		return nil, err
 	}
 
 	schema, err = loader.LoadSwaggerFromData(body)
 	if err != nil {
-		return schema, err
+		return nil, err
 	}
 
 	return schema, nil
