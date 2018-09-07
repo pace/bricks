@@ -6,6 +6,7 @@ package generator
 import (
 	"fmt"
 	"io/ioutil"
+	"net/http"
 	"net/url"
 	"strings"
 
@@ -26,6 +27,28 @@ type Generator struct {
 	serviceName string
 }
 
+func loadSwaggerFromURI(loader *openapi3.SwaggerLoader, url *url.URL) (*openapi3.Swagger, error) {
+	var schema *openapi3.Swagger
+
+	resp, err := http.Get(url.String())
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return nil, err
+	}
+
+	schema, err = loader.LoadSwaggerFromData(body)
+	if err != nil {
+		return nil, err
+	}
+
+	return schema, nil
+}
+
 // BuildSource generates the go code in the specified path with specified package name
 // based on the passed schema source (url or file path)
 func (g *Generator) BuildSource(source, packagePath, packageName string) (string, error) {
@@ -38,7 +61,10 @@ func (g *Generator) BuildSource(source, packagePath, packageName string) (string
 			return "", err
 		}
 
-		schema, err = loader.LoadSwaggerFromURI(loc)
+		schema, err = loadSwaggerFromURI(loader, loc)
+		if err != nil {
+			return "", err
+		}
 	} else {
 		// read spec
 		data, err := ioutil.ReadFile(source)
