@@ -28,6 +28,12 @@ func (g *Generator) BuildTypes(schema *openapi3.Swagger) error {
 		schemaType := schemas[name]
 		// create new type
 		name := goNameHelper(name)
+
+		// skip jsonapi error type
+		if name == "Errors" {
+			continue
+		}
+
 		t := jen.Type().Id(name)
 		err := g.buildType(name, t, schemaType)
 		if err != nil {
@@ -168,7 +174,9 @@ func (g *Generator) generateAttrField(prefix, name string, schema *openapi3.Sche
 		return nil, err
 	}
 	field.Tag(tags)
-	g.commentOrExample(field, schema.Value)
+	if schema.Ref == "" {
+		g.commentOrExample(field, schema.Value)
+	}
 	return field, nil
 }
 

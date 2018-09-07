@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"log"
 	"net/url"
+	"path/filepath"
 	"regexp"
 	"sort"
 	"strconv"
@@ -17,9 +18,12 @@ import (
 	"github.com/getkin/kin-openapi/openapi3"
 )
 
-const gorillaMux = "github.com/gorilla/mux"
-const httpJsonapi = "lab.jamit.de/pace/go-microservice/http/jsonapi/runtime"
-const govalidator = "github.com/asaskevich/govalidator"
+const (
+	gorillaMux     = "github.com/gorilla/mux"
+	httpJsonapi    = "lab.jamit.de/pace/go-microservice/http/jsonapi/runtime"
+	jsonAPIMetrics = "lab.jamit.de/pace/go-microservice/maintenance/metrics/jsonapi"
+	govalidator    = "github.com/asaskevich/govalidator"
+)
 
 const serviceInterface = "Service"
 const jsonapiContent = "application/vnd.api+json"
@@ -158,7 +162,14 @@ func (g *Generator) generateResponseInterface(route *route, schema *openapi3.Swa
 			return fmt.Errorf("Failed to parse response code %s: %v", code, err)
 		}
 
-		methodName := generateMethodName(response.Value.Description)
+		// generate method name
+		var methodName string
+		if response.Ref != "" {
+			methodName = generateMethodName(filepath.Base(response.Ref))
+		} else {
+			methodName = generateMethodName(response.Value.Description)
+		}
+
 		method := jen.Id(methodName)
 		if codeNum >= 400 {
 			method.Params(jen.Error())
@@ -254,10 +265,17 @@ func (g *Generator) generateRequestStruct(route *route, schema *openapi3.Swagger
 		} else {
 			tags["valid"] = "optional"
 		}
-		err := g.goType(paramStmt, param.Value.Schema.Value, tags)
-		if err != nil {
-			return err
+
+		// add go type
+		if param.Value.Schema.Ref != "" {
+			paramStmt.Id(goNameHelper(filepath.Base(param.Value.Schema.Ref)))
+		} else {
+			err := g.goType(paramStmt, param.Value.Schema.Value, tags)
+			if err != nil {
+				return err
+			}
 		}
+
 		fields = append(fields, paramStmt.Tag(tags))
 	}
 
@@ -389,6 +407,7 @@ func (g *Generator) buildHandler(method string, op *openapi3.Operation, pattern 
 	}
 
 	// generate handler function
+	gen := g // generator is used less frequent then the jen group, make available with longer name
 	g.addGoDoc(handler, fmt.Sprintf("handles request/response marshaling and validation for \n %s %s",
 		method, pattern))
 	g.goSource.Func().Id(handler).Params(
@@ -417,7 +436,12 @@ func (g *Generator) buildHandler(method string, op *openapi3.Operation, pattern 
 
 				// response writer
 				g.Id("writer").Op(":=").Id(route.responseTypeImpl).
-					Block(jen.Id("ResponseWriter").Op(":").Id("w").Op(","))
+					Block(jen.Id("ResponseWriter").Op(":").
+						Qual(jsonAPIMetrics, "NewMetric").Call(
+						jen.Lit(gen.serviceName),
+						jen.Lit(route.pattern),
+						jen.Id("w"),
+						jen.Id("r")).Op(","))
 
 				// request
 				g.Id("request").Op(":=").Id(route.requestType).

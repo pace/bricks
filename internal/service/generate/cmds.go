@@ -5,10 +5,13 @@ package generate
 
 import (
 	"fmt"
-	"html/template"
 	"log"
 	"os"
+	"os/user"
 	"path/filepath"
+	"time"
+
+	"github.com/dave/jennifer/jen"
 )
 
 // CommandOptions are applied when generating the different
@@ -48,28 +51,51 @@ func Commands(path string, options CommandOptions) {
 			log.Fatal(err)
 		}
 
-		templateData := struct {
-			Name string
-		}{
-			Name: filepath.Base(dir),
-		}
+		code := jen.NewFilePathName("", "main")
+		cmdName := filepath.Base(dir)
 
-		err = mainTemplate.Execute(f, templateData)
-		if err != nil {
-			log.Fatal(err)
+		if cmdName == options.DaemonName {
+			generateDaemonMain(code, cmdName)
+		} else {
+			generateControlMain(code, cmdName)
 		}
+		f.WriteString(copyright())
+		f.WriteString(code.GoString())
 	}
 }
 
-var mainTemplate = template.Must(template.New("Makefile").
-	Parse(`// Copyright © YYYY by PACE Telematics GmbH. All rights reserved.
-// Created at YYYY/MM/DD by <NAME OF AUTHOR>
+func generateDaemonMain(f *jen.File, cmdName string) {
+	httpPkg := "lab.jamit.de/pace/go-microservice/http"
+	logPkg := "lab.jamit.de/pace/go-microservice/maintenance/log"
+	f.ImportAlias(httpPkg, "pacehttp")
+	f.Func().Id("main").Params().BlockFunc(func(g *jen.Group) {
+		g.Id("router").Op(":=").Qual(httpPkg, "Router").Call()
+		g.Id("s").Op(":=").Qual(httpPkg, "Server").Call(jen.Id("router"))
 
-package main
+		g.Qual(logPkg, "Logger").Call().Dot("Info").Call().Dot("Str").Call(
+			jen.Lit("addr"),
+			jen.Id("s").Dot("Addr"),
+		).Dot("Msg").Call(jen.Lit(fmt.Sprintf("Starting %s ...", cmdName)))
 
-import "fmt"
-
-func main() {
-	fmt.Printf("{{ .Name }}")
+		g.Qual(logPkg, "Fatal").Call(jen.Id("s").Dot("ListenAndServe").Call())
+	})
 }
-`))
+
+func generateControlMain(f *jen.File, cmdName string) {
+	f.Func().Id("main").Params().Block(
+		jen.Qual("fmt", "Printf").Call(jen.Lit(cmdName)))
+}
+
+// copyright generates copyright statement
+func copyright() string {
+	stmt := ""
+	now := time.Now()
+	stmt += fmt.Sprintf("// Copyright © %04d by PACE Telematics GmbH. All rights reserved.\n", now.Year())
+
+	u, err := user.Current()
+	if err != nil {
+		log.Fatal(err)
+	}
+	stmt += fmt.Sprintf("// Created at %04d/%02d/%02d by %s\n\n", now.Year(), now.Month(), now.Day(), u.Name)
+	return stmt
+}
