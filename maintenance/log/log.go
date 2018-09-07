@@ -95,7 +95,7 @@ func Logger() *zerolog.Logger {
 	return &log.Logger
 }
 
-// Prints the stack of the calling goroutine
+// Stack prints the stack of the calling goroutine
 func Stack(ctx context.Context) {
 	for _, line := range strings.Split(string(debug.Stack()[:]), "\n") {
 		if line != "" {
