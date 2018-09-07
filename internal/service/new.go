@@ -51,6 +51,7 @@ func New(name string, options NewOptions) {
 	commands := generate.NewCommandOptions(name)
 	generate.Commands(dir, commands)
 	generate.Dockerfile(filepath.Join(dir, "Dockerfile"), generate.DockerfileOptions{
+		Name:     name,
 		Commands: commands,
 	})
 	generate.Makefile(filepath.Join(dir, "Makefile"), generate.MakefileOptions{

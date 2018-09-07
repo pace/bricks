@@ -190,6 +190,7 @@ func addServiceGenerateCommands(cmdServiceGenerate *cobra.Command) {
 		Args: cobra.ExactArgs(1),
 		Run: func(cmd *cobra.Command, args []string) {
 			generate.Dockerfile(dockerfilePath, generate.DockerfileOptions{
+				Name:     args[0],
 				Commands: generate.NewCommandOptions(args[0]),
 			})
 		},

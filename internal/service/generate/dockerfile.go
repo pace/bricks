@@ -12,6 +12,7 @@ import (
 // DockerfileOptions configure the output of the generated docker
 // file
 type DockerfileOptions struct {
+	Name     string
 	Commands CommandOptions
 }
 
@@ -47,5 +48,6 @@ COPY --from=builder /go/bin/{{ .Commands.ControlName }} /usr/local/bin/
 
 EXPOSE 3000
 ENV PORT 3000
+ENV JAEGER_SERVICE_NAME {{ .Name }}
 ENTRYPOINT ["/usr/local/bin/{{ .Commands.DaemonName }}"]
 `))
