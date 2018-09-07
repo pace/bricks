@@ -3,11 +3,13 @@ package pay
 import (
 	"context"
 	"io/ioutil"
+	"net/http"
 	"net/http/httptest"
 	"strings"
 	"testing"
 
 	"lab.jamit.de/pace/go-microservice/http/jsonapi/runtime"
+	"lab.jamit.de/pace/go-microservice/maintenance/log"
 )
 
 type testService struct {
@@ -17,6 +19,7 @@ type testService struct {
 func (s *testService) GetPaymentMethods(context.Context, GetPaymentMethodsResponseWriter, *GetPaymentMethodsRequest) error {
 	panic("Some error!")
 }
+
 func (s *testService) CreatePaymentMethodSEPA(ctx context.Context, w CreatePaymentMethodSEPAResponseWriter, r *CreatePaymentMethodSEPARequest) error {
 	if str := "Jon"; r.Content.FirstName != str {
 		s.t.Errorf("expected FirstName to be %q, got %q", str, r.Content.FirstName)
@@ -105,12 +108,12 @@ func TestHandlerPanic(t *testing.T) {
 	req.Header.Set("Accept", runtime.JSONAPIContentType)
 	req.Header.Set("Content-Type", runtime.JSONAPIContentType)
 
-	r.ServeHTTP(rec, req)
+	log.Handler()(r).ServeHTTP(rec, req)
 
 	resp := rec.Result()
 	defer resp.Body.Close()
 
-	if resp.StatusCode != 500 {
+	if resp.StatusCode != http.StatusInternalServerError {
 		t.Errorf("expected 500 got: %d", resp.StatusCode)
 		b, err := ioutil.ReadAll(resp.Body)
 		if err != nil {
