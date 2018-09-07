@@ -3,12 +3,11 @@ package poi
 import (
 	"context"
 	"errors"
-	"fmt"
 	mux "github.com/gorilla/mux"
 	runtime "lab.jamit.de/pace/go-microservice/http/jsonapi/runtime"
+	log "lab.jamit.de/pace/go-microservice/maintenance/log"
 	jsonapimetrics "lab.jamit.de/pace/go-microservice/maintenance/metrics/jsonapi"
 	"net/http"
-	"runtime/debug"
 )
 
 // FuelPrice ...
@@ -99,9 +98,9 @@ CheckForPaceAppHandler handles request/response marshaling and validation for
 func CheckForPaceAppHandler(service Service) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		defer func() {
-			if r := recover(); r != nil {
-				fmt.Printf("Panic %s: %v\n", "CheckForPaceAppHandler", r)
-				debug.PrintStack()
+			if rp := recover(); rp != nil {
+				log.Ctx(r.Context()).Error().Str("handler", "CheckForPaceAppHandler").Msgf("Panic: %v", rp)
+				log.Stack(r.Context())
 				runtime.WriteError(w, http.StatusInternalServerError, errors.New("Error"))
 			}
 		}()
@@ -162,9 +161,9 @@ SearchHandler handles request/response marshaling and validation for
 func SearchHandler(service Service) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		defer func() {
-			if r := recover(); r != nil {
-				fmt.Printf("Panic %s: %v\n", "SearchHandler", r)
-				debug.PrintStack()
+			if rp := recover(); rp != nil {
+				log.Ctx(r.Context()).Error().Str("handler", "SearchHandler").Msgf("Panic: %v", rp)
+				log.Stack(r.Context())
 				runtime.WriteError(w, http.StatusInternalServerError, errors.New("Error"))
 			}
 		}()

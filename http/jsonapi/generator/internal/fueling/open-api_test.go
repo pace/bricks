@@ -4,12 +4,11 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-	"fmt"
 	mux "github.com/gorilla/mux"
 	runtime "lab.jamit.de/pace/go-microservice/http/jsonapi/runtime"
+	log "lab.jamit.de/pace/go-microservice/maintenance/log"
 	jsonapimetrics "lab.jamit.de/pace/go-microservice/maintenance/metrics/jsonapi"
 	"net/http"
-	"runtime/debug"
 )
 
 // FuelPrice ...
@@ -104,9 +103,9 @@ ApproachingAtTheForecourtHandler handles request/response marshaling and validat
 func ApproachingAtTheForecourtHandler(service Service) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		defer func() {
-			if r := recover(); r != nil {
-				fmt.Printf("Panic %s: %v\n", "ApproachingAtTheForecourtHandler", r)
-				debug.PrintStack()
+			if rp := recover(); rp != nil {
+				log.Ctx(r.Context()).Error().Str("handler", "ApproachingAtTheForecourtHandler").Msgf("Panic: %v", rp)
+				log.Stack(r.Context())
 				runtime.WriteError(w, http.StatusInternalServerError, errors.New("Error"))
 			}
 		}()
@@ -152,9 +151,9 @@ GetPumpHandler handles request/response marshaling and validation for
 func GetPumpHandler(service Service) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		defer func() {
-			if r := recover(); r != nil {
-				fmt.Printf("Panic %s: %v\n", "GetPumpHandler", r)
-				debug.PrintStack()
+			if rp := recover(); rp != nil {
+				log.Ctx(r.Context()).Error().Str("handler", "GetPumpHandler").Msgf("Panic: %v", rp)
+				log.Stack(r.Context())
 				runtime.WriteError(w, http.StatusInternalServerError, errors.New("Error"))
 			}
 		}()
@@ -195,9 +194,9 @@ ProcessPaymentHandler handles request/response marshaling and validation for
 func ProcessPaymentHandler(service Service) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		defer func() {
-			if r := recover(); r != nil {
-				fmt.Printf("Panic %s: %v\n", "ProcessPaymentHandler", r)
-				debug.PrintStack()
+			if rp := recover(); rp != nil {
+				log.Ctx(r.Context()).Error().Str("handler", "ProcessPaymentHandler").Msgf("Panic: %v", rp)
+				log.Stack(r.Context())
 				runtime.WriteError(w, http.StatusInternalServerError, errors.New("Error"))
 			}
 		}()
@@ -240,9 +239,9 @@ WaitOnPumpStatusChangeHandler handles request/response marshaling and validation
 func WaitOnPumpStatusChangeHandler(service Service) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		defer func() {
-			if r := recover(); r != nil {
-				fmt.Printf("Panic %s: %v\n", "WaitOnPumpStatusChangeHandler", r)
-				debug.PrintStack()
+			if rp := recover(); rp != nil {
+				log.Ctx(r.Context()).Error().Str("handler", "WaitOnPumpStatusChangeHandler").Msgf("Panic: %v", rp)
+				log.Stack(r.Context())
 				runtime.WriteError(w, http.StatusInternalServerError, errors.New("Error"))
 			}
 		}()

@@ -21,6 +21,7 @@ const (
 	gorillaMux     = "github.com/gorilla/mux"
 	httpJsonapi    = "lab.jamit.de/pace/go-microservice/http/jsonapi/runtime"
 	jsonAPIMetrics = "lab.jamit.de/pace/go-microservice/maintenance/metrics/jsonapi"
+	logPkg         = "lab.jamit.de/pace/go-microservice/maintenance/log"
 	govalidator    = "github.com/asaskevich/govalidator"
 )
 
@@ -421,9 +422,13 @@ func (g *Generator) buildHandler(method string, op *openapi3.Operation, pattern 
 				// TODO(vil): add more context and send to sentry, return error code
 				// that can be correlated with the client
 				g.Defer().Func().Call().BlockFunc(func(g *jen.Group) {
-					g.If(jen.Id("r").Op(":=").Id("recover").Call().Op(";").Id("r").Op("!=").Nil()).Block(
-						jen.Qual("fmt", "Printf").Call(jen.Lit("Panic %s: %v\n"), jen.Lit(handler), jen.Id("r")),
-						jen.Qual("runtime/debug", "PrintStack").Call(),
+					g.If(jen.Id("rp").Op(":=").Id("recover").Call().Op(";").Id("rp").Op("!=").Nil()).Block(
+						jen.Qual(logPkg, "Ctx").
+							Call(jen.Id("r").Dot("Context").Call()).Dot("Error").Call().Dot("Str").Call(
+							jen.Lit("handler"),
+							jen.Lit(handler),
+						).Dot("Msgf").Call(jen.Lit("Panic: %v"), jen.Id("rp")),
+						jen.Qual(logPkg, "Stack").Call(jen.Id("r").Dot("Context").Call()),
 						jen.Qual(httpJsonapi, "WriteError").Call(
 							jen.Id("w"),
 							jen.Qual("net/http", "StatusInternalServerError"),
