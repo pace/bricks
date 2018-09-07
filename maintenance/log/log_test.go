@@ -19,5 +19,7 @@ func TestLog(t *testing.T) {
 
 	Ctx(context.Background()).Info().Msg("ctx")
 
+	Stack(context.Background())
+
 	Logger().Info().Msg("log")
 }
