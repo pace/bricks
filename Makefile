@@ -4,6 +4,9 @@
 JSONAPITEST="http/jsonapi/generator/internal"
 JSONAPIGEN="./tools/jsonapigen/main.go"
 
+install:
+	go install ./cmd/pace
+
 jsonapi:
 	go run $(JSONAPIGEN) -pkg poi \
 		-path $(JSONAPITEST)/poi/open-api_test.go \
@@ -14,3 +17,4 @@ jsonapi:
 	go run $(JSONAPIGEN) -pkg pay \
 		-path $(JSONAPITEST)/pay/open-api_test.go \
 		-source $(JSONAPITEST)/pay/open-api.json
+		
