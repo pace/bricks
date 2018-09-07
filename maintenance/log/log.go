@@ -56,9 +56,14 @@ func init() {
 	// use ico8601 (and UTC for json) as defined in https://lab.jamit.de/pace/web/meta/issues/11
 	zerolog.TimeFieldFormat = "2006-01-02 15:04:05"
 
-	// if it is a terminal use the console writer
-	if cfg.Format == "auto" && isatty.IsTerminal(os.Stdout.Fd()) {
-		cfg.Format = "console"
+	// auto detect log format
+	if cfg.Format == "auto" {
+		// if it is a terminal use the console writer
+		if isatty.IsTerminal(os.Stdout.Fd()) {
+			cfg.Format = "console"
+		} else {
+			cfg.Format = "json"
+		}
 	}
 
 	switch cfg.Format {
