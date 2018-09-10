@@ -63,6 +63,7 @@ func (g *Generator) BuildSchema(schema *openapi3.Swagger, packagePath, packageNa
 	g.goSource.ImportAlias(jsonAPIMetrics, "jsonapimetrics")
 	g.goSource.ImportAlias(opentracing, "opentracing")
 	g.goSource.Anon("lab.jamit.de/pace/go-microservice/maintenance/tracing")
+	g.goSource.ImportAlias(opentracingLog, "olog")
 
 	g.serviceName = packageName
 

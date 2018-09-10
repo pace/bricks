@@ -5,6 +5,7 @@ import (
 	"errors"
 	mux "github.com/gorilla/mux"
 	opentracing "github.com/opentracing/opentracing-go"
+	olog "github.com/opentracing/opentracing-go/log"
 	runtime "lab.jamit.de/pace/go-microservice/http/jsonapi/runtime"
 	log "lab.jamit.de/pace/go-microservice/maintenance/log"
 	jsonapimetrics "lab.jamit.de/pace/go-microservice/maintenance/metrics/jsonapi"
@@ -73,6 +74,7 @@ func GetPaymentMethodsHandler(service Service) http.Handler {
 			log.Ctx(ctx).Debug().Err(err).Msg("Couldn't get span from request header")
 		}
 		handlerSpan = opentracing.StartSpan("GetPaymentMethodsHandler", opentracing.ChildOf(wireContext))
+		handlerSpan.LogFields(olog.String("req_id", log.RequestID(r)))
 		defer handlerSpan.Finish()
 
 		// Setup context, response writer and request type
@@ -116,6 +118,7 @@ func CreatePaymentMethodSEPAHandler(service Service) http.Handler {
 			log.Ctx(ctx).Debug().Err(err).Msg("Couldn't get span from request header")
 		}
 		handlerSpan = opentracing.StartSpan("CreatePaymentMethodSEPAHandler", opentracing.ChildOf(wireContext))
+		handlerSpan.LogFields(olog.String("req_id", log.RequestID(r)))
 		defer handlerSpan.Finish()
 
 		// Setup context, response writer and request type
@@ -165,6 +168,7 @@ func DeletePaymentMethodHandler(service Service) http.Handler {
 			log.Ctx(ctx).Debug().Err(err).Msg("Couldn't get span from request header")
 		}
 		handlerSpan = opentracing.StartSpan("DeletePaymentMethodHandler", opentracing.ChildOf(wireContext))
+		handlerSpan.LogFields(olog.String("req_id", log.RequestID(r)))
 		defer handlerSpan.Finish()
 
 		// Setup context, response writer and request type
@@ -220,6 +224,7 @@ func AuthorizePaymentMethodHandler(service Service) http.Handler {
 			log.Ctx(ctx).Debug().Err(err).Msg("Couldn't get span from request header")
 		}
 		handlerSpan = opentracing.StartSpan("AuthorizePaymentMethodHandler", opentracing.ChildOf(wireContext))
+		handlerSpan.LogFields(olog.String("req_id", log.RequestID(r)))
 		defer handlerSpan.Finish()
 
 		// Setup context, response writer and request type
@@ -278,6 +283,7 @@ func DeletePaymentTokenHandler(service Service) http.Handler {
 			log.Ctx(ctx).Debug().Err(err).Msg("Couldn't get span from request header")
 		}
 		handlerSpan = opentracing.StartSpan("DeletePaymentTokenHandler", opentracing.ChildOf(wireContext))
+		handlerSpan.LogFields(olog.String("req_id", log.RequestID(r)))
 		defer handlerSpan.Finish()
 
 		// Setup context, response writer and request type
@@ -338,6 +344,7 @@ func GetPaymentMethodsIncludingCreditCheckHandler(service Service) http.Handler 
 			log.Ctx(ctx).Debug().Err(err).Msg("Couldn't get span from request header")
 		}
 		handlerSpan = opentracing.StartSpan("GetPaymentMethodsIncludingCreditCheckHandler", opentracing.ChildOf(wireContext))
+		handlerSpan.LogFields(olog.String("req_id", log.RequestID(r)))
 		defer handlerSpan.Finish()
 
 		// Setup context, response writer and request type
@@ -393,6 +400,7 @@ func GetPaymentMethodsIncludingPaymentTokenHandler(service Service) http.Handler
 			log.Ctx(ctx).Debug().Err(err).Msg("Couldn't get span from request header")
 		}
 		handlerSpan = opentracing.StartSpan("GetPaymentMethodsIncludingPaymentTokenHandler", opentracing.ChildOf(wireContext))
+		handlerSpan.LogFields(olog.String("req_id", log.RequestID(r)))
 		defer handlerSpan.Finish()
 
 		// Setup context, response writer and request type
