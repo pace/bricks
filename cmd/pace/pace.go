@@ -4,7 +4,6 @@
 package main
 
 import (
-	"log"
 	"os"
 	"path/filepath"
 	"strings"
@@ -12,6 +11,7 @@ import (
 	"github.com/spf13/cobra"
 	"lab.jamit.de/pace/go-microservice/internal/service"
 	"lab.jamit.de/pace/go-microservice/internal/service/generate"
+	"lab.jamit.de/pace/go-microservice/maintenance/log"
 )
 
 func main() {
@@ -20,7 +20,10 @@ func main() {
 		Args: cobra.MaximumNArgs(1),
 	}
 	addRootCommands(rootCmd)
-	rootCmd.Execute()
+	err := rootCmd.Execute()
+	if err != nil {
+		log.Fatal(err)
+	}
 }
 
 // pace ...

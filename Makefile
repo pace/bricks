@@ -17,4 +17,3 @@ jsonapi:
 	go run $(JSONAPIGEN) -pkg pay \
 		-path $(JSONAPITEST)/pay/open-api_test.go \
 		-source $(JSONAPITEST)/pay/open-api.json
-		

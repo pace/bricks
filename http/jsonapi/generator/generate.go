@@ -41,7 +41,7 @@ func (g *Generator) BuildSource(source, packagePath, packageName string) (string
 		schema, err = loader.LoadSwaggerFromURI(loc)
 	} else {
 		// read spec
-		data, err := ioutil.ReadFile(source)
+		data, err := ioutil.ReadFile(source) // nolint: gosec
 		if err != nil {
 			return "", err
 		}

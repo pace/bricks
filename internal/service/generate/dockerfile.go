@@ -36,7 +36,7 @@ RUN go get gopkg.in/alecthomas/gometalinter.v2
 RUN gometalinter.v2 --install
 WORKDIR /tmp/service
 ADD . .
-RUN gometalinter.v2 ./...
+RUN gometalinter.v2 $(go list ./...)
 RUN go test -v -race -cover ./...
 RUN go install ./cmd/{{ .Commands.DaemonName }}
 RUN go install ./cmd/{{ .Commands.ControlName }}

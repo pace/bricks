@@ -80,7 +80,7 @@ func GoBinCommand(cmdName string) string {
 
 // SimpleExec executes the command and uses the parent process STDIN,STDOUT,STDERR
 func SimpleExec(cmdName string, arguments ...string) {
-	cmd := exec.Command(cmdName, arguments...)
+	cmd := exec.Command(cmdName, arguments...) // nolint: gosec
 	cmd.Stdin = os.Stdin
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
@@ -92,7 +92,7 @@ func SimpleExec(cmdName string, arguments ...string) {
 
 // SimpleExecInPath executes the command and uses the parent process STDIN,STDOUT,STDERR in passed dir
 func SimpleExecInPath(dir, cmdName string, arguments ...string) {
-	cmd := exec.Command(cmdName, arguments...)
+	cmd := exec.Command(cmdName, arguments...) // nolint: gosec
 	cmd.Stdin = os.Stdin
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
@@ -105,7 +105,7 @@ func SimpleExecInPath(dir, cmdName string, arguments ...string) {
 
 // GoBinCommandText writes the command output to the passed writer
 func GoBinCommandText(w io.Writer, cmdName string, arguments ...string) {
-	cmd := exec.Command(cmdName, arguments...)
+	cmd := exec.Command(cmdName, arguments...) // nolint: gosec
 	cmd.Stdin = os.Stdin
 	cmd.Stdout = w
 	cmd.Stderr = os.Stderr

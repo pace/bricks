@@ -33,7 +33,7 @@ func New(name string, options NewOptions) {
 	// add REST API if there was a source specified
 	if options.RestSource != "" {
 		restDir := filepath.Join(dir, "internal", "http", "rest")
-		err := os.MkdirAll(restDir, 0770)
+		err := os.MkdirAll(restDir, 0770) // nolint: gosec
 		if err != nil {
 			log.Fatal(fmt.Printf("Failed to generate dir for rest api %s: %v", restDir, err))
 		}

@@ -14,7 +14,7 @@ func (h *handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	// content type and write status code explicitly
 	w.Header().Set("Content-Type", "text/plain")
 	w.WriteHeader(http.StatusOK)
-	w.Write([]byte("OK\n"[:]))
+	w.Write([]byte("OK\n"[:])) // nolint: gosec
 }
 
 // Handler returns the health api endpoint

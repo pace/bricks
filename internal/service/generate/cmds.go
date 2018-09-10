@@ -38,7 +38,7 @@ func Commands(path string, options CommandOptions) {
 		filepath.Join(path, "cmd", options.ControlName),
 	}
 	for _, dir := range dirs {
-		err := os.MkdirAll(dir, 0770)
+		err := os.MkdirAll(dir, 0770) // nolint: gosec
 		if err != nil {
 			log.Fatal(fmt.Printf("Failed to create dir %s: %v", dir, err))
 		}
@@ -59,8 +59,15 @@ func Commands(path string, options CommandOptions) {
 		} else {
 			generateControlMain(code, cmdName)
 		}
-		f.WriteString(copyright())
-		f.WriteString(code.GoString())
+		_, err = f.WriteString(copyright())
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		_, err = f.WriteString(code.GoString())
+		if err != nil {
+			log.Fatal(err)
+		}
 	}
 }
 

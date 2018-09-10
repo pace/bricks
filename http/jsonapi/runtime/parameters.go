@@ -62,7 +62,7 @@ func ScanParameters(w http.ResponseWriter, r *http.Request, parameters ...*ScanP
 					}
 
 					arrElem := array.Index(i - invalid)
-					n, _ := fmt.Sscan(input[i], arrElem.Addr().Interface())
+					n, _ := fmt.Sscan(input[i], arrElem.Addr().Interface()) // nolint: gosec
 					if n != 1 {
 						WriteError(w, http.StatusBadRequest, &Error{
 							Title:  fmt.Sprintf("invalid value for %s", param.Name),
@@ -90,7 +90,7 @@ func ScanParameters(w http.ResponseWriter, r *http.Request, parameters ...*ScanP
 			panic(fmt.Errorf("Impossible scanning location: %d", param.Location))
 		}
 
-		n, _ := fmt.Sscan(scanData, param.Data)
+		n, _ := fmt.Sscan(scanData, param.Data) // nolint: gosec
 		// only report on non empty data, govalidator will handle the other cases
 		if n != 1 && scanData != "" {
 			WriteError(w, http.StatusBadRequest, &Error{
