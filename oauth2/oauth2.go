@@ -1,63 +1,57 @@
+// Package oauth2 provides a middelware that introspects the auth token on
+// behalf of PACE services and populate the request context with useful information
+// when the token is valid, otherwise aborts the request.
 package oauth2
 
 import (
 	"context"
 	"encoding/json"
-	"fmt"
-	"io/ioutil"
+	"log"
 	"net/http"
 	"net/url"
 	"strings"
 )
 
+// Oauth2 Middleware.
 type Middleware struct {
-	Host         string
+	URL          string
 	ClientID     string
 	ClientSecret string
 }
 
-type IntrospectResponse struct {
+type introspectResponse struct {
 	Status   bool    `json:"active"`
 	Scope    *string `json:"scope"` // Could be string or nil, hence the pointer.
 	ClientID string  `json:"client_id"`
 }
 
+type User struct {
+	authToken string
+	userID    string
+	clientID  string
+	scopes    []string
+}
+
 // Should take token, introspect it, and put the token and other relevant information back
 // in the context.
-// TODO
-//
-// 1. Move error code to well named functions.
-// 2. Refaactor code that puts things in the context.
-func (m *Middleware) Middleware(next http.Handler) http.Handler {
+func (m *Middleware) Handler(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		qualifiedToken := r.Header.Get("Authorization")
 
 		items := strings.Split(qualifiedToken, "Bearer ")
 		if len(items) < 2 {
-			// TODO
-			//
-			// Should these responses actually follow JSON spec?
 			http.Error(w, "Unauthorized", http.StatusUnauthorized)
 			return
 		}
 
 		token := items[1]
 
-		resp, err := http.PostForm(m.Host+"/oauth2/introspect",
-			url.Values{"client_id": {m.ClientID}, "client_secret": {m.ClientSecret}, "token": {token}})
-
+		resp, err := m.introspect(token)
 		defer resp.Body.Close()
 
 		if err != nil {
 			// Possible upstream error, log and fail. Use log instead of fmt?
-			fmt.Printf("%v\n", err)
-			http.Error(w, "InternalServerError", http.StatusInternalServerError)
-			return
-		}
-
-		body, err := ioutil.ReadAll(resp.Body)
-		if err != nil {
-			fmt.Printf("%v\n", err)
+			log.Printf("%v\n", err)
 			http.Error(w, "InternalServerError", http.StatusInternalServerError)
 			return
 		}
@@ -65,22 +59,23 @@ func (m *Middleware) Middleware(next http.Handler) http.Handler {
 		// If Response is not 200, it means there are problems with setup, such
 		// as wrong client ID or secret.
 		if resp.StatusCode != 200 {
-			fmt.Printf("Received %s from server, most likely bad oauth config.\n", resp.StatusCode)
+			log.Printf("Received %s from server, most likely bad oauth config.\n", resp.StatusCode)
 
 			http.Error(w, "InternalServerError", http.StatusInternalServerError)
 			return
 		}
 
-		var s = new(IntrospectResponse)
-		err = json.Unmarshal(body, &s)
+		var s introspectResponse
+		decoder := json.NewDecoder(resp.Body)
+		err = decoder.Decode(&s)
 		if err != nil {
-			fmt.Printf("%v", err)
+			log.Printf("%v", err)
 			http.Error(w, "InternalServerError", http.StatusInternalServerError)
 			return
 		}
 
 		if s.Status == false {
-			fmt.Printf("Token %s not active", token)
+			log.Printf("Token %s not active", token)
 			http.Error(w, "Unauthorized", http.StatusUnauthorized)
 			return
 		}
@@ -90,31 +85,31 @@ func (m *Middleware) Middleware(next http.Handler) http.Handler {
 
 			// Unlikely to happen, but we check anyway.
 			if xuid == "" {
-				http.Error(w, "InternalServerError", http.StatusInternalServerError)
+				http.Error(w, "BadGateway", http.StatusBadGateway)
 				return
 			}
 
-			// TODO:
-			//
-			// We might need to consider possible collusions if we pick a string
-			// like this.
-			ctx := context.WithValue(r.Context(), "X-UID", xuid)
-			ctx = context.WithValue(ctx, "authToken", token)
-
-			// If token is associated with one or more scopes, put them in
-			// the context as a slice.
-			if *s.Scope != "null" {
-				scopes := strings.Split(*s.Scope, " ")
-				ctx = context.WithValue(ctx, "scopes", scopes)
+			user := User{
+				userID:    xuid,
+				authToken: token,
+				clientID:  s.ClientID,
 			}
 
-			// Add ClientID to the context.
-			ctx = context.WithValue(ctx, "ClientID", s.ClientID)
+			if *s.Scope != "null" {
+				scopes := strings.Split(*s.Scope, " ")
+				user.scopes = scopes
+			}
 
+			ctx := context.WithValue(r.Context(), "User", user)
 			next.ServeHTTP(w, r.WithContext(ctx))
 			return
 		}
 	})
+}
+
+func (m *Middleware) introspect(token string) (*http.Response, error) {
+	return http.PostForm(m.URL+"/oauth2/introspect",
+		url.Values{"client_id": {m.ClientID}, "client_secret": {m.ClientSecret}, "token": {token}})
 }
 
 // TODO Pseudoish. To test.
@@ -125,20 +120,15 @@ func Request(ctx context.Context, r *http.Request) *http.Request {
 	return r
 }
 
-// TODO: To be tested separately.
 func BearerToken(ctx context.Context) string {
-	return Get(ctx, "authToken")
+	user := ctx.Value("User").(User)
+	return user.authToken
 }
 
-// TODO: To be tested separately.
 func HasScope(ctx context.Context, scope string) bool {
-	scopes, ok := ctx.Value("scopes").([]string)
+	user := ctx.Value("User").(User)
 
-	if !ok {
-		return false
-	}
-
-	for _, v := range scopes {
+	for _, v := range user.scopes {
 		if v == scope {
 			return true
 		}
@@ -147,9 +137,20 @@ func HasScope(ctx context.Context, scope string) bool {
 	return false
 }
 
-// TODO: To be tested separately.
-//
-// Should we propagate an error back to caller? Otherwise this might panic.
-func Get(ctx context.Context, key string) string {
-	return (ctx.Value(key)).(string)
+func UserID(ctx context.Context) string {
+	user := ctx.Value("User").(User)
+
+	return user.userID
+}
+
+func Scopes(ctx context.Context) []string {
+	user := ctx.Value("User").(User)
+
+	return user.scopes
+}
+
+func ClientID(ctx context.Context) string {
+	user := ctx.Value("User").(User)
+
+	return user.clientID
 }
