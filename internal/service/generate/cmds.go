@@ -67,7 +67,10 @@ func Commands(path string, options CommandOptions) {
 func generateDaemonMain(f *jen.File, cmdName string) {
 	httpPkg := "lab.jamit.de/pace/go-microservice/http"
 	logPkg := "lab.jamit.de/pace/go-microservice/maintenance/log"
+	trancing := "lab.jamit.de/pace/go-microservice/maintenance/tracing"
+
 	f.ImportAlias(httpPkg, "pacehttp")
+	f.Anon(trancing)
 	f.Func().Id("main").Params().BlockFunc(func(g *jen.Group) {
 		g.Id("router").Op(":=").Qual(httpPkg, "Router").Call()
 		g.Id("s").Op(":=").Qual(httpPkg, "Server").Call(jen.Id("router"))
