@@ -55,7 +55,7 @@ func (g *Generator) BuildSource(source, packagePath, packageName string) (string
 	loader := openapi3.NewSwaggerLoader()
 	var schema *openapi3.Swagger
 
-	if strings.HasPrefix(source, "http") {
+	if strings.HasPrefix(source, "http://") || strings.HasPrefix(source, "https://") {
 		loc, err := url.Parse(source)
 		if err != nil {
 			return "", err
