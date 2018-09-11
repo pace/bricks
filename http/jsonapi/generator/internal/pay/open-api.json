@@ -763,21 +763,18 @@
         "type": "object",
         "properties": {
           "data": {
-            "type": "array",
-            "items": {
-              "type": "object",
-              "properties": {
-                "type": {
-                  "type": "string",
-                  "enum": [
-                    "paymentToken"
-                  ]
-                },
-                "id": {
-                  "type": "string",
-                  "description": "Payment Token ID (externally provided - by payment provider)",
-                  "example": "ae8d0b2cca500ef9d2fe65cfa5725e64"
-                }
+            "type": "object",
+            "properties": {
+              "type": {
+                "type": "string",
+                "enum": [
+                  "paymentToken"
+                ]
+              },
+              "id": {
+                "type": "string",
+                "description": "Payment Token ID (externally provided - by payment provider)",
+                "example": "ae8d0b2cca500ef9d2fe65cfa5725e64"
               }
             }
           }
