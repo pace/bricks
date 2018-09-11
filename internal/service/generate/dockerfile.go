@@ -54,5 +54,6 @@ COPY --from=builder /go/bin/{{ .Commands.ControlName }} /usr/local/bin/
 
 EXPOSE 3000
 ENV PORT 3000
+ENV JAEGER_SERVICE_NAME {{ .Name }}
 CMD /usr/local/bin/{{ .Commands.DaemonName }}
 `))
