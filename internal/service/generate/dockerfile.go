@@ -31,14 +31,14 @@ func Dockerfile(path string, options DockerfileOptions) {
 
 var dockerTemplate = template.Must(template.New("Dockerfile").Parse(
 	`FROM golang:1.11 as builder
-RUN go get gopkg.in/alecthomas/gometalinter.v2
-RUN gometalinter.v2 --install
+RUN go get github.com/alecthomas/gometalinter
+RUN gometalinter --install
 WORKDIR /tmp/service
 ADD . .
 
 # Lin, vet & test
 # (many linters from gometalinter don't support go mod and therefore need to be disabled)
-RUN gometalinter.v2 --disable-all --vendor -E gocyclo -E goconst -E golint -E ineffassign -E gotypex -E deadcode ./... && \
+RUN gometalinter --disable-all --vendor -E gocyclo -E goconst -E golint -E ineffassign -E gotypex -E deadcode ./... && \
 	go vet -mod vendor ./... && \
 	go test -mod vendor -v -race -cover ./...
 
