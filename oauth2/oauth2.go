@@ -18,6 +18,10 @@ import (
 	"strings"
 )
 
+type ctxkey string
+
+var tokenKey = ctxkey("Token")
+
 const headerPrefix = "Bearer "
 
 type introspecter func(mdw *Middleware, token string, resp *introspectResponse) error
@@ -79,7 +83,7 @@ func (m *Middleware) Handler(next http.Handler) http.Handler {
 			token.scopes = scopes
 		}
 
-		ctx := context.WithValue(r.Context(), "Token", &token)
+		ctx := context.WithValue(r.Context(), tokenKey, &token)
 		next.ServeHTTP(w, r.WithContext(ctx))
 		return
 	})
@@ -130,12 +134,12 @@ func Request(ctx context.Context, r *http.Request) *http.Request {
 }
 
 func BearerToken(ctx context.Context) string {
-	token := ctx.Value("Token").(*token)
+	token := ctx.Value(tokenKey).(*token)
 	return token.value
 }
 
 func HasScope(ctx context.Context, scope string) bool {
-	token := ctx.Value("Token").(*token)
+	token := ctx.Value(tokenKey).(*token)
 
 	for _, v := range token.scopes {
 		if v == scope {
@@ -147,19 +151,19 @@ func HasScope(ctx context.Context, scope string) bool {
 }
 
 func UserID(ctx context.Context) string {
-	token := ctx.Value("Token").(*token)
+	token := ctx.Value(tokenKey).(*token)
 
 	return token.userID
 }
 
 func Scopes(ctx context.Context) []string {
-	token := ctx.Value("Token").(*token)
+	token := ctx.Value(tokenKey).(*token)
 
 	return token.scopes
 }
 
 func ClientID(ctx context.Context) string {
-	token := ctx.Value("Token").(*token)
+	token := ctx.Value(tokenKey).(*token)
 
 	return token.clientID
 }
