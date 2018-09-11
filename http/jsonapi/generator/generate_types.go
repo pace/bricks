@@ -89,7 +89,10 @@ func (g *Generator) buildType(prefix string, stmt *jen.Statement, schema *openap
 			return nil
 		}
 
-		g.goType(stmt, val, make(map[string]string))
+		err := g.goType(stmt, val, make(map[string]string))
+		if err != nil {
+			return err
+		}
 	}
 
 	return nil

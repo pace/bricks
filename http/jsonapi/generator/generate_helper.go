@@ -59,7 +59,10 @@ func (g *Generator) goType(stmt *jen.Statement, schema *openapi3.Schema, tags ma
 	case "boolean":
 		stmt.Bool()
 	case "array":
-		g.goType(stmt.Index(), schema.Items.Value, tags)
+		err := g.goType(stmt.Index(), schema.Items.Value, tags)
+		if err != nil {
+			return err
+		}
 	default:
 		return fmt.Errorf("Unknown type: %s", schema.Type)
 	}

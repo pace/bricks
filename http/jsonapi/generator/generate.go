@@ -67,7 +67,7 @@ func (g *Generator) BuildSource(source, packagePath, packageName string) (string
 		}
 	} else {
 		// read spec
-		data, err := ioutil.ReadFile(source)
+		data, err := ioutil.ReadFile(source) // nolint: gosec
 		if err != nil {
 			return "", err
 		}
@@ -87,6 +87,9 @@ func (g *Generator) BuildSource(source, packagePath, packageName string) (string
 func (g *Generator) BuildSchema(schema *openapi3.Swagger, packagePath, packageName string) (string, error) {
 	g.goSource = jen.NewFilePathName(packagePath, packageName)
 	g.goSource.ImportAlias(jsonAPIMetrics, "jsonapimetrics")
+	g.goSource.ImportAlias(opentracing, "opentracing")
+	g.goSource.ImportAlias(opentracingLog, "olog")
+
 	g.serviceName = packageName
 
 	buildFuncs := []buildFunc{

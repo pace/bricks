@@ -5,9 +5,12 @@ import (
 	"encoding/json"
 	"errors"
 	mux "github.com/gorilla/mux"
+	opentracing "github.com/opentracing/opentracing-go"
+	olog "github.com/opentracing/opentracing-go/log"
 	runtime "lab.jamit.de/pace/go-microservice/http/jsonapi/runtime"
 	log "lab.jamit.de/pace/go-microservice/maintenance/log"
 	jsonapimetrics "lab.jamit.de/pace/go-microservice/maintenance/metrics/jsonapi"
+	_ "lab.jamit.de/pace/go-microservice/maintenance/tracing"
 	"net/http"
 )
 
@@ -93,19 +96,35 @@ ApproachingAtTheForecourtHandler handles request/response marshaling and validat
 */
 func ApproachingAtTheForecourtHandler(service Service) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		ctx := r.Context()
 		defer func() {
 			if rp := recover(); rp != nil {
-				log.Ctx(r.Context()).Error().Str("handler", "ApproachingAtTheForecourtHandler").Msgf("Panic: %v", rp)
-				log.Stack(r.Context())
+				log.Ctx(ctx).Error().Str("handler", "ApproachingAtTheForecourtHandler").Msgf("Panic: %v", rp)
+				log.Stack(ctx)
 				runtime.WriteError(w, http.StatusInternalServerError, errors.New("Error"))
 			}
 		}()
+
+		// Trace the service function handler execution
+		var handlerSpan opentracing.Span
+		wireContext, err := opentracing.GlobalTracer().Extract(opentracing.HTTPHeaders, opentracing.HTTPHeadersCarrier(r.Header))
+		if err != nil {
+			log.Ctx(ctx).Debug().Err(err).Msg("Couldn't get span from request header")
+		}
+		handlerSpan = opentracing.StartSpan("ApproachingAtTheForecourtHandler", opentracing.ChildOf(wireContext))
+		handlerSpan.LogFields(olog.String("req_id", log.RequestID(r)))
+		defer handlerSpan.Finish()
+
+		// Setup context, response writer and request type
+		ctx = opentracing.ContextWithSpan(r.Context(), handlerSpan)
 		writer := approachingAtTheForecourtResponseWriter{
 			ResponseWriter: jsonapimetrics.NewMetric("fueling", "/beta/gas-station/{fuelingAppId}/approaching", w, r),
 		}
 		request := ApproachingAtTheForecourtRequest{
-			Request: r,
+			Request: r.WithContext(ctx),
 		}
+
+		// Scan and validate incoming request parameters
 		vars := mux.Vars(r)
 		if !runtime.ScanParameters(w, r, &runtime.ScanParameter{
 			Data:     &request.ParamFuelingAppID,
@@ -128,7 +147,9 @@ func ApproachingAtTheForecourtHandler(service Service) http.Handler {
 		if !runtime.ValidateParameters(w, r, &request) {
 			return // invalid request stop further processing
 		}
-		err := service.ApproachingAtTheForecourt(r.Context(), &writer, &request)
+
+		// Invoke service that implements the business logic
+		err = service.ApproachingAtTheForecourt(ctx, &writer, &request)
 		if err != nil {
 			runtime.WriteError(w, http.StatusInternalServerError, err)
 		}
@@ -141,19 +162,35 @@ GetPumpHandler handles request/response marshaling and validation for
 */
 func GetPumpHandler(service Service) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		ctx := r.Context()
 		defer func() {
 			if rp := recover(); rp != nil {
-				log.Ctx(r.Context()).Error().Str("handler", "GetPumpHandler").Msgf("Panic: %v", rp)
-				log.Stack(r.Context())
+				log.Ctx(ctx).Error().Str("handler", "GetPumpHandler").Msgf("Panic: %v", rp)
+				log.Stack(ctx)
 				runtime.WriteError(w, http.StatusInternalServerError, errors.New("Error"))
 			}
 		}()
+
+		// Trace the service function handler execution
+		var handlerSpan opentracing.Span
+		wireContext, err := opentracing.GlobalTracer().Extract(opentracing.HTTPHeaders, opentracing.HTTPHeadersCarrier(r.Header))
+		if err != nil {
+			log.Ctx(ctx).Debug().Err(err).Msg("Couldn't get span from request header")
+		}
+		handlerSpan = opentracing.StartSpan("GetPumpHandler", opentracing.ChildOf(wireContext))
+		handlerSpan.LogFields(olog.String("req_id", log.RequestID(r)))
+		defer handlerSpan.Finish()
+
+		// Setup context, response writer and request type
+		ctx = opentracing.ContextWithSpan(r.Context(), handlerSpan)
 		writer := getPumpResponseWriter{
 			ResponseWriter: jsonapimetrics.NewMetric("fueling", "/beta/gas-station/{fuelingAppId}/pumps/{pumpId}", w, r),
 		}
 		request := GetPumpRequest{
-			Request: r,
+			Request: r.WithContext(ctx),
 		}
+
+		// Scan and validate incoming request parameters
 		vars := mux.Vars(r)
 		if !runtime.ScanParameters(w, r, &runtime.ScanParameter{
 			Data:     &request.ParamFuelingAppID,
@@ -171,7 +208,9 @@ func GetPumpHandler(service Service) http.Handler {
 		if !runtime.ValidateParameters(w, r, &request) {
 			return // invalid request stop further processing
 		}
-		err := service.GetPump(r.Context(), &writer, &request)
+
+		// Invoke service that implements the business logic
+		err = service.GetPump(ctx, &writer, &request)
 		if err != nil {
 			runtime.WriteError(w, http.StatusInternalServerError, err)
 		}
@@ -184,19 +223,35 @@ WaitOnPumpStatusChangeHandler handles request/response marshaling and validation
 */
 func WaitOnPumpStatusChangeHandler(service Service) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		ctx := r.Context()
 		defer func() {
 			if rp := recover(); rp != nil {
-				log.Ctx(r.Context()).Error().Str("handler", "WaitOnPumpStatusChangeHandler").Msgf("Panic: %v", rp)
-				log.Stack(r.Context())
+				log.Ctx(ctx).Error().Str("handler", "WaitOnPumpStatusChangeHandler").Msgf("Panic: %v", rp)
+				log.Stack(ctx)
 				runtime.WriteError(w, http.StatusInternalServerError, errors.New("Error"))
 			}
 		}()
+
+		// Trace the service function handler execution
+		var handlerSpan opentracing.Span
+		wireContext, err := opentracing.GlobalTracer().Extract(opentracing.HTTPHeaders, opentracing.HTTPHeadersCarrier(r.Header))
+		if err != nil {
+			log.Ctx(ctx).Debug().Err(err).Msg("Couldn't get span from request header")
+		}
+		handlerSpan = opentracing.StartSpan("WaitOnPumpStatusChangeHandler", opentracing.ChildOf(wireContext))
+		handlerSpan.LogFields(olog.String("req_id", log.RequestID(r)))
+		defer handlerSpan.Finish()
+
+		// Setup context, response writer and request type
+		ctx = opentracing.ContextWithSpan(r.Context(), handlerSpan)
 		writer := waitOnPumpStatusChangeResponseWriter{
 			ResponseWriter: jsonapimetrics.NewMetric("fueling", "/beta/gas-station/{fuelingAppId}/pumps/{pumpId}/wait-for-status-change", w, r),
 		}
 		request := WaitOnPumpStatusChangeRequest{
-			Request: r,
+			Request: r.WithContext(ctx),
 		}
+
+		// Scan and validate incoming request parameters
 		vars := mux.Vars(r)
 		if !runtime.ScanParameters(w, r, &runtime.ScanParameter{
 			Data:     &request.ParamFuelingAppID,
@@ -224,7 +279,9 @@ func WaitOnPumpStatusChangeHandler(service Service) http.Handler {
 		if !runtime.ValidateParameters(w, r, &request) {
 			return // invalid request stop further processing
 		}
-		err := service.WaitOnPumpStatusChange(r.Context(), &writer, &request)
+
+		// Invoke service that implements the business logic
+		err = service.WaitOnPumpStatusChange(ctx, &writer, &request)
 		if err != nil {
 			runtime.WriteError(w, http.StatusInternalServerError, err)
 		}

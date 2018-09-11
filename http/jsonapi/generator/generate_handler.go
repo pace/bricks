@@ -23,6 +23,8 @@ const (
 	jsonAPIMetrics = "lab.jamit.de/pace/go-microservice/maintenance/metrics/jsonapi"
 	logPkg         = "lab.jamit.de/pace/go-microservice/maintenance/log"
 	govalidator    = "github.com/asaskevich/govalidator"
+	opentracing    = "github.com/opentracing/opentracing-go"
+	opentracingLog = opentracing + "/log"
 )
 
 const serviceInterface = "Service"
@@ -418,17 +420,19 @@ func (g *Generator) buildHandler(method string, op *openapi3.Operation, pattern 
 				jen.Id("w").Qual("net/http", "ResponseWriter"),
 				jen.Id("r").Op("*").Qual("net/http", "Request"),
 			).BlockFunc(func(g *jen.Group) {
+				g.Id("ctx").Op(":=").Id("r").Dot("Context").Call()
+
 				// recover panics
 				// TODO(vil): add more context and send to sentry, return error code
 				// that can be correlated with the client
 				g.Defer().Func().Call().BlockFunc(func(g *jen.Group) {
 					g.If(jen.Id("rp").Op(":=").Id("recover").Call().Op(";").Id("rp").Op("!=").Nil()).Block(
 						jen.Qual(logPkg, "Ctx").
-							Call(jen.Id("r").Dot("Context").Call()).Dot("Error").Call().Dot("Str").Call(
+							Call(jen.Id("ctx")).Dot("Error").Call().Dot("Str").Call(
 							jen.Lit("handler"),
 							jen.Lit(handler),
 						).Dot("Msgf").Call(jen.Lit("Panic: %v"), jen.Id("rp")),
-						jen.Qual(logPkg, "Stack").Call(jen.Id("r").Dot("Context").Call()),
+						jen.Qual(logPkg, "Stack").Call(jen.Id("ctx")),
 						jen.Qual(httpJsonapi, "WriteError").Call(
 							jen.Id("w"),
 							jen.Qual("net/http", "StatusInternalServerError"),
@@ -437,6 +441,31 @@ func (g *Generator) buildHandler(method string, op *openapi3.Operation, pattern 
 						),
 					)
 				}).Call()
+
+				// set tracing context
+				g.Line().Comment("Trace the service function handler execution")
+				g.Var().Id("handlerSpan").Qual(opentracing, "Span")
+				g.Id("wireContext").Op(",").Id("err").Op(":=").
+					Qual(opentracing, "GlobalTracer").Call().Dot("Extract").Call(
+					jen.Qual(opentracing, "HTTPHeaders"),
+					jen.Qual(opentracing, "HTTPHeadersCarrier").Call(jen.Id("r").Dot("Header")),
+				)
+				g.If().Id("err").Op("!=").Nil().Block(
+					jen.Qual(logPkg, "Ctx").Call(jen.Id("ctx")).Dot("Debug").Call().Dot("Err").Call(
+						jen.Id("err")).Dot("Msg").Call(jen.Lit("Couldn't get span from request header")),
+				)
+				g.Id("handlerSpan").Op("=").Qual(opentracing, "StartSpan").Call(
+					jen.Lit(handler), jen.Qual(opentracing, "ChildOf").Call(jen.Id("wireContext")))
+				g.Id("handlerSpan").Dot("LogFields").Call(
+					jen.Qual(opentracingLog, "String").Call(jen.Lit("req_id"), jen.Qual(logPkg, "RequestID").Call(
+						jen.Id("r"))))
+				g.Defer().Id("handlerSpan").Dot("Finish").Call()
+
+				g.Line().Comment("Setup context, response writer and request type")
+
+				// set context
+				g.Id("ctx").Op("=").Qual(opentracing, "ContextWithSpan").Call(
+					jen.Id("r").Dot("Context").Call(), jen.Id("handlerSpan"))
 
 				// response writer
 				g.Id("writer").Op(":=").Id(route.responseTypeImpl).
@@ -449,9 +478,10 @@ func (g *Generator) buildHandler(method string, op *openapi3.Operation, pattern 
 
 				// request
 				g.Id("request").Op(":=").Id(route.requestType).
-					Block(jen.Id("Request").Op(":").Id("r").Op(","))
+					Block(jen.Id("Request").Op(":").Id("r").Dot("WithContext").Call(jen.Id("ctx")).Op(","))
 
 				// vars in case parameters are given
+				g.Line().Comment("Scan and validate incoming request parameters")
 				if len(route.operation.Parameters) > 0 {
 					g.Id("vars").Op(":=").Qual(gorillaMux, "Vars").Call(jen.Id("r"))
 
@@ -484,8 +514,9 @@ func (g *Generator) buildHandler(method string, op *openapi3.Operation, pattern 
 				}
 
 				// invoke service and handle error with internal server error response
-				invokeService := jen.Id("err").Op(":=").Id("service").Dot(route.serviceFunc).Call(
-					jen.Id("r").Dot("Context").Call(),
+				invokeService := jen.Comment("Invoke service that implements the business logic").Line().
+					Id("err").Op("=").Id("service").Dot(route.serviceFunc).Call(
+					jen.Id("ctx"),
 					jen.Op("&").Id("writer"),
 					jen.Op("&").Id("request"),
 				).Line().If().Id("err").Op("!=").Nil().Block(
@@ -500,12 +531,13 @@ func (g *Generator) buildHandler(method string, op *openapi3.Operation, pattern 
 				// if there is a request body unmarshal it then call the service
 				// otherwise directly call the service
 				if requestBody {
+					g.Line().Comment("Unmarshal the service request body")
 					g.If(jen.Qual(httpJsonapi, "Unmarshal").Call(
 						jen.Id("w"),
 						jen.Id("r"),
 						jen.Op("&").Id("request").Dot("Content"))).Block(invokeService)
 				} else {
-					g.Add(invokeService)
+					g.Line().Add(invokeService)
 				}
 			}),
 		),

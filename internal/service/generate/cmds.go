@@ -38,7 +38,7 @@ func Commands(path string, options CommandOptions) {
 		filepath.Join(path, "cmd", options.ControlName),
 	}
 	for _, dir := range dirs {
-		err := os.MkdirAll(dir, 0770)
+		err := os.MkdirAll(dir, 0770) // nolint: gosec
 		if err != nil {
 			log.Fatal(fmt.Printf("Failed to create dir %s: %v", dir, err))
 		}
@@ -59,15 +59,25 @@ func Commands(path string, options CommandOptions) {
 		} else {
 			generateControlMain(code, cmdName)
 		}
-		f.WriteString(copyright())
-		f.WriteString(code.GoString())
+		_, err = f.WriteString(copyright())
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		_, err = f.WriteString(code.GoString())
+		if err != nil {
+			log.Fatal(err)
+		}
 	}
 }
 
 func generateDaemonMain(f *jen.File, cmdName string) {
 	httpPkg := "lab.jamit.de/pace/go-microservice/http"
 	logPkg := "lab.jamit.de/pace/go-microservice/maintenance/log"
+	trancing := "lab.jamit.de/pace/go-microservice/maintenance/tracing"
+
 	f.ImportAlias(httpPkg, "pacehttp")
+	f.Anon(trancing)
 	f.Func().Id("main").Params().BlockFunc(func(g *jen.Group) {
 		g.Id("router").Op(":=").Qual(httpPkg, "Router").Call()
 		g.Id("s").Op(":=").Qual(httpPkg, "Server").Call(jen.Id("router"))

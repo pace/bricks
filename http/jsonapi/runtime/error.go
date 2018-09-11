@@ -104,16 +104,26 @@ func WriteError(w http.ResponseWriter, code int, err error) {
 
 	// update the http status code of the error
 	errList.List.setHTTPStatus(code)
-	errList.List.setID(w.Header().Get("Request-ID"))
+	reqID := w.Header().Get("Request-ID")
+	errList.List.setID(reqID)
 
 	// render the error to the client
 	enc := json.NewEncoder(w)
 	enc.SetIndent("", "  ")
 	err = enc.Encode(errList)
 	if err != nil {
-		log.Printf("INFO: Unable to send error response to the client: %v", err)
+		log.Logger().Info().Str("req_id", reqID).
+			Err(err).Msg("Unable to send error response to the client")
 	}
 
+	// log all errors send to the client
+	for _, ei := range errList.List {
+		ev := log.Logger().Info().Str("req_id", reqID)
+		if source := ei.Source; source != nil {
+			ev = ev.Fields(*source)
+		}
+		ev.Err(ei).Msg(ei.Detail)
+	}
 }
 
 // Error objects MUST be returned as an array keyed by errors in the top level of a JSON API document.
