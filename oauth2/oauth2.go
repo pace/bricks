@@ -12,6 +12,8 @@ import (
 	"strings"
 )
 
+const headerPrefix = "Bearer "
+
 // Oauth2 Middleware.
 type Middleware struct {
 	URL          string
@@ -116,7 +118,7 @@ func (m *Middleware) introspect(token string) (*http.Response, error) {
 // TODO Pseudoish. To test.
 func Request(ctx context.Context, r *http.Request) *http.Request {
 	token := BearerToken(ctx)
-	authHeaderVal := "Bearer " + token
+	authHeaderVal := headerPrefix + token
 	r.Header.Set("Authorization: ", authHeaderVal)
 	return r
 }

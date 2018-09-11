@@ -8,15 +8,24 @@ import (
 	"testing"
 )
 
+// Constants used throughout tests.
+const (
+	oauthURL    = "http://localhost:3000"
+	oauthClient = "13972c02189a6e938a4730bc81c2a20cc4e03ef5406d20d2150110584d6b3e6c"
+	oauthSecret = "7d26f8918a83bd155a936bbe780f32503a88cb8bd3e8acf25248357dff31668e"
+	activeToken = "c58b66b2a1b9b79376b587d68e1090e0d976d2013786ec2f1f49116eab4d62a7"
+	userID      = "3298b629-0467-400e-b430-5259cc3efddc"
+)
+
 func dummyHandler(w http.ResponseWriter, r *http.Request) {}
 
 func TestMiddleware(t *testing.T) {
 	// TODO
 	// Run against cp-1-dev or cp-1-prod?
 	var middleware = oauth2.Middleware{
-		URL:          "http://localhost:3000",
-		ClientID:     "13972c02189a6e938a4730bc81c2a20cc4e03ef5406d20d2150110584d6b3e6c",
-		ClientSecret: "7d26f8918a83bd155a936bbe780f32503a88cb8bd3e8acf25248357dff31668e",
+		URL:          oauthURL,
+		ClientID:     oauthClient,
+		ClientSecret: oauthSecret,
 	}
 
 	router := mux.NewRouter()
@@ -30,7 +39,7 @@ func TestMiddleware(t *testing.T) {
 	router.ServeHTTP(rw, req)
 
 	if rw.Body.String() != "Unauthorized\n" {
-		t.Fatalf("Expected `Unauthorized` as response body when *no* token is provided, got %s.", rw.Body)
+		t.Fatalf("Expected `Unauthorized` as body when *no* token is sent, got %s.", rw.Body)
 	}
 
 	// Test bad token.
@@ -40,22 +49,21 @@ func TestMiddleware(t *testing.T) {
 	router.ServeHTTP(rw, req)
 
 	if rw.Body.String() != "Unauthorized\n" {
-		t.Fatalf("Expected `Unauthorized` as response body when *bad* token is provided, got %s.", rw.Body)
+		t.Fatalf("Expected `Unauthorized` as body when *bad* token is sent, got %s.", rw.Body)
 	}
 
 	// Check for data we are interested in inside the context.
 	testMiddlewareHandler := func(w http.ResponseWriter, r *http.Request) {
 		// Check if we have the X-UID.
-		if rw.Result().StatusCode != 200 || oauth2.UserID(r.Context()) != "3298b629-0467-400e-b430-5259cc3efddc" {
+		if rw.Result().StatusCode != 200 || oauth2.UserID(r.Context()) != userID {
 			t.Fatal("Expected successful request and X-UID stored in request context.")
 		}
 
 		// Check if we have the token.
 		receivedToken := oauth2.BearerToken(r.Context())
-		expectedToken := "c58b66b2a1b9b79376b587d68e1090e0d976d2013786ec2f1f49116eab4d62a7"
 
-		if receivedToken != expectedToken {
-			t.Fatalf("Expected %s, got: %s", expectedToken, receivedToken)
+		if receivedToken != activeToken {
+			t.Fatalf("Expected %s, got: %s", activeToken, receivedToken)
 		}
 
 		// Check if we have the scopes.
@@ -64,19 +72,17 @@ func TestMiddleware(t *testing.T) {
 			t.Fatalf("Expected scopes: dtc:codes:read and dtc:codes:write, got: %s", scopes)
 		}
 
-		expectedClientID := "13972c02189a6e938a4730bc81c2a20cc4e03ef5406d20d2150110584d6b3e6c"
-
 		// Check if we have the client ID.
 		clientID := oauth2.ClientID(r.Context())
 
-		if clientID != expectedClientID {
-			t.Fatalf("Expected ClientID %s, got: %s", expectedClientID, clientID)
+		if clientID != oauthClient {
+			t.Fatalf("Expected ClientID %s, got: %s", oauthClient, clientID)
 		}
 	}
 
 	rw = httptest.NewRecorder()
 	req, _ = http.NewRequest("GET", "/working", nil)
-	req.Header.Set("Authorization", "Bearer c58b66b2a1b9b79376b587d68e1090e0d976d2013786ec2f1f49116eab4d62a7")
+	req.Header.Set("Authorization", "Bearer "+activeToken)
 	router.HandleFunc("/working", testMiddlewareHandler)
 	router.ServeHTTP(rw, req)
 
