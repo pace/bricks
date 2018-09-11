@@ -6,6 +6,7 @@ package oauth2
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"log"
 	"net/http"
 	"net/url"
@@ -13,6 +14,11 @@ import (
 )
 
 const headerPrefix = "Bearer "
+
+type introspecter func(mdw *Middleware, token string, resp *introspectResponse) error
+
+var errInvalidToken = errors.New("User token is invalid")
+var errConnection = errors.New("problem connecting to the introspection endpoint")
 
 // Oauth2 Middleware.
 type Middleware struct {
@@ -25,13 +31,14 @@ type introspectResponse struct {
 	Status   bool    `json:"active"`
 	Scope    *string `json:"scope"` // Could be string or nil, hence the pointer.
 	ClientID string  `json:"client_id"`
+	UserID   string  `json:"user_id"`
 }
 
-type User struct {
-	authToken string
-	userID    string
-	clientID  string
-	scopes    []string
+type token struct {
+	value    string
+	userID   string
+	clientID string
+	scopes   []string
 }
 
 // Should take token, introspect it, and put the token and other relevant information back
@@ -46,73 +53,67 @@ func (m *Middleware) Handler(next http.Handler) http.Handler {
 			return
 		}
 
-		token := items[1]
-
-		resp, err := m.introspect(token)
-
-		if err != nil {
-			// Possible upstream error, log and fail. Use log instead of fmt?
-			log.Printf("%v\n", err)
-			http.Error(w, "InternalServerError", http.StatusInternalServerError)
-			return
-		}
-
-		defer resp.Body.Close()
-
-		// If Response is not 200, it means there are problems with setup, such
-		// as wrong client ID or secret.
-		if resp.StatusCode != 200 {
-			log.Printf("Received %s from server, most likely bad oauth config.\n", resp.StatusCode)
-
-			http.Error(w, "InternalServerError", http.StatusInternalServerError)
-			return
-		}
-
+		receivedToken := items[1]
 		var s introspectResponse
-		decoder := json.NewDecoder(resp.Body)
-		err = decoder.Decode(&s)
+		err := introspect(*m, receivedToken, &s)
+		log.Println(err)
+
 		if err != nil {
-			log.Printf("%v", err)
-			http.Error(w, "InternalServerError", http.StatusInternalServerError)
+			http.Error(w, err.Error(), http.StatusUnauthorized)
 			return
 		}
 
-		if s.Status == false {
-			log.Printf("Token %s not active", token)
-			http.Error(w, "Unauthorized", http.StatusUnauthorized)
-			return
+		token := token{
+			userID:   s.UserID,
+			value:    receivedToken,
+			clientID: s.ClientID,
 		}
 
-		if s.Status == true {
-			xuid := resp.Header.Get("X-UID")
-
-			// Unlikely to happen, but we check anyway.
-			if xuid == "" {
-				http.Error(w, "BadGateway", http.StatusBadGateway)
-				return
-			}
-
-			user := User{
-				userID:    xuid,
-				authToken: token,
-				clientID:  s.ClientID,
-			}
-
-			if *s.Scope != "null" {
-				scopes := strings.Split(*s.Scope, " ")
-				user.scopes = scopes
-			}
-
-			ctx := context.WithValue(r.Context(), "User", user)
-			next.ServeHTTP(w, r.WithContext(ctx))
-			return
+		if *s.Scope != "null" {
+			scopes := strings.Split(*s.Scope, " ")
+			token.scopes = scopes
 		}
+
+		ctx := context.WithValue(r.Context(), "Token", &token)
+		next.ServeHTTP(w, r.WithContext(ctx))
+		return
 	})
 }
 
-func (m *Middleware) introspect(token string) (*http.Response, error) {
-	return http.PostForm(m.URL+"/oauth2/introspect",
+func introspect(m Middleware, token string, s *introspectResponse) error {
+	resp, err := http.PostForm(m.URL+"/oauth2/introspect",
 		url.Values{"client_id": {m.ClientID}, "client_secret": {m.ClientSecret}, "token": {token}})
+
+	if err != nil {
+		log.Printf("%v\n", err)
+		return errConnection
+	}
+
+	defer resp.Body.Close()
+
+	// If Response is not 200, it means there are problems with setup, such
+	// as wrong client ID or secret.
+	if resp.StatusCode != 200 {
+		log.Printf("Received %s from server, most likely bad oauth config.\n", resp.StatusCode)
+		return errConnection
+	}
+
+	decoder := json.NewDecoder(resp.Body)
+	err = decoder.Decode(&s)
+	if err != nil {
+		log.Printf("%v", err)
+		return errConnection
+	}
+
+	if s.Status == false {
+		return errInvalidToken
+	}
+
+	// Set the UserID of the introspect response manually since Cockpit returns
+	// is in the response header and not the json (which we should change, I think).
+	s.UserID = resp.Header.Get("X-UID")
+
+	return nil
 }
 
 // TODO Pseudoish. To test.
@@ -124,14 +125,14 @@ func Request(ctx context.Context, r *http.Request) *http.Request {
 }
 
 func BearerToken(ctx context.Context) string {
-	user := ctx.Value("User").(User)
-	return user.authToken
+	token := ctx.Value("Token").(*token)
+	return token.value
 }
 
 func HasScope(ctx context.Context, scope string) bool {
-	user := ctx.Value("User").(User)
+	token := ctx.Value("Token").(*token)
 
-	for _, v := range user.scopes {
+	for _, v := range token.scopes {
 		if v == scope {
 			return true
 		}
@@ -141,19 +142,19 @@ func HasScope(ctx context.Context, scope string) bool {
 }
 
 func UserID(ctx context.Context) string {
-	user := ctx.Value("User").(User)
+	token := ctx.Value("Token").(*token)
 
-	return user.userID
+	return token.userID
 }
 
 func Scopes(ctx context.Context) []string {
-	user := ctx.Value("User").(User)
+	token := ctx.Value("Token").(*token)
 
-	return user.scopes
+	return token.scopes
 }
 
 func ClientID(ctx context.Context) string {
-	user := ctx.Value("User").(User)
+	token := ctx.Value("Token").(*token)
 
-	return user.clientID
+	return token.clientID
 }

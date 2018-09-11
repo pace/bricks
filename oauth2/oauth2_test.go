@@ -50,8 +50,8 @@ func TestMiddleware(t *testing.T) {
 	req.Header.Set("Authorization", "Bearer sometoken")
 	router.ServeHTTP(rw, req)
 
-	if rw.Body.String() != "Unauthorized\n" {
-		t.Fatalf("Expected `Unauthorized` as body when *bad* token is sent, got %s.", rw.Body)
+	if rw.Body.String() != "User token is invalid\n" {
+		t.Fatalf("Expected `User token is invalid.` as body when *bad* token is sent, got %s.", rw.Body)
 	}
 
 	// Check for data we are interested in inside the context.
