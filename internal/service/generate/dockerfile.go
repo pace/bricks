@@ -35,10 +35,16 @@ RUN go get gopkg.in/alecthomas/gometalinter.v2
 RUN gometalinter.v2 --install
 WORKDIR /tmp/service
 ADD . .
-RUN gometalinter.v2 ./...
-RUN go test -v -race -cover ./...
-RUN go install ./cmd/{{ .Commands.DaemonName }}
-RUN go install ./cmd/{{ .Commands.ControlName }}
+
+# Lin, vet & test
+# (many linters from gometalinter don't support go mod and therefore need to be disabled)
+RUN gometalinter.v2 --disable-all --vendor -E gocyclo -E goconst -E golint -E ineffassign -E gotypex -E deadcode ./... && \
+	go vet -mod vendor ./... && \
+	go test -mod vendor -v -race -cover ./...
+
+# Build
+RUN go install -mod vendor ./cmd/{{ .Commands.DaemonName }} && \
+	go install -mod vendor ./cmd/{{ .Commands.ControlName }}
 
 FROM alpine
 RUN apk update && apk add ca-certificates && apk add tzdata && rm -rf /var/cache/apk/*
