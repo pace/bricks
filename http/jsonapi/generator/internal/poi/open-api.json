@@ -357,7 +357,7 @@
                           "toilets"
                         ],
                         "paymentMethods": [
-                          "sepaDirectDebit"
+                          "sepa"
                         ]
                       },
                       "relationships": {
@@ -820,10 +820,13 @@
                     "paymentMethods": {
                       "type": "array",
                       "items": {
-                        "type": "string"
+                        "type": "string",
+                        "enum": [
+                          "sepa"
+                        ]
                       },
                       "example": [
-                        "sepaDirectDebit"
+                        "sepa"
                       ]
                     }
                   }
@@ -917,7 +920,7 @@
       },
       "Errors": {
         "type": "object",
-        "description": "Error objects provide additional information about problems  encountered while performing an operation.\n",
+        "description": "Error objects provide additional information about problems encountered while performing an operation.\n",
         "properties": {
           "errors": {
             "type": "array",

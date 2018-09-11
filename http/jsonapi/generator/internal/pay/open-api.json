@@ -440,6 +440,147 @@
         }
       }
     },
+    "/beta/transaction": {
+      "post": {
+        "tags": [
+          "Payment"
+        ],
+        "operationId": "ProcessPayment",
+        "summary": "Process payment",
+        "description": "Process payment and notify user if transaction is finished successfully. You can optionally provide `priceIncludingVAT`and `currency` in the request body to check if the price the user has seen is still correct.\n",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/vnd.api+json": {
+              "schema": {
+                "$ref": "#/components/schemas/TransactionRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/vnd.api+json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "type": {
+                          "type": "string",
+                          "enum": [
+                            "transaction"
+                          ]
+                        },
+                        "id": {
+                          "type": "string",
+                          "format": "uuid",
+                          "description": "Transaction ID",
+                          "example": "c3f037ea-492e-4033-9b4b-4efc7beca16c"
+                        },
+                        "attributes": {
+                          "type": "object",
+                          "properties": {
+                            "paymentToken": {
+                              "type": "string",
+                              "example": "f106ac99-213c-4cf7-8c1b-1e841516026b"
+                            },
+                            "fueling": {
+                              "type": "object",
+                              "required": [
+                                "appId",
+                                "pumpId",
+                                "vin",
+                                "mileage"
+                              ],
+                              "properties": {
+                                "appId": {
+                                  "type": "string",
+                                  "format": "uuid",
+                                  "example": "c30bce97-b732-4390-af38-1ac6b017aa4c"
+                                },
+                                "pumpId": {
+                                  "type": "string",
+                                  "format": "uuid",
+                                  "example": "460ffaad-a3c1-4199-b69e-63949ccda82f"
+                                },
+                                "vin": {
+                                  "type": "string",
+                                  "example": "1B3EL46R36N102271"
+                                },
+                                "mileage": {
+                                  "type": "integer",
+                                  "example": 66435
+                                }
+                              }
+                            },
+                            "VAT": {
+                              "type": "object",
+                              "properties": {
+                                "amount": {
+                                  "type": "number",
+                                  "format": "float",
+                                  "example": 11.07
+                                },
+                                "rate": {
+                                  "type": "number",
+                                  "format": "float",
+                                  "example": 0.19
+                                }
+                              }
+                            },
+                            "priceWithoutVAT": {
+                              "type": "number",
+                              "format": "float",
+                              "example": 58.27
+                            },
+                            "priceIncludingVAT": {
+                              "type": "number",
+                              "format": "float",
+                              "example": 69.34
+                            },
+                            "currency": {
+                              "$ref": "#/components/schemas/currency"
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "406": {
+            "$ref": "#/components/responses/NotAcceptable"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
+          },
+          "415": {
+            "$ref": "#/components/responses/UnsupportedMediaType"
+          },
+          "422": {
+            "$ref": "#/components/responses/UnprocessableEntity"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        }
+      }
+    },
     "/beta/payment-methods/{paymentMethodId}/paymentTokens/{paymentTokenId}": {
       "delete": {
         "tags": [
@@ -492,6 +633,91 @@
   },
   "components": {
     "schemas": {
+      "currency": {
+        "type": "string",
+        "enum": [
+          "EUR"
+        ],
+        "example": "EUR"
+      },
+      "TransactionRequest": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "object",
+            "required": [
+              "type",
+              "attributes"
+            ],
+            "properties": {
+              "type": {
+                "type": "string",
+                "enum": [
+                  "transaction"
+                ]
+              },
+              "id": {
+                "type": "string",
+                "format": "uuid",
+                "description": "Transaction ID",
+                "example": "c3f037ea-492e-4033-9b4b-4efc7beca16c"
+              },
+              "attributes": {
+                "type": "object",
+                "required": [
+                  "paymentToken"
+                ],
+                "properties": {
+                  "paymentToken": {
+                    "type": "string",
+                    "example": "f106ac99-213c-4cf7-8c1b-1e841516026b"
+                  },
+                  "fueling": {
+                    "type": "object",
+                    "required": [
+                      "appId",
+                      "pumpId",
+                      "vin",
+                      "mileage"
+                    ],
+                    "properties": {
+                      "appId": {
+                        "type": "string",
+                        "format": "uuid",
+                        "description": "Location-based App ID",
+                        "example": "c30bce97-b732-4390-af38-1ac6b017aa4c"
+                      },
+                      "pumpId": {
+                        "type": "string",
+                        "format": "uuid",
+                        "description": "Pump ID",
+                        "example": "460ffaad-a3c1-4199-b69e-63949ccda82f"
+                      },
+                      "vin": {
+                        "type": "string",
+                        "example": "1B3EL46R36N102271"
+                      },
+                      "mileage": {
+                        "type": "integer",
+                        "description": "Current mileage in meters",
+                        "example": 66435
+                      }
+                    }
+                  },
+                  "priceIncludingVAT": {
+                    "type": "number",
+                    "format": "float",
+                    "example": 69.34
+                  },
+                  "currency": {
+                    "$ref": "#/components/schemas/currency"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
       "AllPaymentMethods": {
         "type": "object",
         "properties": {
@@ -527,6 +753,30 @@
                       "example": "DE89 **** 3000"
                     }
                   }
+                }
+              }
+            }
+          }
+        }
+      },
+      "PaymentToken": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "type": {
+                  "type": "string",
+                  "enum": [
+                    "paymentToken"
+                  ]
+                },
+                "id": {
+                  "type": "string",
+                  "description": "Payment Token ID (externally provided - by payment provider)",
+                  "example": "ae8d0b2cca500ef9d2fe65cfa5725e64"
                 }
               }
             }
@@ -737,7 +987,7 @@
       },
       "Errors": {
         "type": "object",
-        "description": "Error objects provide additional information about problems  encountered while performing an operation.\n",
+        "description": "Error objects provide additional information about problems encountered while performing an operation.\n",
         "properties": {
           "errors": {
             "type": "array",
@@ -800,6 +1050,28 @@
       }
     },
     "responses": {
+      "Conflict": {
+        "description": "The provided priceIncludingVAT does not match the actual price",
+        "content": {
+          "application/vnd.api+json": {
+            "schema": {
+              "$ref": "#/components/schemas/Errors"
+            },
+            "example": {
+              "errors": [
+                {
+                  "status": "409",
+                  "code": "priceCheckFailed",
+                  "title": "The provided priceIncludingVAT does not match the actual price",
+                  "source": {
+                    "pointer": "/data/attributes/priceIncludingVAT"
+                  }
+                }
+              ]
+            }
+          }
+        }
+      },
       "BadGateway": {
         "description": "Error occurred while communicating with upstream services",
         "content": {
