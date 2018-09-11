@@ -56,4 +56,6 @@ func New(name string, options NewOptions) {
 	generate.Makefile(filepath.Join(dir, "Makefile"), generate.MakefileOptions{
 		Name: name,
 	})
+
+	SimpleExecInPath(dir, "go", "mod", "vendor")
 }
