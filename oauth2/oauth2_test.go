@@ -8,20 +8,22 @@ import (
 	"testing"
 )
 
-// Constants used throughout tests.
 const (
-	oauthURL    = "http://localhost:3000"
-	oauthClient = "13972c02189a6e938a4730bc81c2a20cc4e03ef5406d20d2150110584d6b3e6c"
-	oauthSecret = "7d26f8918a83bd155a936bbe780f32503a88cb8bd3e8acf25248357dff31668e"
-	activeToken = "c58b66b2a1b9b79376b587d68e1090e0d976d2013786ec2f1f49116eab4d62a7"
-	userID      = "3298b629-0467-400e-b430-5259cc3efddc"
+	oauthURL    = "https://cp-1-dev.pacelink.net"
+	oauthClient = "7d51282118633c3a7412d7456368ddfe172b7987d20b8e3e60ae18e8681fac61"
+	oauthSecret = "141f891391d2b529bbf37b5ae5f57000f8b093956121db51c90fefb83930175c"
+
+	// This token will expire in three years (Sep, 11, 2021) and belongs to the above
+	// application and (wael@pace.car).
+	activeToken = "85b7856f3055411c11b60f582fc091a624db4a38218abac2df9feb66bc6e7eb5"
+
+	// Wael's Cockpit unique identifier.
+	userID = "b773de39-93d8-4aa4-94a3-356900e55956"
 )
 
 func dummyHandler(w http.ResponseWriter, r *http.Request) {}
 
 func TestMiddleware(t *testing.T) {
-	// TODO
-	// Run against cp-1-dev or cp-1-prod?
 	var middleware = oauth2.Middleware{
 		URL:          oauthURL,
 		ClientID:     oauthClient,
@@ -91,6 +93,6 @@ func TestMiddleware(t *testing.T) {
 	// run. We do not have other options because our /introspect endpoint does not
 	// differentiate between bad and old tokens.
 	if rw.Result().StatusCode != 200 || rw.Body.String() == "Unauthorized\n" {
-		t.Fatalf("Unexpected results using token: %s, perhaps it expired?", "token")
+		t.Fatalf("Unexpected results using token: %s, perhaps it expired?", activeToken)
 	}
 }
