@@ -1,6 +1,11 @@
 // Package oauth2 provides a middelware that introspects the auth token on
 // behalf of PACE services and populate the request context with useful information
 // when the token is valid, otherwise aborts the request.
+
+// TODO
+// i would return 502 in case the upstream is not working
+// introspec in new file
+// table tests.
 package oauth2
 
 import (
@@ -99,7 +104,7 @@ func introspect(m Middleware, token string, s *introspectResponse) error {
 	}
 
 	decoder := json.NewDecoder(resp.Body)
-	err = decoder.Decode(&s)
+	err = decoder.Decode(s)
 	if err != nil {
 		log.Printf("%v", err)
 		return errConnection
