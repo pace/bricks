@@ -1,7 +1,7 @@
 # Copyright © 2018 by PACE Telematics GmbH. All rights reserved.
 # Created at 2018/08/24 by Vincent Landgraf
 
-JSONAPITEST="http/jsonapi/generator/internal"
+JSONAPITEST=http/jsonapi/generator/internal
 JSONAPIGEN="./tools/jsonapigen/main.go"
 
 install:

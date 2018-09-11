@@ -75,7 +75,8 @@ func (g *Generator) buildType(prefix string, stmt *jen.Statement, schema *openap
 			return g.structJSONAPI(prefix, stmt, data.Value)
 		} else if val.Properties["id"] != nil &&
 			val.Properties["type"] != nil &&
-			val.Properties["attributes"] != nil {
+			(val.Properties["attributes"] != nil ||
+				val.Properties["relationships"] != nil) {
 			return g.structJSONAPI(prefix, stmt, val)
 		}
 
@@ -147,27 +148,29 @@ func (g *Generator) structJSONAPI(prefix string, stmt *jen.Statement, schema *op
 	fields = append(fields, id)
 
 	// add attributes
-	attrFields, err := g.generateStructFields(prefix, schema.Properties["attributes"].Value, true)
-	if err != nil {
-		return err
+	if attr := schema.Properties["attributes"]; attr != nil {
+		attrFields, err := g.generateStructFields(prefix, attr.Value, true)
+		if err != nil {
+			return err
+		}
+		fields = append(fields, attrFields...)
 	}
-	fields = append(fields, attrFields...)
+
+	// add relationships
+	if rels := schema.Properties["relationships"]; rels != nil {
+		relFields, err := g.generateStructRelationships(prefix, rels.Value, true)
+		if err != nil {
+			return err
+		}
+		fields = append(fields, relFields...)
+	}
 
 	stmt.Struct(fields...)
 	return nil
 }
 
-func (g *Generator) generateAttrField(prefix, name string, schema *openapi3.SchemaRef, jsonAPI bool, tags map[string]string) (*jen.Statement, error) {
+func (g *Generator) generateAttrField(prefix, name string, schema *openapi3.SchemaRef, tags map[string]string) (*jen.Statement, error) {
 	field := jen.Id(goNameHelper(name))
-
-	// Add json-api tag
-	if jsonAPI {
-		tags["jsonapi"] = fmt.Sprintf("attr,%s,omitempty", name)
-	} else {
-		tags["jsonapi"] = fmt.Sprintf("%s,omitempty", name)
-	}
-	// Add json tag
-	tags["json"] = fmt.Sprintf("%s,omitempty", name)
 
 	err := g.buildType(prefix+goNameHelper(name), field, schema)
 	if err != nil {
@@ -192,31 +195,55 @@ func (g *Generator) generateStructFields(prefix string, schema *openapi3.Schema,
 	for _, attrName := range keys {
 		attrSchema := schema.Properties[attrName]
 		tags := make(map[string]string)
-
-		// check if field is required
-		isRequired := false
-		for _, required := range schema.Required {
-			if required == attrName {
-				isRequired = true
-				break
-			}
-		}
-
-		// add required if otherwise optional validation
-		if isRequired {
-			addValidator(tags, "required")
-		} else {
-			addValidator(tags, "optional")
-		}
+		addJSONAPITags(tags, attrName, jsonAPIObject)
+		addRequiredOptionalTag(tags, attrName, schema)
 
 		// generate attribute field
-		field, err := g.generateAttrField(prefix, attrName, attrSchema, jsonAPIObject, tags)
+		field, err := g.generateAttrField(prefix, attrName, attrSchema, tags)
 		if err != nil {
 			return nil, err
 		}
 		fields = append(fields, field)
 	}
 	return fields, nil
+}
+
+func (g *Generator) generateStructRelationships(prefix string, schema *openapi3.Schema, jsonAPI bool) ([]jen.Code, error) {
+	// sort by key
+	keys := make([]string, 0, len(schema.Properties))
+	for k := range schema.Properties {
+		keys = append(keys, k)
+	}
+	sort.Strings(keys)
+
+	var relationships []jen.Code
+	for _, relName := range keys {
+		relSchema := schema.Properties[relName]
+		tags := make(map[string]string)
+		addJSONAPITags(tags, relName, jsonAPI)
+		addRequiredOptionalTag(tags, relName, schema)
+
+		// check for data
+		data := relSchema.Value.Properties["data"]
+		if data == nil || data.Value == nil {
+			return nil, fmt.Errorf("No data for relationship %s context %s", relName, prefix)
+		}
+
+		// generate relationship field
+		rel := jen.Id(goNameHelper(relName))
+
+		switch data.Value.Type {
+		case "array": // one-to-many
+			name := data.Value.Items.Value.Properties["type"].Value.Enum[0].(string)
+			rel.Index().Op("*").Id(goNameHelper(name)).Tag(tags)
+		case "object": // belongs-to
+			name := data.Value.Properties["type"].Value.Enum[0].(string)
+			rel.Op("*").Id(goNameHelper(name)).Tag(tags)
+		}
+
+		relationships = append(relationships, rel)
+	}
+	return relationships, nil
 }
 
 func (g *Generator) generateIDField(idType, objectType *openapi3.Schema) (*jen.Statement, error) {
@@ -232,4 +259,33 @@ func (g *Generator) generateIDField(idType, objectType *openapi3.Schema) (*jen.S
 	id.Tag(tags)
 	g.commentOrExample(id, idType)
 	return id, nil
+}
+
+func addRequiredOptionalTag(tags map[string]string, name string, schema *openapi3.Schema) {
+	// check if field is required
+	isRequired := false
+	for _, required := range schema.Required {
+		if required == name {
+			isRequired = true
+			break
+		}
+	}
+
+	// add required if otherwise optional validation
+	if isRequired {
+		addValidator(tags, "required")
+	} else {
+		addValidator(tags, "optional")
+	}
+}
+
+func addJSONAPITags(tags map[string]string, name string, jsonAPI bool) {
+	// Add json-api tag
+	if jsonAPI {
+		tags["jsonapi"] = fmt.Sprintf("attr,%s,omitempty", name)
+	} else {
+		tags["jsonapi"] = fmt.Sprintf("%s,omitempty", name)
+	}
+	// Add json tag
+	tags["json"] = fmt.Sprintf("%s,omitempty", name)
 }

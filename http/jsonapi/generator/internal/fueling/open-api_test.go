@@ -32,8 +32,10 @@ type GasStationResponseItem struct {
 	Latitude       float32                           `json:"latitude,omitempty" jsonapi:"attr,latitude,omitempty" valid:"optional"`   // Example: "49.013"
 	Longitude      float32                           `json:"longitude,omitempty" jsonapi:"attr,longitude,omitempty" valid:"optional"` // Example: "8.425"
 	OpeningHours   []*GasStationResponseOpeningHours `json:"openingHours,omitempty" jsonapi:"attr,openingHours,omitempty" valid:"optional"`
-	PaymentMethods []string                          `json:"paymentMethods,omitempty" jsonapi:"attr,paymentMethods,omitempty" valid:"optional"` // Example: "[sepaDirectDebit]"
-	StationName    string                            `json:"stationName,omitempty" jsonapi:"attr,stationName,omitempty" valid:"optional"`       // Example: "PACE Station"
+	StationName    string                            `json:"stationName,omitempty" jsonapi:"attr,stationName,omitempty" valid:"optional"` // Example: "PACE Station"
+	FuelPrices     []*FuelPrice                      `json:"fuelPrices,omitempty" jsonapi:"attr,fuelPrices,omitempty" valid:"optional"`
+	PaymentMethods []*PaymentMethod                  `json:"paymentMethods,omitempty" jsonapi:"attr,paymentMethods,omitempty" valid:"optional"`
+	Pumps          []*Pump                           `json:"pumps,omitempty" jsonapi:"attr,pumps,omitempty" valid:"optional"`
 }
 
 // GasStationResponseAddress ...
@@ -78,17 +80,6 @@ type PumpResponse *Pump
 
 // PumpStatus Current pump status
 type PumpStatus string
-
-// TransactionRequest ...
-type TransactionRequest struct {
-	ID              string `jsonapi:"primary,transaction,omitempty" valid:"uuid,optional"`                              // Transaction ID
-	MileageInMeters int64  `json:"mileageInMeters,omitempty" jsonapi:"attr,mileageInMeters,omitempty" valid:"required"` // Example: "66435"
-	PaymentMethodID string `json:"paymentMethodId,omitempty" jsonapi:"attr,paymentMethodId,omitempty" valid:"required"` // Example: "f106ac99-213c-4cf7-8c1b-1e841516026b"
-	Vin             string `json:"vin,omitempty" jsonapi:"attr,vin,omitempty" valid:"required"`                         // Example: "1B3EL46R36N102271"
-}
-
-// TransactionWithPriceCheckRequest ...
-type TransactionWithPriceCheckRequest json.RawMessage
 
 // Currency ...
 type Currency string
@@ -183,51 +174,6 @@ func GetPumpHandler(service Service) http.Handler {
 		err := service.GetPump(r.Context(), &writer, &request)
 		if err != nil {
 			runtime.WriteError(w, http.StatusInternalServerError, err)
-		}
-	})
-}
-
-/*
-ProcessPaymentHandler handles request/response marshaling and validation for
- Post /beta/gas-station/{fuelingAppId}/pumps/{pumpId}/pay
-*/
-func ProcessPaymentHandler(service Service) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		defer func() {
-			if rp := recover(); rp != nil {
-				log.Ctx(r.Context()).Error().Str("handler", "ProcessPaymentHandler").Msgf("Panic: %v", rp)
-				log.Stack(r.Context())
-				runtime.WriteError(w, http.StatusInternalServerError, errors.New("Error"))
-			}
-		}()
-		writer := processPaymentResponseWriter{
-			ResponseWriter: jsonapimetrics.NewMetric("fueling", "/beta/gas-station/{fuelingAppId}/pumps/{pumpId}/pay", w, r),
-		}
-		request := ProcessPaymentRequest{
-			Request: r,
-		}
-		vars := mux.Vars(r)
-		if !runtime.ScanParameters(w, r, &runtime.ScanParameter{
-			Data:     &request.ParamFuelingAppID,
-			Location: runtime.ScanInPath,
-			Input:    vars["fuelingAppId"],
-			Name:     "fuelingAppId",
-		}, &runtime.ScanParameter{
-			Data:     &request.ParamPumpID,
-			Location: runtime.ScanInPath,
-			Input:    vars["pumpId"],
-			Name:     "pumpId",
-		}) {
-			return
-		}
-		if !runtime.ValidateParameters(w, r, &request) {
-			return // invalid request stop further processing
-		}
-		if runtime.Unmarshal(w, r, &request.Content) {
-			err := service.ProcessPayment(r.Context(), &writer, &request)
-			if err != nil {
-				runtime.WriteError(w, http.StatusInternalServerError, err)
-			}
 		}
 	})
 }
@@ -361,72 +307,6 @@ type GetPumpRequest struct {
 	ParamPumpID       string        `valid:"required,uuid"`
 }
 
-// ProcessPaymentCreated ...
-type ProcessPaymentCreated struct {
-	ID                string                    `jsonapi:"primary,transaction,omitempty" valid:"uuid,optional"` // Transaction ID
-	VAT               *ProcessPaymentCreatedVAT `json:"VAT,omitempty" jsonapi:"attr,VAT,omitempty" valid:"optional"`
-	Currency          *Currency                 `json:"currency,omitempty" jsonapi:"attr,currency,omitempty" valid:"optional"`
-	FuelingAppID      string                    `json:"fuelingAppId,omitempty" jsonapi:"attr,fuelingAppId,omitempty" valid:"optional"`           // Example: "c30bce97-b732-4390-af38-1ac6b017aa4c"
-	MileageInMeters   int64                     `json:"mileageInMeters,omitempty" jsonapi:"attr,mileageInMeters,omitempty" valid:"optional"`     // Example: "66435"
-	PaymentMethodID   string                    `json:"paymentMethodId,omitempty" jsonapi:"attr,paymentMethodId,omitempty" valid:"optional"`     // Example: "f106ac99-213c-4cf7-8c1b-1e841516026b"
-	PriceIncludingVAT float32                   `json:"priceIncludingVAT,omitempty" jsonapi:"attr,priceIncludingVAT,omitempty" valid:"optional"` // Example: "69.34"
-	PriceWithoutVAT   float32                   `json:"priceWithoutVAT,omitempty" jsonapi:"attr,priceWithoutVAT,omitempty" valid:"optional"`     // Example: "58.27"
-	PumpID            string                    `json:"pumpId,omitempty" jsonapi:"attr,pumpId,omitempty" valid:"optional"`                       // Example: "460ffaad-a3c1-4199-b69e-63949ccda82f"
-	Vin               string                    `json:"vin,omitempty" jsonapi:"attr,vin,omitempty" valid:"optional"`                             // Example: "1B3EL46R36N102271"
-}
-
-// ProcessPaymentCreatedVAT ...
-type ProcessPaymentCreatedVAT struct {
-	Amount float32 `json:"amount,omitempty" jsonapi:"amount,omitempty" valid:"optional"` // Example: "11.07"
-	Rate   float32 `json:"rate,omitempty" jsonapi:"rate,omitempty" valid:"optional"`     // Example: "0.19"
-}
-
-/*
-ProcessPaymentResponseWriter is a standard http.ResponseWriter extended with methods
-to generate the respective responses easily
-*/
-type ProcessPaymentResponseWriter interface {
-	http.ResponseWriter
-	Created(*ProcessPaymentCreated)
-	BadRequest(error)
-	NotFound(error)
-	Conflict(error)
-}
-type processPaymentResponseWriter struct {
-	http.ResponseWriter
-}
-
-// Conflict responds with jsonapi error (HTTP code 409)
-func (w *processPaymentResponseWriter) Conflict(err error) {
-	runtime.WriteError(w, 409, err)
-}
-
-// NotFound responds with jsonapi error (HTTP code 404)
-func (w *processPaymentResponseWriter) NotFound(err error) {
-	runtime.WriteError(w, 404, err)
-}
-
-// BadRequest responds with jsonapi error (HTTP code 400)
-func (w *processPaymentResponseWriter) BadRequest(err error) {
-	runtime.WriteError(w, 400, err)
-}
-
-// Created responds with jsonapi marshaled data (HTTP code 201)
-func (w *processPaymentResponseWriter) Created(data *ProcessPaymentCreated) {
-	runtime.Marshal(w, data, 201)
-}
-
-// ProcessPaymentContent ...
-type ProcessPaymentContent json.RawMessage
-
-// ProcessPaymentRequest ...
-type ProcessPaymentRequest struct {
-	Request           *http.Request          `valid:"-"`
-	Content           *ProcessPaymentContent `valid:"-"`
-	ParamFuelingAppID string                 `valid:"required,uuid"`
-	ParamPumpID       string                 `valid:"required,uuid"`
-}
-
 // WaitOnPumpStatusChangeOK ...
 type WaitOnPumpStatusChangeOK json.RawMessage
 
@@ -495,12 +375,6 @@ type Service interface {
 	*/
 	GetPump(context.Context, GetPumpResponseWriter, *GetPumpRequest) error
 	/*
-	   ProcessPayment Process payment
-
-	   Process payment and notify user if transaction is finished successfully. You can optionally provide `priceIncludingVAT`and `currency` in the request body to check if the price the user has seen is still correct.
-	*/
-	ProcessPayment(context.Context, ProcessPaymentResponseWriter, *ProcessPaymentRequest) error
-	/*
 	   WaitOnPumpStatusChange Wait for a status change on a given pump
 
 	   Uses **long polling** to wait for a status change on a given pump. Returns as soon as the status has changed or after the number of seconds provided by the optional `timeout` query parameter (default timeout is 30 seconds). In case of timeout (408 status code) you're safe to start the request again. Instantaneously returns if `lastStatus` was given and already changed between request. If successful, it returns the same structure as the normal status call
@@ -517,7 +391,6 @@ func Router(service Service) *mux.Router {
 	router := mux.NewRouter()
 	// Subrouter s1 - https://api.pace.cloud/fueling
 	s1 := router.PathPrefix("/fueling").Subrouter()
-	s1.Methods("POST").Path("/beta/gas-station/{fuelingAppId}/pumps/{pumpId}/pay").Handler(ProcessPaymentHandler(service)).Name("ProcessPayment")
 	s1.Methods("GET").Path("/beta/gas-station/{fuelingAppId}/pumps/{pumpId}/wait-for-status-change").Handler(WaitOnPumpStatusChangeHandler(service)).Name("WaitOnPumpStatusChange")
 	s1.Methods("GET").Path("/beta/gas-station/{fuelingAppId}/pumps/{pumpId}").Handler(GetPumpHandler(service)).Name("GetPump")
 	s1.Methods("GET").Path("/beta/gas-station/{fuelingAppId}/approaching").Handler(ApproachingAtTheForecourtHandler(service)).Name("ApproachingAtTheForecourt")
