@@ -13,7 +13,7 @@ func dummyHandler(w http.ResponseWriter, r *http.Request) {}
 func TestMiddleware(t *testing.T) {
 	// TODO
 	// Run against cp-1-dev or cp-1-prod?
-	middleware := oauth2.Middleware{
+	var middleware = oauth2.Middleware{
 		URL:          "http://localhost:3000",
 		ClientID:     "13972c02189a6e938a4730bc81c2a20cc4e03ef5406d20d2150110584d6b3e6c",
 		ClientSecret: "7d26f8918a83bd155a936bbe780f32503a88cb8bd3e8acf25248357dff31668e",
@@ -52,7 +52,7 @@ func TestMiddleware(t *testing.T) {
 
 		// Check if we have the token.
 		receivedToken := oauth2.BearerToken(r.Context())
-		expectedToken := "a19fb24b914bdd93b1acc3f796dc52bd0ca1e642fa74f2f4657486e24109cb39"
+		expectedToken := "c58b66b2a1b9b79376b587d68e1090e0d976d2013786ec2f1f49116eab4d62a7"
 
 		if receivedToken != expectedToken {
 			t.Fatalf("Expected %s, got: %s", expectedToken, receivedToken)
@@ -70,13 +70,21 @@ func TestMiddleware(t *testing.T) {
 		clientID := oauth2.ClientID(r.Context())
 
 		if clientID != expectedClientID {
-			t.Fatalf("Expected ClientID 6, got: %s", clientID)
+			t.Fatalf("Expected ClientID %s, got: %s", expectedClientID, clientID)
 		}
 	}
 
 	rw = httptest.NewRecorder()
 	req, _ = http.NewRequest("GET", "/working", nil)
-	req.Header.Set("Authorization", "Bearer a19fb24b914bdd93b1acc3f796dc52bd0ca1e642fa74f2f4657486e24109cb39")
+	req.Header.Set("Authorization", "Bearer c58b66b2a1b9b79376b587d68e1090e0d976d2013786ec2f1f49116eab4d62a7")
 	router.HandleFunc("/working", testMiddlewareHandler)
 	router.ServeHTTP(rw, req)
+
+	// This is a last check to make sure everything is good. We must do this check,
+	// because it indirectly ensures that the testMiddlewareHandler did actually
+	// run. We do not have other options because our /introspect endpoint does not
+	// differentiate between bad and old tokens.
+	if rw.Result().StatusCode != 200 || rw.Body.String() == "Unauthorized\n" {
+		t.Fatalf("Unexpected results using token: %s, perhaps it expired?", "token")
+	}
 }

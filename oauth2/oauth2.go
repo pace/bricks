@@ -47,7 +47,6 @@ func (m *Middleware) Handler(next http.Handler) http.Handler {
 		token := items[1]
 
 		resp, err := m.introspect(token)
-		defer resp.Body.Close()
 
 		if err != nil {
 			// Possible upstream error, log and fail. Use log instead of fmt?
@@ -55,6 +54,8 @@ func (m *Middleware) Handler(next http.Handler) http.Handler {
 			http.Error(w, "InternalServerError", http.StatusInternalServerError)
 			return
 		}
+
+		defer resp.Body.Close()
 
 		// If Response is not 200, it means there are problems with setup, such
 		// as wrong client ID or secret.
