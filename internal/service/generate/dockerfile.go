@@ -32,14 +32,20 @@ func Dockerfile(path string, options DockerfileOptions) {
 
 var dockerTemplate = template.Must(template.New("Dockerfile").Parse(
 	`FROM golang:1.11 as builder
-RUN go get gopkg.in/alecthomas/gometalinter.v2
-RUN gometalinter.v2 --install
+RUN go get github.com/alecthomas/gometalinter
+RUN gometalinter --install
 WORKDIR /tmp/service
 ADD . .
-RUN gometalinter.v2 $(go list ./...)
-RUN go test -v -race -cover ./...
-RUN go install ./cmd/{{ .Commands.DaemonName }}
-RUN go install ./cmd/{{ .Commands.ControlName }}
+
+# Lin, vet & test
+# (many linters from gometalinter don't support go mod and therefore need to be disabled)
+RUN gometalinter --disable-all --vendor -E gocyclo -E goconst -E golint -E ineffassign -E gotypex -E deadcode ./... && \
+	go vet -mod vendor ./... && \
+	go test -mod vendor -v -race -cover ./...
+
+# Build go files completely statically
+RUN CGO_ENABLED=0 go build -mod vendor  -a -ldflags '-extldflags "-static"' -o $GOPATH/bin/{{ .Commands.DaemonName }} ./cmd/{{ .Commands.DaemonName }} && \
+	CGO_ENABLED=0 go build -mod vendor  -a -ldflags '-extldflags "-static"' -o $GOPATH/bin/{{ .Commands.ControlName }} ./cmd/{{ .Commands.ControlName }}
 
 FROM alpine
 RUN apk update && apk add ca-certificates && apk add tzdata && rm -rf /var/cache/apk/*
@@ -48,6 +54,5 @@ COPY --from=builder /go/bin/{{ .Commands.ControlName }} /usr/local/bin/
 
 EXPOSE 3000
 ENV PORT 3000
-ENV JAEGER_SERVICE_NAME {{ .Name }}
-ENTRYPOINT ["/usr/local/bin/{{ .Commands.DaemonName }}"]
+CMD /usr/local/bin/{{ .Commands.DaemonName }}
 `))

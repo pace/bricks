@@ -52,6 +52,10 @@ func (s *testService) GetPaymentMethodsIncludingPaymentToken(context.Context, Ge
 	return nil
 }
 
+func (s *testService) ProcessPayment(context.Context, ProcessPaymentResponseWriter, *ProcessPaymentRequest) error {
+	return nil
+}
+
 func TestHandler(t *testing.T) {
 	r := Router(&testService{t})
 	rec := httptest.NewRecorder()

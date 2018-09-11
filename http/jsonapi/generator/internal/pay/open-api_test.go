@@ -44,13 +44,39 @@ type PaymentMethodSEPA struct {
 
 // PaymentMethodsWithPaymentTokensItem ...
 type PaymentMethodsWithPaymentTokensItem struct {
-	ID                   string `jsonapi:"primary,paymentMethod,omitempty" valid:"uuid,optional"`                                      // Payment method ID
-	IdentificationString string `json:"identificationString,omitempty" jsonapi:"attr,identificationString,omitempty" valid:"optional"` // Example: "DE89 **** 3000"
-	Kind                 string `json:"kind,omitempty" jsonapi:"attr,kind,omitempty" valid:"optional"`                                 // Example: "sepa"
+	ID                   string          `jsonapi:"primary,paymentMethod,omitempty" valid:"uuid,optional"`                                      // Payment method ID
+	IdentificationString string          `json:"identificationString,omitempty" jsonapi:"attr,identificationString,omitempty" valid:"optional"` // Example: "DE89 **** 3000"
+	Kind                 string          `json:"kind,omitempty" jsonapi:"attr,kind,omitempty" valid:"optional"`                                 // Example: "sepa"
+	PaymentTokens        []*PaymentToken `json:"paymentTokens,omitempty" jsonapi:"attr,paymentTokens,omitempty" valid:"optional"`
 }
 
 // PaymentMethodsWithPaymentTokens ...
 type PaymentMethodsWithPaymentTokens []*PaymentMethodsWithPaymentTokensItem
+
+// PaymentToken ...
+type PaymentToken struct {
+	ID string `jsonapi:"primary,paymentToken,omitempty" valid:"optional"` // Payment Token ID (externally provided - by payment provider)
+}
+
+// TransactionRequestFueling ...
+type TransactionRequestFueling struct {
+	AppID   string `json:"appId,omitempty" jsonapi:"appId,omitempty" valid:"required"`     // Location-based App ID
+	Mileage int64  `json:"mileage,omitempty" jsonapi:"mileage,omitempty" valid:"required"` // Current mileage in meters
+	PumpID  string `json:"pumpId,omitempty" jsonapi:"pumpId,omitempty" valid:"required"`   // Pump ID
+	Vin     string `json:"vin,omitempty" jsonapi:"vin,omitempty" valid:"required"`         // Example: "1B3EL46R36N102271"
+}
+
+// TransactionRequest ...
+type TransactionRequest struct {
+	ID                string                     `jsonapi:"primary,transaction,omitempty" valid:"uuid,optional"` // Transaction ID
+	Currency          *Currency                  `json:"currency,omitempty" jsonapi:"attr,currency,omitempty" valid:"optional"`
+	Fueling           *TransactionRequestFueling `json:"fueling,omitempty" jsonapi:"attr,fueling,omitempty" valid:"optional"`
+	PaymentToken      string                     `json:"paymentToken,omitempty" jsonapi:"attr,paymentToken,omitempty" valid:"required"`           // Example: "f106ac99-213c-4cf7-8c1b-1e841516026b"
+	PriceIncludingVAT float32                    `json:"priceIncludingVAT,omitempty" jsonapi:"attr,priceIncludingVAT,omitempty" valid:"optional"` // Example: "69.34"
+}
+
+// Currency ...
+type Currency string
 
 /*
 GetPaymentMethodsHandler handles request/response marshaling and validation for
@@ -435,6 +461,37 @@ func GetPaymentMethodsIncludingPaymentTokenHandler(service Service) http.Handler
 }
 
 /*
+ProcessPaymentHandler handles request/response marshaling and validation for
+ Post /beta/transaction
+*/
+func ProcessPaymentHandler(service Service) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		defer func() {
+			if rp := recover(); rp != nil {
+				log.Ctx(r.Context()).Error().Str("handler", "ProcessPaymentHandler").Msgf("Panic: %v", rp)
+				log.Stack(r.Context())
+				runtime.WriteError(w, http.StatusInternalServerError, errors.New("Error"))
+			}
+		}()
+		writer := processPaymentResponseWriter{
+			ResponseWriter: jsonapimetrics.NewMetric("pay", "/beta/transaction", w, r),
+		}
+		request := ProcessPaymentRequest{
+			Request: r,
+		}
+		if !runtime.ValidateParameters(w, r, &request) {
+			return // invalid request stop further processing
+		}
+		if runtime.Unmarshal(w, r, &request.Content) {
+			err := service.ProcessPayment(r.Context(), &writer, &request)
+			if err != nil {
+				runtime.WriteError(w, http.StatusInternalServerError, err)
+			}
+		}
+	})
+}
+
+/*
 GetPaymentMethodsResponseWriter is a standard http.ResponseWriter extended with methods
 to generate the respective responses easily
 */
@@ -668,6 +725,72 @@ type GetPaymentMethodsIncludingPaymentTokenRequest struct {
 	Request      *http.Request `valid:"-"`
 	ParamInclude string        `valid:"required,in(paymentToken)"`
 }
+
+// ProcessPaymentCreated ...
+type ProcessPaymentCreated struct {
+	ID                string                        `jsonapi:"primary,transaction,omitempty" valid:"uuid,optional"` // Transaction ID
+	VAT               *ProcessPaymentCreatedVAT     `json:"VAT,omitempty" jsonapi:"attr,VAT,omitempty" valid:"optional"`
+	Currency          *Currency                     `json:"currency,omitempty" jsonapi:"attr,currency,omitempty" valid:"optional"`
+	Fueling           *ProcessPaymentCreatedFueling `json:"fueling,omitempty" jsonapi:"attr,fueling,omitempty" valid:"optional"`
+	PaymentToken      string                        `json:"paymentToken,omitempty" jsonapi:"attr,paymentToken,omitempty" valid:"optional"`           // Example: "f106ac99-213c-4cf7-8c1b-1e841516026b"
+	PriceIncludingVAT float32                       `json:"priceIncludingVAT,omitempty" jsonapi:"attr,priceIncludingVAT,omitempty" valid:"optional"` // Example: "69.34"
+	PriceWithoutVAT   float32                       `json:"priceWithoutVAT,omitempty" jsonapi:"attr,priceWithoutVAT,omitempty" valid:"optional"`     // Example: "58.27"
+}
+
+// ProcessPaymentCreatedVAT ...
+type ProcessPaymentCreatedVAT struct {
+	Amount float32 `json:"amount,omitempty" jsonapi:"amount,omitempty" valid:"optional"` // Example: "11.07"
+	Rate   float32 `json:"rate,omitempty" jsonapi:"rate,omitempty" valid:"optional"`     // Example: "0.19"
+}
+
+// ProcessPaymentCreatedFueling ...
+type ProcessPaymentCreatedFueling struct {
+	AppID   string `json:"appId,omitempty" jsonapi:"appId,omitempty" valid:"required"`     // Example: "c30bce97-b732-4390-af38-1ac6b017aa4c"
+	Mileage int64  `json:"mileage,omitempty" jsonapi:"mileage,omitempty" valid:"required"` // Example: "66435"
+	PumpID  string `json:"pumpId,omitempty" jsonapi:"pumpId,omitempty" valid:"required"`   // Example: "460ffaad-a3c1-4199-b69e-63949ccda82f"
+	Vin     string `json:"vin,omitempty" jsonapi:"vin,omitempty" valid:"required"`         // Example: "1B3EL46R36N102271"
+}
+
+/*
+ProcessPaymentResponseWriter is a standard http.ResponseWriter extended with methods
+to generate the respective responses easily
+*/
+type ProcessPaymentResponseWriter interface {
+	http.ResponseWriter
+	Created(*ProcessPaymentCreated)
+	BadRequest(error)
+	NotFound(error)
+	Conflict(error)
+}
+type processPaymentResponseWriter struct {
+	http.ResponseWriter
+}
+
+// Conflict responds with jsonapi error (HTTP code 409)
+func (w *processPaymentResponseWriter) Conflict(err error) {
+	runtime.WriteError(w, 409, err)
+}
+
+// NotFound responds with jsonapi error (HTTP code 404)
+func (w *processPaymentResponseWriter) NotFound(err error) {
+	runtime.WriteError(w, 404, err)
+}
+
+// BadRequest responds with jsonapi error (HTTP code 400)
+func (w *processPaymentResponseWriter) BadRequest(err error) {
+	runtime.WriteError(w, 400, err)
+}
+
+// Created responds with jsonapi marshaled data (HTTP code 201)
+func (w *processPaymentResponseWriter) Created(data *ProcessPaymentCreated) {
+	runtime.Marshal(w, data, 201)
+}
+
+// ProcessPaymentRequest ...
+type ProcessPaymentRequest struct {
+	Request *http.Request      `valid:"-"`
+	Content TransactionRequest `valid:"-"`
+}
 type Service interface {
 	// GetPaymentMethods Get all payment methods for user
 	GetPaymentMethods(context.Context, GetPaymentMethodsResponseWriter, *GetPaymentMethodsRequest) error
@@ -705,6 +828,12 @@ type Service interface {
 	   Empty list if there are no pre-authorized amounts.
 	*/
 	GetPaymentMethodsIncludingPaymentToken(context.Context, GetPaymentMethodsIncludingPaymentTokenResponseWriter, *GetPaymentMethodsIncludingPaymentTokenRequest) error
+	/*
+	   ProcessPayment Process payment
+
+	   Process payment and notify user if transaction is finished successfully. You can optionally provide `priceIncludingVAT`and `currency` in the request body to check if the price the user has seen is still correct.
+	*/
+	ProcessPayment(context.Context, ProcessPaymentResponseWriter, *ProcessPaymentRequest) error
 }
 
 /*
@@ -724,5 +853,6 @@ func Router(service Service) *mux.Router {
 	s1.Methods("GET").Path("/beta/payment-methods").Handler(GetPaymentMethodsIncludingPaymentTokenHandler(service)).Queries("include", "paymentTokens").Name("GetPaymentMethodsIncludingPaymentToken")
 	s1.Methods("GET").Path("/beta/payment-methods").Handler(GetPaymentMethodsIncludingCreditCheckHandler(service)).Queries("include", "creditCheck").Name("GetPaymentMethodsIncludingCreditCheck")
 	s1.Methods("GET").Path("/beta/payment-methods").Handler(GetPaymentMethodsHandler(service)).Name("GetPaymentMethods")
+	s1.Methods("POST").Path("/beta/transaction").Handler(ProcessPaymentHandler(service)).Name("ProcessPayment")
 	return router
 }
