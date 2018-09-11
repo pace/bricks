@@ -42,9 +42,9 @@ RUN gometalinter --disable-all --vendor -E gocyclo -E goconst -E golint -E ineff
 	go vet -mod vendor ./... && \
 	go test -mod vendor -v -race -cover ./...
 
-# Build
-RUN go install -mod vendor ./cmd/{{ .Commands.DaemonName }} && \
-	go install -mod vendor ./cmd/{{ .Commands.ControlName }}
+# Build go files completely statically
+RUN CGO_ENABLED=0 go build -mod vendor  -a -ldflags '-extldflags "-static"' -o $GOPATH/bin/{{ .Commands.DaemonName }} ./cmd/{{ .Commands.DaemonName }} && \
+	CGO_ENABLED=0 go build -mod vendor  -a -ldflags '-extldflags "-static"' -o $GOPATH/bin/{{ .Commands.ControlName }} ./cmd/{{ .Commands.ControlName }}
 
 FROM alpine
 RUN apk update && apk add ca-certificates && apk add tzdata && rm -rf /var/cache/apk/*
@@ -53,5 +53,5 @@ COPY --from=builder /go/bin/{{ .Commands.ControlName }} /usr/local/bin/
 
 EXPOSE 3000
 ENV PORT 3000
-ENTRYPOINT ["/usr/local/bin/{{ .Commands.DaemonName }}"]
+CMD /usr/local/bin/{{ .Commands.DaemonName }}
 `))
