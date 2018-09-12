@@ -1,0 +1,25 @@
+image: golang:1.11
+
+variables:
+  GO_PROJECT_DIR: /go/src/lab.jamit.de/pace/go-microservice
+
+before_script:
+  - mkdir -p $GO_PROJECT_DIR
+  - cp -r $CI_PROJECT_DIR/* $GO_PROJECT_DIR
+  - export LOG_FORMAT=console
+
+stages:
+  - test
+
+lint:
+  stage: test
+  script:
+    - go get -u github.com/alecthomas/gometalinter && gometalinter --install
+    - cd $GO_PROJECT_DIR && gometalinter `go list ./...`
+
+test:
+  stage: test
+  script:
+    - curl https://raw.githubusercontent.com/golang/dep/master/install.sh | sh
+    - cd $GO_PROJECT_DIR && dep ensure && go test -v -cover -race ./...
+
