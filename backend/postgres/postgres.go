@@ -1,6 +1,7 @@
 // Copyright © 2018 by PACE Telematics GmbH. All rights reserved.
 // Created at 2018/09/12 by Vincent Landgraf
 
+// Package postgres helps creating PostgreSQL connection pools
 package postgres
 
 import (
@@ -54,7 +55,7 @@ func ConnectionPool() *pg.DB {
 
 func queryLogger(event *pg.QueryProcessedEvent) {
 	ctx := event.DB.Context()
-	dur := float64(time.Now().Sub(event.StartTime)) / float64(time.Millisecond)
+	dur := float64(time.Since(event.StartTime)) / float64(time.Millisecond)
 
 	// check if log context is given
 	var logger *zerolog.Logger
