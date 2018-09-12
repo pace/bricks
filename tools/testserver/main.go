@@ -12,6 +12,7 @@ import (
 
 	opentracing "github.com/opentracing/opentracing-go"
 	olog "github.com/opentracing/opentracing-go/log"
+	"lab.jamit.de/pace/go-microservice/backend/postgres"
 	pacehttp "lab.jamit.de/pace/go-microservice/http"
 	"lab.jamit.de/pace/go-microservice/maintenance/log"
 	_ "lab.jamit.de/pace/go-microservice/maintenance/tracing"
@@ -24,10 +25,12 @@ var (
 )
 
 func main() {
+	db := postgres.ConnectionPool()
 	h := pacehttp.Router()
 	h.HandleFunc("/test", func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
 
+		// add opentracing span + context
 		var handlerSpan opentracing.Span
 		wireContext, err := opentracing.GlobalTracer().Extract(opentracing.HTTPHeaders, opentracing.HTTPHeadersCarrier(r.Header))
 		if err != nil {
@@ -35,9 +38,22 @@ func main() {
 		}
 		handlerSpan = opentracing.StartSpan("TestHandler", opentracing.ChildOf(wireContext))
 		handlerSpan.LogFields(olog.String("req_id", log.RequestID(r)))
-		defer handlerSpan.Finish()
 		ctx = opentracing.ContextWithSpan(r.Context(), handlerSpan)
+		defer handlerSpan.Finish()
 
+		// do dummy database query
+		db := db.WithContext(ctx)
+		var result struct {
+			Calc int
+		}
+		res, err := db.QueryOne(&result, `SELECT ? + ? AS Calc`, 10, 10)
+		if err != nil {
+			log.Ctx(ctx).Debug().Err(err).Msg("Calc failed")
+			return
+		}
+		log.Ctx(ctx).Debug().Int("rows_affected", res.RowsAffected()).Msg("Calc done")
+
+		// do dummy call to external service
 		log.Ctx(ctx).Debug().Msg("Test before JSON")
 		w.Header().Set("Content-Type", "application/json")
 		fmt.Fprintf(w, `{"street":"Haid-und-Neu-Straße 18, 76131 Karlsruhe", "sunset": "%s"}`, fetchSunsetandSunrise(ctx))

@@ -18,3 +18,11 @@ jsonapi:
 	go run $(JSONAPIGEN) -pkg pay \
 		-path $(JSONAPITEST)/pay/open-api_test.go \
 		-source $(JSONAPITEST)/pay/open-api.json
+
+testserver:
+	JAEGER_ENDPOINT=http://localhost:14268/api/traces \
+	JAEGER_SERVICE_NAME=testserver \
+	POSTGRES_USER=testserveruser \
+	POSTGRES_DB=testserver \
+	POSTGRES_PASSWORD=pace1234! \
+	go run ./tools/testserver/main.go

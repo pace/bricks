@@ -9,7 +9,6 @@ import (
 	runtime "lab.jamit.de/pace/go-microservice/http/jsonapi/runtime"
 	log "lab.jamit.de/pace/go-microservice/maintenance/log"
 	jsonapimetrics "lab.jamit.de/pace/go-microservice/maintenance/metrics/jsonapi"
-	_ "lab.jamit.de/pace/go-microservice/maintenance/tracing"
 	"net/http"
 )
 

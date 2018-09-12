@@ -9,7 +9,6 @@ import (
 	runtime "lab.jamit.de/pace/go-microservice/http/jsonapi/runtime"
 	log "lab.jamit.de/pace/go-microservice/maintenance/log"
 	jsonapimetrics "lab.jamit.de/pace/go-microservice/maintenance/metrics/jsonapi"
-	_ "lab.jamit.de/pace/go-microservice/maintenance/tracing"
 	"net/http"
 )
 
@@ -466,24 +465,43 @@ ProcessPaymentHandler handles request/response marshaling and validation for
 */
 func ProcessPaymentHandler(service Service) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		ctx := r.Context()
 		defer func() {
 			if rp := recover(); rp != nil {
-				log.Ctx(r.Context()).Error().Str("handler", "ProcessPaymentHandler").Msgf("Panic: %v", rp)
-				log.Stack(r.Context())
+				log.Ctx(ctx).Error().Str("handler", "ProcessPaymentHandler").Msgf("Panic: %v", rp)
+				log.Stack(ctx)
 				runtime.WriteError(w, http.StatusInternalServerError, errors.New("Error"))
 			}
 		}()
+
+		// Trace the service function handler execution
+		var handlerSpan opentracing.Span
+		wireContext, err := opentracing.GlobalTracer().Extract(opentracing.HTTPHeaders, opentracing.HTTPHeadersCarrier(r.Header))
+		if err != nil {
+			log.Ctx(ctx).Debug().Err(err).Msg("Couldn't get span from request header")
+		}
+		handlerSpan = opentracing.StartSpan("ProcessPaymentHandler", opentracing.ChildOf(wireContext))
+		handlerSpan.LogFields(olog.String("req_id", log.RequestID(r)))
+		defer handlerSpan.Finish()
+
+		// Setup context, response writer and request type
+		ctx = opentracing.ContextWithSpan(r.Context(), handlerSpan)
 		writer := processPaymentResponseWriter{
 			ResponseWriter: jsonapimetrics.NewMetric("pay", "/beta/transaction", w, r),
 		}
 		request := ProcessPaymentRequest{
-			Request: r,
+			Request: r.WithContext(ctx),
 		}
+
+		// Scan and validate incoming request parameters
 		if !runtime.ValidateParameters(w, r, &request) {
 			return // invalid request stop further processing
 		}
+
+		// Unmarshal the service request body
 		if runtime.Unmarshal(w, r, &request.Content) {
-			err := service.ProcessPayment(r.Context(), &writer, &request)
+			// Invoke service that implements the business logic
+			err = service.ProcessPayment(ctx, &writer, &request)
 			if err != nil {
 				runtime.WriteError(w, http.StatusInternalServerError, err)
 			}
