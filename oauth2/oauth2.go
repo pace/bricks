@@ -37,10 +37,10 @@ type Middleware struct {
 }
 
 type introspectResponse struct {
-	Status   bool    `json:"active"`
-	Scope    *string `json:"scope"` // Could be string or nil, hence the pointer.
-	ClientID string  `json:"client_id"`
-	UserID   string  `json:"user_id"`
+	Status   bool   `json:"active"`
+	Scope    string `json:"scope"`
+	ClientID string `json:"client_id"`
+	UserID   string `json:"user_id"`
 }
 
 type token struct {
@@ -65,9 +65,9 @@ func (m *Middleware) Handler(next http.Handler) http.Handler {
 		receivedToken := items[1]
 		var s introspectResponse
 		err := introspect(*m, receivedToken, &s)
-		log.Println(err)
 
 		if err != nil {
+			log.Println(err)
 			http.Error(w, err.Error(), http.StatusUnauthorized)
 			return
 		}
@@ -78,8 +78,8 @@ func (m *Middleware) Handler(next http.Handler) http.Handler {
 			clientID: s.ClientID,
 		}
 
-		if *s.Scope != "null" {
-			scopes := strings.Split(*s.Scope, " ")
+		if s.Scope != "" {
+			scopes := strings.Split(s.Scope, " ")
 			token.scopes = scopes
 		}
 

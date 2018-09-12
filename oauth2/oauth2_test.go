@@ -70,6 +70,11 @@ func TestMiddleware(t *testing.T) {
 
 		// Check if we have the scopes.
 		scopes := oauth2.Scopes(r.Context())
+
+		if len(scopes) < 2 {
+			t.Fatal("Expected scopes: dtc:codes:read and dtc:codes:write, got nothing.")
+		}
+
 		if scopes[0] != "dtc:codes:read" || scopes[1] != "dtc:codes:write" {
 			t.Fatalf("Expected scopes: dtc:codes:read and dtc:codes:write, got: %s", scopes)
 		}
