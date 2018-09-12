@@ -13,6 +13,7 @@ import (
 	opentracing "github.com/opentracing/opentracing-go"
 	olog "github.com/opentracing/opentracing-go/log"
 	"lab.jamit.de/pace/go-microservice/backend/postgres"
+	"lab.jamit.de/pace/go-microservice/backend/redis"
 	pacehttp "lab.jamit.de/pace/go-microservice/http"
 	"lab.jamit.de/pace/go-microservice/maintenance/log"
 	_ "lab.jamit.de/pace/go-microservice/maintenance/tracing"
@@ -26,6 +27,7 @@ var (
 
 func main() {
 	db := postgres.ConnectionPool()
+	rdb := redis.Client()
 	h := pacehttp.Router()
 	h.HandleFunc("/test", func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
@@ -42,16 +44,23 @@ func main() {
 		defer handlerSpan.Finish()
 
 		// do dummy database query
-		db := db.WithContext(ctx)
+		cdb := db.WithContext(ctx)
 		var result struct {
 			Calc int
 		}
-		res, err := db.QueryOne(&result, `SELECT ? + ? AS Calc`, 10, 10)
+		res, err := cdb.QueryOne(&result, `SELECT ? + ? AS Calc`, 10, 10)
 		if err != nil {
 			log.Ctx(ctx).Debug().Err(err).Msg("Calc failed")
 			return
 		}
 		log.Ctx(ctx).Debug().Int("rows_affected", res.RowsAffected()).Msg("Calc done")
+
+		// do dummy redis query
+		crdb := redis.WithContext(ctx, rdb)
+		if err := crdb.Ping().Err(); err != nil {
+			log.Ctx(ctx).Debug().Err(err).Msg("Ping failed")
+			return
+		}
 
 		// do dummy call to external service
 		log.Ctx(ctx).Debug().Msg("Test before JSON")

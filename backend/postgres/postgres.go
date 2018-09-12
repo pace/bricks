@@ -91,8 +91,8 @@ func queryLogger(event *pg.QueryProcessedEvent) {
 }
 
 func openTracingAdapter(event *pg.QueryProcessedEvent) {
-	q := fmt.Sprintf("%v", event.Query)
-	span, _ := opentracing.StartSpanFromContext(event.DB.Context(), q,
+	name := fmt.Sprintf("PostgreSQL: %v", event.Query)
+	span, _ := opentracing.StartSpanFromContext(event.DB.Context(), name,
 		opentracing.StartTime(event.StartTime))
 
 	// start span with genral info
@@ -101,7 +101,7 @@ func openTracingAdapter(event *pg.QueryProcessedEvent) {
 		olog.Int("line", event.Line),
 		olog.String("func", event.Func),
 		olog.Int("attempt", event.Attempt),
-		olog.String("query", q),
+		olog.String("query", fmt.Sprintf("%v", event.Query)),
 	}
 
 	// add error or result set info
