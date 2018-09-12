@@ -68,7 +68,7 @@ func Client() *redis.Client {
 
 // CustomClient with passed configuration
 func CustomClient(opts *redis.Options) *redis.Client {
-	log.Logger().Info().Str("addr", cfg.Addrs[0]).
+	log.Logger().Info().Str("addr", opts.Addr).
 		Msg("Redis connection pool created")
 	return redis.NewClient(opts)
 }
@@ -95,7 +95,7 @@ func ClusterClient() *redis.ClusterClient {
 
 // CustomClusterClient with passed configuration
 func CustomClusterClient(opts *redis.ClusterOptions) *redis.ClusterClient {
-	log.Logger().Info().Strs("addrs", cfg.Addrs).
+	log.Logger().Info().Strs("addrs", opts.Addrs).
 		Msg("Redis cluster connection pool created")
 	return redis.NewClusterClient(opts)
 }
