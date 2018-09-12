@@ -3,8 +3,7 @@
 // when the token is valid, otherwise aborts the request.
 
 // TODO
-// i would return 502 in case the upstream is not working
-// introspec in new file
+// introspect in new file
 // table tests.
 package oauth2
 
@@ -27,7 +26,8 @@ const headerPrefix = "Bearer "
 type introspecter func(mdw *Middleware, token string, resp *introspectResponse) error
 
 var errInvalidToken = errors.New("User token is invalid")
-var errConnection = errors.New("problem connecting to the introspection endpoint")
+var errUpstreamConnection = errors.New("problem connecting to the introspection endpoint")
+var errBadUpstreamResponse = errors.New("Bad upstream response when introspecting token")
 
 // Oauth2 Middleware.
 type Middleware struct {
@@ -66,10 +66,13 @@ func (m *Middleware) Handler(next http.Handler) http.Handler {
 		var s introspectResponse
 		err := introspect(*m, receivedToken, &s)
 
-		if err != nil {
-			log.Println(err)
+		switch err {
+		case errBadUpstreamResponse:
+			http.Error(w, err.Error(), http.StatusBadGateway)
+		case errUpstreamConnection:
 			http.Error(w, err.Error(), http.StatusUnauthorized)
-			return
+		case errInvalidToken:
+			http.Error(w, err.Error(), http.StatusUnauthorized)
 		}
 
 		token := token{
@@ -95,7 +98,7 @@ func introspect(m Middleware, token string, s *introspectResponse) error {
 
 	if err != nil {
 		log.Printf("%v\n", err)
-		return errConnection
+		return errUpstreamConnection
 	}
 
 	defer resp.Body.Close()
@@ -104,14 +107,14 @@ func introspect(m Middleware, token string, s *introspectResponse) error {
 	// as wrong client ID or secret.
 	if resp.StatusCode != 200 {
 		log.Printf("Received %s from server, most likely bad oauth config.\n", resp.StatusCode)
-		return errConnection
+		return errBadUpstreamResponse
 	}
 
 	decoder := json.NewDecoder(resp.Body)
 	err = decoder.Decode(s)
 	if err != nil {
 		log.Printf("%v", err)
-		return errConnection
+		return errBadUpstreamResponse
 	}
 
 	if s.Status == false {
