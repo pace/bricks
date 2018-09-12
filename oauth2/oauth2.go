@@ -62,9 +62,9 @@ func (m *Middleware) Handler(next http.Handler) http.Handler {
 			return
 		}
 
-		receivedToken := items[1]
+		tokenValue := items[1]
 		var s introspectResponse
-		err := introspect(*m, receivedToken, &s)
+		err := introspect(*m, tokenValue, &s)
 
 		switch err {
 		case errBadUpstreamResponse:
@@ -75,21 +75,27 @@ func (m *Middleware) Handler(next http.Handler) http.Handler {
 			http.Error(w, err.Error(), http.StatusUnauthorized)
 		}
 
-		token := token{
-			userID:   s.UserID,
-			value:    receivedToken,
-			clientID: s.ClientID,
-		}
-
-		if s.Scope != "" {
-			scopes := strings.Split(s.Scope, " ")
-			token.scopes = scopes
-		}
+		token := fromIntrospectResponse(s, tokenValue)
 
 		ctx := context.WithValue(r.Context(), tokenKey, &token)
 		next.ServeHTTP(w, r.WithContext(ctx))
 		return
 	})
+}
+
+func fromIntrospectResponse(s introspectResponse, tokenValue string) token {
+	token := token{
+		userID:   s.UserID,
+		value:    tokenValue,
+		clientID: s.ClientID,
+	}
+
+	if s.Scope != "" {
+		scopes := strings.Split(s.Scope, " ")
+		token.scopes = scopes
+	}
+
+	return token
 }
 
 func introspect(m Middleware, token string, s *introspectResponse) error {
