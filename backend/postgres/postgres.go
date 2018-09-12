@@ -38,16 +38,22 @@ func init() {
 // that is already configured with the correct credentials and
 // instrumented with tracing and logging
 func ConnectionPool() *pg.DB {
-	addr := fmt.Sprintf("%s:%d", cfg.Host, cfg.Port)
-	log.Logger().Info().Str("addr", addr).
-		Str("user", cfg.User).Str("database", cfg.Database).
-		Msg("PostgreSQL connection pool created")
-	db := pg.Connect(&pg.Options{
-		Addr:     addr,
+	return CustomConnectionPool(&pg.Options{
+		Addr:     fmt.Sprintf("%s:%d", cfg.Host, cfg.Port),
 		User:     cfg.User,
 		Password: cfg.Password,
 		Database: cfg.Database,
 	})
+}
+
+// CustomConnectionPool returns a new database connection pool
+// that is already configured with the correct credentials and
+// instrumented with tracing and logging using the passed options
+func CustomConnectionPool(opts *pg.Options) *pg.DB {
+	log.Logger().Info().Str("addr", opts.Addr).
+		Str("user", cfg.User).Str("database", cfg.Database).
+		Msg("PostgreSQL connection pool created")
+	db := pg.Connect(opts)
 	db.OnQueryProcessed(queryLogger)
 	db.OnQueryProcessed(openTracingAdapter)
 	return db
