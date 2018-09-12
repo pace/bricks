@@ -51,7 +51,7 @@ func ConnectionPool() *pg.DB {
 // instrumented with tracing and logging using the passed options
 func CustomConnectionPool(opts *pg.Options) *pg.DB {
 	log.Logger().Info().Str("addr", opts.Addr).
-		Str("user", cfg.User).Str("database", cfg.Database).
+		Str("user", opts.User).Str("database", opts.Database).
 		Msg("PostgreSQL connection pool created")
 	db := pg.Connect(opts)
 	db.OnQueryProcessed(queryLogger)
