@@ -1,10 +1,9 @@
-package main
+package oauth2
 
 import (
 	"github.com/gorilla/mux"
 	"net/http"
 	"net/http/httptest"
-	"oauth2"
 	"testing"
 )
 
@@ -24,7 +23,7 @@ const (
 func dummyHandler(w http.ResponseWriter, r *http.Request) {}
 
 func TestMiddleware(t *testing.T) {
-	var middleware = oauth2.Middleware{
+	var middleware = Middleware{
 		URL:          oauthURL,
 		ClientID:     oauthClient,
 		ClientSecret: oauthSecret,
@@ -57,19 +56,19 @@ func TestMiddleware(t *testing.T) {
 	// Check for data we are interested in inside the context.
 	testMiddlewareHandler := func(w http.ResponseWriter, r *http.Request) {
 		// Check if we have the X-UID.
-		if rw.Result().StatusCode != 200 || oauth2.UserID(r.Context()) != userID {
+		if rw.Result().StatusCode != 200 || UserID(r.Context()) != userID {
 			t.Fatal("Expected successful request and X-UID stored in request context.")
 		}
 
 		// Check if we have the token.
-		receivedToken := oauth2.BearerToken(r.Context())
+		receivedToken := BearerToken(r.Context())
 
 		if receivedToken != activeToken {
 			t.Fatalf("Expected %s, got: %s", activeToken, receivedToken)
 		}
 
 		// Check if we have the scopes.
-		scopes := oauth2.Scopes(r.Context())
+		scopes := Scopes(r.Context())
 
 		if len(scopes) < 2 {
 			t.Fatal("Expected scopes: dtc:codes:read and dtc:codes:write, got nothing.")
@@ -80,7 +79,7 @@ func TestMiddleware(t *testing.T) {
 		}
 
 		// Check if we have the client ID.
-		clientID := oauth2.ClientID(r.Context())
+		clientID := ClientID(r.Context())
 
 		if clientID != oauthClient {
 			t.Fatalf("Expected ClientID %s, got: %s", oauthClient, clientID)
