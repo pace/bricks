@@ -65,7 +65,7 @@ func GoServicePackagePath(name string) string {
 // AutoInstall cmdName if not installed already using go get -u goGetPath
 func AutoInstall(cmdName, goGetPath string) {
 	if _, err := os.Stat(GoBinCommand(cmdName)); os.IsNotExist(err) {
-		fmt.Fprintf(os.Stderr, "Installing %s using: go get -u %s\n", cmdName, goGetPath)
+		fmt.Fprintf(os.Stderr, "Installing %s using: go get -u %s\n", cmdName, goGetPath) // nolint: errcheck
 		// assume error means no file
 		SimpleExec("go", "get", "-u", goGetPath)
 	} else if err != nil {

@@ -29,7 +29,7 @@ func Rest(options RestOptions) {
 	if err != nil {
 		log.Fatal(err)
 	}
-	defer file.Close()
+	defer file.Close() // nolint: errcheck
 
 	// write file
 	_, err = file.WriteString(result)

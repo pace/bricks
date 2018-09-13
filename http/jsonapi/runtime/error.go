@@ -15,10 +15,6 @@ import (
 // Note: we don't use the jsonapi.ErrorObject because it doesn't implement the
 // error interface
 
-type httpStatusSetter interface {
-	setHTTPStatus(code int)
-}
-
 // Error objects provide additional information about problems
 // encountered while performing an operation.
 type Error struct {

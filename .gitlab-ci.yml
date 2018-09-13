@@ -15,7 +15,7 @@ lint:
   stage: test
   script:
     - go get -u github.com/alecthomas/gometalinter && gometalinter --install
-    - cd $GO_PROJECT_DIR && gometalinter `go list ./...`
+    - cd $GO_PROJECT_DIR && gometalinter --deadline 90s --vendor ./...
 
 test:
   stage: test
