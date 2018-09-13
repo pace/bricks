@@ -1,3 +1,6 @@
+// Copyright © 2018 by PACE Telematics GmbH. All rights reserved.
+// Created at 2018/09/03 by Mohamed Wael Khobalatte
+
 // Package oauth2 provides a middelware that introspects the auth token on
 // behalf of PACE services and populate the request context with useful information
 // when the token is valid, otherwise aborts the request.
