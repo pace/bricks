@@ -22,7 +22,6 @@ const (
 	httpJsonapi    = "lab.jamit.de/pace/go-microservice/http/jsonapi/runtime"
 	jsonAPIMetrics = "lab.jamit.de/pace/go-microservice/maintenance/metrics/jsonapi"
 	logPkg         = "lab.jamit.de/pace/go-microservice/maintenance/log"
-	govalidator    = "github.com/asaskevich/govalidator"
 	opentracing    = "github.com/opentracing/opentracing-go"
 	opentracingLog = opentracing + "/log"
 )

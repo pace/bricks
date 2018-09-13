@@ -34,7 +34,7 @@ func loadSwaggerFromURI(loader *openapi3.SwaggerLoader, url *url.URL) (*openapi3
 	if err != nil {
 		return nil, err
 	}
-	defer resp.Body.Close()
+	defer resp.Body.Close() // nolint: errcheck
 
 	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {

@@ -15,7 +15,8 @@ import (
 // specified go-validator struct tags.
 // In case of an error, an jsonapi error message will be directly send to the client
 func Unmarshal(w http.ResponseWriter, r *http.Request, data interface{}) bool {
-	defer r.Body.Close() // don't leak
+	// don't leak , but error can't be handled
+	defer r.Body.Close() // nolint: errcheck
 
 	// verify that the client accepts our response
 	// Note: logically this would be done before marshalling,
