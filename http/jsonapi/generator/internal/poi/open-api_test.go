@@ -306,7 +306,7 @@ func (w *checkForPaceAppResponseWriter) OK(data LocationBasedAppsResponse) {
 }
 
 /*
-CheckForPaceAppResponseWriter is a standard http.Request extended with the
+CheckForPaceAppRequest is a standard http.Request extended with the
 un-marshaled content object
 */
 type CheckForPaceAppRequest struct {
@@ -343,7 +343,7 @@ func (w *searchResponseWriter) OK(data GasStationResponse) {
 }
 
 /*
-SearchResponseWriter is a standard http.Request extended with the
+SearchRequest is a standard http.Request extended with the
 un-marshaled content object
 */
 type SearchRequest struct {
@@ -360,6 +360,8 @@ type SearchRequest struct {
 	ParamBoundingBox []float32     `valid:"optional"`
 	ParamPath        [][]float32   `valid:"optional"`
 }
+
+// Service interface for all handlers
 type Service interface {
 	/*
 	   CheckForPaceApp Get location-based apps

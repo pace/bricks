@@ -285,7 +285,7 @@ func (g *Generator) generateRequestStruct(route *route, schema *openapi3.Swagger
 	if body != nil {
 		g.addGoDoc(route.requestType, body.Value.Description)
 	} else {
-		g.addGoDoc(route.responseType, "is a standard http.Request extended with the\n"+
+		g.addGoDoc(route.requestType, "is a standard http.Request extended with the\n"+
 			"un-marshaled content object")
 	}
 	g.goSource.Type().Id(route.requestType).Struct(fields...)
@@ -309,6 +309,7 @@ func (g *Generator) buildServiceInterface(routes []*route, schema *openapi3.Swag
 		).Id("error"))
 	}
 
+	g.goSource.Line().Commentf("%s interface for all handlers", serviceInterface)
 	g.goSource.Type().Id(serviceInterface).Interface(methods...)
 
 	return nil
@@ -413,7 +414,7 @@ func (g *Generator) buildHandler(method string, op *openapi3.Operation, pattern 
 	g.addGoDoc(handler, fmt.Sprintf("handles request/response marshaling and validation for \n %s %s",
 		method, pattern))
 	g.goSource.Func().Id(handler).Params(
-		jen.Id("service").Id("Service"),
+		jen.Id("service").Id(serviceInterface),
 	).Qual("net/http", "Handler").Block(
 		jen.Return().Qual("net/http", "HandlerFunc").Call(
 			jen.Func().Params(

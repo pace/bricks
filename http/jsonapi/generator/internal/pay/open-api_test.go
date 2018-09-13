@@ -527,7 +527,7 @@ func (w *getPaymentMethodsResponseWriter) AllThePaymentMethodsForUser(data AllPa
 }
 
 /*
-GetPaymentMethodsResponseWriter is a standard http.Request extended with the
+GetPaymentMethodsRequest is a standard http.Request extended with the
 un-marshaled content object
 */
 type GetPaymentMethodsRequest struct {
@@ -594,7 +594,7 @@ func (w *deletePaymentMethodResponseWriter) ThePaymentMethodWasDeletedSuccessful
 }
 
 /*
-DeletePaymentMethodResponseWriter is a standard http.Request extended with the
+DeletePaymentMethodRequest is a standard http.Request extended with the
 un-marshaled content object
 */
 type DeletePaymentMethodRequest struct {
@@ -683,7 +683,7 @@ func (w *deletePaymentTokenResponseWriter) ThePaymentTokenWasRemovedSuccessfully
 }
 
 /*
-DeletePaymentTokenResponseWriter is a standard http.Request extended with the
+DeletePaymentTokenRequest is a standard http.Request extended with the
 un-marshaled content object
 */
 type DeletePaymentTokenRequest struct {
@@ -710,7 +710,7 @@ func (w *getPaymentMethodsIncludingCreditCheckResponseWriter) AllThePaymentMetho
 }
 
 /*
-GetPaymentMethodsIncludingCreditCheckResponseWriter is a standard http.Request extended with the
+GetPaymentMethodsIncludingCreditCheckRequest is a standard http.Request extended with the
 un-marshaled content object
 */
 type GetPaymentMethodsIncludingCreditCheckRequest struct {
@@ -736,7 +736,7 @@ func (w *getPaymentMethodsIncludingPaymentTokenResponseWriter) AllThePaymentMeth
 }
 
 /*
-GetPaymentMethodsIncludingPaymentTokenResponseWriter is a standard http.Request extended with the
+GetPaymentMethodsIncludingPaymentTokenRequest is a standard http.Request extended with the
 un-marshaled content object
 */
 type GetPaymentMethodsIncludingPaymentTokenRequest struct {
@@ -809,6 +809,8 @@ type ProcessPaymentRequest struct {
 	Request *http.Request      `valid:"-"`
 	Content TransactionRequest `valid:"-"`
 }
+
+// Service interface for all handlers
 type Service interface {
 	// GetPaymentMethods Get all payment methods for user
 	GetPaymentMethods(context.Context, GetPaymentMethodsResponseWriter, *GetPaymentMethodsRequest) error

@@ -317,7 +317,7 @@ func (w *approachingAtTheForecourtResponseWriter) OK(data GasStationResponse) {
 }
 
 /*
-ApproachingAtTheForecourtResponseWriter is a standard http.Request extended with the
+ApproachingAtTheForecourtRequest is a standard http.Request extended with the
 un-marshaled content object
 */
 type ApproachingAtTheForecourtRequest struct {
@@ -354,7 +354,7 @@ func (w *getPumpResponseWriter) OK(data *GetPumpOK) {
 }
 
 /*
-GetPumpResponseWriter is a standard http.Request extended with the
+GetPumpRequest is a standard http.Request extended with the
 un-marshaled content object
 */
 type GetPumpRequest struct {
@@ -402,7 +402,7 @@ func (w *waitOnPumpStatusChangeResponseWriter) OK(data *WaitOnPumpStatusChangeOK
 }
 
 /*
-WaitOnPumpStatusChangeResponseWriter is a standard http.Request extended with the
+WaitOnPumpStatusChangeRequest is a standard http.Request extended with the
 un-marshaled content object
 */
 type WaitOnPumpStatusChangeRequest struct {
@@ -412,6 +412,8 @@ type WaitOnPumpStatusChangeRequest struct {
 	ParamLastStatus   PumpStatus    `valid:"optional"`
 	ParamTimeout      int64         `valid:"optional"`
 }
+
+// Service interface for all handlers
 type Service interface {
 	/*
 	   ApproachingAtTheForecourt Gather information when approaching at the forecourt
