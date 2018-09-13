@@ -23,9 +23,10 @@ const headerPrefix = "Bearer "
 
 // Oauth2 Middleware.
 type Middleware struct {
-	URL          string
-	ClientID     string
-	ClientSecret string
+	URL            string
+	ClientID       string
+	ClientSecret   string
+	introspectFunc introspecter
 }
 
 type token struct {
@@ -35,8 +36,8 @@ type token struct {
 	scopes   []string
 }
 
-// Should take token, introspect it, and put the token and other relevant information back
-// in the context.
+// Handler will parse the bearer token, introspect it, and put the token and other
+// relevant information back in the context.
 func (m *Middleware) Handler(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		qualifiedToken := r.Header.Get("Authorization")
@@ -49,15 +50,21 @@ func (m *Middleware) Handler(next http.Handler) http.Handler {
 
 		tokenValue := items[1]
 		var s introspectResponse
-		err := introspect(*m, tokenValue, &s)
+		var introspectErr error
 
-		switch err {
+		if m.introspectFunc != nil {
+			introspectErr = m.introspectFunc(m, tokenValue, &s)
+		} else {
+			introspectErr = introspect(*m, tokenValue, &s)
+		}
+
+		switch introspectErr {
 		case errBadUpstreamResponse:
-			http.Error(w, err.Error(), http.StatusBadGateway)
+			http.Error(w, introspectErr.Error(), http.StatusBadGateway)
 		case errUpstreamConnection:
-			http.Error(w, err.Error(), http.StatusUnauthorized)
+			http.Error(w, introspectErr.Error(), http.StatusUnauthorized)
 		case errInvalidToken:
-			http.Error(w, err.Error(), http.StatusUnauthorized)
+			http.Error(w, introspectErr.Error(), http.StatusUnauthorized)
 		}
 
 		token := fromIntrospectResponse(s, tokenValue)
@@ -66,6 +73,10 @@ func (m *Middleware) Handler(next http.Handler) http.Handler {
 		next.ServeHTTP(w, r.WithContext(ctx))
 		return
 	})
+}
+
+func (m *Middleware) addIntrospectFunc(f introspecter) {
+	m.introspectFunc = f
 }
 
 func fromIntrospectResponse(s introspectResponse, tokenValue string) token {

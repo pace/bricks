@@ -8,19 +8,23 @@ import (
 )
 
 const (
-	oauthURL    = "https://cp-1-dev.pacelink.net"
-	oauthClient = "7d51282118633c3a7412d7456368ddfe172b7987d20b8e3e60ae18e8681fac61"
-	oauthSecret = "141f891391d2b529bbf37b5ae5f57000f8b093956121db51c90fefb83930175c"
-
-	// This token will expire in three years (Sep, 11, 2021) and belongs to the above
-	// application and (wael@pace.car).
-	activeToken = "85b7856f3055411c11b60f582fc091a624db4a38218abac2df9feb66bc6e7eb5"
-
-	// Wael's Cockpit unique identifier.
-	userID = "b773de39-93d8-4aa4-94a3-356900e55956"
+	oauthURL      = "https://cp-1-dev.pacelink.net"
+	oauthClient   = "7d51282118633c3a7412d7456368ddfe172b7987d20b8e3e60ae18e8681fac61"
+	oauthSecret   = "141f891391d2b529bbf37b5ae5f57000f8b093956121db51c90fefb83930175c"
+	activeToken   = "85b7856f3055411c11b60f582fc091a624db4a38218abac2df9feb66bc6e7eb5"
+	userID        = "b773de39-93d8-4aa4-94a3-356900e55956"
+	allowedScopes = "dtc:codes:read dtc:codes:write"
 )
 
 func dummyHandler(w http.ResponseWriter, r *http.Request) {}
+
+func introspectMock(m *Middleware, token string, s *introspectResponse) error {
+	s.UserID = userID
+	s.Scope = allowedScopes
+	s.ClientID = oauthClient
+	s.Active = true
+	return nil
+}
 
 func TestMiddleware(t *testing.T) {
 	var middleware = Middleware{
@@ -28,6 +32,8 @@ func TestMiddleware(t *testing.T) {
 		ClientID:     oauthClient,
 		ClientSecret: oauthSecret,
 	}
+
+	middleware.addIntrospectFunc(introspectMock)
 
 	router := mux.NewRouter()
 	router.Use(middleware.Handler)
@@ -41,16 +47,6 @@ func TestMiddleware(t *testing.T) {
 
 	if rw.Body.String() != "Unauthorized\n" {
 		t.Fatalf("Expected `Unauthorized` as body when *no* token is sent, got %s.", rw.Body)
-	}
-
-	// Test bad token.
-	rw = httptest.NewRecorder()
-	req, _ = http.NewRequest("GET", "/broken", nil)
-	req.Header.Set("Authorization", "Bearer sometoken")
-	router.ServeHTTP(rw, req)
-
-	if rw.Body.String() != "User token is invalid\n" {
-		t.Fatalf("Expected `User token is invalid.` as body when *bad* token is sent, got %s.", rw.Body)
 	}
 
 	// Check for data we are interested in inside the context.

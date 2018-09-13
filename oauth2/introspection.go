@@ -15,7 +15,7 @@ var errUpstreamConnection = errors.New("Problem connecting to the introspection 
 var errBadUpstreamResponse = errors.New("Bad upstream response when introspecting token")
 
 type introspectResponse struct {
-	Status   bool   `json:"active"`
+	Active   bool   `json:"active"`
 	Scope    string `json:"scope"`
 	ClientID string `json:"client_id"`
 	UserID   string `json:"user_id"`
@@ -46,7 +46,7 @@ func introspect(m Middleware, token string, s *introspectResponse) error {
 		return errBadUpstreamResponse
 	}
 
-	if s.Status == false {
+	if s.Active == false {
 		return errInvalidToken
 	}
 
