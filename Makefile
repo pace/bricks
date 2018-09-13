@@ -21,6 +21,8 @@ jsonapi:
 
 testserver:
 	JAEGER_ENDPOINT=http://localhost:14268/api/traces \
+	JAEGER_SAMPLER_TYPE=const \
+	JAEGER_SAMPLER_PARAM=1 \
 	JAEGER_SERVICE_NAME=testserver \
 	POSTGRES_USER=testserveruser \
 	POSTGRES_DB=testserver \
