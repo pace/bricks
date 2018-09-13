@@ -16,6 +16,7 @@ lint:
   script:
     - go get -u github.com/alecthomas/gometalinter && gometalinter --install
     - cd $GO_PROJECT_DIR && gometalinter --deadline 90s --vendor ./...
+  allow_failure: true
 
 test:
   stage: test
