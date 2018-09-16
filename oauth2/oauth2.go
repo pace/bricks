@@ -6,10 +6,6 @@
 // when the token is valid, otherwise aborts the request.
 //
 // See example_usage.go for an example usage (pardon the runny wording).
-
-// TODO
-// table tests.
-// Add copyright notice.
 package oauth2
 
 import (
@@ -45,7 +41,7 @@ func (m *Middleware) Handler(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		qualifiedToken := r.Header.Get("Authorization")
 
-		items := strings.Split(qualifiedToken, "Bearer ")
+		items := strings.Split(qualifiedToken, headerPrefix)
 		if len(items) < 2 {
 			http.Error(w, "Unauthorized", http.StatusUnauthorized)
 			return
@@ -97,7 +93,6 @@ func fromIntrospectResponse(s introspectResponse, tokenValue string) token {
 	return token
 }
 
-// TODO Pseudoish. To test.
 func Request(ctx context.Context, r *http.Request) *http.Request {
 	token := BearerToken(ctx)
 	authHeaderVal := headerPrefix + token
