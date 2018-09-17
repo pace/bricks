@@ -24,7 +24,8 @@ func Example() {
 	r.Use(middleware.Handler)
 
 	r.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		log.Printf("AUDIT: User %s does something", UserID(r.Context()))
+		userid, _ := UserID(r.Context())
+		log.Printf("AUDIT: User %s does something", userid)
 
 		if HasScope(r.Context(), "dtc:codes:write") {
 			fmt.Fprintf(w, "User has scope.")
@@ -55,9 +56,19 @@ func TestRequest(t *testing.T) {
 	r = r.WithContext(ctx)
 
 	r2 := Request(r)
-	header := r2.Header.Get("Authorization: ")
+	header := r2.Header.Get("Authorization")
 
 	if header != "Bearer somevalue" {
 		t.Fatalf("Expected request to have authorization header, got: %v", header)
+	}
+}
+
+func TestRequestWithNoToken(t *testing.T) {
+	r := httptest.NewRequest("GET", "http://example.com", nil)
+	r2 := Request(r)
+	header := r2.Header.Get("Authorization")
+
+	if header != "" {
+		t.Fatalf("Expected request to have no authorization header, got: %v", header)
 	}
 }

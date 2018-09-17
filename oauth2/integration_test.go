@@ -60,12 +60,13 @@ func TestMiddleware(t *testing.T) {
 	// Check for data we are interested in inside the context.
 	testMiddlewareHandler := func(w http.ResponseWriter, r *http.Request) {
 		// Check if we have the X-UID.
-		if rw.Result().StatusCode != 200 || UserID(r.Context()) != userID {
+		uid, _ := UserID(r.Context())
+		if rw.Result().StatusCode != 200 || uid != userID {
 			t.Fatal("Expected successful request and X-UID stored in request context.")
 		}
 
 		// Check if we have the token.
-		receivedToken := BearerToken(r.Context())
+		receivedToken, _ := BearerToken(r.Context())
 
 		if receivedToken != activeToken {
 			t.Fatalf("Expected %s, got: %s", activeToken, receivedToken)
@@ -83,7 +84,7 @@ func TestMiddleware(t *testing.T) {
 		}
 
 		// Check if we have the client ID.
-		clientID := ClientID(r.Context())
+		clientID, _ := ClientID(r.Context())
 
 		if clientID != oauthClient {
 			t.Fatalf("Expected ClientID %s, got: %s", oauthClient, clientID)

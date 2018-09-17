@@ -94,19 +94,33 @@ func fromIntrospectResponse(s introspectResponse, tokenValue string) token {
 }
 
 func Request(r *http.Request) *http.Request {
-	token := BearerToken(r.Context())
-	authHeaderVal := headerPrefix + token
-	r.Header.Set("Authorization: ", authHeaderVal)
+	bt, ok := BearerToken(r.Context())
+
+	if !ok {
+		return r
+	}
+
+	authHeaderVal := headerPrefix + bt
+	r.Header.Set("Authorization", authHeaderVal)
 	return r
 }
 
-func BearerToken(ctx context.Context) string {
+func BearerToken(ctx context.Context) (string, bool) {
 	token := tokenFromContext(ctx)
-	return token.value
+
+	if token != nil {
+		return token.value, true
+	}
+
+	return "", false
 }
 
 func HasScope(ctx context.Context, scope string) bool {
 	token := tokenFromContext(ctx)
+
+	if token == nil {
+		return false
+	}
 
 	for _, v := range token.scopes {
 		if v == scope {
@@ -117,24 +131,42 @@ func HasScope(ctx context.Context, scope string) bool {
 	return false
 }
 
-func UserID(ctx context.Context) string {
+func UserID(ctx context.Context) (string, bool) {
 	token := tokenFromContext(ctx)
 
-	return token.userID
+	if token != nil {
+		return token.userID, true
+	}
+
+	return "", false
 }
 
 func Scopes(ctx context.Context) []string {
 	token := tokenFromContext(ctx)
 
-	return token.scopes
+	if token != nil {
+		return token.scopes
+	}
+
+	return []string{}
 }
 
-func ClientID(ctx context.Context) string {
+func ClientID(ctx context.Context) (string, bool) {
 	token := tokenFromContext(ctx)
 
-	return token.clientID
+	if token != nil {
+		return token.clientID, true
+	}
+
+	return "", false
 }
 
 func tokenFromContext(ctx context.Context) *token {
-	return ctx.Value(tokenKey).(*token)
+	val := ctx.Value(tokenKey)
+
+	if val == nil {
+		return nil
+	}
+
+	return val.(*token)
 }
