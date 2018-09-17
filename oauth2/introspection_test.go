@@ -44,7 +44,7 @@ func TestSuccessfulIntrospection(t *testing.T) {
 		ClientSecret: "oauthSecret",
 	}
 
-	err := introspect(m, "token", &s)
+	err := introspect(&m, "token", &s)
 
 	if err != nil {
 		t.Fatalf("Expected no error, got %v.", err)
@@ -64,7 +64,7 @@ func TestNoConnection(t *testing.T) {
 		ClientSecret: "oauthSecret",
 	}
 
-	err := introspect(m, "token", &s)
+	err := introspect(&m, "token", &s)
 
 	if err != errUpstreamConnection {
 		t.Fatalf("Expected error %v, got %v.", errUpstreamConnection, err)
@@ -85,7 +85,7 @@ func Test400UpstreamResponse(t *testing.T) {
 		ClientSecret: "oauthSecret",
 	}
 
-	err := introspect(m, "token", &s)
+	err := introspect(&m, "token", &s)
 
 	if err != errBadUpstreamResponse {
 		t.Fatalf("Expected error %v, got %v.", errBadUpstreamResponse, err)
@@ -106,7 +106,7 @@ func TestUnparsableUpstreamResponse(t *testing.T) {
 		ClientSecret: "oauthSecret",
 	}
 
-	err := introspect(m, "token", &s)
+	err := introspect(&m, "token", &s)
 
 	if err != errBadUpstreamResponse {
 		t.Fatalf("Expected error %v, got %v.", errBadUpstreamResponse, err)
@@ -132,7 +132,7 @@ func TestBadTokenResponse(t *testing.T) {
 		ClientSecret: "oauthSecret",
 	}
 
-	err := introspect(m, "token", &s)
+	err := introspect(&m, "token", &s)
 
 	if err != errInvalidToken {
 		t.Fatalf("Expected error %v, got %v.", errInvalidToken, err)

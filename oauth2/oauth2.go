@@ -54,7 +54,7 @@ func (m *Middleware) Handler(next http.Handler) http.Handler {
 		if m.introspectFunc != nil {
 			introspectErr = m.introspectFunc(m, tokenValue, &s)
 		} else {
-			introspectErr = introspect(*m, tokenValue, &s)
+			introspectErr = introspect(m, tokenValue, &s)
 		}
 
 		switch introspectErr {

@@ -24,7 +24,7 @@ type introspectResponse struct {
 	UserID   string `json:"user_id"`
 }
 
-func introspect(m Middleware, token string, s *introspectResponse) error {
+func introspect(m *Middleware, token string, s *introspectResponse) error {
 	resp, err := http.PostForm(m.URL+"/oauth2/introspect",
 		url.Values{"client_id": {m.ClientID}, "client_secret": {m.ClientSecret}, "token": {token}})
 
