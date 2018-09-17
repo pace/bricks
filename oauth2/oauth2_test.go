@@ -4,10 +4,13 @@
 package oauth2
 
 import (
+	"context"
 	"fmt"
 	"github.com/gorilla/mux"
 	"log"
 	"net/http"
+	"net/http/httptest"
+	"testing"
 )
 
 func Example() {
@@ -37,4 +40,24 @@ func Example() {
 	}
 
 	log.Fatal(srv.ListenAndServe())
+}
+
+func TestRequest(t *testing.T) {
+	var to = token{
+		value:    "somevalue",
+		userID:   "someuserid",
+		clientID: "someclientid",
+		scopes:   []string{"scope1 scope2"},
+	}
+
+	r := httptest.NewRequest("GET", "http://example.com", nil)
+	ctx := context.WithValue(r.Context(), tokenKey, &to)
+	r = r.WithContext(ctx)
+
+	r2 := Request(r)
+	header := r2.Header.Get("Authorization: ")
+
+	if header != "Bearer somevalue" {
+		t.Fatalf("Expected request to have authorization header, got: %v", header)
+	}
 }

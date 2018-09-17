@@ -93,8 +93,8 @@ func fromIntrospectResponse(s introspectResponse, tokenValue string) token {
 	return token
 }
 
-func Request(ctx context.Context, r *http.Request) *http.Request {
-	token := BearerToken(ctx)
+func Request(r *http.Request) *http.Request {
+	token := BearerToken(r.Context())
 	authHeaderVal := headerPrefix + token
 	r.Header.Set("Authorization: ", authHeaderVal)
 	return r
