@@ -101,12 +101,12 @@ func Request(ctx context.Context, r *http.Request) *http.Request {
 }
 
 func BearerToken(ctx context.Context) string {
-	token := ctx.Value(tokenKey).(*token)
+	token := tokenFromContext(ctx)
 	return token.value
 }
 
 func HasScope(ctx context.Context, scope string) bool {
-	token := ctx.Value(tokenKey).(*token)
+	token := tokenFromContext(ctx)
 
 	for _, v := range token.scopes {
 		if v == scope {
@@ -118,19 +118,23 @@ func HasScope(ctx context.Context, scope string) bool {
 }
 
 func UserID(ctx context.Context) string {
-	token := ctx.Value(tokenKey).(*token)
+	token := tokenFromContext(ctx)
 
 	return token.userID
 }
 
 func Scopes(ctx context.Context) []string {
-	token := ctx.Value(tokenKey).(*token)
+	token := tokenFromContext(ctx)
 
 	return token.scopes
 }
 
 func ClientID(ctx context.Context) string {
-	token := ctx.Value(tokenKey).(*token)
+	token := tokenFromContext(ctx)
 
 	return token.clientID
+}
+
+func tokenFromContext(ctx context.Context) *token {
+	return ctx.Value(tokenKey).(*token)
 }
