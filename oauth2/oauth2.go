@@ -4,12 +4,12 @@
 // Package oauth2 provides a middelware that introspects the auth token on
 // behalf of PACE services and populate the request context with useful information
 // when the token is valid, otherwise aborts the request.
-//
-// See example_usage.go for an example usage (pardon the runny wording).
 package oauth2
 
 import (
 	"context"
+	"github.com/caarlos0/env"
+	"log"
 	"net/http"
 	"strings"
 )
@@ -33,6 +33,25 @@ type token struct {
 	userID   string
 	clientID string
 	scopes   []string
+}
+
+type config struct {
+	URL          string `env:"OAUTH2_URL" envDefault:"https://cp-1-prod.pacelink.net"`
+	ClientID     string `env:"OAUTH2_CLIENT_ID"`
+	ClientSecret string `env:"OAUTH2_CLIENT_SECRET"`
+}
+
+func NewMiddleware() *Middleware {
+	var cfg config
+	err := env.Parse(&cfg)
+	if err != nil {
+		log.Fatalf("Failed to parse oauth2 environment: %v", err)
+	}
+	return &Middleware{
+		URL:          cfg.URL,
+		ClientID:     cfg.ClientID,
+		ClientSecret: cfg.ClientSecret,
+	}
 }
 
 // Handler will parse the bearer token, introspect it, and put the token and other

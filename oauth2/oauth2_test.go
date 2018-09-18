@@ -15,6 +15,15 @@ import (
 
 func Example() {
 	r := mux.NewRouter()
+
+	// Alternatively, you can construct the Middleware using ENV variables and
+	// our custom constructor `NewMiddlware`, example:
+	//
+	// `OAUTH2_URL=XXX OAUTH2_CLIENT_ID=YYY OAUTH2_CLIENT_SECRET=ZZZ bin_to_start_your_service`
+	//
+	// Then, in your code:
+	//
+	// middleware = NewMiddleware()
 	middleware := Middleware{
 		URL:          "http://localhost:3000",
 		ClientID:     "13972c02189a6e938a4730bc81c2a20cc4e03ef5406d20d2150110584d6b3e6c",
