@@ -9,7 +9,7 @@ import (
 	"net/http"
 	"strconv"
 	"time"
-
+	"lab.jamit.de/pace/go-microservice/oauth2"
 	"github.com/prometheus/client_golang/prometheus"
 )
 
@@ -56,8 +56,7 @@ func NewMetric(serviceName, path string, w http.ResponseWriter, r *http.Request)
 // collects the pace_api_http_request_total counter and
 // pace_api_http_request_duration_seconds histogram metric
 func (m *Metric) WriteHeader(statusCode int) {
-	// TODO(vil): when oauth2 package is ready, decode clientID from request
-	clientID := "none"
+	clientID, _ := oauth2.ClientID(m.request.Context())
 	IncPaceAPIHTTPRequestTotal(strconv.Itoa(statusCode), m.request.Method, m.path, m.serviceName, clientID)
 	duration := float64(time.Now().Sub(m.requestStart).Nanoseconds()) / float64(time.Second)
 	AddPaceAPIHTTPRequestDurationSeconds(duration, m.request.Method, m.path, m.serviceName)
