@@ -14,8 +14,8 @@
     }
   ],
   "paths": {
-    "/beta/gas-station/{fuelingAppId}/approaching": {
-      "get": {
+    "/beta/gas-stations/{gasStationId}/approaching": {
+      "post": {
         "tags": [
           "Fueling"
         ],
@@ -25,67 +25,63 @@
         "parameters": [
           {
             "in": "path",
-            "name": "fuelingAppId",
+            "name": "gasStationId",
             "schema": {
               "type": "string",
               "format": "uuid"
             },
             "required": true,
-            "description": "Location-based App ID",
+            "description": "Gas station ID",
             "example": "93db55b6-a9ab-4597-a253-49a1718cea0a"
-          },
-          {
-            "in": "query",
-            "name": "expectedAmountInLiters",
-            "schema": {
-              "type": "number",
-              "format": "float"
-            },
-            "required": true,
-            "description": "Expected amount in liters for refuel",
-            "example": 47.8
-          },
-          {
-            "in": "query",
-            "name": "carFuelType",
-            "schema": {
-              "type": "string",
-              "enum": [
-                "e85",
-                "ron91",
-                "ron95_e5",
-                "ron95_e10",
-                "ron98",
-                "ron98_e5",
-                "ron100",
-                "diesel",
-                "diesel_gtl",
-                "diesel_b7",
-                "lpg",
-                "cng",
-                "h2",
-                "Truck Diesel",
-                "AdBlue"
-              ]
-            },
-            "required": true,
-            "description": "Fuel type of the car",
-            "example": "ron95_e10"
           }
         ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/vnd.api+json": {
+              "schema": {
+                "$ref": "#/components/schemas/ApproachingRequest"
+              }
+            }
+          }
+        },
         "responses": {
-          "200": {
-            "description": "OK",
+          "201": {
+            "description": "Created",
             "content": {
               "application/vnd.api+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/GasStationResponse"
+                  "$ref": "#/components/schemas/ApproachingResponse"
                 },
                 "example": {
-                  "data": [
+                  "data": {
+                    "type": "approaching",
+                    "id": "c3f037ea-492e-4033-9b4b-4efc7beca16c",
+                    "attributes": {
+                      "expectedAmount": 47.8,
+                      "carFuelType": "ron95_e10"
+                    },
+                    "relationships": {
+                      "gasStation": {
+                        "data": {
+                          "type": "gasStation",
+                          "id": "93db55b6-a9ab-4597-a253-49a1718cea0a"
+                        }
+                      },
+                      "paymentMethods": {
+                        "data": [
+                          {
+                            "type": "paymentMethod",
+                            "id": "6e30ccd1-0f76-4208-bd3d-a804f810cba8"
+                          }
+                        ]
+                      }
+                    }
+                  },
+                  "included": [
                     {
                       "type": "gasStation",
-                      "id": "b86b67e9-7fae-4500-8885-45c8032056cc",
+                      "id": "93db55b6-a9ab-4597-a253-49a1718cea0a",
                       "attributes": {
                         "latitude": 49.013,
                         "longitude": 8.425,
@@ -164,26 +160,15 @@
                               "id": "689631b2-cd75-4f01-a36e-72f77cd4f007"
                             }
                           ]
-                        },
-                        "paymentMethods": {
-                          "data": [
-                            {
-                              "type": "paymentMethod",
-                              "id": "6e30ccd1-0f76-4208-bd3d-a804f810cba8"
-                            }
-                          ]
                         }
                       }
-                    }
-                  ],
-                  "included": [
+                    },
                     {
                       "type": "fuelPrice",
                       "id": "6b5bff6f-74e1-40a1-9da0-72305292d939",
                       "attributes": {
                         "fuelType": "ron95_e5",
-                        "fuelAmountUnit": "Ltr",
-                        "pricePerUnit": 1.399,
+                        "price": 1.399,
                         "currency": "EUR",
                         "productName": "Super E5"
                       }
@@ -193,8 +178,7 @@
                       "id": "f563e0ee-ba9a-4869-8fe7-42639fcf375d",
                       "attributes": {
                         "fuelType": "ron95_e10",
-                        "fuelAmountUnit": "Ltr",
-                        "pricePerUnit": 1.379,
+                        "price": 1.379,
                         "currency": "EUR",
                         "productName": "Super E10"
                       }
@@ -204,8 +188,7 @@
                       "id": "cb1afd35-f531-4606-abc8-e1cfbc1f96f5",
                       "attributes": {
                         "fuelType": "diesel",
-                        "fuelAmountUnit": "Ltr",
-                        "pricePerUnit": 1.239,
+                        "price": 1.239,
                         "currency": "EUR",
                         "productName": "Diesel"
                       }
@@ -250,30 +233,33 @@
           "406": {
             "$ref": "#/components/responses/NotAcceptable"
           },
+          "415": {
+            "$ref": "#/components/responses/UnsupportedMediaType"
+          },
           "500": {
             "$ref": "#/components/responses/InternalServerError"
           }
         }
       }
     },
-    "/beta/gas-station/{fuelingAppId}/pumps/{pumpId}": {
+    "/beta/gas-stations/{gasStationId}/pumps/{pumpId}": {
       "get": {
         "tags": [
           "Fueling"
         ],
         "operationId": "GetPump",
         "summary": "Return current pump information",
-        "description": "Returns the current pump status (free, inUse, readyToPay, outOfOrder) and identifier. If the status is readyToPay, the result also contains fuelType, productName, fuelAmount, fuelAmountUnit, VAT (amount & rate), priceWithoutVAT, priceIncludingVAT, currency.\n",
+        "description": "Returns the current pump status (free, inUse, readyToPay, outOfOrder) and identifier. If the status is readyToPay, the result also contains fuelType, productName, fuelAmount, VAT (amount & rate), priceWithoutVAT, priceIncludingVAT, currency.\n",
         "parameters": [
           {
             "in": "path",
-            "name": "fuelingAppId",
+            "name": "gasStationId",
             "schema": {
               "type": "string",
               "format": "uuid"
             },
             "required": true,
-            "description": "Location-based App ID",
+            "description": "Gas station ID",
             "example": "583ad807-6a08-4d5a-b3f6-8861b0e355df"
           },
           {
@@ -294,14 +280,7 @@
             "content": {
               "application/vnd.api+json": {
                 "schema": {
-                  "oneOf": [
-                    {
-                      "$ref": "#/components/schemas/PumpResponse"
-                    },
-                    {
-                      "$ref": "#/components/schemas/PumpReadyForPaymentResponse"
-                    }
-                  ]
+                  "$ref": "#/components/schemas/PumpResponse"
                 }
               }
             }
@@ -321,7 +300,7 @@
         }
       }
     },
-    "/beta/gas-station/{fuelingAppId}/pumps/{pumpId}/wait-for-status-change": {
+    "/beta/gas-stations/{gasStationId}/pumps/{pumpId}/wait-for-status-change": {
       "get": {
         "tags": [
           "Fueling"
@@ -332,13 +311,13 @@
         "parameters": [
           {
             "in": "path",
-            "name": "fuelingAppId",
+            "name": "gasStationId",
             "schema": {
               "type": "string",
               "format": "uuid"
             },
             "required": true,
-            "description": "Location-based App ID",
+            "description": "Gas station ID",
             "example": "a6ec9bd7-cf0b-416c-b24f-9ce65ab3dfe1"
           },
           {
@@ -351,6 +330,18 @@
             "required": true,
             "description": "Pump ID",
             "example": "4665fddc-83fe-46bd-85ae-110d71e78357"
+          },
+          {
+            "in": "query",
+            "name": "update",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "longPolling"
+              ]
+            },
+            "required": true,
+            "description": "Use **long polling** for status updates"
           },
           {
             "in": "query",
@@ -379,14 +370,7 @@
             "content": {
               "application/vnd.api+json": {
                 "schema": {
-                  "oneOf": [
-                    {
-                      "$ref": "#/components/schemas/PumpResponse"
-                    },
-                    {
-                      "$ref": "#/components/schemas/PumpReadyForPaymentResponse"
-                    }
-                  ]
+                  "$ref": "#/components/schemas/PumpResponse"
                 }
               }
             }
@@ -411,10 +395,290 @@
           }
         }
       }
+    },
+    "/beta/gas-station/{gasStationId}/payment": {
+      "post": {
+        "tags": [
+          "Fueling"
+        ],
+        "operationId": "ProcessPayment",
+        "summary": "Process payment",
+        "description": "Process payment and notify user if transaction is finished successfully. You can optionally provide `priceIncludingVAT`and `currency` in the request body to check if the price the user has seen is still correct.\n",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "gasStationId",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "required": true,
+            "description": "Gas station ID",
+            "example": "a6ec9bd7-cf0b-416c-b24f-9ce65ab3dfe1"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/vnd.api+json": {
+              "schema": {
+                "$ref": "#/components/schemas/TransactionRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/vnd.api+json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "type": {
+                          "type": "string",
+                          "enum": [
+                            "transaction"
+                          ]
+                        },
+                        "id": {
+                          "type": "string",
+                          "format": "uuid",
+                          "description": "Transaction ID",
+                          "example": "c3f037ea-492e-4033-9b4b-4efc7beca16c"
+                        },
+                        "attributes": {
+                          "type": "object",
+                          "properties": {
+                            "paymentToken": {
+                              "type": "string",
+                              "example": "f106ac99-213c-4cf7-8c1b-1e841516026b"
+                            },
+                            "gasStationId": {
+                              "type": "string",
+                              "format": "uuid",
+                              "example": "a6ec9bd7-cf0b-416c-b24f-9ce65ab3dfe1"
+                            },
+                            "fuelingAppId": {
+                              "type": "string",
+                              "format": "uuid",
+                              "example": "c30bce97-b732-4390-af38-1ac6b017aa4c"
+                            },
+                            "pumpId": {
+                              "type": "string",
+                              "format": "uuid",
+                              "example": "460ffaad-a3c1-4199-b69e-63949ccda82f"
+                            },
+                            "vin": {
+                              "type": "string",
+                              "example": "1B3EL46R36N102271"
+                            },
+                            "mileage": {
+                              "type": "integer",
+                              "example": 66435
+                            },
+                            "VAT": {
+                              "type": "object",
+                              "properties": {
+                                "amount": {
+                                  "type": "number",
+                                  "format": "float",
+                                  "example": 11.07
+                                },
+                                "rate": {
+                                  "type": "number",
+                                  "format": "float",
+                                  "example": 0.19
+                                }
+                              }
+                            },
+                            "priceWithoutVAT": {
+                              "type": "number",
+                              "format": "float",
+                              "example": 58.27
+                            },
+                            "priceIncludingVAT": {
+                              "type": "number",
+                              "format": "float",
+                              "example": 69.34
+                            },
+                            "currency": {
+                              "$ref": "#/components/schemas/currency"
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "406": {
+            "$ref": "#/components/responses/NotAcceptable"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
+          },
+          "415": {
+            "$ref": "#/components/responses/UnsupportedMediaType"
+          },
+          "422": {
+            "$ref": "#/components/responses/UnprocessableEntity"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        }
+      }
     }
   },
   "components": {
     "schemas": {
+      "ApproachingRequest": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "object",
+            "required": [
+              "type",
+              "attributes"
+            ],
+            "properties": {
+              "type": {
+                "type": "string",
+                "enum": [
+                  "approaching"
+                ]
+              },
+              "id": {
+                "type": "string",
+                "format": "uuid",
+                "description": "Approaching ID",
+                "example": "c3f037ea-492e-4033-9b4b-4efc7beca16c"
+              },
+              "attributes": {
+                "type": "object",
+                "required": [
+                  "expectedAmount",
+                  "carFuelType"
+                ],
+                "properties": {
+                  "expectedAmount": {
+                    "type": "number",
+                    "format": "float",
+                    "description": "Expected amount in liters for refuel",
+                    "example": 47.8
+                  },
+                  "carFuelType": {
+                    "type": "string",
+                    "enum": [
+                      "e85",
+                      "ron91",
+                      "ron95_e5",
+                      "ron95_e10",
+                      "ron98",
+                      "ron98_e5",
+                      "ron100",
+                      "diesel",
+                      "diesel_gtl",
+                      "diesel_b7",
+                      "lpg",
+                      "cng",
+                      "h2",
+                      "Truck Diesel",
+                      "AdBlue"
+                    ],
+                    "description": "Fuel type of the car",
+                    "example": "ron95_e10"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "TransactionRequest": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "object",
+            "required": [
+              "type",
+              "attributes"
+            ],
+            "properties": {
+              "type": {
+                "type": "string",
+                "enum": [
+                  "transaction"
+                ]
+              },
+              "id": {
+                "type": "string",
+                "format": "uuid",
+                "description": "Transaction ID",
+                "example": "c3f037ea-492e-4033-9b4b-4efc7beca16c"
+              },
+              "attributes": {
+                "type": "object",
+                "required": [
+                  "paymentToken",
+                  "fuelingAppId",
+                  "pumpId"
+                ],
+                "properties": {
+                  "paymentToken": {
+                    "type": "string",
+                    "example": "f106ac99-213c-4cf7-8c1b-1e841516026b"
+                  },
+                  "fuelingAppId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Location-based App ID",
+                    "example": "c30bce97-b732-4390-af38-1ac6b017aa4c"
+                  },
+                  "pumpId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Pump ID",
+                    "example": "460ffaad-a3c1-4199-b69e-63949ccda82f"
+                  },
+                  "vin": {
+                    "type": "string",
+                    "example": "1B3EL46R36N102271"
+                  },
+                  "mileage": {
+                    "type": "integer",
+                    "description": "Current mileage in meters",
+                    "example": 66435
+                  },
+                  "priceIncludingVAT": {
+                    "type": "number",
+                    "format": "float",
+                    "example": 69.34
+                  },
+                  "currency": {
+                    "$ref": "#/components/schemas/currency"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
       "PumpStatus": {
         "type": "string",
         "description": "Current pump status",
@@ -460,7 +724,77 @@
         "type": "object",
         "properties": {
           "data": {
-            "$ref": "#/components/schemas/Pump"
+            "type": "object",
+            "properties": {
+              "type": {
+                "type": "string",
+                "description": "Type",
+                "enum": [
+                  "pump"
+                ]
+              },
+              "id": {
+                "type": "string",
+                "format": "uuid",
+                "description": "Pump ID",
+                "example": "f106ac99-213c-4cf7-8c1b-1e841516026b"
+              },
+              "attributes": {
+                "type": "object",
+                "properties": {
+                  "status": {
+                    "$ref": "#/components/schemas/PumpStatus"
+                  },
+                  "identifier": {
+                    "type": "string",
+                    "description": "Pump identifier",
+                    "example": "2"
+                  },
+                  "fuelType": {
+                    "type": "string",
+                    "example": "ron95_e10"
+                  },
+                  "productName": {
+                    "type": "string",
+                    "example": "Super E10"
+                  },
+                  "fuelAmount": {
+                    "type": "number",
+                    "format": "float",
+                    "description": "Fuel amount in liters",
+                    "example": 44.3
+                  },
+                  "VAT": {
+                    "type": "object",
+                    "properties": {
+                      "amount": {
+                        "type": "number",
+                        "format": "float",
+                        "example": 9.72
+                      },
+                      "rate": {
+                        "type": "number",
+                        "format": "float",
+                        "example": 0.19
+                      }
+                    }
+                  },
+                  "priceWithoutVAT": {
+                    "type": "number",
+                    "format": "float",
+                    "example": 51.37
+                  },
+                  "priceIncludingVAT": {
+                    "type": "number",
+                    "format": "float",
+                    "example": 61.09
+                  },
+                  "currency": {
+                    "$ref": "#/components/schemas/currency"
+                  }
+                }
+              }
+            }
           }
         },
         "example": {
@@ -469,82 +803,20 @@
             "id": "baca9c76-82bf-44e7-b8b0-8af44fa4998b",
             "attributes": {
               "identifier": "3",
-              "status": "inUse"
+              "status": "readyToPay",
+              "fuelType": "ron95_e10",
+              "productName": "Super E10",
+              "fuelAmount": 44.3,
+              "VAT": {
+                "amount": 9.72,
+                "rate": 0.19
+              },
+              "priceWithoutVAT": 51.37,
+              "priceIncludingVAT": 61.09,
+              "currency": "EUR"
             }
           }
         }
-      },
-      "PumpReadyForPaymentResponse": {
-        "allOf": [
-          {
-            "$ref": "#/components/schemas/PumpResponse"
-          },
-          {
-            "type": "object",
-            "properties": {
-              "data": {
-                "type": "object",
-                "properties": {
-                  "attributes": {
-                    "type": "object",
-                    "properties": {
-                      "status": {
-                        "type": "string",
-                        "enum": [
-                          "readyToPay"
-                        ]
-                      },
-                      "fuelType": {
-                        "type": "string",
-                        "example": "ron95_e10"
-                      },
-                      "productName": {
-                        "type": "string",
-                        "example": "Super E10"
-                      },
-                      "fuelAmount": {
-                        "type": "number",
-                        "format": "float",
-                        "example": 44.3
-                      },
-                      "fuelAmountUnit": {
-                        "$ref": "#/components/schemas/fuelAmountUnit"
-                      },
-                      "VAT": {
-                        "type": "object",
-                        "properties": {
-                          "amount": {
-                            "type": "number",
-                            "format": "float",
-                            "example": 9.72
-                          },
-                          "rate": {
-                            "type": "number",
-                            "format": "float",
-                            "example": 0.19
-                          }
-                        }
-                      },
-                      "priceWithoutVAT": {
-                        "type": "number",
-                        "format": "float",
-                        "example": 51.37
-                      },
-                      "priceIncludingVAT": {
-                        "type": "number",
-                        "format": "float",
-                        "example": 61.09
-                      },
-                      "currency": {
-                        "$ref": "#/components/schemas/currency"
-                      }
-                    }
-                  }
-                }
-              }
-            }
-          }
-        ]
       },
       "FuelPrice": {
         "type": "object",
@@ -585,12 +857,10 @@
                 ],
                 "example": "ron95_e10"
               },
-              "fuelAmountUnit": {
-                "$ref": "#/components/schemas/fuelAmountUnit"
-              },
-              "pricePerUnit": {
+              "price": {
                 "type": "number",
                 "format": "float",
+                "description": "Price in liters",
                 "example": 1.379
               },
               "currency": {
@@ -645,181 +915,101 @@
           }
         }
       },
-      "GasStationResponse": {
+      "ApproachingResponse": {
         "type": "object",
         "properties": {
           "data": {
-            "type": "array",
-            "items": {
-              "type": "object",
-              "properties": {
-                "type": {
-                  "type": "string",
-                  "enum": [
-                    "gasStation"
-                  ]
-                },
-                "id": {
-                  "type": "string",
-                  "format": "uuid",
-                  "description": "Gas Station ID",
-                  "example": "d7101f72-a672-453c-9d36-d5809ef0ded6"
-                },
-                "attributes": {
-                  "type": "object",
-                  "properties": {
-                    "latitude": {
-                      "type": "number",
-                      "format": "float",
-                      "example": 49.013
-                    },
-                    "longitude": {
-                      "type": "number",
-                      "format": "float",
-                      "example": 8.425
-                    },
-                    "stationName": {
-                      "type": "string",
-                      "example": "PACE Station"
-                    },
-                    "address": {
-                      "type": "object",
-                      "properties": {
-                        "street": {
-                          "type": "string",
-                          "example": "Haid-und-Neu-Str."
-                        },
-                        "houseNo": {
-                          "type": "string",
-                          "example": "18"
-                        },
-                        "postalCode": {
-                          "type": "string",
-                          "example": "76131"
-                        },
-                        "city": {
-                          "type": "string",
-                          "example": "Karlsruhe"
-                        },
-                        "countryCode": {
-                          "type": "string",
-                          "example": "DE",
-                          "description": "Country code in as specified in ISO 3166-1."
-                        }
-                      }
-                    },
-                    "openingHours": {
-                      "type": "array",
-                      "items": {
+            "type": "object",
+            "properties": {
+              "type": {
+                "type": "string",
+                "enum": [
+                  "approaching"
+                ]
+              },
+              "id": {
+                "type": "string",
+                "format": "uuid",
+                "description": "Approaching ID",
+                "example": "c3f037ea-492e-4033-9b4b-4efc7beca16c"
+              },
+              "attributes": {
+                "type": "object",
+                "properties": {
+                  "expectedAmount": {
+                    "type": "number",
+                    "format": "float",
+                    "description": "Expected amount in liters for refuel",
+                    "example": 47.8
+                  },
+                  "carFuelType": {
+                    "type": "string",
+                    "enum": [
+                      "e85",
+                      "ron91",
+                      "ron95_e5",
+                      "ron95_e10",
+                      "ron98",
+                      "ron98_e5",
+                      "ron100",
+                      "diesel",
+                      "diesel_gtl",
+                      "diesel_b7",
+                      "lpg",
+                      "cng",
+                      "h2",
+                      "Truck Diesel",
+                      "AdBlue"
+                    ],
+                    "description": "Fuel type of the car",
+                    "example": "ron95_e10"
+                  }
+                }
+              },
+              "relationships": {
+                "type": "object",
+                "properties": {
+                  "gasStation": {
+                    "type": "object",
+                    "properties": {
+                      "data": {
                         "type": "object",
                         "properties": {
-                          "weekdays": {
-                            "type": "array",
-                            "items": {
-                              "type": "string"
-                            },
-                            "example": [
-                              "Montag",
-                              "Dienstag"
+                          "type": {
+                            "type": "string",
+                            "enum": [
+                              "gasStation"
                             ]
                           },
-                          "openFromTo": {
-                            "type": "array",
-                            "items": {
-                              "type": "string"
-                            },
-                            "example": [
-                              "07:30",
-                              "20:30"
-                            ]
+                          "id": {
+                            "type": "string",
+                            "format": "uuid",
+                            "description": "Gas Station ID",
+                            "example": "93db55b6-a9ab-4597-a253-49a1718cea0a"
                           }
                         }
                       }
-                    },
-                    "amenities": {
-                      "type": "array",
-                      "items": {
-                        "type": "string"
-                      },
-                      "example": [
-                        "restaurant"
-                      ]
                     }
-                  }
-                },
-                "relationships": {
-                  "type": "object",
-                  "properties": {
-                    "fuelPrices": {
-                      "type": "object",
-                      "properties": {
-                        "data": {
-                          "type": "array",
-                          "items": {
-                            "type": "object",
-                            "properties": {
-                              "type": {
-                                "type": "string",
-                                "enum": [
-                                  "fuelPrice"
-                                ]
-                              },
-                              "id": {
-                                "type": "string",
-                                "format": "uuid",
-                                "description": "Fuel Price ID",
-                                "example": "486e1b37-10b5-4089-aa21-15dea6f0e01e"
-                              }
-                            }
-                          }
-                        }
-                      }
-                    },
-                    "paymentMethods": {
-                      "type": "object",
-                      "properties": {
-                        "data": {
-                          "type": "array",
-                          "items": {
-                            "type": "object",
-                            "properties": {
-                              "type": {
-                                "type": "string",
-                                "enum": [
-                                  "paymentMethod"
-                                ]
-                              },
-                              "id": {
-                                "type": "string",
-                                "format": "uuid",
-                                "description": "Payment Method ID",
-                                "example": "a166d498-a8d6-49f0-83ef-50a42dcf7748"
-                              }
-                            }
-                          }
-                        }
-                      }
-                    },
-                    "pumps": {
-                      "type": "object",
-                      "properties": {
-                        "data": {
-                          "type": "array",
-                          "items": {
-                            "type": "object",
-                            "properties": {
-                              "type": {
-                                "type": "string",
-                                "enum": [
-                                  "pump"
-                                ]
-                              },
-                              "id": {
-                                "type": "string",
-                                "format": "uuid",
-                                "description": "Pump ID",
-                                "example": "c4bb2c5e-71fd-42ed-a664-471984e28f1f"
-                              }
+                  },
+                  "paymentMethods": {
+                    "type": "object",
+                    "properties": {
+                      "data": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "type": {
+                              "type": "string",
+                              "enum": [
+                                "paymentMethod"
+                              ]
+                            },
+                            "id": {
+                              "type": "string",
+                              "format": "uuid",
+                              "description": "Payment Method ID",
+                              "example": "a166d498-a8d6-49f0-83ef-50a42dcf7748"
                             }
                           }
                         }
@@ -835,15 +1025,172 @@
             "items": {
               "oneOf": [
                 {
+                  "$ref": "#/components/schemas/GasStation"
+                },
+                {
                   "$ref": "#/components/schemas/FuelPrice"
                 },
                 {
-                  "$ref": "#/components/schemas/PaymentMethod"
+                  "$ref": "#/components/schemas/Pump"
                 },
                 {
-                  "$ref": "#/components/schemas/Pump"
+                  "$ref": "#/components/schemas/PaymentMethod"
                 }
               ]
+            }
+          }
+        }
+      },
+      "GasStation": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "enum": [
+              "gasStation"
+            ]
+          },
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Gas Station ID",
+            "example": "d7101f72-a672-453c-9d36-d5809ef0ded6"
+          },
+          "attributes": {
+            "type": "object",
+            "properties": {
+              "latitude": {
+                "type": "number",
+                "format": "float",
+                "example": 49.013
+              },
+              "longitude": {
+                "type": "number",
+                "format": "float",
+                "example": 8.425
+              },
+              "stationName": {
+                "type": "string",
+                "example": "PACE Station"
+              },
+              "address": {
+                "type": "object",
+                "properties": {
+                  "street": {
+                    "type": "string",
+                    "example": "Haid-und-Neu-Str."
+                  },
+                  "houseNo": {
+                    "type": "string",
+                    "example": "18"
+                  },
+                  "postalCode": {
+                    "type": "string",
+                    "example": "76131"
+                  },
+                  "city": {
+                    "type": "string",
+                    "example": "Karlsruhe"
+                  },
+                  "countryCode": {
+                    "type": "string",
+                    "example": "DE",
+                    "description": "Country code in as specified in ISO 3166-1."
+                  }
+                }
+              },
+              "openingHours": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "weekdays": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      },
+                      "example": [
+                        "Montag",
+                        "Dienstag"
+                      ]
+                    },
+                    "openFromTo": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      },
+                      "example": [
+                        "07:30",
+                        "20:30"
+                      ]
+                    }
+                  }
+                }
+              },
+              "amenities": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "example": [
+                  "restaurant"
+                ]
+              }
+            }
+          },
+          "relationships": {
+            "type": "object",
+            "properties": {
+              "fuelPrices": {
+                "type": "object",
+                "properties": {
+                  "data": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "type": {
+                          "type": "string",
+                          "enum": [
+                            "fuelPrice"
+                          ]
+                        },
+                        "id": {
+                          "type": "string",
+                          "format": "uuid",
+                          "description": "Fuel Price ID",
+                          "example": "486e1b37-10b5-4089-aa21-15dea6f0e01e"
+                        }
+                      }
+                    }
+                  }
+                }
+              },
+              "pumps": {
+                "type": "object",
+                "properties": {
+                  "data": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "type": {
+                          "type": "string",
+                          "enum": [
+                            "pump"
+                          ]
+                        },
+                        "id": {
+                          "type": "string",
+                          "format": "uuid",
+                          "description": "Pump ID",
+                          "example": "c4bb2c5e-71fd-42ed-a664-471984e28f1f"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
             }
           }
         }
@@ -854,13 +1201,6 @@
           "EUR"
         ],
         "example": "EUR"
-      },
-      "fuelAmountUnit": {
-        "type": "string",
-        "enum": [
-          "Ltr"
-        ],
-        "example": "Ltr"
       },
       "Errors": {
         "type": "object",
@@ -1003,6 +1343,28 @@
           "application/vnd.api+json": {
             "schema": {
               "$ref": "#/components/schemas/Errors"
+            }
+          }
+        }
+      },
+      "Conflict": {
+        "description": "The provided priceIncludingVAT does not match the actual price",
+        "content": {
+          "application/vnd.api+json": {
+            "schema": {
+              "$ref": "#/components/schemas/Errors"
+            },
+            "example": {
+              "errors": [
+                {
+                  "status": "409",
+                  "code": "priceCheckFailed",
+                  "title": "The provided priceIncludingVAT does not match the actual price",
+                  "source": {
+                    "pointer": "/data/attributes/priceIncludingVAT"
+                  }
+                }
+              ]
             }
           }
         }
