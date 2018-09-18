@@ -108,11 +108,11 @@ func Request(r *http.Request) *http.Request {
 func BearerToken(ctx context.Context) (string, bool) {
 	token := tokenFromContext(ctx)
 
-	if token != nil {
-		return token.value, true
+	if token == nil {
+		return "", false
 	}
 
-	return "", false
+	return token.value, true
 }
 
 func HasScope(ctx context.Context, scope string) bool {
@@ -134,31 +134,32 @@ func HasScope(ctx context.Context, scope string) bool {
 func UserID(ctx context.Context) (string, bool) {
 	token := tokenFromContext(ctx)
 
-	if token != nil {
-		return token.userID, true
+	if token == nil {
+		return "", false
 	}
 
-	return "", false
+	return token.userID, true
 }
 
 func Scopes(ctx context.Context) []string {
 	token := tokenFromContext(ctx)
 
-	if token != nil {
-		return token.scopes
+	if token == nil {
+		return []string{}
 	}
 
-	return []string{}
+	return token.scopes
 }
 
 func ClientID(ctx context.Context) (string, bool) {
 	token := tokenFromContext(ctx)
 
-	if token != nil {
-		return token.clientID, true
+	if token == nil {
+		return "", false
 	}
 
-	return "", false
+	return token.clientID, true
+
 }
 
 func tokenFromContext(ctx context.Context) *token {

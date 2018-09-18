@@ -29,7 +29,7 @@ func introspectMock(m *Middleware, token string, s *introspectResponse) error {
 	return nil
 }
 
-func TestMiddleware(t *testing.T) {
+func TestIntegrationMiddleware(t *testing.T) {
 	if testing.Short() {
 		t.Skip("Skipping integration test due to -short")
 		return
