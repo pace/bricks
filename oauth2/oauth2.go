@@ -9,7 +9,7 @@ package oauth2
 import (
 	"context"
 	"github.com/caarlos0/env"
-	"log"
+	"lab.jamit.de/pace/go-microservice/maintenance/log"
 	"net/http"
 	"strings"
 )

@@ -6,7 +6,7 @@ package oauth2
 import (
 	"encoding/json"
 	"errors"
-	"log"
+	"lab.jamit.de/pace/go-microservice/maintenance/log"
 	"net/http"
 	"net/url"
 )

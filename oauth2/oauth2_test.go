@@ -7,7 +7,7 @@ import (
 	"context"
 	"fmt"
 	"github.com/gorilla/mux"
-	"log"
+	"lab.jamit.de/pace/go-microservice/maintenance/log"
 	"net/http"
 	"net/http/httptest"
 	"testing"
