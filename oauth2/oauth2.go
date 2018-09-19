@@ -88,6 +88,14 @@ func (m *Middleware) Handler(next http.Handler) http.Handler {
 		token := fromIntrospectResponse(s, tokenValue)
 
 		ctx := context.WithValue(r.Context(), tokenKey, &token)
+
+		// Log crucial oauth info.
+		log.Logger().Info().
+			Str("request_id", log.RequestID(r)).
+			Str("client_id", token.clientID).
+			Str("user_id", token.userID).
+			Msg("Oauth2")
+
 		next.ServeHTTP(w, r.WithContext(ctx))
 		return
 	})
