@@ -6,11 +6,11 @@
 package jsonapi
 
 import (
+	"github.com/prometheus/client_golang/prometheus"
+	"lab.jamit.de/pace/go-microservice/oauth2"
 	"net/http"
 	"strconv"
 	"time"
-	"lab.jamit.de/pace/go-microservice/oauth2"
-	"github.com/prometheus/client_golang/prometheus"
 )
 
 var (

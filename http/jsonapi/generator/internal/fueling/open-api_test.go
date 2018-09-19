@@ -9,7 +9,6 @@ import (
 	runtime "lab.jamit.de/pace/go-microservice/http/jsonapi/runtime"
 	log "lab.jamit.de/pace/go-microservice/maintenance/log"
 	jsonapimetrics "lab.jamit.de/pace/go-microservice/maintenance/metrics/jsonapi"
-	oauth2 "lab.jamit.de/pace/go-microservice/oauth2"
 	"net/http"
 )
 
@@ -145,7 +144,7 @@ func ProcessPaymentHandler(service Service) http.Handler {
 			log.Ctx(ctx).Debug().Err(err).Msg("Couldn't get span from request header")
 		}
 		handlerSpan = opentracing.StartSpan("ProcessPaymentHandler", opentracing.ChildOf(wireContext))
-		handlerSpan.LogFields(olog.String("req_id", log.RequestID(r)), olog.String("client_id", oauth2.ClientID(r.Context())), olog.String("user_id", oauth2.UserID(r.Context())))
+		handlerSpan.LogFields(olog.String("req_id", log.RequestID(r)))
 		defer handlerSpan.Finish()
 
 		// Setup context, response writer and request type
@@ -204,7 +203,7 @@ func ApproachingAtTheForecourtHandler(service Service) http.Handler {
 			log.Ctx(ctx).Debug().Err(err).Msg("Couldn't get span from request header")
 		}
 		handlerSpan = opentracing.StartSpan("ApproachingAtTheForecourtHandler", opentracing.ChildOf(wireContext))
-		handlerSpan.LogFields(olog.String("req_id", log.RequestID(r)), olog.String("client_id", oauth2.ClientID(r.Context())), olog.String("user_id", oauth2.UserID(r.Context())))
+		handlerSpan.LogFields(olog.String("req_id", log.RequestID(r)))
 		defer handlerSpan.Finish()
 
 		// Setup context, response writer and request type
@@ -263,7 +262,7 @@ func GetPumpHandler(service Service) http.Handler {
 			log.Ctx(ctx).Debug().Err(err).Msg("Couldn't get span from request header")
 		}
 		handlerSpan = opentracing.StartSpan("GetPumpHandler", opentracing.ChildOf(wireContext))
-		handlerSpan.LogFields(olog.String("req_id", log.RequestID(r)), olog.String("client_id", oauth2.ClientID(r.Context())), olog.String("user_id", oauth2.UserID(r.Context())))
+		handlerSpan.LogFields(olog.String("req_id", log.RequestID(r)))
 		defer handlerSpan.Finish()
 
 		// Setup context, response writer and request type
@@ -324,7 +323,7 @@ func WaitOnPumpStatusChangeHandler(service Service) http.Handler {
 			log.Ctx(ctx).Debug().Err(err).Msg("Couldn't get span from request header")
 		}
 		handlerSpan = opentracing.StartSpan("WaitOnPumpStatusChangeHandler", opentracing.ChildOf(wireContext))
-		handlerSpan.LogFields(olog.String("req_id", log.RequestID(r)), olog.String("client_id", oauth2.ClientID(r.Context())), olog.String("user_id", oauth2.UserID(r.Context())))
+		handlerSpan.LogFields(olog.String("req_id", log.RequestID(r)))
 		defer handlerSpan.Finish()
 
 		// Setup context, response writer and request type

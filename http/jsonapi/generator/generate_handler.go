@@ -22,7 +22,6 @@ const (
 	httpJsonapi    = "lab.jamit.de/pace/go-microservice/http/jsonapi/runtime"
 	jsonAPIMetrics = "lab.jamit.de/pace/go-microservice/maintenance/metrics/jsonapi"
 	logPkg         = "lab.jamit.de/pace/go-microservice/maintenance/log"
-	oauth2Pkg      = "lab.jamit.de/pace/go-microservice/oauth2"
 	opentracing    = "github.com/opentracing/opentracing-go"
 	opentracingLog = opentracing + "/log"
 )
@@ -459,10 +458,7 @@ func (g *Generator) buildHandler(method string, op *openapi3.Operation, pattern 
 					jen.Lit(handler), jen.Qual(opentracing, "ChildOf").Call(jen.Id("wireContext")))
 				g.Id("handlerSpan").Dot("LogFields").Call(
 					jen.Qual(opentracingLog, "String").Call(jen.Lit("req_id"), jen.Qual(logPkg, "RequestID").Call(
-						jen.Id("r"))),
-					jen.Qual(opentracingLog, "String").Call(jen.Lit("client_id"), jen.Qual(oauth2Pkg, "ClientID").Call(jen.Id("r").Dot("Context").Call())),
-
-					jen.Qual(opentracingLog, "String").Call(jen.Lit("user_id"), jen.Qual(oauth2Pkg, "UserID").Call(jen.Id("r").Dot("Context").Call())))
+						jen.Id("r"))))
 				g.Defer().Id("handlerSpan").Dot("Finish").Call()
 
 				g.Line().Comment("Setup context, response writer and request type")
