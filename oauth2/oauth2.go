@@ -61,17 +61,8 @@ func NewMiddleware() *Middleware {
 func (m *Middleware) Handler(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		// Setup tracing
-		var handlerSpan opentracing.Span
-		wireContext, err := opentracing.GlobalTracer().Extract(opentracing.HTTPHeaders, opentracing.HTTPHeadersCarrier(r.Header))
-		if err != nil {
-			log.Ctx(r.Context()).Debug().Err(err).Msg("Couldn't get span from request header")
-		}
-		handlerSpan = opentracing.StartSpan("Oauth2", opentracing.ChildOf(wireContext))
-		handlerSpan.LogFields(olog.String("req_id", log.RequestID(r)))
-		defer handlerSpan.Finish()
-
-		// Setup context
-		ctx := opentracing.ContextWithSpan(r.Context(), handlerSpan)
+		span, ctx := opentracing.StartSpanFromContext(r.Context(), "Oauth2")
+		defer span.Finish()
 
 		qualifiedToken := r.Header.Get("Authorization")
 
@@ -115,7 +106,7 @@ func (m *Middleware) Handler(next http.Handler) http.Handler {
 			Str("user_id", token.userID).
 			Msg("Oauth2")
 
-		handlerSpan.LogFields(olog.String("client_id", token.clientID), olog.String("user_id", token.userID))
+		span.LogFields(olog.String("client_id", token.clientID), olog.String("user_id", token.userID))
 
 		next.ServeHTTP(w, r.WithContext(ctx))
 		return
