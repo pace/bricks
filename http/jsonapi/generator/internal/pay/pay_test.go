@@ -2,6 +2,7 @@ package pay
 
 import (
 	"context"
+	"fmt"
 	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
@@ -49,7 +50,7 @@ func (s *testService) GetPaymentMethodsIncludingCreditCheck(context.Context, Get
 	return nil
 }
 func (s *testService) GetPaymentMethodsIncludingPaymentToken(context.Context, GetPaymentMethodsIncludingPaymentTokenResponseWriter, *GetPaymentMethodsIncludingPaymentTokenRequest) error {
-	return nil
+	return fmt.Errorf("Some other error")
 }
 
 func (s *testService) ProcessPayment(context.Context, ProcessPaymentResponseWriter, *ProcessPaymentRequest) error {
@@ -106,6 +107,28 @@ func TestHandler(t *testing.T) {
 }
 
 func TestHandlerPanic(t *testing.T) {
+	r := Router(&testService{t})
+	rec := httptest.NewRecorder()
+	req := httptest.NewRequest("GET", "/pay/beta/payment-methods?include=paymentToken", nil)
+	req.Header.Set("Accept", runtime.JSONAPIContentType)
+	req.Header.Set("Content-Type", runtime.JSONAPIContentType)
+
+	log.Handler()(r).ServeHTTP(rec, req)
+
+	resp := rec.Result()
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusInternalServerError {
+		t.Errorf("expected 500 got: %d", resp.StatusCode)
+		b, err := ioutil.ReadAll(resp.Body)
+		if err != nil {
+			t.Fatal(err)
+		}
+		t.Error(string(b[:]))
+	}
+}
+
+func TestHandlerError(t *testing.T) {
 	r := Router(&testService{t})
 	rec := httptest.NewRecorder()
 	req := httptest.NewRequest("GET", "/pay/beta/payment-methods", nil)

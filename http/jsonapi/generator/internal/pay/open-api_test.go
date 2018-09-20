@@ -2,11 +2,11 @@ package pay
 
 import (
 	"context"
-	"errors"
 	mux "github.com/gorilla/mux"
 	opentracing "github.com/opentracing/opentracing-go"
 	olog "github.com/opentracing/opentracing-go/log"
 	runtime "lab.jamit.de/pace/go-microservice/http/jsonapi/runtime"
+	errors "lab.jamit.de/pace/go-microservice/maintenance/errors"
 	log "lab.jamit.de/pace/go-microservice/maintenance/log"
 	jsonapimetrics "lab.jamit.de/pace/go-microservice/maintenance/metrics/jsonapi"
 	"net/http"
@@ -84,13 +84,7 @@ GetPaymentMethodsHandler handles request/response marshaling and validation for
 func GetPaymentMethodsHandler(service Service) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
-		defer func() {
-			if rp := recover(); rp != nil {
-				log.Ctx(ctx).Error().Str("handler", "GetPaymentMethodsHandler").Msgf("Panic: %v", rp)
-				log.Stack(ctx)
-				runtime.WriteError(w, http.StatusInternalServerError, errors.New("Error"))
-			}
-		}()
+		defer errors.HandleRequest("GetPaymentMethodsHandler", w, r)
 
 		// Trace the service function handler execution
 		var handlerSpan opentracing.Span
@@ -116,7 +110,7 @@ func GetPaymentMethodsHandler(service Service) http.Handler {
 		// Invoke service that implements the business logic
 		err = service.GetPaymentMethods(ctx, &writer, &request)
 		if err != nil {
-			runtime.WriteError(w, http.StatusInternalServerError, err)
+			errors.HandleError(err, "GetPaymentMethodsHandler", w, r)
 		}
 	})
 }
@@ -128,13 +122,7 @@ CreatePaymentMethodSEPAHandler handles request/response marshaling and validatio
 func CreatePaymentMethodSEPAHandler(service Service) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
-		defer func() {
-			if rp := recover(); rp != nil {
-				log.Ctx(ctx).Error().Str("handler", "CreatePaymentMethodSEPAHandler").Msgf("Panic: %v", rp)
-				log.Stack(ctx)
-				runtime.WriteError(w, http.StatusInternalServerError, errors.New("Error"))
-			}
-		}()
+		defer errors.HandleRequest("CreatePaymentMethodSEPAHandler", w, r)
 
 		// Trace the service function handler execution
 		var handlerSpan opentracing.Span
@@ -165,7 +153,7 @@ func CreatePaymentMethodSEPAHandler(service Service) http.Handler {
 			// Invoke service that implements the business logic
 			err = service.CreatePaymentMethodSEPA(ctx, &writer, &request)
 			if err != nil {
-				runtime.WriteError(w, http.StatusInternalServerError, err)
+				errors.HandleError(err, "CreatePaymentMethodSEPAHandler", w, r)
 			}
 		}
 	})
@@ -178,13 +166,7 @@ DeletePaymentMethodHandler handles request/response marshaling and validation fo
 func DeletePaymentMethodHandler(service Service) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
-		defer func() {
-			if rp := recover(); rp != nil {
-				log.Ctx(ctx).Error().Str("handler", "DeletePaymentMethodHandler").Msgf("Panic: %v", rp)
-				log.Stack(ctx)
-				runtime.WriteError(w, http.StatusInternalServerError, errors.New("Error"))
-			}
-		}()
+		defer errors.HandleRequest("DeletePaymentMethodHandler", w, r)
 
 		// Trace the service function handler execution
 		var handlerSpan opentracing.Span
@@ -222,7 +204,7 @@ func DeletePaymentMethodHandler(service Service) http.Handler {
 		// Invoke service that implements the business logic
 		err = service.DeletePaymentMethod(ctx, &writer, &request)
 		if err != nil {
-			runtime.WriteError(w, http.StatusInternalServerError, err)
+			errors.HandleError(err, "DeletePaymentMethodHandler", w, r)
 		}
 	})
 }
@@ -234,13 +216,7 @@ AuthorizePaymentMethodHandler handles request/response marshaling and validation
 func AuthorizePaymentMethodHandler(service Service) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
-		defer func() {
-			if rp := recover(); rp != nil {
-				log.Ctx(ctx).Error().Str("handler", "AuthorizePaymentMethodHandler").Msgf("Panic: %v", rp)
-				log.Stack(ctx)
-				runtime.WriteError(w, http.StatusInternalServerError, errors.New("Error"))
-			}
-		}()
+		defer errors.HandleRequest("AuthorizePaymentMethodHandler", w, r)
 
 		// Trace the service function handler execution
 		var handlerSpan opentracing.Span
@@ -280,7 +256,7 @@ func AuthorizePaymentMethodHandler(service Service) http.Handler {
 			// Invoke service that implements the business logic
 			err = service.AuthorizePaymentMethod(ctx, &writer, &request)
 			if err != nil {
-				runtime.WriteError(w, http.StatusInternalServerError, err)
+				errors.HandleError(err, "AuthorizePaymentMethodHandler", w, r)
 			}
 		}
 	})
@@ -293,13 +269,7 @@ DeletePaymentTokenHandler handles request/response marshaling and validation for
 func DeletePaymentTokenHandler(service Service) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
-		defer func() {
-			if rp := recover(); rp != nil {
-				log.Ctx(ctx).Error().Str("handler", "DeletePaymentTokenHandler").Msgf("Panic: %v", rp)
-				log.Stack(ctx)
-				runtime.WriteError(w, http.StatusInternalServerError, errors.New("Error"))
-			}
-		}()
+		defer errors.HandleRequest("DeletePaymentTokenHandler", w, r)
 
 		// Trace the service function handler execution
 		var handlerSpan opentracing.Span
@@ -342,7 +312,7 @@ func DeletePaymentTokenHandler(service Service) http.Handler {
 		// Invoke service that implements the business logic
 		err = service.DeletePaymentToken(ctx, &writer, &request)
 		if err != nil {
-			runtime.WriteError(w, http.StatusInternalServerError, err)
+			errors.HandleError(err, "DeletePaymentTokenHandler", w, r)
 		}
 	})
 }
@@ -354,13 +324,7 @@ GetPaymentMethodsIncludingCreditCheckHandler handles request/response marshaling
 func GetPaymentMethodsIncludingCreditCheckHandler(service Service) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
-		defer func() {
-			if rp := recover(); rp != nil {
-				log.Ctx(ctx).Error().Str("handler", "GetPaymentMethodsIncludingCreditCheckHandler").Msgf("Panic: %v", rp)
-				log.Stack(ctx)
-				runtime.WriteError(w, http.StatusInternalServerError, errors.New("Error"))
-			}
-		}()
+		defer errors.HandleRequest("GetPaymentMethodsIncludingCreditCheckHandler", w, r)
 
 		// Trace the service function handler execution
 		var handlerSpan opentracing.Span
@@ -398,25 +362,19 @@ func GetPaymentMethodsIncludingCreditCheckHandler(service Service) http.Handler 
 		// Invoke service that implements the business logic
 		err = service.GetPaymentMethodsIncludingCreditCheck(ctx, &writer, &request)
 		if err != nil {
-			runtime.WriteError(w, http.StatusInternalServerError, err)
+			errors.HandleError(err, "GetPaymentMethodsIncludingCreditCheckHandler", w, r)
 		}
 	})
 }
 
 /*
 GetPaymentMethodsIncludingPaymentTokenHandler handles request/response marshaling and validation for
- Get /beta/payment-methods?include=paymentTokens
+ Get /beta/payment-methods?include=paymentToken
 */
 func GetPaymentMethodsIncludingPaymentTokenHandler(service Service) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
-		defer func() {
-			if rp := recover(); rp != nil {
-				log.Ctx(ctx).Error().Str("handler", "GetPaymentMethodsIncludingPaymentTokenHandler").Msgf("Panic: %v", rp)
-				log.Stack(ctx)
-				runtime.WriteError(w, http.StatusInternalServerError, errors.New("Error"))
-			}
-		}()
+		defer errors.HandleRequest("GetPaymentMethodsIncludingPaymentTokenHandler", w, r)
 
 		// Trace the service function handler execution
 		var handlerSpan opentracing.Span
@@ -431,7 +389,7 @@ func GetPaymentMethodsIncludingPaymentTokenHandler(service Service) http.Handler
 		// Setup context, response writer and request type
 		ctx = opentracing.ContextWithSpan(r.Context(), handlerSpan)
 		writer := getPaymentMethodsIncludingPaymentTokenResponseWriter{
-			ResponseWriter: jsonapimetrics.NewMetric("pay", "/beta/payment-methods?include=paymentTokens", w, r),
+			ResponseWriter: jsonapimetrics.NewMetric("pay", "/beta/payment-methods?include=paymentToken", w, r),
 		}
 		request := GetPaymentMethodsIncludingPaymentTokenRequest{
 			Request: r.WithContext(ctx),
@@ -454,7 +412,7 @@ func GetPaymentMethodsIncludingPaymentTokenHandler(service Service) http.Handler
 		// Invoke service that implements the business logic
 		err = service.GetPaymentMethodsIncludingPaymentToken(ctx, &writer, &request)
 		if err != nil {
-			runtime.WriteError(w, http.StatusInternalServerError, err)
+			errors.HandleError(err, "GetPaymentMethodsIncludingPaymentTokenHandler", w, r)
 		}
 	})
 }
@@ -466,13 +424,7 @@ ProcessPaymentHandler handles request/response marshaling and validation for
 func ProcessPaymentHandler(service Service) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
-		defer func() {
-			if rp := recover(); rp != nil {
-				log.Ctx(ctx).Error().Str("handler", "ProcessPaymentHandler").Msgf("Panic: %v", rp)
-				log.Stack(ctx)
-				runtime.WriteError(w, http.StatusInternalServerError, errors.New("Error"))
-			}
-		}()
+		defer errors.HandleRequest("ProcessPaymentHandler", w, r)
 
 		// Trace the service function handler execution
 		var handlerSpan opentracing.Span
@@ -503,7 +455,7 @@ func ProcessPaymentHandler(service Service) http.Handler {
 			// Invoke service that implements the business logic
 			err = service.ProcessPayment(ctx, &writer, &request)
 			if err != nil {
-				runtime.WriteError(w, http.StatusInternalServerError, err)
+				errors.HandleError(err, "ProcessPaymentHandler", w, r)
 			}
 		}
 	})
@@ -870,7 +822,7 @@ func Router(service Service) *mux.Router {
 	s1.Methods("POST").Path("/beta/payment-methods/{paymentMethodId}/authorize").Handler(AuthorizePaymentMethodHandler(service)).Name("AuthorizePaymentMethod")
 	s1.Methods("POST").Path("/beta/payment-methods/sepa-direct-debit").Handler(CreatePaymentMethodSEPAHandler(service)).Name("CreatePaymentMethodSEPA")
 	s1.Methods("DELETE").Path("/beta/payment-methods/{paymentMethodId}").Handler(DeletePaymentMethodHandler(service)).Name("DeletePaymentMethod")
-	s1.Methods("GET").Path("/beta/payment-methods").Handler(GetPaymentMethodsIncludingPaymentTokenHandler(service)).Queries("include", "paymentTokens").Name("GetPaymentMethodsIncludingPaymentToken")
+	s1.Methods("GET").Path("/beta/payment-methods").Handler(GetPaymentMethodsIncludingPaymentTokenHandler(service)).Queries("include", "paymentToken").Name("GetPaymentMethodsIncludingPaymentToken")
 	s1.Methods("GET").Path("/beta/payment-methods").Handler(GetPaymentMethodsIncludingCreditCheckHandler(service)).Queries("include", "creditCheck").Name("GetPaymentMethodsIncludingCreditCheck")
 	s1.Methods("GET").Path("/beta/payment-methods").Handler(GetPaymentMethodsHandler(service)).Name("GetPaymentMethods")
 	s1.Methods("POST").Path("/beta/transaction").Handler(ProcessPaymentHandler(service)).Name("ProcessPayment")

@@ -14,6 +14,8 @@ import (
 	"github.com/dave/jennifer/jen"
 )
 
+const errorsPkg = "lab.jamit.de/pace/go-microservice/maintenance/errors"
+
 // CommandOptions are applied when generating the different
 // microservice commands
 type CommandOptions struct {
@@ -79,6 +81,7 @@ func generateDaemonMain(f *jen.File, cmdName string) {
 	f.ImportAlias(httpPkg, "pacehttp")
 	f.Anon(trancing)
 	f.Func().Id("main").Params().BlockFunc(func(g *jen.Group) {
+		g.Defer().Qual(errorsPkg, "HandleWithCtx").Call(jen.Qual("context", "Background").Call(), jen.Lit(cmdName))
 		g.Id("router").Op(":=").Qual(httpPkg, "Router").Call()
 		g.Id("s").Op(":=").Qual(httpPkg, "Server").Call(jen.Id("router"))
 
@@ -93,6 +96,7 @@ func generateDaemonMain(f *jen.File, cmdName string) {
 
 func generateControlMain(f *jen.File, cmdName string) {
 	f.Func().Id("main").Params().Block(
+		jen.Defer().Qual(errorsPkg, "HandleWithCtx").Call(jen.Qual("context", "Background").Call(), jen.Lit(cmdName)),
 		jen.Qual("fmt", "Printf").Call(jen.Lit(cmdName)))
 }
 

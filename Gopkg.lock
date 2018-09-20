@@ -26,6 +26,14 @@
   version = "v3.3.0"
 
 [[projects]]
+  digest = "1:fed1f537c2f1269fe475a8556c393fe466641682d73ef8fd0491cd3aa1e47bad"
+  name = "github.com/certifi/gocertifi"
+  packages = ["."]
+  pruneopts = "UT"
+  revision = "deb3ae2ef2610fde3330947281941c562861188b"
+  version = "2018.01.18"
+
+[[projects]]
   branch = "master"
   digest = "1:4c4c33075b704791d6a7f09dfb55c66769e8a1dc6adf87026292d274fe8ad113"
   name = "github.com/codahale/hdrhistogram"
@@ -51,6 +59,14 @@
   ]
   pruneopts = "UT"
   revision = "e1956e8013e5183f5f237673fb4341492773b284"
+
+[[projects]]
+  branch = "master"
+  digest = "1:64ef2c2f0f508690f06c1b009e1e3103441ce60c2db0323ff94d8d1c560ec10b"
+  name = "github.com/getsentry/raven-go"
+  packages = ["."]
+  pruneopts = "UT"
+  revision = "084a9de9eb0361fbd5ded14b55c84e5493a5d7f6"
 
 [[projects]]
   digest = "1:2cd7915ab26ede7d95b8749e6b1f933f1c6d5398030684e6505940a10f31cfda"
@@ -343,6 +359,7 @@
     "github.com/caarlos0/env",
     "github.com/dave/jennifer/jen",
     "github.com/getkin/kin-openapi/openapi3",
+    "github.com/getsentry/raven-go",
     "github.com/go-pg/pg",
     "github.com/go-redis/redis",
     "github.com/google/jsonapi",
