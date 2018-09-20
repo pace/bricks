@@ -2,11 +2,11 @@ package poi
 
 import (
 	"context"
-	"errors"
 	mux "github.com/gorilla/mux"
 	opentracing "github.com/opentracing/opentracing-go"
 	olog "github.com/opentracing/opentracing-go/log"
 	runtime "lab.jamit.de/pace/go-microservice/http/jsonapi/runtime"
+	errors "lab.jamit.de/pace/go-microservice/maintenance/errors"
 	log "lab.jamit.de/pace/go-microservice/maintenance/log"
 	jsonapimetrics "lab.jamit.de/pace/go-microservice/maintenance/metrics/jsonapi"
 	"net/http"
@@ -102,13 +102,7 @@ CheckForPaceAppHandler handles request/response marshaling and validation for
 func CheckForPaceAppHandler(service Service) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
-		defer func() {
-			if rp := recover(); rp != nil {
-				log.Ctx(ctx).Error().Str("handler", "CheckForPaceAppHandler").Msgf("Panic: %v", rp)
-				log.Stack(ctx)
-				runtime.WriteError(w, http.StatusInternalServerError, errors.New("Error"))
-			}
-		}()
+		defer errors.HandleRequest("CheckForPaceAppHandler", w, r)
 
 		// Trace the service function handler execution
 		var handlerSpan opentracing.Span
@@ -171,7 +165,7 @@ func CheckForPaceAppHandler(service Service) http.Handler {
 		// Invoke service that implements the business logic
 		err = service.CheckForPaceApp(ctx, &writer, &request)
 		if err != nil {
-			runtime.WriteError(w, http.StatusInternalServerError, err)
+			errors.HandleError(err, "CheckForPaceAppHandler", w, r)
 		}
 	})
 }
@@ -183,13 +177,7 @@ SearchHandler handles request/response marshaling and validation for
 func SearchHandler(service Service) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
-		defer func() {
-			if rp := recover(); rp != nil {
-				log.Ctx(ctx).Error().Str("handler", "SearchHandler").Msgf("Panic: %v", rp)
-				log.Stack(ctx)
-				runtime.WriteError(w, http.StatusInternalServerError, errors.New("Error"))
-			}
-		}()
+		defer errors.HandleRequest("SearchHandler", w, r)
 
 		// Trace the service function handler execution
 		var handlerSpan opentracing.Span
@@ -277,7 +265,7 @@ func SearchHandler(service Service) http.Handler {
 		// Invoke service that implements the business logic
 		err = service.Search(ctx, &writer, &request)
 		if err != nil {
-			runtime.WriteError(w, http.StatusInternalServerError, err)
+			errors.HandleError(err, "SearchHandler", w, r)
 		}
 	})
 }
