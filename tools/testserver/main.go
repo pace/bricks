@@ -17,6 +17,7 @@ import (
 	pacehttp "lab.jamit.de/pace/go-microservice/http"
 	"lab.jamit.de/pace/go-microservice/maintenance/log"
 	_ "lab.jamit.de/pace/go-microservice/maintenance/tracing"
+	"lab.jamit.de/pace/go-microservice/oauth2"
 )
 
 // pace lat/lon
@@ -28,7 +29,22 @@ var (
 func main() {
 	db := postgres.ConnectionPool()
 	rdb := redis.Client()
+
+	// This middleware is configured against an Oauth application registered
+	// in cp-1-dev called GolangTests.
+	m := oauth2.Middleware{
+		URL:          "https://cp-1-dev.pacelink.net",
+		ClientID:     "7d51282118633c3a7412d7456368ddfe172b7987d20b8e3e60ae18e8681fac61",
+		ClientSecret: "141f891391d2b529bbf37b5ae5f57000f8b093956121db51c90fefb83930175c",
+	}
+
 	h := pacehttp.Router()
+
+	h.Use(m.Handler)
+
+	// To actually test the Oauth2 as well, one can run the following as an example:
+	//
+	// curl -H "Authorization: Bearer 83142f1b767e910e78ba2d554b6708c371f053d13d6075bcc39766853a932253" localhost:3000/test
 	h.HandleFunc("/test", func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
 

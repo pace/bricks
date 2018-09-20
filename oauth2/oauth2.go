@@ -9,6 +9,8 @@ package oauth2
 import (
 	"context"
 	"github.com/caarlos0/env"
+	opentracing "github.com/opentracing/opentracing-go"
+	olog "github.com/opentracing/opentracing-go/log"
 	"lab.jamit.de/pace/go-microservice/maintenance/log"
 	"net/http"
 	"strings"
@@ -58,6 +60,19 @@ func NewMiddleware() *Middleware {
 // relevant information back in the context.
 func (m *Middleware) Handler(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		// Setup tracing
+		var handlerSpan opentracing.Span
+		wireContext, err := opentracing.GlobalTracer().Extract(opentracing.HTTPHeaders, opentracing.HTTPHeadersCarrier(r.Header))
+		if err != nil {
+			log.Ctx(r.Context()).Debug().Err(err).Msg("Couldn't get span from request header")
+		}
+		handlerSpan = opentracing.StartSpan("Oauth2", opentracing.ChildOf(wireContext))
+		handlerSpan.LogFields(olog.String("req_id", log.RequestID(r)))
+		defer handlerSpan.Finish()
+
+		// Setup context
+		ctx := opentracing.ContextWithSpan(r.Context(), handlerSpan)
+
 		qualifiedToken := r.Header.Get("Authorization")
 
 		items := strings.Split(qualifiedToken, headerPrefix)
@@ -80,24 +95,28 @@ func (m *Middleware) Handler(next http.Handler) http.Handler {
 		case errBadUpstreamResponse:
 			log.Logger().Error().Str("request_id", log.RequestID(r)).Msg(introspectErr.Error())
 			http.Error(w, introspectErr.Error(), http.StatusBadGateway)
+			return
 		case errUpstreamConnection:
 			log.Logger().Error().Str("request_id", log.RequestID(r)).Msg(introspectErr.Error())
 			http.Error(w, introspectErr.Error(), http.StatusUnauthorized)
+			return
 		case errInvalidToken:
 			log.Logger().Error().Str("request_id", log.RequestID(r)).Msg(introspectErr.Error())
 			http.Error(w, introspectErr.Error(), http.StatusUnauthorized)
+			return
 		}
 
 		token := fromIntrospectResponse(s, tokenValue)
 
-		ctx := context.WithValue(r.Context(), tokenKey, &token)
+		ctx = context.WithValue(ctx, tokenKey, &token)
 
-		// Log crucial oauth info.
 		log.Logger().Info().
 			Str("request_id", log.RequestID(r)).
 			Str("client_id", token.clientID).
 			Str("user_id", token.userID).
 			Msg("Oauth2")
+
+		handlerSpan.LogFields(olog.String("client_id", token.clientID), olog.String("user_id", token.userID))
 
 		next.ServeHTTP(w, r.WithContext(ctx))
 		return
