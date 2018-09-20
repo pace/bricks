@@ -7,7 +7,7 @@ package jsonapi
 
 import (
 	"github.com/prometheus/client_golang/prometheus"
-	"lab.jamit.de/pace/go-microservice/oauth2"
+	"lab.jamit.de/pace/go-microservice/http/oauth2"
 	"net/http"
 	"strconv"
 	"time"

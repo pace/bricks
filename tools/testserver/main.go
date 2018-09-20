@@ -17,7 +17,7 @@ import (
 	pacehttp "lab.jamit.de/pace/go-microservice/http"
 	"lab.jamit.de/pace/go-microservice/maintenance/log"
 	_ "lab.jamit.de/pace/go-microservice/maintenance/tracing"
-	"lab.jamit.de/pace/go-microservice/oauth2"
+	"lab.jamit.de/pace/go-microservice/http/oauth2"
 )
 
 // pace lat/lon
@@ -40,8 +40,9 @@ func main() {
 
 	h := pacehttp.Router()
 
-	h.Use(m.Handler)
 	h.Use(log.Handler())
+  h.Use(m.Handler)
+
 
 	// To actually test the Oauth2 as well, one can run the following as an example:
 	//
