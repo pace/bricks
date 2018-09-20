@@ -93,15 +93,15 @@ func (m *Middleware) Handler(next http.Handler) http.Handler {
 
 		switch introspectErr {
 		case errBadUpstreamResponse:
-			log.Logger().Error().Str("request_id", log.RequestID(r)).Msg(introspectErr.Error())
+			log.Req(r).Info().Msg(introspectErr.Error())
 			http.Error(w, introspectErr.Error(), http.StatusBadGateway)
 			return
 		case errUpstreamConnection:
-			log.Logger().Error().Str("request_id", log.RequestID(r)).Msg(introspectErr.Error())
+			log.Req(r).Info().Msg(introspectErr.Error())
 			http.Error(w, introspectErr.Error(), http.StatusUnauthorized)
 			return
 		case errInvalidToken:
-			log.Logger().Error().Str("request_id", log.RequestID(r)).Msg(introspectErr.Error())
+			log.Req(r).Info().Msg(introspectErr.Error())
 			http.Error(w, introspectErr.Error(), http.StatusUnauthorized)
 			return
 		}
@@ -110,8 +110,7 @@ func (m *Middleware) Handler(next http.Handler) http.Handler {
 
 		ctx = context.WithValue(ctx, tokenKey, &token)
 
-		log.Logger().Info().
-			Str("request_id", log.RequestID(r)).
+		log.Req(r).Info().
 			Str("client_id", token.clientID).
 			Str("user_id", token.userID).
 			Msg("Oauth2")

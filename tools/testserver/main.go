@@ -41,6 +41,7 @@ func main() {
 	h := pacehttp.Router()
 
 	h.Use(m.Handler)
+	h.Use(log.Handler())
 
 	// To actually test the Oauth2 as well, one can run the following as an example:
 	//
