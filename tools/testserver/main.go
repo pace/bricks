@@ -30,20 +30,8 @@ func main() {
 	db := postgres.ConnectionPool()
 	rdb := redis.Client()
 	h := pacehttp.Router()
-
-	h.Use(errors.Handler())
 	h.HandleFunc("/test", func(w http.ResponseWriter, r *http.Request) {
-		ctx := r.Context()
-
-		// add opentracing span + context
-		var handlerSpan opentracing.Span
-		wireContext, err := opentracing.GlobalTracer().Extract(opentracing.HTTPHeaders, opentracing.HTTPHeadersCarrier(r.Header))
-		if err != nil {
-			log.Ctx(ctx).Debug().Err(err).Msg("Couldn't get span from request header")
-		}
-		handlerSpan = opentracing.StartSpan("TestHandler", opentracing.ChildOf(wireContext))
-		handlerSpan.LogFields(olog.String("req_id", log.RequestID(r)))
-		ctx = opentracing.ContextWithSpan(r.Context(), handlerSpan)
+		handlerSpan, ctx := opentracing.StartSpanFromContext(r.Context(), "TestHandler")
 		defer handlerSpan.Finish()
 
 		// do dummy database query

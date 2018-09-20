@@ -11,6 +11,7 @@ import (
 	"lab.jamit.de/pace/go-microservice/maintenance/health"
 	"lab.jamit.de/pace/go-microservice/maintenance/log"
 	"lab.jamit.de/pace/go-microservice/maintenance/metrics"
+	"lab.jamit.de/pace/go-microservice/maintenance/tracing"
 )
 
 // Router returns the default microservice endpoints for
@@ -23,6 +24,7 @@ func Router() *mux.Router {
 
 	// for logging
 	r.Use(log.Handler())
+	r.Use(tracing.Handler())
 
 	// for prometheus
 	r.Handle("/metrics", metrics.Handler())
