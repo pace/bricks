@@ -1,9 +1,11 @@
 # Copyright © 2018 by PACE Telematics GmbH. All rights reserved.
 # Created at 2018/08/24 by Vincent Landgraf
-.PHONY: install jsonapi docker.all docker.jaeger docker.postgres docker.redis
+.PHONY: install jsonapi docker.all docker.jaeger docker.postgres docker.postgres.setup docker.redis
 
 JSONAPITEST=http/jsonapi/generator/internal
 JSONAPIGEN="./tools/jsonapigen/main.go"
+PGPASSWORD="pace1234!"
+psql=PGPASSWORD="pace1234!" psql -h localhost -U postgres
 
 install:
 	go install ./cmd/pace
@@ -29,7 +31,7 @@ testserver:
 	POSTGRES_PASSWORD=pace1234! \
 	go run ./tools/testserver/main.go
 
-docker.all: docker.jaeger docker.postgres docker.redis
+docker.all: docker.jaeger docker.postgres.setup docker.redis
 
 docker.jaeger:
 	docker run -d --rm --name jaeger \
@@ -45,9 +47,14 @@ docker.jaeger:
 
 docker.postgres:
 	docker run -d --rm --name postgres \
-		-e POSTGRES_PASSWORD=pace1234! \
+		-e POSTGRES_PASSWORD=$(PGPASSWORD) \
 		-p 5432:5432 \
 		postgres:9
+
+docker.postgres.setup: docker.postgres
+	$(psql) -c "CREATE DATABASE testserver;"
+	$(psql) -c "CREATE USER testserveruser WITH ENCRYPTED PASSWORD 'pace1234!';"
+	$(psql) -c "GRANT ALL PRIVILEGES ON DATABASE testserver TO testserveruser;"
 
 docker.redis:
 	docker run -d --rm --name redis \

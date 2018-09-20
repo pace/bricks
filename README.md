@@ -39,14 +39,3 @@ generated code in these directories can be updated with `make jsonapi`.
 ### Jaeger
 
 Access web UI: http://localhost:16686/search
-
-### PostgreSQL
-
-Configure the postgres for go-microservice testserver
-
-    psql -h localhost -U postgres
-    > CREATE DATABASE testserver;
-    > CREATE USER testserveruser WITH ENCRYPTED PASSWORD 'pace1234!';
-    > GRANT ALL PRIVILEGES ON DATABASE testserver TO testserveruser;
-
-### Redis
