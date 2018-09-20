@@ -26,6 +26,9 @@ testserver:
 	JAEGER_SAMPLER_TYPE=const \
 	JAEGER_SAMPLER_PARAM=1 \
 	JAEGER_SERVICE_NAME=testserver \
+	SENTRY_DSN="https://71e5037808ff4acf9e18cd0ab5ee472a:f58b0c9ba48447af953cf377cf1d9b9c@sentry.jamit.de/164" \
+	SENTRY_ENVIRONMENT=development \
+	SENTRY_RELEASE=`git rev-parse --short HEAD` \
 	POSTGRES_USER=testserveruser \
 	POSTGRES_DB=testserver \
 	POSTGRES_PASSWORD=pace1234! \
