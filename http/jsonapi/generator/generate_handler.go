@@ -21,10 +21,8 @@ const (
 	gorillaMux     = "github.com/gorilla/mux"
 	httpJsonapi    = "lab.jamit.de/pace/go-microservice/http/jsonapi/runtime"
 	jsonAPIMetrics = "lab.jamit.de/pace/go-microservice/maintenance/metrics/jsonapi"
-	logPkg         = "lab.jamit.de/pace/go-microservice/maintenance/log"
 	errorsPkg      = "lab.jamit.de/pace/go-microservice/maintenance/errors"
 	opentracing    = "github.com/opentracing/opentracing-go"
-	opentracingLog = opentracing + "/log"
 )
 
 const serviceInterface = "Service"

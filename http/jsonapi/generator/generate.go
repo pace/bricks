@@ -27,7 +27,7 @@ type Generator struct {
 	serviceName string
 }
 
-func loadSwaggerFromURI(loader *openapi3.SwaggerLoader, url *url.URL) (*openapi3.Swagger, error) {
+func loadSwaggerFromURI(loader *openapi3.SwaggerLoader, url *url.URL) (*openapi3.Swagger, error) { // nolint: interfacer
 	var schema *openapi3.Swagger
 
 	resp, err := http.Get(url.String())

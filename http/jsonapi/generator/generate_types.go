@@ -27,7 +27,7 @@ func (g *Generator) BuildTypes(schema *openapi3.Swagger) error {
 	for _, name := range keys {
 		schemaType := schemas[name]
 		// create new type
-		name := goNameHelper(name)
+		name = goNameHelper(name)
 
 		// skip jsonapi error type
 		if name == "Errors" {
@@ -47,7 +47,7 @@ func (g *Generator) BuildTypes(schema *openapi3.Swagger) error {
 	return nil
 }
 
-func (g *Generator) buildType(prefix string, stmt *jen.Statement, schema *openapi3.SchemaRef) error {
+func (g *Generator) buildType(prefix string, stmt *jen.Statement, schema *openapi3.SchemaRef) error { // nolint: gocyclo
 	// handle references
 	if schema.Ref != "" {
 		// if there is a reference to a type use it
@@ -58,13 +58,13 @@ func (g *Generator) buildType(prefix string, stmt *jen.Statement, schema *openap
 	val := schema.Value
 
 	switch val.Type {
-	case "array":
+	case "array": // nolint: goconst
 		return g.buildType(prefix, stmt.Index(), val.Items)
 	case "object":
 		if data := val.Properties["data"]; data != nil {
 			if data.Ref != "" {
 				return g.buildType(prefix+"Ref", stmt, data)
-			} else if data.Value.Type == "array" {
+			} else if data.Value.Type == "array" { // nolint: goconst
 				item := prefix + "Item"
 				stmt.Index().Op("*").Id(item)
 				g.addGoDoc(item, data.Value.Description)
@@ -236,10 +236,12 @@ func (g *Generator) generateStructRelationships(prefix string, schema *openapi3.
 		rel := jen.Id(goNameHelper(relName))
 
 		switch data.Value.Type {
-		case "array": // one-to-many
+		// case array = one-to-many
+		case "array": // nolint: goconst
 			name := data.Value.Items.Value.Properties["type"].Value.Enum[0].(string)
 			rel.Index().Op("*").Id(goNameHelper(name)).Tag(tags)
-		case "object": // belongs-to
+		// case object = belongs-to
+		case "object":
 			name := data.Value.Properties["type"].Value.Enum[0].(string)
 			rel.Op("*").Id(goNameHelper(name)).Tag(tags)
 		}
