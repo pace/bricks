@@ -15,9 +15,9 @@ import (
 	"lab.jamit.de/pace/go-microservice/backend/postgres"
 	"lab.jamit.de/pace/go-microservice/backend/redis"
 	pacehttp "lab.jamit.de/pace/go-microservice/http"
+	"lab.jamit.de/pace/go-microservice/http/oauth2"
 	"lab.jamit.de/pace/go-microservice/maintenance/log"
 	_ "lab.jamit.de/pace/go-microservice/maintenance/tracing"
-	"lab.jamit.de/pace/go-microservice/http/oauth2"
 )
 
 // pace lat/lon
@@ -41,24 +41,13 @@ func main() {
 	h := pacehttp.Router()
 
 	h.Use(log.Handler())
-  h.Use(m.Handler)
-
+	h.Use(m.Handler)
 
 	// To actually test the Oauth2 as well, one can run the following as an example:
 	//
 	// curl -H "Authorization: Bearer 83142f1b767e910e78ba2d554b6708c371f053d13d6075bcc39766853a932253" localhost:3000/test
 	h.HandleFunc("/test", func(w http.ResponseWriter, r *http.Request) {
-		ctx := r.Context()
-
-		// add opentracing span + context
-		var handlerSpan opentracing.Span
-		wireContext, err := opentracing.GlobalTracer().Extract(opentracing.HTTPHeaders, opentracing.HTTPHeadersCarrier(r.Header))
-		if err != nil {
-			log.Ctx(ctx).Debug().Err(err).Msg("Couldn't get span from request header")
-		}
-		handlerSpan = opentracing.StartSpan("TestHandler", opentracing.ChildOf(wireContext))
-		handlerSpan.LogFields(olog.String("req_id", log.RequestID(r)))
-		ctx = opentracing.ContextWithSpan(r.Context(), handlerSpan)
+		handlerSpan, ctx := opentracing.StartSpanFromContext(r.Context(), "TestHandler")
 		defer handlerSpan.Finish()
 
 		// do dummy database query
