@@ -233,7 +233,7 @@
         }
       }
     },
-    "/beta/payment-methods?include=paymentTokens": {
+    "/beta/payment-methods?include=paymentToken": {
       "get": {
         "tags": [
           "Payment"

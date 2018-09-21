@@ -16,6 +16,7 @@ import (
 	"lab.jamit.de/pace/go-microservice/backend/redis"
 	pacehttp "lab.jamit.de/pace/go-microservice/http"
 	"lab.jamit.de/pace/go-microservice/http/oauth2"
+	"lab.jamit.de/pace/go-microservice/maintenance/errors"
 	"lab.jamit.de/pace/go-microservice/maintenance/log"
 	_ "lab.jamit.de/pace/go-microservice/maintenance/tracing"
 )
@@ -59,6 +60,21 @@ func main() {
 		log.Ctx(ctx).Debug().Msg("Test before JSON")
 		w.Header().Set("Content-Type", "application/json")
 		fmt.Fprintf(w, `{"street":"Haid-und-Neu-Straße 18, 76131 Karlsruhe", "sunset": "%s"}`, fetchSunsetandSunrise(ctx))
+	})
+
+	h.HandleFunc("/panic", func(w http.ResponseWriter, r *http.Request) {
+		go func() {
+			defer errors.HandleWithCtx(r.Context(), "Some worker")
+
+			panic(fmt.Errorf("Something went wrong %d - times", 100))
+		}()
+
+		panic("Test for sentry")
+	})
+	h.HandleFunc("/err", func(w http.ResponseWriter, r *http.Request) {
+		errors.HandleError(errors.WrapWithExtra(errors.New("Wrap error"), map[string]interface{}{
+			"Foo": 123,
+		}), "wrapHandler", w, r)
 	})
 
 	// Test OAuth

@@ -7,6 +7,7 @@ before_script:
   - mkdir -p $GO_PROJECT_DIR
   - cp -r $CI_PROJECT_DIR/* $GO_PROJECT_DIR
   - export LOG_FORMAT=console
+  - export JAEGER_SERVICE_NAME=unittest
 
 stages:
   - test

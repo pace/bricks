@@ -33,14 +33,14 @@ var requestCompleted = func(r *http.Request, status, size int, duration time.Dur
 		Str("host", r.Host).
 		Int("size", size).
 		Dur("duration", duration).
-		Str("ip", proxyAwareRemote(r)).
+		Str("ip", ProxyAwareRemote(r)).
 		Str("referer", r.Header.Get("Referer")).
 		Str("user_agent", r.Header.Get("User-Agent")).
 		Msg("Request Completed")
 }
 
-// proxyAwareRemote return the most likely remote address
-func proxyAwareRemote(r *http.Request) string {
+// ProxyAwareRemote return the most likely remote address
+func ProxyAwareRemote(r *http.Request) string {
 	// if we get the content via a proxy, try to extract the
 	// ip from the usual headers
 	for _, h := range []string{"X-Forwarded-For", "X-Real-Ip"} {

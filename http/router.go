@@ -7,6 +7,7 @@ import (
 	"net/http/pprof"
 
 	"github.com/gorilla/mux"
+	"lab.jamit.de/pace/go-microservice/maintenance/errors"
 	"lab.jamit.de/pace/go-microservice/maintenance/health"
 	"lab.jamit.de/pace/go-microservice/maintenance/log"
 	"lab.jamit.de/pace/go-microservice/maintenance/metrics"
@@ -18,9 +19,18 @@ import (
 func Router() *mux.Router {
 	r := mux.NewRouter()
 
+	// last resort error handler
+	r.Use(errors.Handler())
+
 	// for logging
 	r.Use(log.Handler())
-	r.Use(tracing.Handler())
+
+	r.Use(tracing.Handler(
+		// no tracing for these prefixes
+		"/metrics",
+		"/health",
+		"/debug",
+	))
 
 	// for prometheus
 	r.Handle("/metrics", metrics.Handler())
