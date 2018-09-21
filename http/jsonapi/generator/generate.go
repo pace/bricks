@@ -27,7 +27,7 @@ type Generator struct {
 	serviceName string
 }
 
-func loadSwaggerFromURI(loader *openapi3.SwaggerLoader, url *url.URL) (*openapi3.Swagger, error) {
+func loadSwaggerFromURI(loader *openapi3.SwaggerLoader, url *url.URL) (*openapi3.Swagger, error) { // nolint: interfacer
 	var schema *openapi3.Swagger
 
 	resp, err := http.Get(url.String())
@@ -86,9 +86,8 @@ func (g *Generator) BuildSource(source, packagePath, packageName string) (string
 // based on the passed schema
 func (g *Generator) BuildSchema(schema *openapi3.Swagger, packagePath, packageName string) (string, error) {
 	g.goSource = jen.NewFilePathName(packagePath, packageName)
-	g.goSource.ImportAlias(jsonAPIMetrics, "jsonapimetrics")
+	g.goSource.ImportAlias(jsonAPIMetrics, "metrics")
 	g.goSource.ImportAlias(opentracing, "opentracing")
-	g.goSource.ImportAlias(opentracingLog, "olog")
 
 	g.serviceName = packageName
 

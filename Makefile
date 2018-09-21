@@ -1,6 +1,6 @@
 # Copyright © 2018 by PACE Telematics GmbH. All rights reserved.
 # Created at 2018/08/24 by Vincent Landgraf
-.PHONY: install jsonapi docker.all docker.jaeger docker.postgres docker.postgres.setup docker.redis
+.PHONY: install test jsonapi docker.all docker.jaeger docker.postgres docker.postgres.setup docker.redis
 
 JSONAPITEST=http/jsonapi/generator/internal
 JSONAPIGEN="./tools/jsonapigen/main.go"
@@ -20,6 +20,9 @@ jsonapi:
 	go run $(JSONAPIGEN) -pkg pay \
 		-path $(JSONAPITEST)/pay/open-api_test.go \
 		-source $(JSONAPITEST)/pay/open-api.json
+
+test:
+	JAEGER_SERVICE_NAME=unittest LOG_FORMAT=console go test -v -race -cover ./...
 
 testserver:
 	JAEGER_ENDPOINT=http://localhost:14268/api/traces \

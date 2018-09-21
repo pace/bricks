@@ -4,11 +4,9 @@ import (
 	"context"
 	mux "github.com/gorilla/mux"
 	opentracing "github.com/opentracing/opentracing-go"
-	olog "github.com/opentracing/opentracing-go/log"
 	runtime "lab.jamit.de/pace/go-microservice/http/jsonapi/runtime"
 	errors "lab.jamit.de/pace/go-microservice/maintenance/errors"
-	log "lab.jamit.de/pace/go-microservice/maintenance/log"
-	jsonapimetrics "lab.jamit.de/pace/go-microservice/maintenance/metrics/jsonapi"
+	metrics "lab.jamit.de/pace/go-microservice/maintenance/metrics/jsonapi"
 	"net/http"
 )
 
@@ -101,23 +99,15 @@ CheckForPaceAppHandler handles request/response marshaling and validation for
 */
 func CheckForPaceAppHandler(service Service) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		ctx := r.Context()
 		defer errors.HandleRequest("CheckForPaceAppHandler", w, r)
 
 		// Trace the service function handler execution
-		var handlerSpan opentracing.Span
-		wireContext, err := opentracing.GlobalTracer().Extract(opentracing.HTTPHeaders, opentracing.HTTPHeadersCarrier(r.Header))
-		if err != nil {
-			log.Ctx(ctx).Debug().Err(err).Msg("Couldn't get span from request header")
-		}
-		handlerSpan = opentracing.StartSpan("CheckForPaceAppHandler", opentracing.ChildOf(wireContext))
-		handlerSpan.LogFields(olog.String("req_id", log.RequestID(r)))
+		handlerSpan, ctx := opentracing.StartSpanFromContext(r.Context(), "CheckForPaceAppHandler")
 		defer handlerSpan.Finish()
 
 		// Setup context, response writer and request type
-		ctx = opentracing.ContextWithSpan(r.Context(), handlerSpan)
 		writer := checkForPaceAppResponseWriter{
-			ResponseWriter: jsonapimetrics.NewMetric("poi", "/beta/check-for-pace-app", w, r),
+			ResponseWriter: metrics.NewMetric("poi", "/beta/check-for-pace-app", w, r),
 		}
 		request := CheckForPaceAppRequest{
 			Request: r.WithContext(ctx),
@@ -163,7 +153,7 @@ func CheckForPaceAppHandler(service Service) http.Handler {
 		}
 
 		// Invoke service that implements the business logic
-		err = service.CheckForPaceApp(ctx, &writer, &request)
+		err := service.CheckForPaceApp(ctx, &writer, &request)
 		if err != nil {
 			errors.HandleError(err, "CheckForPaceAppHandler", w, r)
 		}
@@ -176,23 +166,15 @@ SearchHandler handles request/response marshaling and validation for
 */
 func SearchHandler(service Service) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		ctx := r.Context()
 		defer errors.HandleRequest("SearchHandler", w, r)
 
 		// Trace the service function handler execution
-		var handlerSpan opentracing.Span
-		wireContext, err := opentracing.GlobalTracer().Extract(opentracing.HTTPHeaders, opentracing.HTTPHeadersCarrier(r.Header))
-		if err != nil {
-			log.Ctx(ctx).Debug().Err(err).Msg("Couldn't get span from request header")
-		}
-		handlerSpan = opentracing.StartSpan("SearchHandler", opentracing.ChildOf(wireContext))
-		handlerSpan.LogFields(olog.String("req_id", log.RequestID(r)))
+		handlerSpan, ctx := opentracing.StartSpanFromContext(r.Context(), "SearchHandler")
 		defer handlerSpan.Finish()
 
 		// Setup context, response writer and request type
-		ctx = opentracing.ContextWithSpan(r.Context(), handlerSpan)
 		writer := searchResponseWriter{
-			ResponseWriter: jsonapimetrics.NewMetric("poi", "/beta/search", w, r),
+			ResponseWriter: metrics.NewMetric("poi", "/beta/search", w, r),
 		}
 		request := SearchRequest{
 			Request: r.WithContext(ctx),
@@ -263,7 +245,7 @@ func SearchHandler(service Service) http.Handler {
 		}
 
 		// Invoke service that implements the business logic
-		err = service.Search(ctx, &writer, &request)
+		err := service.Search(ctx, &writer, &request)
 		if err != nil {
 			errors.HandleError(err, "SearchHandler", w, r)
 		}

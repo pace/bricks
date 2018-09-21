@@ -4,9 +4,14 @@
 package tracing
 
 import (
+	"net/http"
+	"strings"
+
 	opentracing "github.com/opentracing/opentracing-go"
+	olog "github.com/opentracing/opentracing-go/log"
 	"github.com/uber/jaeger-client-go/config"
 	"github.com/uber/jaeger-lib/metrics/prometheus"
+	"github.com/zenazn/goji/web/mutil"
 	"lab.jamit.de/pace/go-microservice/maintenance/log"
 )
 
@@ -29,4 +34,67 @@ func init() {
 	if err != nil {
 		log.Fatal(err)
 	}
+}
+
+type traceHandler struct {
+	ignoredPrefixes []string
+	next            http.Handler
+}
+
+// Trace the service function handler execution
+func (h *traceHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	// check if path needs to be ignored
+	for _, prefix := range h.ignoredPrefixes {
+		if strings.HasPrefix(r.URL.Path, prefix) {
+			h.next.ServeHTTP(w, r)
+			return
+		}
+	}
+
+	// no ignored prefix, try decoding the tracing from the http request
+	ctx := r.Context()
+	var handlerSpan opentracing.Span
+	wireContext, err := opentracing.GlobalTracer().Extract(opentracing.HTTPHeaders, opentracing.HTTPHeadersCarrier(r.Header))
+	if err != nil {
+		log.Ctx(ctx).Debug().Err(err).Msg("Couldn't get span from request header")
+	}
+	handlerSpan, ctx = opentracing.StartSpanFromContext(ctx, "ServeHTTP", opentracing.ChildOf(wireContext))
+	handlerSpan.LogFields(olog.String("req_id", log.RequestID(r)),
+		olog.String("path", r.URL.Path),
+		olog.String("method", r.Method))
+	ww := mutil.WrapWriter(w)
+	h.next.ServeHTTP(ww, r.WithContext(ctx))
+	handlerSpan.LogFields(olog.Int("bytes", ww.BytesWritten()), olog.Int("status", ww.Status()))
+	handlerSpan.Finish()
+}
+
+// Handler generates a tracing handler that decodes the current trace from the wire.
+// The tracing handler will not start traces for the list of ignoredPrefixes.
+func Handler(ignoredPrefixes ...string) func(http.Handler) http.Handler {
+	return func(next http.Handler) http.Handler {
+		return &traceHandler{
+			ignoredPrefixes: ignoredPrefixes,
+			next:            next,
+		}
+	}
+}
+
+// Request augments an outgoing request for further tracing
+func Request(r *http.Request) *http.Request {
+	// check if the request contains a span
+	span := opentracing.SpanFromContext(r.Context())
+	if span == nil {
+		return r
+	}
+
+	// inject tracing info for next request containing the span
+	err := opentracing.GlobalTracer().Inject(
+		span.Context(),
+		opentracing.HTTPHeaders,
+		opentracing.HTTPHeadersCarrier(r.Header))
+	if err != nil {
+		log.Warnf("Request tracing injection failed: %v", err)
+	}
+
+	return r
 }

@@ -20,7 +20,7 @@ func (g *Generator) addGoDoc(typeName, description string) {
 	}
 }
 
-func (g *Generator) goType(stmt *jen.Statement, schema *openapi3.Schema, tags map[string]string) error {
+func (g *Generator) goType(stmt *jen.Statement, schema *openapi3.Schema, tags map[string]string) error { // nolint: gocyclo
 	switch schema.Type {
 	case "string":
 		switch schema.Format {
@@ -58,7 +58,7 @@ func (g *Generator) goType(stmt *jen.Statement, schema *openapi3.Schema, tags ma
 		}
 	case "boolean":
 		stmt.Bool()
-	case "array":
+	case "array": // nolint: goconst
 		err := g.goType(stmt.Index(), schema.Items.Value, tags)
 		if err != nil {
 			return err
