@@ -50,7 +50,7 @@ func TestSuccessfulIntrospection(t *testing.T) {
 		t.Fatalf("Expected no error, got %v.", err)
 	}
 
-	if s.Active != true || s.Scope != "dtc:codes:read dtc:codes:write" || s.UserID != "SOME_USER_ID" ||
+	if !s.Active || s.Scope != "dtc:codes:read dtc:codes:write" || s.UserID != "SOME_USER_ID" ||
 		s.ClientID != "SOME_CLIENT_ID" {
 		t.Fatalf("Expected specific values stored in struct, got: %v", s)
 	}

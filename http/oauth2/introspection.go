@@ -49,7 +49,7 @@ func introspect(m *Middleware, token string, s *introspectResponse) error {
 		return errBadUpstreamResponse
 	}
 
-	if s.Active == false {
+	if !s.Active {
 		return errInvalidToken
 	}
 

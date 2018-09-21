@@ -119,7 +119,7 @@ func TestSuccessfulAccessors(t *testing.T) {
 		t.Fatalf("Expected %v, got: %v", expectedScopes, scopes)
 	}
 
-	if hasScope != true {
+	if !hasScope {
 		t.Fatalf("Expected true, got: %v", hasScope)
 	}
 }
@@ -134,15 +134,15 @@ func TestUnsucessfulAccessors(t *testing.T) {
 	scopes := Scopes(ctx)
 	hasScope := HasScope(ctx, "scope2")
 
-	if uid != "" || uidOK != false {
+	if uid != "" || uidOK {
 		t.Fatalf("Expected no %v, got: %v", "UserID", uid)
 	}
 
-	if cid != "" || cidOK != false {
+	if cid != "" || cidOK {
 		t.Fatalf("Expected no %v, got: %v", "ClientID", cid)
 	}
 
-	if bt != "" || btOK != false {
+	if bt != "" || btOK {
 		t.Fatalf("Expected no %v, got: %v", "BearerToken", bt)
 	}
 
@@ -150,7 +150,7 @@ func TestUnsucessfulAccessors(t *testing.T) {
 		t.Fatalf("Expected no scopes, got: %v", scopes)
 	}
 
-	if hasScope != false {
+	if hasScope {
 		t.Fatalf("Expected hasScope to return false, got: %v", hasScope)
 	}
 }
