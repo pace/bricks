@@ -36,13 +36,13 @@ func init() {
 	}
 }
 
-type tranceHandler struct {
+type traceHandler struct {
 	ignoredPrefixes []string
 	next            http.Handler
 }
 
 // Trace the service function handler execution
-func (h *tranceHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+func (h *traceHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	// check if path needs to be ignored
 	for _, prefix := range h.ignoredPrefixes {
 		if strings.HasPrefix(r.URL.Path, prefix) {
@@ -72,7 +72,7 @@ func (h *tranceHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 // The tracing handler will not start traces for the list of ignoredPrefixes.
 func Handler(ignoredPrefixes ...string) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
-		return &tranceHandler{
+		return &traceHandler{
 			ignoredPrefixes: ignoredPrefixes,
 			next:            next,
 		}
