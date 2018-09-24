@@ -13,7 +13,7 @@ import (
 	raven "github.com/getsentry/raven-go"
 	"lab.jamit.de/pace/go-microservice/http/jsonapi/runtime"
 	"lab.jamit.de/pace/go-microservice/maintenance/log"
-	"lab.jamit.de/pace/go-microservice/oauth2"
+	"lab.jamit.de/pace/go-microservice/http/oauth2"
 )
 
 type PanicWrap struct {

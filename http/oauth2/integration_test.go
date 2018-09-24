@@ -11,9 +11,7 @@ import (
 )
 
 const (
-	oauthURL      = "https://cp-1-dev.pacelink.net"
 	oauthClient   = "7d51282118633c3a7412d7456368ddfe172b7987d20b8e3e60ae18e8681fac61"
-	oauthSecret   = "141f891391d2b529bbf37b5ae5f57000f8b093956121db51c90fefb83930175c"
 	activeToken   = "85b7856f3055411c11b60f582fc091a624db4a38218abac2df9feb66bc6e7eb5"
 	userID        = "b773de39-93d8-4aa4-94a3-356900e55956"
 	allowedScopes = "dtc:codes:read dtc:codes:write"
@@ -35,11 +33,7 @@ func TestIntegrationMiddleware(t *testing.T) {
 		return
 	}
 
-	var middleware = Middleware{
-		URL:          oauthURL,
-		ClientID:     oauthClient,
-		ClientSecret: oauthSecret,
-	}
+	var middleware = NewMiddleware()
 
 	middleware.addIntrospectFunc(introspectMock)
 

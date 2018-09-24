@@ -15,7 +15,7 @@ import (
 )
 
 // Router returns the default microservice endpoints for
-// health, metrics and debuging
+// health, metrics and debugging
 func Router() *mux.Router {
 	r := mux.NewRouter()
 
@@ -24,6 +24,7 @@ func Router() *mux.Router {
 
 	// for logging
 	r.Use(log.Handler())
+
 	r.Use(tracing.Handler(
 		// no tracing for these prefixes
 		"/metrics",

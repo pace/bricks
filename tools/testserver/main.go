@@ -15,6 +15,7 @@ import (
 	"lab.jamit.de/pace/go-microservice/backend/postgres"
 	"lab.jamit.de/pace/go-microservice/backend/redis"
 	pacehttp "lab.jamit.de/pace/go-microservice/http"
+	"lab.jamit.de/pace/go-microservice/http/oauth2"
 	"lab.jamit.de/pace/go-microservice/maintenance/errors"
 	"lab.jamit.de/pace/go-microservice/maintenance/log"
 	_ "lab.jamit.de/pace/go-microservice/maintenance/tracing"
@@ -29,7 +30,9 @@ var (
 func main() {
 	db := postgres.ConnectionPool()
 	rdb := redis.Client()
+
 	h := pacehttp.Router()
+
 	h.HandleFunc("/test", func(w http.ResponseWriter, r *http.Request) {
 		handlerSpan, ctx := opentracing.StartSpanFromContext(r.Context(), "TestHandler")
 		defer handlerSpan.Finish()
@@ -58,6 +61,7 @@ func main() {
 		w.Header().Set("Content-Type", "application/json")
 		fmt.Fprintf(w, `{"street":"Haid-und-Neu-Straße 18, 76131 Karlsruhe", "sunset": "%s"}`, fetchSunsetandSunrise(ctx))
 	})
+
 	h.HandleFunc("/panic", func(w http.ResponseWriter, r *http.Request) {
 		go func() {
 			defer errors.HandleWithCtx(r.Context(), "Some worker")
@@ -72,6 +76,27 @@ func main() {
 			"Foo": 123,
 		}), "wrapHandler", w, r)
 	})
+
+	// Test OAuth
+	//
+	// This middleware is configured against an Oauth application registered
+	// in cp-1-dev called GolangTests.
+	m := oauth2.Middleware{
+		URL:          "https://cp-1-dev.pacelink.net",
+		ClientID:     "7d51282118633c3a7412d7456368ddfe172b7987d20b8e3e60ae18e8681fac61",
+		ClientSecret: "141f891391d2b529bbf37b5ae5f57000f8b093956121db51c90fefb83930175c",
+	}
+
+	sr := h.PathPrefix("/test").Subrouter()
+	sr.Use(m.Handler)
+
+	// To actually test the Oauth2, one can run the following as an example:
+	//
+	// curl -H "Authorization: Bearer 83142f1b767e910e78ba2d554b6708c371f053d13d6075bcc39766853a932253" localhost:3000/test/auth
+	sr.HandleFunc("/oauth", func(w http.ResponseWriter, r *http.Request) {
+		fmt.Fprintf(w, "Oauth test successful.\n")
+	})
+
 	s := pacehttp.Server(h)
 	log.Logger().Info().Str("addr", s.Addr).Msg("Starting testserver ...")
 	log.Fatal(s.ListenAndServe())

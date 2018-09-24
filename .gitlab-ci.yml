@@ -11,6 +11,7 @@ before_script:
 
 stages:
   - test
+  - integration
 
 lint:
   stage: test
@@ -23,5 +24,11 @@ test:
   stage: test
   script:
     - curl https://raw.githubusercontent.com/golang/dep/master/install.sh | sh
-    - cd $GO_PROJECT_DIR && dep ensure && go test -v -cover -race ./...
+    - cd $GO_PROJECT_DIR && dep ensure && go test -v -cover -race -short ./...
+
+integration:
+  stage: integration
+  script:
+    - curl https://raw.githubusercontent.com/golang/dep/master/install.sh | sh
+    - cd $GO_PROJECT_DIR && dep ensure && go test -v -cover -race -run TestIntegration ./...
 

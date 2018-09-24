@@ -7,7 +7,7 @@ import (
 	"context"
 	"fmt"
 	"github.com/gorilla/mux"
-	"log"
+	"lab.jamit.de/pace/go-microservice/maintenance/log"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -15,6 +15,15 @@ import (
 
 func Example() {
 	r := mux.NewRouter()
+
+	// Alternatively, you can construct the Middleware using ENV variables and
+	// our custom constructor `NewMiddlware`, example:
+	//
+	// `OAUTH2_URL=XXX OAUTH2_CLIENT_ID=YYY OAUTH2_CLIENT_SECRET=ZZZ bin_to_start_your_service`
+	//
+	// Then, in your code:
+	//
+	// middleware = NewMiddleware()
 	middleware := Middleware{
 		URL:          "http://localhost:3000",
 		ClientID:     "13972c02189a6e938a4730bc81c2a20cc4e03ef5406d20d2150110584d6b3e6c",
@@ -110,7 +119,7 @@ func TestSuccessfulAccessors(t *testing.T) {
 		t.Fatalf("Expected %v, got: %v", expectedScopes, scopes)
 	}
 
-	if hasScope != true {
+	if !hasScope {
 		t.Fatalf("Expected true, got: %v", hasScope)
 	}
 }
@@ -125,15 +134,15 @@ func TestUnsucessfulAccessors(t *testing.T) {
 	scopes := Scopes(ctx)
 	hasScope := HasScope(ctx, "scope2")
 
-	if uid != "" || uidOK != false {
+	if uid != "" || uidOK {
 		t.Fatalf("Expected no %v, got: %v", "UserID", uid)
 	}
 
-	if cid != "" || cidOK != false {
+	if cid != "" || cidOK {
 		t.Fatalf("Expected no %v, got: %v", "ClientID", cid)
 	}
 
-	if bt != "" || btOK != false {
+	if bt != "" || btOK {
 		t.Fatalf("Expected no %v, got: %v", "BearerToken", bt)
 	}
 
@@ -141,7 +150,7 @@ func TestUnsucessfulAccessors(t *testing.T) {
 		t.Fatalf("Expected no scopes, got: %v", scopes)
 	}
 
-	if hasScope != false {
+	if hasScope {
 		t.Fatalf("Expected hasScope to return false, got: %v", hasScope)
 	}
 }

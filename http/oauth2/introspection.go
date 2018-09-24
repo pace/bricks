@@ -6,7 +6,7 @@ package oauth2
 import (
 	"encoding/json"
 	"errors"
-	"log"
+	"lab.jamit.de/pace/go-microservice/maintenance/log"
 	"net/http"
 	"net/url"
 )
@@ -49,7 +49,7 @@ func introspect(m *Middleware, token string, s *introspectResponse) error {
 		return errBadUpstreamResponse
 	}
 
-	if s.Active == false {
+	if !s.Active {
 		return errInvalidToken
 	}
 

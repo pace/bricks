@@ -4,12 +4,14 @@
 // Package oauth2 provides a middelware that introspects the auth token on
 // behalf of PACE services and populate the request context with useful information
 // when the token is valid, otherwise aborts the request.
-//
-// See example_usage.go for an example usage (pardon the runny wording).
 package oauth2
 
 import (
 	"context"
+	"github.com/caarlos0/env"
+	opentracing "github.com/opentracing/opentracing-go"
+	olog "github.com/opentracing/opentracing-go/log"
+	"lab.jamit.de/pace/go-microservice/maintenance/log"
 	"net/http"
 	"strings"
 )
@@ -20,7 +22,7 @@ var tokenKey = ctxkey("Token")
 
 const headerPrefix = "Bearer "
 
-// Oauth2 Middleware.
+// Middleware holds data necessary for Oauth processing
 type Middleware struct {
 	URL            string
 	ClientID       string
@@ -35,10 +37,34 @@ type token struct {
 	scopes   []string
 }
 
+type config struct {
+	URL          string `env:"OAUTH2_URL" envDefault:"https://cp-1-prod.pacelink.net"`
+	ClientID     string `env:"OAUTH2_CLIENT_ID"`
+	ClientSecret string `env:"OAUTH2_CLIENT_SECRET"`
+}
+
+// NewMiddleware creates a new Oauth middleware
+func NewMiddleware() *Middleware {
+	var cfg config
+	err := env.Parse(&cfg)
+	if err != nil {
+		log.Fatalf("Failed to parse oauth2 environment: %v", err)
+	}
+	return &Middleware{
+		URL:          cfg.URL,
+		ClientID:     cfg.ClientID,
+		ClientSecret: cfg.ClientSecret,
+	}
+}
+
 // Handler will parse the bearer token, introspect it, and put the token and other
 // relevant information back in the context.
 func (m *Middleware) Handler(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		// Setup tracing
+		span, ctx := opentracing.StartSpanFromContext(r.Context(), "Oauth2")
+		defer span.Finish()
+
 		qualifiedToken := r.Header.Get("Authorization")
 
 		items := strings.Split(qualifiedToken, headerPrefix)
@@ -59,18 +85,31 @@ func (m *Middleware) Handler(next http.Handler) http.Handler {
 
 		switch introspectErr {
 		case errBadUpstreamResponse:
+			log.Req(r).Info().Msg(introspectErr.Error())
 			http.Error(w, introspectErr.Error(), http.StatusBadGateway)
+			return
 		case errUpstreamConnection:
+			log.Req(r).Info().Msg(introspectErr.Error())
 			http.Error(w, introspectErr.Error(), http.StatusUnauthorized)
+			return
 		case errInvalidToken:
+			log.Req(r).Info().Msg(introspectErr.Error())
 			http.Error(w, introspectErr.Error(), http.StatusUnauthorized)
+			return
 		}
 
-		token := fromIntrospectResponse(s, tokenValue)
+		t := fromIntrospectResponse(s, tokenValue)
 
-		ctx := context.WithValue(r.Context(), tokenKey, &token)
+		ctx = context.WithValue(ctx, tokenKey, &t)
+
+		log.Req(r).Info().
+			Str("client_id", t.clientID).
+			Str("user_id", t.userID).
+			Msg("Oauth2")
+
+		span.LogFields(olog.String("client_id", t.clientID), olog.String("user_id", t.userID))
+
 		next.ServeHTTP(w, r.WithContext(ctx))
-		return
 	})
 }
 
@@ -79,7 +118,7 @@ func (m *Middleware) addIntrospectFunc(f introspecter) {
 }
 
 func fromIntrospectResponse(s introspectResponse, tokenValue string) token {
-	token := token{
+	t := token{
 		userID:   s.UserID,
 		value:    tokenValue,
 		clientID: s.ClientID,
@@ -87,12 +126,13 @@ func fromIntrospectResponse(s introspectResponse, tokenValue string) token {
 
 	if s.Scope != "" {
 		scopes := strings.Split(s.Scope, " ")
-		token.scopes = scopes
+		t.scopes = scopes
 	}
 
-	return token
+	return t
 }
 
+// Request adds Authorization token to r
 func Request(r *http.Request) *http.Request {
 	bt, ok := BearerToken(r.Context())
 
@@ -105,6 +145,7 @@ func Request(r *http.Request) *http.Request {
 	return r
 }
 
+// BearerToken returns the bearer token stored in ctx
 func BearerToken(ctx context.Context) (string, bool) {
 	token := tokenFromContext(ctx)
 
@@ -115,6 +156,7 @@ func BearerToken(ctx context.Context) (string, bool) {
 	return token.value, true
 }
 
+// HasScope checks if scope is stored in ctx
 func HasScope(ctx context.Context, scope string) bool {
 	token := tokenFromContext(ctx)
 
@@ -131,6 +173,7 @@ func HasScope(ctx context.Context, scope string) bool {
 	return false
 }
 
+// UserID returns the userID stored in ctx
 func UserID(ctx context.Context) (string, bool) {
 	token := tokenFromContext(ctx)
 
@@ -141,6 +184,7 @@ func UserID(ctx context.Context) (string, bool) {
 	return token.userID, true
 }
 
+// Scopes returns the scopes stored in ctx
 func Scopes(ctx context.Context) []string {
 	token := tokenFromContext(ctx)
 
@@ -151,6 +195,7 @@ func Scopes(ctx context.Context) []string {
 	return token.scopes
 }
 
+// ClientID returns the clientID stored in ctx
 func ClientID(ctx context.Context) (string, bool) {
 	token := tokenFromContext(ctx)
 
