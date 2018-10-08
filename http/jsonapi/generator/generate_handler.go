@@ -210,12 +210,21 @@ func (g *Generator) generateResponseInterface(route *route, schema *openapi3.Swa
 			method.Params()
 
 			defer func() { // defer to put methods after type
+				// get mime type if any
+				mime := "application/vnd.api+json"
+				for m, _ := range response.Value.Content {
+					mime = m
+					break // only the first mime type will be respected
+				}
+
 				// generate the method as function for the implementing type
 				g.addGoDoc(methodName, fmt.Sprintf("responds with empty response (HTTP code %d)", codeNum))
 				g.goSource.Func().Params(jen.Id("w").Op("*").Id(route.responseTypeImpl)).
-					Id(methodName).Params().Block(
-					jen.Id("w").Dot("WriteHeader").Call(jen.Lit(codeNum)),
-				)
+					Id(methodName).Params().BlockFunc(func(g *jen.Group) {
+					// set the content type for the response (prevents the go guess work -> improves performance)
+					g.Id("w").Dot("Header").Call().Dot("Set").Call(jen.Lit("Content-Type"), jen.Lit(mime))
+					g.Id("w").Dot("WriteHeader").Call(jen.Lit(codeNum))
+				})
 			}()
 		}
 
@@ -526,5 +535,5 @@ func generateMethodName(description string) string {
 }
 
 func generateParamName(param *openapi3.ParameterRef) string {
-	return "Param" + goNameHelper(param.Value.Name)
+	return "Param" + generateMethodName(param.Value.Name)
 }

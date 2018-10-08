@@ -14,124 +14,43 @@
     }
   ],
   "paths": {
-    "/beta/check-for-pace-app": {
+    "/beta/gas-stations": {
       "get": {
         "tags": [
-          "POI"
+          "Gas Stations"
         ],
-        "operationId": "CheckForPaceApp",
-        "summary": "Get location-based apps\n",
-        "description": "These location-based PACE apps deliver additional services for PACE customers based on their current position.\nYou can (or should) trigger this whenever:\n* A longer stand-still is detected\n* The engine is turned off\n* Every 5 seconds if the user \"left the road\"\n\nPlease note that calling this API is very cheap and can be done regularly.\n",
-        "parameters": [
+        "operationId": "GetGasStations",
+        "security": [
           {
-            "in": "query",
-            "name": "latitude",
-            "schema": {
-              "type": "number",
-              "format": "float"
-            },
-            "required": true,
-            "description": "Latitude",
-            "example": 48.123
-          },
-          {
-            "in": "query",
-            "name": "longitude",
-            "schema": {
-              "type": "number",
-              "format": "float"
-            },
-            "required": true,
-            "description": "Longitude",
-            "example": 9.456
-          },
-          {
-            "in": "query",
-            "name": "gpsSource",
-            "schema": {
-              "type": "string",
-              "enum": [
-                "raw",
-                "mapMatched"
-              ]
-            },
-            "required": true,
-            "description": "GPS Source",
-            "example": "mapMatched"
-          },
-          {
-            "in": "query",
-            "name": "appType",
-            "schema": {
-              "type": "string",
-              "enum": [
-                "fueling"
-              ]
-            },
-            "required": true,
-            "description": "Type of location-based app"
-          },
-          {
-            "in": "query",
-            "name": "accuracy",
-            "schema": {
-              "type": "number",
-              "format": "float"
-            },
-            "required": false,
-            "description": "GPS accuracy",
-            "example": 0.7
-          },
-          {
-            "in": "query",
-            "name": "deviation",
-            "schema": {
-              "type": "number",
-              "format": "float"
-            },
-            "required": false,
-            "description": "Deviation in case of map-matched GPS data",
-            "example": 0.35
+            "OAuth2": [
+              "poi:gas-stations:read"
+            ]
           }
         ],
-        "responses": {
-          "200": {
-            "description": "OK",
-            "content": {
-              "application/vnd.api+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/LocationBasedAppsResponse"
-                }
-              }
-            }
-          },
-          "400": {
-            "$ref": "#/components/responses/BadRequest"
-          },
-          "401": {
-            "$ref": "#/components/responses/Unauthorized"
-          },
-          "406": {
-            "$ref": "#/components/responses/NotAcceptable"
-          },
-          "500": {
-            "$ref": "#/components/responses/InternalServerError"
-          }
-        }
-      }
-    },
-    "/beta/search": {
-      "get": {
-        "tags": [
-          "POI"
-        ],
-        "operationId": "Search",
-        "summary": "Search for gas stations",
+        "summary": "Query for gas stations",
         "description": "There are three possibilities to search for gas stations. If you want to search in a specific radius around a given longitude and latitude you have to provide the following query parameters:\n\n* latitude (required)\n* longitude (required)\n* radius (required)\n* accuracy (optional)\n\nIf you want to search in a given bounding box you have to provide the following query parameters:\n\n* boundingBox (required)\n\nIf you want to search along a given path you have to provide the following query parameters:\n* path (required)\n* radius (required)\n\nIf you have map-matched GPS data you can also provide a `deviation` query parameter. By using this query type, the evaluation if the user is inside the polygon of a specific location-based PACE app needs to be done by the client.\n",
         "parameters": [
           {
             "in": "query",
-            "name": "poiType",
+            "name": "page[number]",
+            "schema": {
+              "type": "integer"
+            },
+            "example": 1,
+            "description": "page number"
+          },
+          {
+            "in": "query",
+            "name": "page[size]",
+            "schema": {
+              "type": "integer"
+            },
+            "example": 50,
+            "description": "items per page"
+          },
+          {
+            "in": "query",
+            "name": "filter[poiType]",
             "schema": {
               "type": "string",
               "enum": [
@@ -144,7 +63,7 @@
           },
           {
             "in": "query",
-            "name": "appType",
+            "name": "filter[appType]",
             "schema": {
               "type": "array",
               "items": {
@@ -164,7 +83,7 @@
           },
           {
             "in": "query",
-            "name": "gpsSource",
+            "name": "filter[gpsSource]",
             "schema": {
               "type": "string",
               "enum": [
@@ -191,7 +110,7 @@
           },
           {
             "in": "query",
-            "name": "latitude",
+            "name": "filter[latitude]",
             "schema": {
               "type": "number",
               "format": "float"
@@ -202,7 +121,7 @@
           },
           {
             "in": "query",
-            "name": "longitude",
+            "name": "filter[longitude]",
             "schema": {
               "type": "number",
               "format": "float"
@@ -213,7 +132,7 @@
           },
           {
             "in": "query",
-            "name": "radius",
+            "name": "filter[radius]",
             "schema": {
               "type": "number",
               "format": "float"
@@ -224,7 +143,7 @@
           },
           {
             "in": "query",
-            "name": "accuracy",
+            "name": "filter[accuracy]",
             "schema": {
               "type": "number",
               "format": "float",
@@ -237,7 +156,7 @@
           },
           {
             "in": "query",
-            "name": "deviation",
+            "name": "filter[deviation]",
             "schema": {
               "type": "number",
               "format": "float"
@@ -248,7 +167,7 @@
           },
           {
             "in": "query",
-            "name": "boundingBox",
+            "name": "filter[boundingBox]",
             "schema": {
               "type": "array",
               "items": {
@@ -257,41 +176,19 @@
               }
             },
             "required": false,
-            "description": "Bounding box representing [left, bottom, right, top]",
-            "example": [
-              8.23,
-              48.91,
-              8.59,
-              49.08
-            ],
+            "description": "Bounding box representing left, bottom, right, top. The query parametes need to be passed 4 times in exactly the order left, bottom, right, top.",
             "style": "form",
             "explode": false
           },
           {
             "in": "query",
-            "name": "path",
+            "name": "filter[path]",
             "schema": {
-              "type": "array",
-              "items": {
-                "type": "array",
-                "items": {
-                  "type": "number",
-                  "format": "float"
-                }
-              }
+              "type": "string"
             },
             "required": false,
-            "description": "Path",
-            "example": [
-              [
-                49.13,
-                9.89
-              ],
-              [
-                49.5,
-                9.12
-              ]
-            ]
+            "description": "Path as [Encoded Polyline Algorithm Format](https://developers.google.com/maps/documentation/utilities/polylinealgorithm)",
+            "example": "_p~iF~ps|U_ulLnnqC_mqNvxq`@"
           }
         ],
         "responses": {
@@ -300,7 +197,25 @@
             "content": {
               "application/vnd.api+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/GasStationResponse"
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/GasStations"
+                    },
+                    "included": {
+                      "type": "array",
+                      "items": {
+                        "oneOf": [
+                          {
+                            "$ref": "#/components/schemas/FuelPrice"
+                          },
+                          {
+                            "$ref": "#/components/schemas/LocationBasedApp"
+                          }
+                        ]
+                      }
+                    }
+                  }
                 },
                 "example": {
                   "data": [
@@ -320,34 +235,40 @@
                         },
                         "openingHours": [
                           {
-                            "weekdays": [
+                            "days": [
                               "Montag",
                               "Dienstag",
                               "Mittwoch",
                               "Donnerstag",
                               "Freitag"
                             ],
-                            "openFromTo": [
-                              "06:00",
-                              "23:00"
+                            "timespans": [
+                              {
+                                "from": "06:00",
+                                "to": "23:00"
+                              }
                             ]
                           },
                           {
-                            "weekdays": [
+                            "days": [
                               "Samstag"
                             ],
-                            "openFromTo": [
-                              "07:00",
-                              "23:00"
+                            "timespans": [
+                              {
+                                "from": "07:00",
+                                "to": "23:00"
+                              }
                             ]
                           },
                           {
-                            "weekdays": [
+                            "days": [
                               "Sonntag"
                             ],
-                            "openFromTo": [
-                              "07:00",
-                              "22:00"
+                            "timespans": [
+                              {
+                                "from": "07:00",
+                                "to": "22:00"
+                              }
                             ]
                           }
                         ],
@@ -394,8 +315,7 @@
                       "id": "6b5bff6f-74e1-40a1-9da0-72305292d939",
                       "attributes": {
                         "fuelType": "ron95_e5",
-                        "fuelAmountUnit": "Ltr",
-                        "pricePerUnit": 1.399,
+                        "price": 1.399,
                         "currency": "EUR",
                         "productName": "Super E5"
                       }
@@ -405,8 +325,7 @@
                       "id": "f563e0ee-ba9a-4869-8fe7-42639fcf375d",
                       "attributes": {
                         "fuelType": "ron95_e10",
-                        "fuelAmountUnit": "Ltr",
-                        "pricePerUnit": 1.379,
+                        "price": 1.379,
                         "currency": "EUR",
                         "productName": "Super E10"
                       }
@@ -416,8 +335,7 @@
                       "id": "cb1afd35-f531-4606-abc8-e1cfbc1f96f5",
                       "attributes": {
                         "fuelType": "diesel",
-                        "fuelAmountUnit": "Ltr",
-                        "pricePerUnit": 1.239,
+                        "price": 1.239,
                         "currency": "EUR",
                         "productName": "Diesel"
                       }
@@ -430,20 +348,23 @@
                         "title": "PACE Fueling App",
                         "subtitle": "Zahle bargeldlos mit der PACE Fueling App",
                         "insideAppArea": true,
-                        "appArea": [
-                          [
-                            49.012,
-                            8.424
-                          ],
-                          [
-                            49.1,
-                            9.34
-                          ],
-                          [
-                            48.7,
-                            8.92
+                        "appArea": {
+                          "type": "Polygon",
+                          "coordinates": [
+                            [
+                              49.012,
+                              8.424
+                            ],
+                            [
+                              49.1,
+                              9.34
+                            ],
+                            [
+                              48.7,
+                              8.92
+                            ]
                           ]
-                        ],
+                        },
                         "logoUrl": "http://via.placeholder.com/200x200",
                         "pwaUrl": "http://via.placeholder.com/150x150",
                         "androidInstantAppUrl": "http://via.placeholder.com/150x150"
@@ -468,10 +389,2083 @@
           }
         }
       }
+    },
+    "/beta/gas-stations/{id}": {
+      "get": {
+        "tags": [
+          "Gas Stations"
+        ],
+        "operationId": "GetGasStation",
+        "security": [
+          {
+            "OAuth2": [
+              "poi:gas-stations:read"
+            ]
+          }
+        ],
+        "summary": "Get a specific gas station",
+        "description": "Returns an individual gas station\n",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "example": "be83d-a68d-41e3-9467-eb60442ff27b",
+            "required": true,
+            "description": "Gas station ID"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/vnd.api+json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/GasStation"
+                    },
+                    "included": {
+                      "type": "array",
+                      "items": {
+                        "oneOf": [
+                          {
+                            "$ref": "#/components/schemas/FuelPrice"
+                          },
+                          {
+                            "$ref": "#/components/schemas/LocationBasedApp"
+                          }
+                        ]
+                      }
+                    }
+                  }
+                },
+                "example": {
+                  "data": {
+                    "type": "gasStation",
+                    "id": "b86b67e9-7fae-4500-8885-45c8032056cc",
+                    "attributes": {
+                      "latitude": 49.013,
+                      "longitude": 8.425,
+                      "stationName": "PACE Station",
+                      "address": {
+                        "street": "Haid-und-Neu-Str.",
+                        "houseNo": "18",
+                        "postalCode": "76131",
+                        "city": "Karlsruhe",
+                        "countryCode": "DE"
+                      },
+                      "openingHours": [
+                        {
+                          "days": [
+                            "Montag",
+                            "Dienstag",
+                            "Mittwoch",
+                            "Donnerstag",
+                            "Freitag"
+                          ],
+                          "timespans": [
+                            {
+                              "from": "06:00",
+                              "to": "23:00"
+                            }
+                          ]
+                        },
+                        {
+                          "days": [
+                            "Samstag"
+                          ],
+                          "timespans": [
+                            {
+                              "from": "07:00",
+                              "to": "23:00"
+                            }
+                          ]
+                        },
+                        {
+                          "days": [
+                            "Sonntag"
+                          ],
+                          "timespans": [
+                            {
+                              "from": "07:00",
+                              "to": "22:00"
+                            }
+                          ]
+                        }
+                      ],
+                      "amenities": [
+                        "restaurant",
+                        "wifi",
+                        "toilets"
+                      ],
+                      "paymentMethods": [
+                        "sepa"
+                      ]
+                    },
+                    "relationships": {
+                      "fuelPrices": {
+                        "data": [
+                          {
+                            "type": "fuelPrice",
+                            "id": "6b5bff6f-74e1-40a1-9da0-72305292d939"
+                          },
+                          {
+                            "type": "fuelPrice",
+                            "id": "f563e0ee-ba9a-4869-8fe7-42639fcf375d"
+                          },
+                          {
+                            "type": "fuelPrice",
+                            "id": "cb1afd35-f531-4606-abc8-e1cfbc1f96f5"
+                          }
+                        ]
+                      },
+                      "locationBasedApps": {
+                        "data": [
+                          {
+                            "type": "locationBasedApp",
+                            "id": "89a072d1-0255-4abb-b863-c463e4b78453"
+                          }
+                        ]
+                      }
+                    }
+                  },
+                  "included": [
+                    {
+                      "type": "fuelPrice",
+                      "id": "6b5bff6f-74e1-40a1-9da0-72305292d939",
+                      "attributes": {
+                        "fuelType": "ron95_e5",
+                        "fuelAmountUnit": "Ltr",
+                        "price": 1.399,
+                        "currency": "EUR",
+                        "productName": "Super E5"
+                      }
+                    },
+                    {
+                      "type": "fuelPrice",
+                      "id": "f563e0ee-ba9a-4869-8fe7-42639fcf375d",
+                      "attributes": {
+                        "fuelType": "ron95_e10",
+                        "fuelAmountUnit": "Ltr",
+                        "price": 1.379,
+                        "currency": "EUR",
+                        "productName": "Super E10"
+                      }
+                    },
+                    {
+                      "type": "fuelPrice",
+                      "id": "cb1afd35-f531-4606-abc8-e1cfbc1f96f5",
+                      "attributes": {
+                        "fuelType": "diesel",
+                        "fuelAmountUnit": "Ltr",
+                        "price": 1.239,
+                        "currency": "EUR",
+                        "productName": "Diesel"
+                      }
+                    },
+                    {
+                      "type": "locationBasedApp",
+                      "id": "89a072d1-0255-4abb-b863-c463e4b78453",
+                      "attributes": {
+                        "appType": "fueling",
+                        "title": "PACE Fueling App",
+                        "subtitle": "Zahle bargeldlos mit der PACE Fueling App",
+                        "insideAppArea": true,
+                        "appArea": {
+                          "type": "Polygon",
+                          "coordinates": [
+                            [
+                              49.012,
+                              8.424
+                            ],
+                            [
+                              49.1,
+                              9.34
+                            ],
+                            [
+                              48.7,
+                              8.92
+                            ]
+                          ]
+                        },
+                        "logoUrl": "http://via.placeholder.com/200x200",
+                        "pwaUrl": "http://via.placeholder.com/150x150",
+                        "androidInstantAppUrl": "http://via.placeholder.com/150x150"
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "406": {
+            "$ref": "#/components/responses/NotAcceptable"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        }
+      }
+    },
+    "/beta/subscriptions": {
+      "post": {
+        "tags": [
+          "Subscriptions"
+        ],
+        "operationId": "CreateSubscription",
+        "security": [
+          {
+            "OAuth2": [
+              "poi:subscriptions:create"
+            ]
+          }
+        ],
+        "summary": "Create a POI subscription\n",
+        "description": "Create a POI subscription to send a push notification to the device with the specified `pushToken` once you enter the specified `area`, which is currently described by a polygon. If you specify `types`, you only get one of those POI types in the push notification. The notification contains (max 4kb)\n\n```\n{\n  \"target\": \"mapkit\"\n  \"poi\": {\n    \"id\": \"B064797C-C644-4D48-8DDD-E2D6A7D86770\", # poi ID\n    \"type\": \"movableCamera\",\n    \"attributes\": {\n      \"coordinates\": [101.0, 0.0], # lat, long\n      # ... potentially more data\n    }\n  }\n} ```\n",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/vnd.api+json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "data": {
+                    "$ref": "#/components/schemas/SubscriptionRequest"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/vnd.api+json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/Subscription"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "406": {
+            "$ref": "#/components/responses/NotAcceptable"
+          },
+          "415": {
+            "$ref": "#/components/responses/UnsupportedMediaType"
+          },
+          "422": {
+            "$ref": "#/components/responses/UnprocessableEntity"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        }
+      }
+    },
+    "/beta/tiles/query": {
+      "post": {
+        "tags": [
+          "Tiles"
+        ],
+        "operationId": "GetTiles",
+        "security": [
+          {
+            "OAuth2": [
+              "poi:tiles:read"
+            ]
+          }
+        ],
+        "summary": "Query for tiles\n",
+        "description": "Get a list of map tiles in the Protobuf binary wire format.\n",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/protobuf": {
+              "schema": {
+                "type": "string",
+                "format": "binary",
+                "description": "Protobuf binary wire format of the following definition\n```\nsyntax = \"proto3\";\n\nmessage TileQueryRequest {\n  uint32 zoom = 1;\n  repeated AreaQuery areas = 2;\n  repeated IndividualTileQuery tiles = 3;\n}\n\nmessage AreaQuery {\n  // if NE(1,1) + SW(1,1) == { tile(1,1) }\n  // if NE(2,1) + SW(1,2) == { tile(1,1), tile(2,1), tile(1,2), tile(2,2) }\n  Coordinate north_east = 1;\n  Coordinate south_west = 2;\n  uint64 invalidation_token = 3; // e.g. timestamp or sequence number\n}\n\nmessage IndividualTileQuery {\n  Coordinate geo = 1;\n  uint64 invalidation_token = 3; // e.g. timestamp or sequence number\n}\n\nmessage Coordinate {\n  uint32 x = 1; // tile coordinate\n  uint32 y = 2; // tile coordinate\n}\n```\n",
+                "x-protobuf-definition": {
+                  "version": "proto3",
+                  "messages": {
+                    "TileQueryRequest": {
+                      "fields": {
+                        "zoom": {
+                          "field-type": "uint32",
+                          "field-number": 1
+                        },
+                        "areas": {
+                          "field-type": "AreaQuery",
+                          "field-number": 2,
+                          "field-rule": "repeated"
+                        },
+                        "tiles": {
+                          "field-type": "IndividualTileQuery",
+                          "field-number": 3,
+                          "field-rule": "repeated"
+                        }
+                      }
+                    },
+                    "AreaQuery": {
+                      "fields": {
+                        "north_east": {
+                          "field-type": "Coordinate",
+                          "field-number": 1
+                        },
+                        "south_west": {
+                          "field-type": "Coordinate",
+                          "field-number": 2
+                        },
+                        "invalidation_token": {
+                          "field-type": "uint64",
+                          "field-number": 3
+                        }
+                      }
+                    },
+                    "IndividualTileQuery": {
+                      "fields": {
+                        "geo": {
+                          "field-type": "Coordinate",
+                          "field-number": 1
+                        },
+                        "invalidation_token": {
+                          "field-type": "uint64",
+                          "field-number": 3
+                        }
+                      }
+                    },
+                    "Coordinate": {
+                      "fields": {
+                        "x": {
+                          "field-type": "uint32",
+                          "field-number": 1
+                        },
+                        "y": {
+                          "field-type": "uint32",
+                          "field-number": 2
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/protobuf": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary",
+                  "description": "Protobuf binary wire format of the following definition\n```\nsyntax = \"proto3\";\n\nmessage TileQueryResponse {\n  uint32 zoom = 1;\n  repeated VectorTile vector_tiles = 2;\n  uint64 invalidation_token = 3; // e.g. timestamp or sequence number\n}\n\nmessage VectorTile {\n  Coordinate geo = 1;\n  bytes vector_tiles = 3;\n}\n\nmessage Coordinate {\n  uint32 x = 1; // tile coordinate\n  uint32 y = 2; // tile coordinate\n}\n\n```\n",
+                  "x-protobuf-definition": {
+                    "version": "proto3",
+                    "messages": {
+                      "TileQueryResponse": {
+                        "fields": {
+                          "zoom": {
+                            "field-type": "uint32",
+                            "field-number": 1
+                          },
+                          "vector_tiles": {
+                            "field-type": "VectorTile",
+                            "field-number": 2,
+                            "field-rule": "repeated"
+                          },
+                          "invalidation_token": {
+                            "field-type": "uint64",
+                            "field-number": 3
+                          }
+                        }
+                      },
+                      "VectorTile": {
+                        "geo": {
+                          "field-type": "Coordinate",
+                          "field-number": 1
+                        },
+                        "vector_tiles": {
+                          "field-type": "bytes",
+                          "field-number": 3
+                        }
+                      },
+                      "Coordinate": {
+                        "fields": {
+                          "x": {
+                            "field-type": "uint32",
+                            "field-number": 1
+                          },
+                          "y": {
+                            "field-type": "uint32",
+                            "field-number": 2
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "406": {
+            "$ref": "#/components/responses/NotAcceptable"
+          },
+          "415": {
+            "$ref": "#/components/responses/UnsupportedMediaType"
+          },
+          "422": {
+            "$ref": "#/components/responses/UnprocessableEntity"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        }
+      }
+    },
+    "/beta/sources": {
+      "post": {
+        "tags": [
+          "Sources"
+        ],
+        "operationId": "CreateSource",
+        "security": [
+          {
+            "OAuth2": [
+              "poi:sources:create"
+            ]
+          }
+        ],
+        "summary": "Creates a new source",
+        "description": "Creates a new source",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/vnd.api+json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "data": {
+                    "$ref": "#/components/schemas/Source"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "OK",
+            "content": {
+              "application/vnd.api+json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/Source"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "406": {
+            "$ref": "#/components/responses/NotAcceptable"
+          },
+          "415": {
+            "$ref": "#/components/responses/UnsupportedMediaType"
+          },
+          "422": {
+            "$ref": "#/components/responses/UnprocessableEntity"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        }
+      },
+      "get": {
+        "tags": [
+          "Sources"
+        ],
+        "operationId": "GetSources",
+        "security": [
+          {
+            "OAuth2": [
+              "poi:sources:read"
+            ]
+          }
+        ],
+        "summary": "Returns a paginated list of sources",
+        "description": "Returns a paginated list of sources optionally filtered by poi type and/or name",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "page[number]",
+            "schema": {
+              "type": "integer"
+            },
+            "example": 1,
+            "description": "page number"
+          },
+          {
+            "in": "query",
+            "name": "page[size]",
+            "schema": {
+              "type": "integer"
+            },
+            "example": 50,
+            "description": "items per page"
+          },
+          {
+            "in": "query",
+            "name": "filter[poitype]",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "CameraCamera",
+                "FuelStation"
+              ]
+            },
+            "example": "FuelStation",
+            "description": "Filter for poi type, no filter returns all types"
+          },
+          {
+            "in": "query",
+            "name": "filter[name]",
+            "schema": {
+              "type": "string"
+            },
+            "description": "Filter for all sources with given source name"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/vnd.api+json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/Sources"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "406": {
+            "$ref": "#/components/responses/NotAcceptable"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        }
+      }
+    },
+    "/beta/sources/{sourceId}": {
+      "put": {
+        "tags": [
+          "Sources"
+        ],
+        "operationId": "UpdateSource",
+        "security": [
+          {
+            "OAuth2": [
+              "poi:sources:update"
+            ]
+          }
+        ],
+        "summary": "Updates source with specified id",
+        "description": "Updates source with specified id",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "sourceId",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "example": "be83d-a68d-41e3-9467-eb60442ff27b",
+            "description": "ID of the source"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/vnd.api+json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "data": {
+                    "$ref": "#/components/schemas/Source"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/vnd.api+json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/Source"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "406": {
+            "$ref": "#/components/responses/NotAcceptable"
+          },
+          "415": {
+            "$ref": "#/components/responses/UnsupportedMediaType"
+          },
+          "422": {
+            "$ref": "#/components/responses/UnprocessableEntity"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        }
+      },
+      "get": {
+        "tags": [
+          "Sources"
+        ],
+        "operationId": "GetSource",
+        "security": [
+          {
+            "OAuth2": [
+              "poi:sources:read"
+            ]
+          }
+        ],
+        "summary": "Returns source with specified id",
+        "description": "Returns source with specified id",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "sourceId",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "example": "be83d-a68d-41e3-9467-eb60442ff27b",
+            "description": "ID of the source"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/vnd.api+json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/Source"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "406": {
+            "$ref": "#/components/responses/NotAcceptable"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Sources"
+        ],
+        "operationId": "DeleteSource",
+        "security": [
+          {
+            "OAuth2": [
+              "poi:sources:delete"
+            ]
+          }
+        ],
+        "summary": "Deletes source with specified id",
+        "description": "Deletes source with specified id",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "sourceId",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "example": "be83d-a68d-41e3-9467-eb60442ff27b",
+            "description": "ID of the source"
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "OK"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "406": {
+            "$ref": "#/components/responses/NotAcceptable"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        }
+      }
+    },
+    "/beta/policies": {
+      "get": {
+        "tags": [
+          "Policies"
+        ],
+        "operationId": "GetPolicies",
+        "security": [
+          {
+            "OAuth2": [
+              "poi:policies:read"
+            ]
+          }
+        ],
+        "summary": "Returns a paginated list of policies",
+        "description": "Returns a paginated list of policies optionally filtered by poi type and/or country id and/or user id",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "page[number]",
+            "schema": {
+              "type": "integer"
+            },
+            "example": 1,
+            "description": "page number"
+          },
+          {
+            "in": "query",
+            "name": "page[size]",
+            "schema": {
+              "type": "integer"
+            },
+            "example": 50,
+            "description": "items per page"
+          },
+          {
+            "in": "query",
+            "name": "filter[poiType]",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "CameraCamera",
+                "FuelStation"
+              ]
+            },
+            "example": "FuelStation",
+            "description": "Filter for poi type, no filter returns all types"
+          },
+          {
+            "in": "query",
+            "name": "filter[countryId]",
+            "schema": {
+              "type": "string"
+            },
+            "example": "de",
+            "description": "Filter for all policies for the given country"
+          },
+          {
+            "in": "query",
+            "name": "filter[userId]",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "example": "be83d-a68d-41e3-9467-eb60442ff27b",
+            "description": "Filter for all policies created by the given user"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/vnd.api+json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/Policies"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "406": {
+            "$ref": "#/components/responses/NotAcceptable"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Policies"
+        ],
+        "operationId": "CreatePolicy",
+        "security": [
+          {
+            "OAuth2": [
+              "poi:policies:create"
+            ]
+          }
+        ],
+        "summary": "Creates a new policy",
+        "description": "Creates a new policy",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/vnd.api+json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "data": {
+                    "$ref": "#/components/schemas/Policy"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "OK",
+            "content": {
+              "application/vnd.api+json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/Policy"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "406": {
+            "$ref": "#/components/responses/NotAcceptable"
+          },
+          "415": {
+            "$ref": "#/components/responses/UnsupportedMediaType"
+          },
+          "422": {
+            "$ref": "#/components/responses/UnprocessableEntity"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        }
+      }
+    },
+    "/beta/policies/{policyId}": {
+      "get": {
+        "tags": [
+          "Policies"
+        ],
+        "operationId": "GetPolicy",
+        "security": [
+          {
+            "OAuth2": [
+              "poi:policies:read"
+            ]
+          }
+        ],
+        "summary": "Returns policy with specified id",
+        "description": "Returns policy with specified id",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "policyId",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "example": "be83d-a68d-41e3-9467-eb60442ff27b",
+            "description": "ID of the policy"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/vnd.api+json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/Policy"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "406": {
+            "$ref": "#/components/responses/NotAcceptable"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        }
+      }
+    },
+    "/beta/events": {
+      "get": {
+        "tags": [
+          "Events"
+        ],
+        "operationId": "GetEvents",
+        "security": [
+          {
+            "OAuth2": [
+              "poi:events:read"
+            ]
+          }
+        ],
+        "summary": "Returns a list of events",
+        "description": "Returns a list of eventsoptionally filtered by poi type and/or country id and/or user id",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "page[number]",
+            "schema": {
+              "type": "integer"
+            },
+            "example": 1,
+            "description": "page number"
+          },
+          {
+            "in": "query",
+            "name": "page[size]",
+            "schema": {
+              "type": "integer"
+            },
+            "example": 50,
+            "description": "items per page"
+          },
+          {
+            "in": "query",
+            "name": "filter[sourceId]",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "example": "be83d-a68d-41e3-9467-eb60442ff27b",
+            "description": "Filter for all events from given source id"
+          },
+          {
+            "in": "query",
+            "name": "filter[userId]",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "example": "be83d-a68d-41e3-9467-eb60442ff27b",
+            "description": "Filter for all events for the changes made by a given user"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/vnd.api+json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/Events"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "406": {
+            "$ref": "#/components/responses/NotAcceptable"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        }
+      }
+    },
+    "/beta/pois": {
+      "get": {
+        "tags": [
+          "POI"
+        ],
+        "operationId": "GetPois",
+        "security": [
+          {
+            "OAuth2": [
+              "poi:pois:read"
+            ]
+          }
+        ],
+        "summary": "Returns a paginated list of POIs",
+        "description": "Returns a paginated list of POIs optionally filtered by type, appId and/or query",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "page[number]",
+            "schema": {
+              "type": "integer"
+            },
+            "example": 1,
+            "description": "page number"
+          },
+          {
+            "in": "query",
+            "name": "page[size]",
+            "schema": {
+              "type": "integer"
+            },
+            "example": 50,
+            "description": "items per page"
+          },
+          {
+            "in": "query",
+            "name": "filter[type]",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "CameraCamera",
+                "FuelStation"
+              ]
+            },
+            "example": "FuelStation",
+            "description": "Filter for poi type, no filter returns all types"
+          },
+          {
+            "in": "query",
+            "name": "filter[appId]",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "example": "be83d-a68d-41e3-9467-eb60442ff27b",
+            "description": "Filter id for app id, no filter returns pois for all apps"
+          },
+          {
+            "in": "query",
+            "name": "filter[query]",
+            "schema": {
+              "type": "string"
+            },
+            "description": "query text"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/vnd.api+json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/POIs"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "406": {
+            "$ref": "#/components/responses/NotAcceptable"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        }
+      }
+    },
+    "/beta/pois/{poiId}": {
+      "get": {
+        "tags": [
+          "POI"
+        ],
+        "operationId": "GetPoi",
+        "security": [
+          {
+            "OAuth2": [
+              "poi:pois:read"
+            ]
+          }
+        ],
+        "summary": "Returns POI with specified id",
+        "description": "Returns POI with specified id",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "poiId",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "example": "be83d-a68d-41e3-9467-eb60442ff27b",
+            "description": "ID of the POI"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/vnd.api+json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/POI"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "406": {
+            "$ref": "#/components/responses/NotAcceptable"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        }
+      },
+      "patch": {
+        "tags": [
+          "POI"
+        ],
+        "operationId": "ChangePoi",
+        "security": [
+          {
+            "OAuth2": [
+              "poi:pois:update"
+            ]
+          }
+        ],
+        "summary": "Updates POI with specified id (only passed attributes will be updated)",
+        "description": "Returns POI with specified id (only passed attributes will be updated)",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "poiId",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "example": "be83d-a68d-41e3-9467-eb60442ff27b",
+            "description": "ID of the POI"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/vnd.api+json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "data": {
+                    "$ref": "#/components/schemas/POI"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/vnd.api+json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/POI"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "406": {
+            "$ref": "#/components/responses/NotAcceptable"
+          },
+          "415": {
+            "$ref": "#/components/responses/UnsupportedMediaType"
+          },
+          "422": {
+            "$ref": "#/components/responses/UnprocessableEntity"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        }
+      }
+    },
+    "/beta/apps/query": {
+      "get": {
+        "tags": [
+          "Apps"
+        ],
+        "operationId": "CheckForPaceApp",
+        "security": [
+          {
+            "OAuth2": [
+              "poi:apps:read"
+            ]
+          }
+        ],
+        "summary": "Query for location-based apps\n",
+        "description": "These location-based PACE apps deliver additional services for PACE customers based on their current position.\nYou can (or should) trigger this whenever:\n* A longer stand-still is detected\n* The engine is turned off\n* Every 5 seconds if the user \"left the road\"\n\nPlease note that calling this API is very cheap and can be done regularly.\n",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "page[number]",
+            "schema": {
+              "type": "integer"
+            },
+            "example": 1,
+            "description": "page number"
+          },
+          {
+            "in": "query",
+            "name": "page[size]",
+            "schema": {
+              "type": "integer"
+            },
+            "example": 50,
+            "description": "items per page"
+          },
+          {
+            "in": "query",
+            "name": "filter[latitude]",
+            "schema": {
+              "type": "number",
+              "format": "float"
+            },
+            "required": true,
+            "description": "Latitude",
+            "example": 48.123
+          },
+          {
+            "in": "query",
+            "name": "filter[longitude]",
+            "schema": {
+              "type": "number",
+              "format": "float"
+            },
+            "required": true,
+            "description": "Longitude",
+            "example": 9.456
+          },
+          {
+            "in": "query",
+            "name": "filter[gpsSource]",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "raw",
+                "mapMatched"
+              ]
+            },
+            "required": true,
+            "description": "GPS Source",
+            "example": "mapMatched"
+          },
+          {
+            "in": "query",
+            "name": "filter[appType]",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "fueling"
+              ]
+            },
+            "required": true,
+            "description": "Type of location-based app"
+          },
+          {
+            "in": "query",
+            "name": "filter[accuracy]",
+            "schema": {
+              "type": "number",
+              "format": "float"
+            },
+            "required": false,
+            "description": "GPS accuracy",
+            "example": 0.7
+          },
+          {
+            "in": "query",
+            "name": "filter[deviation]",
+            "schema": {
+              "type": "number",
+              "format": "float"
+            },
+            "required": false,
+            "description": "Deviation in case of map-matched GPS data",
+            "example": 0.35
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/vnd.api+json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/LocationBasedApps"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "406": {
+            "$ref": "#/components/responses/NotAcceptable"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        }
+      }
+    },
+    "/beta/apps": {
+      "get": {
+        "tags": [
+          "Apps"
+        ],
+        "operationId": "GetApps",
+        "security": [
+          {
+            "OAuth2": [
+              "poi:apps:read"
+            ]
+          }
+        ],
+        "summary": "Returns a paginated list of apps",
+        "description": "Returns a paginated list of apps optionally filtered by type and/or query",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "page[number]",
+            "schema": {
+              "type": "integer"
+            },
+            "example": 1,
+            "description": "page number"
+          },
+          {
+            "in": "query",
+            "name": "page[size]",
+            "schema": {
+              "type": "integer"
+            },
+            "example": 50,
+            "description": "items per page"
+          },
+          {
+            "in": "query",
+            "name": "filter[type]",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "CameraCamera",
+                "FuelStation"
+              ]
+            },
+            "example": "FuelStation",
+            "description": "Filter for poi type, no filter returns all types"
+          },
+          {
+            "in": "query",
+            "name": "filter[query]",
+            "schema": {
+              "type": "string"
+            },
+            "description": "query text"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/vnd.api+json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/LocationBasedApps"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "406": {
+            "$ref": "#/components/responses/NotAcceptable"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Apps"
+        ],
+        "operationId": "CreateApp",
+        "security": [
+          {
+            "OAuth2": [
+              "poi:apps:create"
+            ]
+          }
+        ],
+        "summary": "Creates a new application",
+        "description": "Creates a new application",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/vnd.api+json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "data": {
+                    "$ref": "#/components/schemas/LocationBasedApp"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "OK",
+            "content": {
+              "application/vnd.api+json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/LocationBasedApp"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "406": {
+            "$ref": "#/components/responses/NotAcceptable"
+          },
+          "415": {
+            "$ref": "#/components/responses/UnsupportedMediaType"
+          },
+          "422": {
+            "$ref": "#/components/responses/UnprocessableEntity"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        }
+      }
+    },
+    "/beta/apps/{appID}": {
+      "get": {
+        "tags": [
+          "Apps"
+        ],
+        "operationId": "GetApp",
+        "security": [
+          {
+            "OAuth2": [
+              "poi:apps:read"
+            ]
+          }
+        ],
+        "summary": "Returns App with specified id",
+        "description": "Returns App with specified id",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "appID",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "example": "be83d-a68d-41e3-9467-eb60442ff27b",
+            "description": "ID of the App"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/vnd.api+json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/LocationBasedApp"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "406": {
+            "$ref": "#/components/responses/NotAcceptable"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Apps"
+        ],
+        "operationId": "UpdateApp",
+        "security": [
+          {
+            "OAuth2": [
+              "poi:apps:update"
+            ]
+          }
+        ],
+        "summary": "Updates App with specified id",
+        "description": "Updates App with specified id",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "appID",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "example": "be83d-a68d-41e3-9467-eb60442ff27b",
+            "description": "ID of the App"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/vnd.api+json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "data": {
+                    "$ref": "#/components/schemas/LocationBasedApp"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/vnd.api+json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/LocationBasedApp"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "406": {
+            "$ref": "#/components/responses/NotAcceptable"
+          },
+          "415": {
+            "$ref": "#/components/responses/UnsupportedMediaType"
+          },
+          "422": {
+            "$ref": "#/components/responses/UnprocessableEntity"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Apps"
+        ],
+        "operationId": "DeleteApp",
+        "security": [
+          {
+            "OAuth2": [
+              "poi:apps:delete"
+            ]
+          }
+        ],
+        "summary": "Deletes App with specified id",
+        "description": "Deletes App with specified id",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "appID",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "example": "be83d-a68d-41e3-9467-eb60442ff27b",
+            "description": "ID of the App"
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "OK"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "406": {
+            "$ref": "#/components/responses/NotAcceptable"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        }
+      }
+    },
+    "/beta/apps/{appID}/relationships/pois": {
+      "get": {
+        "tags": [
+          "Apps"
+        ],
+        "operationId": "GetAppPOIsRelationships",
+        "security": [
+          {
+            "OAuth2": [
+              "poi:apps:read"
+            ]
+          }
+        ],
+        "summary": "Returns all POI relations for specified app id",
+        "description": "Returns all POI relations for specified app id",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "appID",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "example": "be83d-a68d-41e3-9467-eb60442ff27b",
+            "description": "ID of the App"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/vnd.api+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AppPOIsRelationships"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "406": {
+            "$ref": "#/components/responses/NotAcceptable"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        }
+      },
+      "patch": {
+        "tags": [
+          "Apps"
+        ],
+        "operationId": "UdpateAppPOIsRelationships",
+        "security": [
+          {
+            "OAuth2": [
+              "poi:apps:update"
+            ]
+          }
+        ],
+        "summary": "Update all POI relations for specified app id",
+        "description": "Update all POI relations for specified app id",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "appID",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "example": "be83d-a68d-41e3-9467-eb60442ff27b",
+            "description": "ID of the App"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/vnd.api+json": {
+              "schema": {
+                "$ref": "#/components/schemas/AppPOIsRelationships"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/vnd.api+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AppPOIsRelationships"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "406": {
+            "$ref": "#/components/responses/NotAcceptable"
+          },
+          "415": {
+            "$ref": "#/components/responses/UnsupportedMediaType"
+          },
+          "422": {
+            "$ref": "#/components/responses/UnprocessableEntity"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        }
+      }
     }
   },
   "components": {
     "schemas": {
+      "SubscriptionRequest": {
+        "type": "object",
+        "required": [
+          "type",
+          "attributes"
+        ],
+        "properties": {
+          "type": {
+            "type": "string",
+            "enum": [
+              "subscription"
+            ]
+          },
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "example": "0c5b01d8-8dde-4d9f-be20-0865766bae6e"
+          },
+          "attributes": {
+            "type": "object",
+            "required": [
+              "area",
+              "types",
+              "pushToken"
+            ],
+            "properties": {
+              "area": {
+                "type": "object",
+                "required": [
+                  "type",
+                  "coordinates"
+                ],
+                "description": "Once entered, a notification is sent\n",
+                "properties": {
+                  "type": {
+                    "type": "string",
+                    "enum": [
+                      "Polygon"
+                    ]
+                  },
+                  "coordinates": {
+                    "type": "array",
+                    "items": {
+                      "type": "array",
+                      "items": {
+                        "type": "number",
+                        "format": "float"
+                      }
+                    },
+                    "description": "Polygon coordinates with 4 or more positions. The first and last positions are equivalent (they represent equivalent points)\n",
+                    "example": [
+                      [
+                        100,
+                        0
+                      ],
+                      [
+                        101,
+                        0
+                      ],
+                      [
+                        101,
+                        1
+                      ],
+                      [
+                        100,
+                        1
+                      ],
+                      [
+                        100,
+                        0
+                      ]
+                    ]
+                  }
+                }
+              },
+              "types": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "enum": [
+                    "gasStation",
+                    "movableCamera",
+                    "fixedCamera"
+                  ]
+                },
+                "description": "Filter for POI types contained in the push notification. An empty array indicates, that all POI types are allowed\n",
+                "example": [
+                  "gasStation",
+                  "movableCamera"
+                ]
+              },
+              "pushToken": {
+                "type": "string",
+                "description": "Firebase registration token",
+                "example": "84D31D6A-4E77-497A-BFA5-0D7E6F7342D2"
+              }
+            }
+          }
+        }
+      },
+      "Subscription": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "enum": [
+              "subscription"
+            ]
+          },
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "description": "POI Subscription ID",
+            "example": "706087b4-8bca-4db9-b037-8a7ff4ce5633"
+          },
+          "attributes": {
+            "type": "object",
+            "properties": {
+              "ttl": {
+                "type": "number",
+                "description": "TTL value for the subscription in minutes",
+                "example": 30
+              },
+              "pushToken": {
+                "type": "string",
+                "description": "Firebase registration token",
+                "example": "84D31D6A-4E77-497A-BFA5-0D7E6F7342D2"
+              }
+            }
+          }
+        }
+      },
       "LocationBasedApp": {
         "type": "object",
         "properties": {
@@ -511,28 +2505,7 @@
                 "example": true
               },
               "appArea": {
-                "type": "array",
-                "items": {
-                  "type": "array",
-                  "items": {
-                    "type": "number",
-                    "format": "float"
-                  }
-                },
-                "example": [
-                  [
-                    49.012,
-                    8.424
-                  ],
-                  [
-                    49.1,
-                    9.34
-                  ],
-                  [
-                    48.7,
-                    8.92
-                  ]
-                ]
+                "$ref": "#/components/schemas/CommonGeoJSONPolygon"
               },
               "logoUrl": {
                 "type": "string",
@@ -553,101 +2526,10 @@
           }
         }
       },
-      "LocationBasedAppResponse": {
-        "type": "object",
-        "properties": {
-          "data": {
-            "$ref": "#/components/schemas/LocationBasedApp"
-          }
-        }
-      },
-      "LocationBasedAppsResponse": {
-        "type": "object",
-        "properties": {
-          "data": {
-            "type": "array",
-            "items": {
-              "type": "object",
-              "properties": {
-                "type": {
-                  "type": "string",
-                  "description": "Type",
-                  "enum": [
-                    "locationBasedApp"
-                  ]
-                },
-                "id": {
-                  "type": "string",
-                  "format": "uuid",
-                  "description": "Location-based app ID",
-                  "example": "f106ac99-213c-4cf7-8c1b-1e841516026b"
-                },
-                "attributes": {
-                  "type": "object",
-                  "properties": {
-                    "appType": {
-                      "type": "string",
-                      "enum": [
-                        "fueling"
-                      ]
-                    },
-                    "title": {
-                      "type": "string",
-                      "example": "PACE Fueling App"
-                    },
-                    "subtitle": {
-                      "type": "string",
-                      "example": "Zahle bargeldlos mit der PACE Fueling App"
-                    },
-                    "insideAppArea": {
-                      "type": "boolean",
-                      "description": "Boolean flag if the current position is inside the app area (polygon).",
-                      "example": true
-                    },
-                    "appArea": {
-                      "type": "array",
-                      "items": {
-                        "type": "array",
-                        "items": {
-                          "type": "number",
-                          "format": "float"
-                        }
-                      },
-                      "example": [
-                        [
-                          49.012,
-                          8.424
-                        ],
-                        [
-                          49.1,
-                          9.34
-                        ],
-                        [
-                          49.012,
-                          8.424
-                        ]
-                      ]
-                    },
-                    "logoUrl": {
-                      "type": "string",
-                      "description": "Logo URL",
-                      "example": "http://via.placeholder.com/200x200"
-                    },
-                    "pwaUrl": {
-                      "type": "string",
-                      "description": "Progressive web application URL",
-                      "example": "http://via.placeholder.com/200x200"
-                    },
-                    "androidInstantAppUrl": {
-                      "type": "string",
-                      "description": "Android instant app URL",
-                      "example": "http://via.placeholder.com/200x200"
-                    }
-                  }
-                }
-              }
-            }
-          }
+      "LocationBasedApps": {
+        "type": "array",
+        "items": {
+          "$ref": "#/components/schemas/LocationBasedApp"
         }
       },
       "FuelPrice": {
@@ -683,6 +2565,7 @@
                   "diesel_gtl",
                   "diesel_b7",
                   "lpg",
+                  "lng",
                   "cng",
                   "h2",
                   "Truck Diesel",
@@ -690,10 +2573,8 @@
                 ],
                 "example": "ron95_e10"
               },
-              "fuelAmountUnit": {
-                "$ref": "#/components/schemas/fuelAmountUnit"
-              },
-              "pricePerUnit": {
+              "price": {
+                "description": "per liter",
                 "type": "number",
                 "format": "float",
                 "example": 1.379
@@ -717,170 +2598,137 @@
           }
         }
       },
-      "GasStationResponse": {
+      "GasStation": {
         "type": "object",
         "properties": {
-          "data": {
-            "type": "array",
-            "items": {
-              "type": "object",
-              "properties": {
-                "type": {
+          "type": {
+            "type": "string",
+            "enum": [
+              "gasStation"
+            ]
+          },
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Gas Station ID",
+            "example": "d7101f72-a672-453c-9d36-d5809ef0ded6"
+          },
+          "attributes": {
+            "type": "object",
+            "properties": {
+              "latitude": {
+                "type": "number",
+                "format": "float",
+                "example": 49.013
+              },
+              "longitude": {
+                "type": "number",
+                "format": "float",
+                "example": 8.425
+              },
+              "stationName": {
+                "type": "string",
+                "example": "PACE Station"
+              },
+              "address": {
+                "type": "object",
+                "properties": {
+                  "street": {
+                    "type": "string",
+                    "example": "Haid-und-Neu-Str."
+                  },
+                  "houseNo": {
+                    "type": "string",
+                    "example": "18"
+                  },
+                  "postalCode": {
+                    "type": "string",
+                    "example": "76131"
+                  },
+                  "city": {
+                    "type": "string",
+                    "example": "Karlsruhe"
+                  },
+                  "countryCode": {
+                    "type": "string",
+                    "example": "DE",
+                    "description": "Country code in as specified in ISO 3166-1."
+                  }
+                }
+              },
+              "openingHours": {
+                "$ref": "#/components/schemas/CommonOpeningHours"
+              },
+              "amenities": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "example": [
+                  "restaurant"
+                ]
+              },
+              "paymentMethods": {
+                "type": "array",
+                "items": {
                   "type": "string",
                   "enum": [
-                    "gasStation"
+                    "sepa"
                   ]
                 },
-                "id": {
-                  "type": "string",
-                  "format": "uuid",
-                  "description": "Gas Station ID",
-                  "example": "d7101f72-a672-453c-9d36-d5809ef0ded6"
-                },
-                "attributes": {
-                  "type": "object",
-                  "properties": {
-                    "latitude": {
-                      "type": "number",
-                      "format": "float",
-                      "example": 49.013
-                    },
-                    "longitude": {
-                      "type": "number",
-                      "format": "float",
-                      "example": 8.425
-                    },
-                    "stationName": {
-                      "type": "string",
-                      "example": "PACE Station"
-                    },
-                    "address": {
+                "example": [
+                  "sepa"
+                ]
+              }
+            }
+          },
+          "relationships": {
+            "type": "object",
+            "properties": {
+              "fuelPrices": {
+                "type": "object",
+                "properties": {
+                  "data": {
+                    "type": "array",
+                    "items": {
                       "type": "object",
                       "properties": {
-                        "street": {
+                        "type": {
                           "type": "string",
-                          "example": "Haid-und-Neu-Str."
+                          "enum": [
+                            "fuelPrice"
+                          ]
                         },
-                        "houseNo": {
+                        "id": {
                           "type": "string",
-                          "example": "18"
-                        },
-                        "postalCode": {
-                          "type": "string",
-                          "example": "76131"
-                        },
-                        "city": {
-                          "type": "string",
-                          "example": "Karlsruhe"
-                        },
-                        "countryCode": {
-                          "type": "string",
-                          "example": "DE",
-                          "description": "Country code in as specified in ISO 3166-1."
+                          "format": "uuid",
+                          "description": "Fuel Price ID",
+                          "example": "486e1b37-10b5-4089-aa21-15dea6f0e01e"
                         }
                       }
-                    },
-                    "openingHours": {
-                      "type": "array",
-                      "items": {
-                        "type": "object",
-                        "properties": {
-                          "weekdays": {
-                            "type": "array",
-                            "items": {
-                              "type": "string"
-                            },
-                            "example": [
-                              "Montag",
-                              "Dienstag"
-                            ]
-                          },
-                          "openFromTo": {
-                            "type": "array",
-                            "items": {
-                              "type": "string"
-                            },
-                            "example": [
-                              "07:30",
-                              "20:30"
-                            ]
-                          }
-                        }
-                      }
-                    },
-                    "amenities": {
-                      "type": "array",
-                      "items": {
-                        "type": "string"
-                      },
-                      "example": [
-                        "restaurant"
-                      ]
-                    },
-                    "paymentMethods": {
-                      "type": "array",
-                      "items": {
-                        "type": "string",
-                        "enum": [
-                          "sepa"
-                        ]
-                      },
-                      "example": [
-                        "sepa"
-                      ]
                     }
                   }
-                },
-                "relationships": {
-                  "type": "object",
-                  "properties": {
-                    "fuelPrices": {
+                }
+              },
+              "locationBasedApps": {
+                "type": "object",
+                "properties": {
+                  "data": {
+                    "type": "array",
+                    "items": {
                       "type": "object",
                       "properties": {
-                        "data": {
-                          "type": "array",
-                          "items": {
-                            "type": "object",
-                            "properties": {
-                              "type": {
-                                "type": "string",
-                                "enum": [
-                                  "fuelPrice"
-                                ]
-                              },
-                              "id": {
-                                "type": "string",
-                                "format": "uuid",
-                                "description": "Fuel Price ID",
-                                "example": "486e1b37-10b5-4089-aa21-15dea6f0e01e"
-                              }
-                            }
-                          }
-                        }
-                      }
-                    },
-                    "locationBasedApps": {
-                      "type": "object",
-                      "properties": {
-                        "data": {
-                          "type": "array",
-                          "items": {
-                            "type": "object",
-                            "properties": {
-                              "type": {
-                                "type": "string",
-                                "enum": [
-                                  "locationBasedApp"
-                                ]
-                              },
-                              "id": {
-                                "type": "string",
-                                "format": "uuid",
-                                "description": "Location-based app ID",
-                                "example": "819fe1f6-9056-43d4-af3f-a7a712793339"
-                              }
-                            }
-                          }
+                        "type": {
+                          "type": "string",
+                          "enum": [
+                            "locationBasedApp"
+                          ]
+                        },
+                        "id": {
+                          "type": "string",
+                          "format": "uuid",
+                          "description": "Location-based app ID",
+                          "example": "819fe1f6-9056-43d4-af3f-a7a712793339"
                         }
                       }
                     }
@@ -888,20 +2736,13 @@
                 }
               }
             }
-          },
-          "included": {
-            "type": "array",
-            "items": {
-              "oneOf": [
-                {
-                  "$ref": "#/components/schemas/FuelPrice"
-                },
-                {
-                  "$ref": "#/components/schemas/LocationBasedApp"
-                }
-              ]
-            }
           }
+        }
+      },
+      "GasStations": {
+        "type": "array",
+        "items": {
+          "$ref": "#/components/schemas/GasStation"
         }
       },
       "currency": {
@@ -917,6 +2758,494 @@
           "Ltr"
         ],
         "example": "Ltr"
+      },
+      "POI": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "$ref": "#/components/schemas/POIType"
+          },
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "description": "POI ID",
+            "example": "f106ac99-213c-4cf7-8c1b-1e841516026b"
+          },
+          "attributes": {
+            "type": "object",
+            "properties": {
+              "countryId": {
+                "$ref": "#/components/schemas/CommonCountryId"
+              },
+              "position": {
+                "$ref": "#/components/schemas/CommonGeoJSONPoint"
+              },
+              "boundary": {
+                "$ref": "#/components/schemas/CommonGeoJSONPolygon"
+              },
+              "data": {
+                "description": "a JSON field containing POI specific data",
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/FieldData"
+                }
+              },
+              "metadata": {
+                "description": "a JSON field containing information about data field origin and update time",
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/FieldMetaData"
+                }
+              },
+              "active": {
+                "type": "boolean"
+              },
+              "createdAt": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "updatedAt": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "last_seenAt": {
+                "type": "string",
+                "format": "date-time"
+              }
+            }
+          }
+        }
+      },
+      "POIs": {
+        "type": "array",
+        "items": {
+          "$ref": "#/components/schemas/POI"
+        }
+      },
+      "AppPOIsRelationships": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "type": {
+                  "type": "string",
+                  "enum": [
+                    "pois"
+                  ],
+                  "description": "name of the relation type"
+                },
+                "id": {
+                  "type": "string",
+                  "format": "uuid",
+                  "example": "d7101f72-a672-453c-9d36-d5809ef0ded6",
+                  "description": "ID of the for the referenced object"
+                }
+              }
+            }
+          }
+        }
+      },
+      "Policy": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "description": "Type",
+            "enum": [
+              "policies"
+            ]
+          },
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Policy ID",
+            "example": "f106ac99-213c-4cf7-8c1b-1e841516026b"
+          },
+          "attributes": {
+            "type": "object",
+            "properties": {
+              "poiType": {
+                "$ref": "#/components/schemas/POIType"
+              },
+              "countryId": {
+                "$ref": "#/components/schemas/CommonCountryId"
+              },
+              "createdAt": {
+                "type": "string",
+                "format": "date-time",
+                "description": "Time of POI creation in (iso8601 without zone - expects UTC)",
+                "example": "2018-01-01T00:00:00.00000"
+              },
+              "rules": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/PolicyRule"
+                }
+              },
+              "userId": {
+                "type": "string",
+                "format": "uuid",
+                "description": "Tracks who did last change",
+                "example": "f106ac99-213c-4cf7-8c1b-1e841516026b"
+              }
+            }
+          }
+        }
+      },
+      "Policies": {
+        "type": "array",
+        "items": {
+          "$ref": "#/components/schemas/Policy"
+        }
+      },
+      "PolicyRule": {
+        "type": "object",
+        "required": [
+          "field",
+          "priorities"
+        ],
+        "properties": {
+          "field": {
+            "$ref": "#/components/schemas/FieldName"
+          },
+          "priorities": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PolicyRulePriority"
+            }
+          }
+        }
+      },
+      "PolicyRulePriority": {
+        "type": "object",
+        "required": [
+          "sourceId"
+        ],
+        "properties": {
+          "sourceId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Tracks who did last change",
+            "example": "f106ac99-213c-4cf7-8c1b-1e841516026b"
+          },
+          "timeToLive": {
+            "type": "number",
+            "default": 0,
+            "description": "Time to live in seconds (in relation to other entries)"
+          }
+        }
+      },
+      "Event": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "description": "Type",
+            "enum": [
+              "events"
+            ]
+          },
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Event ID",
+            "example": "f106ac99-213c-4cf7-8c1b-1e841516026b"
+          },
+          "attributes": {
+            "type": "object",
+            "properties": {
+              "createdAt": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "eventAt": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "userId": {
+                "type": "string",
+                "format": "uuid",
+                "description": "Tracks who did last change",
+                "example": "f106ac99-213c-4cf7-8c1b-1e841516026b"
+              },
+              "data": {
+                "$ref": "#/components/schemas/FieldData"
+              }
+            }
+          }
+        }
+      },
+      "Events": {
+        "type": "array",
+        "items": {
+          "$ref": "#/components/schemas/Event"
+        }
+      },
+      "Source": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "description": "Type",
+            "enum": [
+              "sources"
+            ]
+          },
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Source ID",
+            "example": "f106ac99-213c-4cf7-8c1b-1e841516026b"
+          },
+          "attributes": {
+            "type": "object",
+            "properties": {
+              "name": {
+                "type": "string",
+                "description": "source name, unique"
+              },
+              "poiType": {
+                "$ref": "#/components/schemas/POIType"
+              },
+              "schema": {
+                "description": "JSON field describing the structure of the updates sent by the data source",
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/FieldName"
+                }
+              },
+              "createdAt": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "updatedAt": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "lastDataAt": {
+                "description": "timestamp of last import from source",
+                "type": "string",
+                "format": "date-time"
+              }
+            }
+          }
+        }
+      },
+      "Sources": {
+        "type": "array",
+        "items": {
+          "$ref": "#/components/schemas/Source"
+        }
+      },
+      "FieldName": {
+        "type": "string",
+        "enum": [
+          "name",
+          "brand",
+          "street",
+          "houseNumber",
+          "postCode",
+          "place",
+          "holidayIdentifier",
+          "operatingHours",
+          "fuelPrices"
+        ],
+        "x-valid-combinations": {
+          "fuelStation": [
+            "name",
+            "brand",
+            "street",
+            "houseNumber",
+            "postCode",
+            "place",
+            "holidayIdentifier",
+            "operatingHours",
+            "fuelPrices"
+          ]
+        }
+      },
+      "FieldMetaData": {
+        "type": "object",
+        "properties": {
+          "field": {
+            "$ref": "#/components/schemas/FieldName"
+          },
+          "SourceId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Source ID",
+            "example": "f106ac99-213c-4cf7-8c1b-1e841516026b"
+          },
+          "UpdatedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "FieldData": {
+        "type": "object",
+        "properties": {
+          "field": {
+            "$ref": "#/components/schemas/FieldName"
+          },
+          "value": {
+            "type": "string",
+            "description": "escaped json"
+          }
+        }
+      },
+      "POIType": {
+        "type": "string",
+        "description": "POI type this applies to",
+        "enum": [
+          "SpeedCamera",
+          "GasStation"
+        ]
+      },
+      "CommonCountryId": {
+        "type": "string",
+        "description": "Country this policy applies to (as ISO3166Alpha2)",
+        "example": "DE",
+        "x-validator": [
+          "ISO3166Alpha2"
+        ]
+      },
+      "CommonGeoJSONPoint": {
+        "type": "object",
+        "description": "https://tools.ietf.org/html/rfc7946#section-3.1.2",
+        "properties": {
+          "type": {
+            "type": "string",
+            "enum": [
+              "Point"
+            ],
+            "example": "Point"
+          },
+          "coordinates": {
+            "$ref": "#/components/schemas/CommonLatLong"
+          }
+        }
+      },
+      "CommonGeoJSONPolygon": {
+        "type": "object",
+        "description": "https://tools.ietf.org/html/rfc7946#section-3.1.6; used as [bounding box](https://tools.ietf.org/html/rfc7946#section-5)",
+        "properties": {
+          "type": {
+            "type": "string",
+            "enum": [
+              "Polygon"
+            ],
+            "example": "Polygon"
+          },
+          "coordinates": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CommonLatLong"
+            },
+            "example": [
+              [
+                49.012,
+                8.424
+              ],
+              [
+                49.1,
+                9.34
+              ],
+              [
+                49.012,
+                8.424
+              ]
+            ]
+          }
+        }
+      },
+      "CommonLatLong": {
+        "type": "array",
+        "description": "https://tools.ietf.org/html/rfc7946",
+        "items": {
+          "type": "number",
+          "format": "float"
+        },
+        "example": [
+          -71.1043443253471,
+          42.3150676015829
+        ]
+      },
+      "CommonOpeningHours": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "properties": {
+            "days": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "example": [
+                "Montag",
+                "Dienstag"
+              ]
+            },
+            "timespans": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "from": {
+                    "type": "string",
+                    "example": "07:30"
+                  },
+                  "to": {
+                    "type": "string",
+                    "example": "20:30"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "example": [
+          {
+            "days": [
+              "Montag",
+              "Dienstag",
+              "Mittwoch",
+              "Donnerstag",
+              "Freitag"
+            ],
+            "hours": [
+              {
+                "from": "06:00",
+                "to": "23:00"
+              }
+            ]
+          },
+          {
+            "days": [
+              "Samstag"
+            ],
+            "hours": [
+              {
+                "from": "07:00",
+                "to": "23:00"
+              }
+            ]
+          },
+          {
+            "days": [
+              "Sonntag"
+            ],
+            "hours": [
+              {
+                "from": "07:00",
+                "to": "22:00"
+              }
+            ]
+          }
+        ]
       },
       "Errors": {
         "type": "object",
@@ -958,7 +3287,7 @@
                 },
                 "source": {
                   "type": "object",
-                  "desciption": "An object containing references to the source of the error.\n",
+                  "description": "An object containing references to the source of the error.\n",
                   "properties": {
                     "pointer": {
                       "type": "string",
@@ -1003,6 +3332,16 @@
           }
         }
       },
+      "NotFound": {
+        "description": "Resource not found",
+        "content": {
+          "application/vnd.api+json": {
+            "schema": {
+              "$ref": "#/components/schemas/Errors"
+            }
+          }
+        }
+      },
       "NotAcceptable": {
         "description": "The specified Accept header is not valid",
         "content": {
@@ -1019,6 +3358,56 @@
           "application/vnd.api+json": {
             "schema": {
               "$ref": "#/components/schemas/Errors"
+            }
+          }
+        }
+      },
+      "UnsupportedMediaType": {
+        "description": "The specified Content-Type header is not valid",
+        "content": {
+          "application/vnd.api+json": {
+            "schema": {
+              "$ref": "#/components/schemas/Errors"
+            }
+          }
+        }
+      },
+      "UnprocessableEntity": {
+        "description": "Unprocessable entity, due to malformed or invalid json",
+        "content": {
+          "application/vnd.api+json": {
+            "schema": {
+              "$ref": "#/components/schemas/Errors"
+            }
+          }
+        }
+      }
+    },
+    "securitySchemes": {
+      "OAuth2": {
+        "type": "oauth2",
+        "flows": {
+          "authorizationCode": {
+            "authorizationUrl": "https://id.pace.cloud/oauth2/authorize",
+            "tokenUrl": "https://id.pace.cloud/oauth2/token",
+            "refreshUrl": "https://id.pace.cloud/oauth2/token",
+            "scopes": {
+              "poi:apps:create": "Create an app",
+              "poi:apps:delete": "Delete an app",
+              "poi:apps:read": "Get/search for an app",
+              "poi:apps:update": "Change an app",
+              "poi:events:read": "Get/search for events",
+              "poi:gas-stations:read": "Get/search for gas stations",
+              "poi:pois:read": "Get/search for pois",
+              "poi:pois:update": "Update a poi",
+              "poi:policies:create": "Create a policy",
+              "poi:policies:read": "Get/search for policies",
+              "poi:sources:create": "Create a source",
+              "poi:sources:delete": "Delete a source",
+              "poi:sources:read": "Get/search for sources",
+              "poi:sources:update": "Update a source",
+              "poi:subscriptions:create": "Create a subscription",
+              "poi:tiles:read": "Get/search for tiles"
             }
           }
         }

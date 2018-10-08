@@ -476,6 +476,7 @@ func (w *deletePaymentMethodResponseWriter) NotFound(err error) {
 
 // ThePaymentMethodWasDeletedSuccessfully responds with empty response (HTTP code 204)
 func (w *deletePaymentMethodResponseWriter) ThePaymentMethodWasDeletedSuccessfully() {
+	w.Header().Set("Content-Type", "application/vnd.api+json")
 	w.WriteHeader(204)
 }
 
@@ -565,6 +566,7 @@ func (w *deletePaymentTokenResponseWriter) NotFound(err error) {
 
 // ThePaymentTokenWasRemovedSuccessfully responds with empty response (HTTP code 204)
 func (w *deletePaymentTokenResponseWriter) ThePaymentTokenWasRemovedSuccessfully() {
+	w.Header().Set("Content-Type", "application/vnd.api+json")
 	w.WriteHeader(204)
 }
 

@@ -5,6 +5,7 @@ package generator
 
 import (
 	"fmt"
+	"path/filepath"
 	"regexp"
 	"strings"
 
@@ -101,5 +102,13 @@ func goNameHelper(name string) string {
 	name = strings.Title(name)
 	name = strings.Replace(name, "Url", "URL", -1)
 	name = idRegex.ReplaceAllString(name, "ID")
+	return name
+}
+
+func nameFromSchemaRef(ref *openapi3.SchemaRef) string {
+	name := goNameHelper(filepath.Base(ref.Ref))
+	if name == "." {
+		return ""
+	}
 	return name
 }
