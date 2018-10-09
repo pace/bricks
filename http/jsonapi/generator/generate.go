@@ -23,8 +23,10 @@ type buildFunc func(schema *openapi3.Swagger) error
 // be ignored during generation.
 // The Generator doesn't validate necessarily.
 type Generator struct {
-	goSource    *jen.File
-	serviceName string
+	goSource            *jen.File
+	serviceName         string
+	generatedTypes      map[string]bool
+	generatedArrayTypes map[string]bool
 }
 
 func loadSwaggerFromURI(loader *openapi3.SwaggerLoader, url *url.URL) (*openapi3.Swagger, error) { // nolint: interfacer
@@ -85,6 +87,8 @@ func (g *Generator) BuildSource(source, packagePath, packageName string) (string
 // BuildSchema generates the go code in the specified path with specified package name
 // based on the passed schema
 func (g *Generator) BuildSchema(schema *openapi3.Swagger, packagePath, packageName string) (string, error) {
+	g.generatedTypes = make(map[string]bool)
+	g.generatedArrayTypes = make(map[string]bool)
 	g.goSource = jen.NewFilePathName(packagePath, packageName)
 	g.goSource.ImportAlias(jsonAPIMetrics, "metrics")
 	g.goSource.ImportAlias(opentracing, "opentracing")

@@ -5,7 +5,6 @@ package generator
 
 import (
 	"fmt"
-	"path/filepath"
 	"sort"
 
 	"github.com/dave/jennifer/jen"
@@ -34,7 +33,11 @@ func (g *Generator) BuildTypes(schema *openapi3.Swagger) error {
 			continue
 		}
 
-		t := jen.Type().Id(name)
+		t, ok := g.newType(name)
+		if !ok { // type already exists
+			continue
+		}
+
 		err := g.buildType(name, t, schemaType)
 		if err != nil {
 			return err
@@ -51,7 +54,7 @@ func (g *Generator) buildType(prefix string, stmt *jen.Statement, schema *openap
 	// handle references
 	if schema.Ref != "" {
 		// if there is a reference to a type use it
-		stmt.Op("*").Id(goNameHelper(filepath.Base(schema.Ref)))
+		stmt.Op("*").Id(nameFromSchemaRef(schema))
 		return nil
 	}
 
@@ -59,6 +62,7 @@ func (g *Generator) buildType(prefix string, stmt *jen.Statement, schema *openap
 
 	switch val.Type {
 	case "array": // nolint: goconst
+		g.generatedArrayTypes[prefix] = true
 		return g.buildType(prefix, stmt.Index(), val.Items)
 	case "object":
 		if data := val.Properties["data"]; data != nil {
@@ -105,12 +109,19 @@ func (g *Generator) buildTypeStruct(name string, stmt *jen.Statement, schema *op
 		return err
 	}
 
-	// generate struct as separate objects to allow direct creation of those objects
-	g.addGoDoc(name, schema.Description)
-	g.goSource.Type().Id(name).Struct(fields...)
+	t, ok := g.newType(name)
+	if ok {
+		// generate struct as separate objects to allow direct creation of those objects
+		g.addGoDoc(name, schema.Description)
 
-	// use new struct pointer
-	stmt.Op("*").Id(name)
+		g.goSource.Add(t).Struct(fields...)
+		// use new struct pointer
+		stmt.Op("*").Id(name)
+		return nil
+	}
+
+	stmt.Struct(fields...)
+
 	return nil
 }
 
@@ -120,14 +131,27 @@ func (g *Generator) generateTypeReference(fallbackName string, schema *openapi3.
 	// handle references
 	if schema.Ref != "" {
 		// if there is a reference to a type use it
-		return jen.Id(goNameHelper(filepath.Base(schema.Ref))), nil
+		return jen.Id(nameFromSchemaRef(schema)), nil
+	}
+
+	// in case the type referenced is defined already directly reference it
+	sv := schema.Value
+	if sv.Type == "object" && sv.Properties["data"] != nil && sv.Properties["data"].Ref != "" {
+		id := nameFromSchemaRef(schema.Value.Properties["data"])
+		if g.generatedArrayTypes[id] {
+			return jen.Id(id), nil
+		}
+		return jen.Op("*").Id(id), nil
 	}
 
 	// generate type and doc as a fallback (if no ref provided)
-	g.addGoDoc(fallbackName, schema.Value.Description)
-	err := g.buildType(fallbackName, g.goSource.Type().Id(fallbackName), schema)
-	if err != nil {
-		return nil, err
+	t, ok := g.newType(fallbackName)
+	if ok {
+		g.addGoDoc(fallbackName, schema.Value.Description)
+		err := g.buildType(fallbackName, g.goSource.Add(t), schema)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	return jen.Op("*").Id(fallbackName), nil
@@ -264,6 +288,16 @@ func (g *Generator) generateIDField(idType, objectType *openapi3.Schema) (*jen.S
 	id.Tag(tags)
 	g.commentOrExample(id, idType)
 	return id, nil
+}
+
+// newType generates a new type only if it was not generated yet.
+// returns nil, false if type already exists
+func (g *Generator) newType(name string) (*jen.Statement, bool) {
+	if g.generatedTypes[name] {
+		return nil, false
+	}
+	g.generatedTypes[name] = true
+	return jen.Type().Id(name), true
 }
 
 func addRequiredOptionalTag(tags map[string]string, name string, schema *openapi3.Schema) {
