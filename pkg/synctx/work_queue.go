@@ -9,8 +9,12 @@ import (
 	"sync"
 )
 
+// WorkFunc a function that receives an context and optionally returns
+// an error. Returning an error will cancel all other worker functions
 type WorkFunc func(ctx context.Context) error
 
+// WorkerQueue is a work queue implementation that respects cancellation
+// using contexts
 type WorkQueue struct {
 	wg     WaitGroup
 	mu     sync.Mutex
@@ -20,6 +24,8 @@ type WorkQueue struct {
 	cancel func()
 }
 
+// NewWorkQueue creates a new WorkQueue that respects
+// the passed context for cancellation
 func NewWorkQueue(ctx context.Context) *WorkQueue {
 	ctx, cancel := context.WithCancel(ctx)
 	return &WorkQueue{
@@ -29,6 +35,9 @@ func NewWorkQueue(ctx context.Context) *WorkQueue {
 	}
 }
 
+// Add add work to the work queue. The passed description
+// will be used for the error message, if any. The function
+// will be immediately executed.
 func (queue *WorkQueue) Add(description string, fn WorkFunc) {
 	queue.wg.Add(1)
 	go func() {
@@ -43,6 +52,8 @@ func (queue *WorkQueue) Add(description string, fn WorkFunc) {
 	}()
 }
 
+// Wait waits until all worker functions are done,
+// one worker is failing or the context is canceled
 func (queue *WorkQueue) Wait() {
 	defer queue.cancel()
 
@@ -58,19 +69,20 @@ func (queue *WorkQueue) Wait() {
 	}
 }
 
+// Err returns the error if one of the work queue items failed
 func (queue *WorkQueue) Err() error {
 	queue.mu.Lock()
 	defer queue.mu.Unlock()
+
 	return queue.err
 }
 
 // setErr sets the error on the queue if not set already
 func (queue *WorkQueue) setErr(err error) {
+	queue.mu.Lock()
+	defer queue.mu.Unlock()
+
 	if queue.err == nil {
-		queue.mu.Lock()
-		if queue.err == nil {
-			queue.err = err
-		}
-		queue.mu.Unlock()
+		queue.err = err
 	}
 }
