@@ -141,6 +141,7 @@ func (lt *logtracer) handle(realProcess func(redis.Cmder) error) func(redis.Cmde
 
 		// add error
 		if err != nil {
+			span.LogFields(olog.Err(err))
 			le = le.Err(err)
 		}
 

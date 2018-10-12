@@ -106,7 +106,7 @@ func openTracingAdapter(event *pg.QueryProcessedEvent) {
 
 	// add error or result set info
 	if event.Error != nil {
-		fields = append(fields, olog.String("err", event.Error.Error()))
+		fields = append(fields, olog.Error(event.Error))
 	} else {
 		fields = append(fields,
 			olog.Int("affected", event.Result.RowsAffected()),
