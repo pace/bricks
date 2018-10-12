@@ -7,6 +7,7 @@ import (
 	"context"
 	"errors"
 	"testing"
+	"time"
 )
 
 func TestWorkQueueNoTask(t *testing.T) {
@@ -57,7 +58,8 @@ func TestWorkQueueOneTaskWithCancel(t *testing.T) {
 	cancel()
 	q := NewWorkQueue(ctx)
 	q.Add("some work", func(ctx context.Context) error {
-		return errors.New("Some error")
+		time.Sleep(10 * time.Millisecond)
+		return nil
 	})
 
 	q.Wait()
