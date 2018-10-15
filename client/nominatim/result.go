@@ -50,7 +50,7 @@ func (a Address) GermanShort() string {
 
 // CityEquivalent returns the first filled field of either 'city', 'town', 'village',
 // 'hamlet' or 'suburb'.
-// Based on based on https://github.com/openstreetmap/Nominatim/issues/885.
+// Based on https://github.com/openstreetmap/Nominatim/issues/885.
 func (a Address) CityEquivalent() string {
 	if a.City != "" {
 		return a.City

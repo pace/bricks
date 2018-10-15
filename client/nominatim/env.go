@@ -9,6 +9,7 @@ import (
 	"github.com/caarlos0/env"
 )
 
+// DefaultClient is initialized using the environment variables
 var DefaultClient *Client
 
 type config struct {
