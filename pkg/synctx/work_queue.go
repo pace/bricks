@@ -13,7 +13,7 @@ import (
 // an error. Returning an error will cancel all other worker functions
 type WorkFunc func(ctx context.Context) error
 
-// WorkerQueue is a work queue implementation that respects cancellation
+// WorkQueue is a work queue implementation that respects cancellation
 // using contexts
 type WorkQueue struct {
 	wg     WaitGroup
