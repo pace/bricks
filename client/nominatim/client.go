@@ -19,12 +19,16 @@ import (
 	"lab.jamit.de/pace/go-microservice/pkg/synctx"
 )
 
+// Client for nominatim using the configured endpoint
 type Client struct {
+	// Endpoint url e.g. https://nominatim.example.org/
 	Endpoint string
 }
 
+// ErrUnableToGeocode lat/lon don't match to a known address
 var ErrUnableToGeocode = errors.New("Unable to geocode")
 
+// ErrRequestFailed either the connection was lost or similar
 var ErrRequestFailed = errors.New("HTTP request failed")
 
 // SolidifiedReverse does two requests to the nominatim APIs one with zoom level 10 and one with
@@ -38,7 +42,7 @@ func (c *Client) SolidifiedReverse(ctx context.Context, lat, lon float64) (*Resu
 	// ignore errors for the zoom level 10, if there are any errors
 	// for that zoom level the request will simply not be enriched
 	wq.Add("query nominatim zoom level 10", func(ctx context.Context) error {
-		resultHigh, _ = c.Reverse(ctx, lat, lon, 10) // nolint: errcheck
+		resultHigh, _ = c.Reverse(ctx, lat, lon, 10) // nolint: errcheck,gosec
 		return nil
 	})
 
@@ -69,9 +73,15 @@ func (c *Client) SolidifiedReverse(ctx context.Context, lat, lon float64) (*Resu
 		if resultLow.Address.Suburb == "" {
 			resultLow.Address.Suburb = resultHigh.Address.Suburb
 		}
-		resultLow.Address.County = resultHigh.Address.County
-		resultLow.Address.StateDistrict = resultHigh.Address.StateDistrict
-		resultLow.Address.State = resultHigh.Address.StateDistrict
+		if resultLow.Address.County == "" {
+			resultLow.Address.County = resultHigh.Address.County
+		}
+		if resultLow.Address.StateDistrict == "" {
+			resultLow.Address.StateDistrict = resultHigh.Address.StateDistrict
+		}
+		if resultLow.Address.State == "" {
+			resultLow.Address.State = resultHigh.Address.StateDistrict
+		}
 	}
 
 	return resultLow, nil

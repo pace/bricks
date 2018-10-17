@@ -6,9 +6,10 @@ package oauth2
 import (
 	"encoding/json"
 	"errors"
-	"lab.jamit.de/pace/go-microservice/maintenance/log"
 	"net/http"
 	"net/url"
+
+	"lab.jamit.de/pace/go-microservice/maintenance/log"
 )
 
 type introspecter func(mdw *Middleware, token string, resp *introspectResponse) error
@@ -33,7 +34,7 @@ func introspect(m *Middleware, token string, s *introspectResponse) error {
 		return errUpstreamConnection
 	}
 
-	defer resp.Body.Close()
+	defer resp.Body.Close() // nolint: errcheck,gosec
 
 	// If Response is not 200, it means there are problems with setup, such
 	// as wrong client ID or secret.
