@@ -18,11 +18,11 @@ import (
 )
 
 const (
-	gorillaMux     = "github.com/gorilla/mux"
-	httpJsonapi    = "lab.jamit.de/pace/go-microservice/http/jsonapi/runtime"
-	jsonAPIMetrics = "lab.jamit.de/pace/go-microservice/maintenance/metrics/jsonapi"
-	errorsPkg      = "lab.jamit.de/pace/go-microservice/maintenance/errors"
-	opentracing    = "github.com/opentracing/opentracing-go"
+	pkgGorillaMux     = "github.com/gorilla/mux"
+	pkgJSONAPIRuntime = "lab.jamit.de/pace/go-microservice/http/jsonapi/runtime"
+	pkgJSONAPIMetrics = "lab.jamit.de/pace/go-microservice/maintenance/metrics/jsonapi"
+	pkgMaintErrors    = "lab.jamit.de/pace/go-microservice/maintenance/errors"
+	pkgOpentracing    = "github.com/opentracing/opentracing-go"
 )
 
 const serviceInterface = "Service"
@@ -179,7 +179,7 @@ func (g *Generator) generateResponseInterface(route *route, schema *openapi3.Swa
 				g.addGoDoc(methodName, fmt.Sprintf("responds with jsonapi error (HTTP code %d)", codeNum))
 				g.goSource.Func().Params(jen.Id("w").Op("*").Id(route.responseTypeImpl)).
 					Id(methodName).Params(jen.Id("err").Error()).Block(
-					jen.Qual(httpJsonapi, "WriteError").Call(
+					jen.Qual(pkgJSONAPIRuntime, "WriteError").Call(
 						jen.Id("w"),
 						jen.Lit(codeNum),
 						jen.Id("err"),
@@ -199,7 +199,7 @@ func (g *Generator) generateResponseInterface(route *route, schema *openapi3.Swa
 				g.addGoDoc(methodName, fmt.Sprintf("responds with jsonapi marshaled data (HTTP code %d)", codeNum))
 				g.goSource.Func().Params(jen.Id("w").Op("*").Id(route.responseTypeImpl)).
 					Id(methodName).Params(jen.Id("data").Add(typeReference)).Block(
-					jen.Qual(httpJsonapi, "Marshal").Call(
+					jen.Qual(pkgJSONAPIRuntime, "Marshal").Call(
 						jen.Id("w"),
 						jen.Id("data"),
 						jen.Lit(codeNum),
@@ -212,7 +212,7 @@ func (g *Generator) generateResponseInterface(route *route, schema *openapi3.Swa
 			defer func() { // defer to put methods after type
 				// get mime type if any
 				mime := "application/vnd.api+json"
-				for m, _ := range response.Value.Content {
+				for m := range response.Value.Content {
 					mime = m
 					break // only the first mime type will be respected
 				}
@@ -326,7 +326,7 @@ func (g *Generator) buildRouter(routes []*route, schema *openapi3.Swagger) error
 	routeStmts := make([]jen.Code, 1, (len(routes)+2)*len(schema.Servers)+1)
 
 	// create new router
-	routeStmts[0] = jen.Id("router").Op(":=").Qual(gorillaMux, "NewRouter").Call()
+	routeStmts[0] = jen.Id("router").Op(":=").Qual(pkgGorillaMux, "NewRouter").Call()
 
 	// Note: we don't restrict host, scheme and port to ease development
 	// but generate subrouters for each server
@@ -378,7 +378,7 @@ func (g *Generator) buildRouter(routes []*route, schema *openapi3.Swagger) error
 	g.addGoDoc("Router", "implements: "+schema.Info.Title+"\n\n"+schema.Info.Description)
 	g.goSource.Func().Id("Router").Params(
 		jen.Id("service").Id(serviceInterface),
-	).Op("*").Qual(gorillaMux, "Router").Block(routeStmts...)
+	).Op("*").Qual(pkgGorillaMux, "Router").Block(routeStmts...)
 
 	return nil
 }
@@ -429,11 +429,11 @@ func (g *Generator) buildHandler(method string, op *openapi3.Operation, pattern 
 				jen.Id("r").Op("*").Qual("net/http", "Request"),
 			).BlockFunc(func(g *jen.Group) {
 				// recover panics
-				g.Defer().Qual(errorsPkg, "HandleRequest").Call(jen.Lit(handler), jen.Id("w"), jen.Id("r"))
+				g.Defer().Qual(pkgMaintErrors, "HandleRequest").Call(jen.Lit(handler), jen.Id("w"), jen.Id("r"))
 
 				// set tracing context
 				g.Line().Comment("Trace the service function handler execution")
-				g.List(jen.Id("handlerSpan"), jen.Id("ctx")).Op(":=").Qual(opentracing, "StartSpanFromContext").Call(
+				g.List(jen.Id("handlerSpan"), jen.Id("ctx")).Op(":=").Qual(pkgOpentracing, "StartSpanFromContext").Call(
 					jen.Id("r").Dot("Context").Call(), jen.Lit(handler))
 				g.Defer().Id("handlerSpan").Dot("Finish").Call()
 				g.Line().Comment("Setup context, response writer and request type")
@@ -441,7 +441,7 @@ func (g *Generator) buildHandler(method string, op *openapi3.Operation, pattern 
 				// response writer
 				g.Id("writer").Op(":=").Id(route.responseTypeImpl).
 					Block(jen.Id("ResponseWriter").Op(":").
-						Qual(jsonAPIMetrics, "NewMetric").Call(
+						Qual(pkgJSONAPIMetrics, "NewMetric").Call(
 						jen.Lit(gen.serviceName),
 						jen.Lit(route.pattern),
 						jen.Id("w"),
@@ -454,18 +454,18 @@ func (g *Generator) buildHandler(method string, op *openapi3.Operation, pattern 
 				// vars in case parameters are given
 				g.Line().Comment("Scan and validate incoming request parameters")
 				if len(route.operation.Parameters) > 0 {
-					g.Id("vars").Op(":=").Qual(gorillaMux, "Vars").Call(jen.Id("r"))
+					g.Id("vars").Op(":=").Qual(pkgGorillaMux, "Vars").Call(jen.Id("r"))
 
 					// all parameters need to be parsed
-					g.If().Op("!").Qual(httpJsonapi, "ScanParameters").CallFunc(func(g *jen.Group) {
+					g.If().Op("!").Qual(pkgJSONAPIRuntime, "ScanParameters").CallFunc(func(g *jen.Group) {
 						g.Id("w")
 						g.Id("r")
 
 						for _, param := range route.operation.Parameters {
 							name := generateParamName(param)
-							g.Op("&").Qual(httpJsonapi, "ScanParameter").Block(
+							g.Op("&").Qual(pkgJSONAPIRuntime, "ScanParameter").Block(
 								jen.Id("Data").Op(":").Op("&").Id("request").Dot(name).Op(","),
-								jen.Id("Location").Op(":").Qual(httpJsonapi, "ScanIn"+strings.Title(param.Value.In)).Op(","),
+								jen.Id("Location").Op(":").Qual(pkgJSONAPIRuntime, "ScanIn"+strings.Title(param.Value.In)).Op(","),
 								jen.Id("Input").Op(":").Id("vars").Index(jen.Lit(param.Value.Name)).Op(","),
 								jen.Id("Name").Op(":").Lit(param.Value.Name).Op(","),
 							)
@@ -475,7 +475,7 @@ func (g *Generator) buildHandler(method string, op *openapi3.Operation, pattern 
 
 				// validate parameters / body
 				if requestBody || len(route.operation.Parameters) > 0 {
-					g.If().Op("!").Qual(httpJsonapi, "ValidateParameters").Call(
+					g.If().Op("!").Qual(pkgJSONAPIRuntime, "ValidateParameters").Call(
 						jen.Id("w"),
 						jen.Id("r"),
 						jen.Op("&").Id("request"),
@@ -491,7 +491,7 @@ func (g *Generator) buildHandler(method string, op *openapi3.Operation, pattern 
 					jen.Op("&").Id("writer"),
 					jen.Op("&").Id("request"),
 				).Line().If().Id("err").Op("!=").Nil().Block(
-					jen.Qual(errorsPkg, "HandleError").Call(jen.Id("err"),
+					jen.Qual(pkgMaintErrors, "HandleError").Call(jen.Id("err"),
 						jen.Lit(handler),
 						jen.Id("w"),
 						jen.Id("r")))
@@ -500,7 +500,7 @@ func (g *Generator) buildHandler(method string, op *openapi3.Operation, pattern 
 				// otherwise directly call the service
 				if requestBody {
 					g.Line().Comment("Unmarshal the service request body")
-					g.If(jen.Qual(httpJsonapi, "Unmarshal").Call(
+					g.If(jen.Qual(pkgJSONAPIRuntime, "Unmarshal").Call(
 						jen.Id("w"),
 						jen.Id("r"),
 						jen.Op("&").Id("request").Dot("Content"))).Block(invokeService)
