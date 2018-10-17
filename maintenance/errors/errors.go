@@ -60,8 +60,11 @@ func HandleError(rp interface{}, handlerName string, w http.ResponseWriter, r *h
 	packet.Interfaces = append(packet.Interfaces, raven.NewHttp(r))
 
 	// append additional info
-	userID, _ := oauth2.UserID(ctx)
+	userID, ok := oauth2.UserID(ctx)
 	packet.Interfaces = append(packet.Interfaces, &raven.User{ID: userID, IP: log.ProxyAwareRemote(r)})
+	if ok {
+		packet.Tags = append(packet.Tags, raven.Tag{Key: "user_id", Value: userID})
+	}
 	appendInfoFromContext(ctx, packet, handlerName, log.RequestID(r))
 
 	raven.Capture(packet, nil)
@@ -78,8 +81,11 @@ func HandleWithCtx(ctx context.Context, handlerName string) {
 		packet := newPacket(rp)
 
 		// append additional info
-		userID, _ := oauth2.UserID(ctx)
+		userID, ok := oauth2.UserID(ctx)
 		packet.Interfaces = append(packet.Interfaces, &raven.User{ID: userID})
+		if ok {
+			packet.Tags = append(packet.Tags, raven.Tag{Key: "user_id", Value: userID})
+		}
 		appendInfoFromContext(ctx, packet, handlerName, requestIDFromContext(ctx))
 
 		raven.Capture(packet, nil)
@@ -117,6 +123,9 @@ func newPacket(rp interface{}) *raven.Packet {
 }
 
 func appendInfoFromContext(ctx context.Context, packet *raven.Packet, handlerName, reqID string) {
+	if reqID := log.RequestIDFromContext(ctx); reqID != "" {
+		packet.Tags = append(packet.Tags, raven.Tag{Key: "req_id", Value: reqID})
+	}
 	packet.Extra["req_id"] = reqID
 	packet.Extra["handler"] = handlerName
 	if clientID, ok := oauth2.ClientID(ctx); ok {
