@@ -41,7 +41,7 @@ func TestIntegrationSolidifiedReverse(t *testing.T) {
 		wantErr bool
 	}{
 		{"Herrenstraße 31, 76133 Karlsruhe", 49.00825, 8.39765, false},
-		{"Strange Place", 48.50742, 8.36920, true},
+		{"Strange Place", 0, 0, true},
 		{"Hauptstraße 5, 71732 Tamm", 48.91943465, 9.11269735, false},
 		{"Haid-und-Neu-Straße 18, 76131 Karlsruhe", 49.01251, 8.42636, false},
 	}
