@@ -12,6 +12,10 @@ import (
 	"lab.jamit.de/pace/go-microservice/maintenance/log"
 )
 
+const (
+	pkgJSONAPI = "github.com/google/jsonapi"
+)
+
 // BuildTypes transforms all component schemas into go types
 func (g *Generator) BuildTypes(schema *openapi3.Swagger) error {
 	schemas := schema.Components.Schemas
@@ -64,7 +68,7 @@ func (g *Generator) buildType(prefix string, stmt *jen.Statement, schema *openap
 	case "array": // nolint: goconst
 		g.generatedArrayTypes[prefix] = true
 		return g.buildType(prefix, stmt.Index(), val.Items)
-	case "object":
+	case "object": // nolint: goconst
 		if data := val.Properties["data"]; data != nil {
 			if data.Ref != "" {
 				return g.buildType(prefix+"Ref", stmt, data)
@@ -136,7 +140,7 @@ func (g *Generator) generateTypeReference(fallbackName string, schema *openapi3.
 
 	// in case the type referenced is defined already directly reference it
 	sv := schema.Value
-	if sv.Type == "object" && sv.Properties["data"] != nil && sv.Properties["data"].Ref != "" {
+	if sv.Type == "object" && sv.Properties["data"] != nil && sv.Properties["data"].Ref != "" { // nolint: goconst
 		id := nameFromSchemaRef(schema.Value.Properties["data"])
 		if g.generatedArrayTypes[id] {
 			return jen.Id(id), nil
@@ -157,7 +161,7 @@ func (g *Generator) generateTypeReference(fallbackName string, schema *openapi3.
 	return jen.Op("*").Id(fallbackName), nil
 }
 
-func (g *Generator) structJSONAPI(prefix string, stmt *jen.Statement, schema *openapi3.Schema) error {
+func (g *Generator) structJSONAPI(prefix string, stmt *jen.Statement, schema *openapi3.Schema) error { // nolint: gocyclo
 	var fields []jen.Code
 
 	propID := schema.Properties["id"]
@@ -183,6 +187,20 @@ func (g *Generator) structJSONAPI(prefix string, stmt *jen.Statement, schema *op
 		fields = append(fields, attrFields...)
 	}
 
+	// att meta attribute
+	meta := schema.Properties["meta"]
+	if meta != nil {
+		metaAttr := jen.Id("Meta")
+		defer func() {
+			err := g.buildTypeStruct(prefix+"Meta", metaAttr, meta.Value)
+			if err != nil {
+				log.Fatal(err)
+			}
+			metaAttr.Comment("Resource meta data (json:api meta)")
+		}()
+		fields = append(fields, metaAttr)
+	}
+
 	// add relationships
 	if rels := schema.Properties["relationships"]; rels != nil {
 		relFields, err := g.generateStructRelationships(prefix, rels.Value, true)
@@ -193,6 +211,15 @@ func (g *Generator) structJSONAPI(prefix string, stmt *jen.Statement, schema *op
 	}
 
 	stmt.Struct(fields...)
+
+	// generate meta function if any
+	if meta != nil {
+		err := g.generateJSONAPIMeta(prefix, stmt, meta.Value)
+		if err != nil {
+			return err
+		}
+	}
+
 	return nil
 }
 
@@ -265,7 +292,7 @@ func (g *Generator) generateStructRelationships(prefix string, schema *openapi3.
 			name := data.Value.Items.Value.Properties["type"].Value.Enum[0].(string)
 			rel.Index().Op("*").Id(goNameHelper(name)).Tag(tags)
 		// case object = belongs-to
-		case "object":
+		case "object": // nolint: goconst
 			name := data.Value.Properties["type"].Value.Enum[0].(string)
 			rel.Op("*").Id(goNameHelper(name)).Tag(tags)
 		}
@@ -273,6 +300,32 @@ func (g *Generator) generateStructRelationships(prefix string, schema *openapi3.
 		relationships = append(relationships, rel)
 	}
 	return relationships, nil
+}
+
+// generateJSONAPIMeta generates a function that implements JSONAPIMeta
+func (g *Generator) generateJSONAPIMeta(typeName string, stmt *jen.Statement, schema *openapi3.Schema) error {
+	stmt.Line().Comment("JSONAPIMeta implements the meta data API for json:api").Line().
+		Func().Params(jen.Id("r").Op("*").Id(typeName)).Id("JSONAPIMeta").Params().Op("*").Qual(pkgJSONAPI, "Meta").BlockFunc(
+		func(g *jen.Group) {
+			g.If(jen.Id("r").Dot("Meta").Op("==").Nil()).Block(jen.Return(jen.Nil()))
+
+			g.Id("meta").Op(":=").Id("make").Call(jen.Qual(pkgJSONAPI, "Meta"))
+
+			// sort by key
+			keys := make([]string, 0, len(schema.Properties))
+			for k := range schema.Properties {
+				keys = append(keys, k)
+			}
+			sort.Strings(keys)
+
+			for _, attrName := range keys {
+				g.Id("meta").Index(jen.Lit(attrName)).Op("=").Id("r").Dot("Meta").Dot(generateMethodName(attrName))
+			}
+
+			g.Return(jen.Op("&").Id("meta"))
+		})
+
+	return nil
 }
 
 func (g *Generator) generateIDField(idType, objectType *openapi3.Schema) (*jen.Statement, error) {

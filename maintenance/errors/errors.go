@@ -12,10 +12,11 @@ import (
 
 	raven "github.com/getsentry/raven-go"
 	"lab.jamit.de/pace/go-microservice/http/jsonapi/runtime"
-	"lab.jamit.de/pace/go-microservice/maintenance/log"
 	"lab.jamit.de/pace/go-microservice/http/oauth2"
+	"lab.jamit.de/pace/go-microservice/maintenance/log"
 )
 
+// PanicWrap wraps a panic for HandleRequest
 type PanicWrap struct {
 	err interface{}
 }
@@ -59,8 +60,8 @@ func HandleError(rp interface{}, handlerName string, w http.ResponseWriter, r *h
 	packet.Interfaces = append(packet.Interfaces, raven.NewHttp(r))
 
 	// append additional info
-	userId, _ := oauth2.UserID(ctx)
-	packet.Interfaces = append(packet.Interfaces, &raven.User{ID: userId, IP: log.ProxyAwareRemote(r)})
+	userID, _ := oauth2.UserID(ctx)
+	packet.Interfaces = append(packet.Interfaces, &raven.User{ID: userID, IP: log.ProxyAwareRemote(r)})
 	appendInfoFromContext(ctx, packet, handlerName, log.RequestID(r))
 
 	raven.Capture(packet, nil)
@@ -77,8 +78,8 @@ func HandleWithCtx(ctx context.Context, handlerName string) {
 		packet := newPacket(rp)
 
 		// append additional info
-		userId, _ := oauth2.UserID(ctx)
-		packet.Interfaces = append(packet.Interfaces, &raven.User{ID: userId})
+		userID, _ := oauth2.UserID(ctx)
+		packet.Interfaces = append(packet.Interfaces, &raven.User{ID: userID})
 		appendInfoFromContext(ctx, packet, handlerName, requestIDFromContext(ctx))
 
 		raven.Capture(packet, nil)
@@ -90,7 +91,7 @@ func New(text string) error {
 	return errors.New(text)
 }
 
-// Adds extra data to an error before reporting to Sentry
+// WrapWithExtra adds extra data to an error before reporting to Sentry
 func WrapWithExtra(err error, extraInfo map[string]interface{}) error {
 	return raven.WrapWithExtra(err, extraInfo)
 }

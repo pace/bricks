@@ -2,6 +2,7 @@ package poi
 
 import (
 	"context"
+	jsonapi "github.com/google/jsonapi"
 	mux "github.com/gorilla/mux"
 	opentracing "github.com/opentracing/opentracing-go"
 	runtime "lab.jamit.de/pace/go-microservice/http/jsonapi/runtime"
@@ -51,11 +52,11 @@ type CommonOpeningHours []struct {
 
 // Event ...
 type Event struct {
-	ID        string     `jsonapi:"primary,events,omitempty" valid:"uuid,optional"` // Event ID
-	CreatedAt time.Time  `json:"createdAt,omitempty" jsonapi:"attr,createdAt,omitempty" valid:"optional"`
-	Data      *FieldData `json:"data,omitempty" jsonapi:"attr,data,omitempty" valid:"optional"`
-	EventAt   time.Time  `json:"eventAt,omitempty" jsonapi:"attr,eventAt,omitempty" valid:"optional"`
-	UserID    string     `json:"userId,omitempty" jsonapi:"attr,userId,omitempty" valid:"optional"` // Tracks who did last change
+	ID        string       `jsonapi:"primary,events,omitempty" valid:"uuid,optional"` // Event ID
+	CreatedAt time.Time    `json:"createdAt,omitempty" jsonapi:"attr,createdAt,omitempty" valid:"optional"`
+	EventAt   time.Time    `json:"eventAt,omitempty" jsonapi:"attr,eventAt,omitempty" valid:"optional"`
+	Fields    []*FieldData `json:"fields,omitempty" jsonapi:"attr,fields,omitempty" valid:"optional"`
+	UserID    string       `json:"userId,omitempty" jsonapi:"attr,userId,omitempty" valid:"optional"` // Tracks who did last change
 }
 
 // Events ...
@@ -115,17 +116,33 @@ type GasStation struct {
 // GasStations ...
 type GasStations []*GasStation
 
+// LocationBasedAppMeta ...
+type LocationBasedAppMeta struct {
+	AppArea       *CommonGeoJSONPolygon `json:"appArea,omitempty" jsonapi:"appArea,omitempty" valid:"optional"`
+	InsideAppArea bool                  `json:"insideAppArea,omitempty" jsonapi:"insideAppArea,omitempty" valid:"optional"` // Boolean flag if the current position is inside the app area (polygon).
+}
+
 // LocationBasedApp ...
 type LocationBasedApp struct {
 	ID                   string                `jsonapi:"primary,locationBasedApp,omitempty" valid:"uuid,optional"`                                   // Location-based app ID
 	AndroidInstantAppURL string                `json:"androidInstantAppUrl,omitempty" jsonapi:"attr,androidInstantAppUrl,omitempty" valid:"optional"` // Android instant app URL
-	AppArea              *CommonGeoJSONPolygon `json:"appArea,omitempty" jsonapi:"attr,appArea,omitempty" valid:"optional"`
 	AppType              string                `json:"appType,omitempty" jsonapi:"attr,appType,omitempty" valid:"optional"`
-	InsideAppArea        bool                  `json:"insideAppArea,omitempty" jsonapi:"attr,insideAppArea,omitempty" valid:"optional"` // Boolean flag if the current position is inside the app area (polygon).
-	LogoURL              string                `json:"logoUrl,omitempty" jsonapi:"attr,logoUrl,omitempty" valid:"optional"`             // Logo URL
-	PwaURL               string                `json:"pwaUrl,omitempty" jsonapi:"attr,pwaUrl,omitempty" valid:"optional"`               // Progressive web application URL
-	Subtitle             string                `json:"subtitle,omitempty" jsonapi:"attr,subtitle,omitempty" valid:"optional"`           // Example: "Zahle bargeldlos mit der PACE Fueling App"
-	Title                string                `json:"title,omitempty" jsonapi:"attr,title,omitempty" valid:"optional"`                 // Example: "PACE Fueling App"
+	LogoURL              string                `json:"logoUrl,omitempty" jsonapi:"attr,logoUrl,omitempty" valid:"optional"`   // Logo URL
+	PwaURL               string                `json:"pwaUrl,omitempty" jsonapi:"attr,pwaUrl,omitempty" valid:"optional"`     // Progressive web application URL
+	Subtitle             string                `json:"subtitle,omitempty" jsonapi:"attr,subtitle,omitempty" valid:"optional"` // Example: "Zahle bargeldlos mit der PACE Fueling App"
+	Title                string                `json:"title,omitempty" jsonapi:"attr,title,omitempty" valid:"optional"`       // Example: "PACE Fueling App"
+	Meta                 *LocationBasedAppMeta // Resource meta data (json:api meta)
+}
+
+// JSONAPIMeta implements the meta data API for json:api
+func (r *LocationBasedApp) JSONAPIMeta() *jsonapi.Meta {
+	if r.Meta == nil {
+		return nil
+	}
+	meta := make(jsonapi.Meta)
+	meta["appArea"] = r.Meta.AppArea
+	meta["insideAppArea"] = r.Meta.InsideAppArea
+	return &meta
 }
 
 // LocationBasedApps ...
@@ -133,16 +150,16 @@ type LocationBasedApps []*LocationBasedApp
 
 // POI ...
 type POI struct {
-	ID          string                `jsonapi:"primary,SpeedCamera,omitempty" valid:"uuid,optional"` // POI ID
-	Active      bool                  `json:"active,omitempty" jsonapi:"attr,active,omitempty" valid:"optional"`
-	Boundary    *CommonGeoJSONPolygon `json:"boundary,omitempty" jsonapi:"attr,boundary,omitempty" valid:"optional"`
-	CountryID   *CommonCountryID      `json:"countryId,omitempty" jsonapi:"attr,countryId,omitempty" valid:"optional"`
-	CreatedAt   time.Time             `json:"createdAt,omitempty" jsonapi:"attr,createdAt,omitempty" valid:"optional"`
-	Data        []*FieldData          `json:"data,omitempty" jsonapi:"attr,data,omitempty" valid:"optional"` // a JSON field containing POI specific data
-	Last_seenAt time.Time             `json:"last_seenAt,omitempty" jsonapi:"attr,last_seenAt,omitempty" valid:"optional"`
-	Metadata    []*FieldMetaData      `json:"metadata,omitempty" jsonapi:"attr,metadata,omitempty" valid:"optional"` // a JSON field containing information about data field origin and update time
-	Position    *CommonGeoJSONPoint   `json:"position,omitempty" jsonapi:"attr,position,omitempty" valid:"optional"`
-	UpdatedAt   time.Time             `json:"updatedAt,omitempty" jsonapi:"attr,updatedAt,omitempty" valid:"optional"`
+	ID         string                `jsonapi:"primary,SpeedCamera,omitempty" valid:"uuid,optional"` // POI ID
+	Active     bool                  `json:"active,omitempty" jsonapi:"attr,active,omitempty" valid:"optional"`
+	Boundary   *CommonGeoJSONPolygon `json:"boundary,omitempty" jsonapi:"attr,boundary,omitempty" valid:"optional"`
+	CountryID  *CommonCountryID      `json:"countryId,omitempty" jsonapi:"attr,countryId,omitempty" valid:"optional"`
+	CreatedAt  time.Time             `json:"createdAt,omitempty" jsonapi:"attr,createdAt,omitempty" valid:"optional"`
+	Data       []*FieldData          `json:"data,omitempty" jsonapi:"attr,data,omitempty" valid:"optional"` // a JSON field containing POI specific data
+	LastSeenAt time.Time             `json:"lastSeenAt,omitempty" jsonapi:"attr,lastSeenAt,omitempty" valid:"optional"`
+	Metadata   []*FieldMetaData      `json:"metadata,omitempty" jsonapi:"attr,metadata,omitempty" valid:"optional"` // a JSON field containing information about data field origin and update time
+	Position   *CommonGeoJSONPoint   `json:"position,omitempty" jsonapi:"attr,position,omitempty" valid:"optional"`
+	UpdatedAt  time.Time             `json:"updatedAt,omitempty" jsonapi:"attr,updatedAt,omitempty" valid:"optional"`
 }
 
 // POIType POI type this applies to
@@ -258,10 +275,10 @@ func GetAppsHandler(service Service) http.Handler {
 			Input:    vars["page[size]"],
 			Name:     "page[size]",
 		}, &runtime.ScanParameter{
-			Data:     &request.ParamFilterType,
+			Data:     &request.ParamFilterAppType,
 			Location: runtime.ScanInQuery,
-			Input:    vars["filter[type]"],
-			Name:     "filter[type]",
+			Input:    vars["filter[appType]"],
+			Name:     "filter[appType]",
 		}, &runtime.ScanParameter{
 			Data:     &request.ParamFilterQuery,
 			Location: runtime.ScanInQuery,
@@ -567,22 +584,22 @@ func GetAppPOIsRelationshipsHandler(service Service) http.Handler {
 }
 
 /*
-UdpateAppPOIsRelationshipsHandler handles request/response marshaling and validation for
+UpdateAppPOIsRelationshipsHandler handles request/response marshaling and validation for
  Patch /beta/apps/{appID}/relationships/pois
 */
-func UdpateAppPOIsRelationshipsHandler(service Service) http.Handler {
+func UpdateAppPOIsRelationshipsHandler(service Service) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		defer errors.HandleRequest("UdpateAppPOIsRelationshipsHandler", w, r)
+		defer errors.HandleRequest("UpdateAppPOIsRelationshipsHandler", w, r)
 
 		// Trace the service function handler execution
-		handlerSpan, ctx := opentracing.StartSpanFromContext(r.Context(), "UdpateAppPOIsRelationshipsHandler")
+		handlerSpan, ctx := opentracing.StartSpanFromContext(r.Context(), "UpdateAppPOIsRelationshipsHandler")
 		defer handlerSpan.Finish()
 
 		// Setup context, response writer and request type
-		writer := udpateAppPOIsRelationshipsResponseWriter{
+		writer := updateAppPOIsRelationshipsResponseWriter{
 			ResponseWriter: metrics.NewMetric("poi", "/beta/apps/{appID}/relationships/pois", w, r),
 		}
-		request := UdpateAppPOIsRelationshipsRequest{
+		request := UpdateAppPOIsRelationshipsRequest{
 			Request: r.WithContext(ctx),
 		}
 
@@ -603,9 +620,9 @@ func UdpateAppPOIsRelationshipsHandler(service Service) http.Handler {
 		// Unmarshal the service request body
 		if runtime.Unmarshal(w, r, &request.Content) {
 			// Invoke service that implements the business logic
-			err := service.UdpateAppPOIsRelationships(ctx, &writer, &request)
+			err := service.UpdateAppPOIsRelationships(ctx, &writer, &request)
 			if err != nil {
-				errors.HandleError(err, "UdpateAppPOIsRelationshipsHandler", w, r)
+				errors.HandleError(err, "UpdateAppPOIsRelationshipsHandler", w, r)
 			}
 		}
 	})
@@ -845,10 +862,10 @@ func GetPoisHandler(service Service) http.Handler {
 			Input:    vars["page[size]"],
 			Name:     "page[size]",
 		}, &runtime.ScanParameter{
-			Data:     &request.ParamFilterType,
+			Data:     &request.ParamFilterPoiType,
 			Location: runtime.ScanInQuery,
-			Input:    vars["filter[type]"],
-			Name:     "filter[type]",
+			Input:    vars["filter[poiType]"],
+			Name:     "filter[poiType]",
 		}, &runtime.ScanParameter{
 			Data:     &request.ParamFilterAppID,
 			Location: runtime.ScanInQuery,
@@ -1134,10 +1151,10 @@ func GetSourcesHandler(service Service) http.Handler {
 			Input:    vars["page[size]"],
 			Name:     "page[size]",
 		}, &runtime.ScanParameter{
-			Data:     &request.ParamFilterPoitype,
+			Data:     &request.ParamFilterPoiType,
 			Location: runtime.ScanInQuery,
-			Input:    vars["filter[poitype]"],
-			Name:     "filter[poitype]",
+			Input:    vars["filter[poiType]"],
+			Name:     "filter[poiType]",
 		}, &runtime.ScanParameter{
 			Data:     &request.ParamFilterName,
 			Location: runtime.ScanInQuery,
@@ -1417,11 +1434,11 @@ GetAppsRequest is a standard http.Request extended with the
 un-marshaled content object
 */
 type GetAppsRequest struct {
-	Request          *http.Request `valid:"-"`
-	ParamPageNumber  int64         `valid:"optional"`
-	ParamPageSize    int64         `valid:"optional"`
-	ParamFilterType  string        `valid:"optional,in(CameraCamera|FuelStation)"`
-	ParamFilterQuery string        `valid:"optional"`
+	Request            *http.Request `valid:"-"`
+	ParamPageNumber    int64         `valid:"optional"`
+	ParamPageSize      int64         `valid:"optional"`
+	ParamFilterAppType string        `valid:"optional,in(fueling)"`
+	ParamFilterQuery   string        `valid:"optional"`
 }
 
 /*
@@ -1632,36 +1649,36 @@ type GetAppPOIsRelationshipsRequest struct {
 }
 
 /*
-UdpateAppPOIsRelationshipsResponseWriter is a standard http.ResponseWriter extended with methods
+UpdateAppPOIsRelationshipsResponseWriter is a standard http.ResponseWriter extended with methods
 to generate the respective responses easily
 */
-type UdpateAppPOIsRelationshipsResponseWriter interface {
+type UpdateAppPOIsRelationshipsResponseWriter interface {
 	http.ResponseWriter
 	OK(AppPOIsRelationships)
 	BadRequest(error)
 	NotFound(error)
 }
-type udpateAppPOIsRelationshipsResponseWriter struct {
+type updateAppPOIsRelationshipsResponseWriter struct {
 	http.ResponseWriter
 }
 
 // NotFound responds with jsonapi error (HTTP code 404)
-func (w *udpateAppPOIsRelationshipsResponseWriter) NotFound(err error) {
+func (w *updateAppPOIsRelationshipsResponseWriter) NotFound(err error) {
 	runtime.WriteError(w, 404, err)
 }
 
 // BadRequest responds with jsonapi error (HTTP code 400)
-func (w *udpateAppPOIsRelationshipsResponseWriter) BadRequest(err error) {
+func (w *updateAppPOIsRelationshipsResponseWriter) BadRequest(err error) {
 	runtime.WriteError(w, 400, err)
 }
 
 // OK responds with jsonapi marshaled data (HTTP code 200)
-func (w *udpateAppPOIsRelationshipsResponseWriter) OK(data AppPOIsRelationships) {
+func (w *updateAppPOIsRelationshipsResponseWriter) OK(data AppPOIsRelationships) {
 	runtime.Marshal(w, data, 200)
 }
 
-// UdpateAppPOIsRelationshipsRequest ...
-type UdpateAppPOIsRelationshipsRequest struct {
+// UpdateAppPOIsRelationshipsRequest ...
+type UpdateAppPOIsRelationshipsRequest struct {
 	Request    *http.Request        `valid:"-"`
 	Content    AppPOIsRelationships `valid:"-"`
 	ParamAppID string               `valid:"optional,uuid"`
@@ -1800,12 +1817,12 @@ GetPoisRequest is a standard http.Request extended with the
 un-marshaled content object
 */
 type GetPoisRequest struct {
-	Request          *http.Request `valid:"-"`
-	ParamPageNumber  int64         `valid:"optional"`
-	ParamPageSize    int64         `valid:"optional"`
-	ParamFilterType  string        `valid:"optional,in(CameraCamera|FuelStation)"`
-	ParamFilterAppID string        `valid:"optional,uuid"`
-	ParamFilterQuery string        `valid:"optional"`
+	Request            *http.Request `valid:"-"`
+	ParamPageNumber    int64         `valid:"optional"`
+	ParamPageSize      int64         `valid:"optional"`
+	ParamFilterPoiType POIType       `valid:"optional"`
+	ParamFilterAppID   string        `valid:"optional,uuid"`
+	ParamFilterQuery   string        `valid:"optional"`
 }
 
 /*
@@ -1913,7 +1930,7 @@ type GetPoliciesRequest struct {
 	Request              *http.Request `valid:"-"`
 	ParamPageNumber      int64         `valid:"optional"`
 	ParamPageSize        int64         `valid:"optional"`
-	ParamFilterPoiType   string        `valid:"optional,in(CameraCamera|FuelStation)"`
+	ParamFilterPoiType   POIType       `valid:"optional"`
 	ParamFilterCountryID string        `valid:"optional"`
 	ParamFilterUserID    string        `valid:"optional,uuid"`
 }
@@ -2016,7 +2033,7 @@ type GetSourcesRequest struct {
 	Request            *http.Request `valid:"-"`
 	ParamPageNumber    int64         `valid:"optional"`
 	ParamPageSize      int64         `valid:"optional"`
-	ParamFilterPoitype string        `valid:"optional,in(CameraCamera|FuelStation)"`
+	ParamFilterPoiType POIType       `valid:"optional"`
 	ParamFilterName    string        `valid:"optional"`
 }
 
@@ -2266,11 +2283,11 @@ type Service interface {
 	*/
 	GetAppPOIsRelationships(context.Context, GetAppPOIsRelationshipsResponseWriter, *GetAppPOIsRelationshipsRequest) error
 	/*
-	   UdpateAppPOIsRelationships Update all POI relations for specified app id
+	   UpdateAppPOIsRelationships Update all POI relations for specified app id
 
 	   Update all POI relations for specified app id
 	*/
-	UdpateAppPOIsRelationships(context.Context, UdpateAppPOIsRelationshipsResponseWriter, *UdpateAppPOIsRelationshipsRequest) error
+	UpdateAppPOIsRelationships(context.Context, UpdateAppPOIsRelationshipsResponseWriter, *UpdateAppPOIsRelationshipsRequest) error
 	/*
 	   GetEvents Returns a list of events
 
@@ -2420,7 +2437,7 @@ func Router(service Service) *mux.Router {
 	s1.Methods("GET").Path("/beta/gas-stations").Handler(GetGasStationsHandler(service)).Name("GetGasStations")
 	s1.Methods("POST").Path("/beta/sources").Handler(CreateSourceHandler(service)).Name("CreateSource")
 	s1.Methods("GET").Path("/beta/apps").Handler(GetAppsHandler(service)).Name("GetApps")
-	s1.Methods("PATCH").Path("/beta/apps/{appID}/relationships/pois").Handler(UdpateAppPOIsRelationshipsHandler(service)).Name("UdpateAppPOIsRelationships")
+	s1.Methods("PATCH").Path("/beta/apps/{appID}/relationships/pois").Handler(UpdateAppPOIsRelationshipsHandler(service)).Name("UpdateAppPOIsRelationships")
 	s1.Methods("GET").Path("/beta/apps/{appID}/relationships/pois").Handler(GetAppPOIsRelationshipsHandler(service)).Name("GetAppPOIsRelationships")
 	s1.Methods("GET").Path("/beta/gas-stations/{id}").Handler(GetGasStationHandler(service)).Name("GetGasStation")
 	s1.Methods("PATCH").Path("/beta/pois/{poiId}").Handler(ChangePoiHandler(service)).Name("ChangePoi")

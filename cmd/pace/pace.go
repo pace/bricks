@@ -230,7 +230,7 @@ func mustIdentifyService() string {
 
 	// check if the current path is a service
 	servicePrefix := filepath.Join("src", service.PaceBase, service.ServiceBase)
-	if !filepath.HasPrefix(relDir, servicePrefix) {
+	if !strings.HasPrefix(relDir, servicePrefix) {
 		log.Fatalf("%s is not a service directory", dir)
 	}
 

@@ -37,6 +37,9 @@ func (s *testService) CheckForPaceApp(ctx context.Context, w CheckForPaceAppResp
 		appsResp[i].ID = strconv.Itoa(i)
 		appsResp[i].AndroidInstantAppURL = "https://foobar.com"
 		appsResp[i].Title = "Some app"
+		appsResp[i].Meta = &LocationBasedAppMeta{
+			InsideAppArea: true,
+		}
 	}
 
 	w.OK(appsResp)
@@ -60,7 +63,7 @@ func (s *testService) UpdateApp(context.Context, UpdateAppResponseWriter, *Updat
 func (s *testService) GetAppPOIsRelationships(context.Context, GetAppPOIsRelationshipsResponseWriter, *GetAppPOIsRelationshipsRequest) error {
 	return nil
 }
-func (s *testService) UdpateAppPOIsRelationships(context.Context, UdpateAppPOIsRelationshipsResponseWriter, *UdpateAppPOIsRelationshipsRequest) error {
+func (s *testService) UpdateAppPOIsRelationships(context.Context, UpdateAppPOIsRelationshipsResponseWriter, *UpdateAppPOIsRelationshipsRequest) error {
 	return nil
 }
 func (s *testService) GetEvents(context.Context, GetEventsResponseWriter, *GetEventsRequest) error {
@@ -141,5 +144,13 @@ func TestHandler(t *testing.T) {
 	}
 	if data.Data[0]["type"] != "locationBasedApp" {
 		t.Error("Expected type locationBasedApp")
+	}
+	meta, ok := data.Data[0]["meta"].(map[string]interface{})
+	if !ok {
+		t.Error("Expected meta do pe present")
+		return
+	}
+	if meta["insideAppArea"] != true {
+		t.Error("Expected insideAppArea to be true")
 	}
 }

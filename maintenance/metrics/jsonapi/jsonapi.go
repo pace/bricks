@@ -58,7 +58,7 @@ func NewMetric(serviceName, path string, w http.ResponseWriter, r *http.Request)
 func (m *Metric) WriteHeader(statusCode int) {
 	clientID, _ := oauth2.ClientID(m.request.Context())
 	IncPaceAPIHTTPRequestTotal(strconv.Itoa(statusCode), m.request.Method, m.path, m.serviceName, clientID)
-	duration := float64(time.Now().Sub(m.requestStart).Nanoseconds()) / float64(time.Second)
+	duration := float64(time.Since(m.requestStart).Nanoseconds()) / float64(time.Second)
 	AddPaceAPIHTTPRequestDurationSeconds(duration, m.request.Method, m.path, m.serviceName)
 	m.ResponseWriter.WriteHeader(statusCode)
 }
