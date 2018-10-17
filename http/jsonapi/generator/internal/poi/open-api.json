@@ -954,15 +954,10 @@
           },
           {
             "in": "query",
-            "name": "filter[poitype]",
+            "name": "filter[poiType]",
             "schema": {
-              "type": "string",
-              "enum": [
-                "CameraCamera",
-                "FuelStation"
-              ]
+              "$ref": "#/components/schemas/POIType"
             },
-            "example": "FuelStation",
             "description": "Filter for poi type, no filter returns all types"
           },
           {
@@ -1228,13 +1223,8 @@
             "in": "query",
             "name": "filter[poiType]",
             "schema": {
-              "type": "string",
-              "enum": [
-                "CameraCamera",
-                "FuelStation"
-              ]
+              "$ref": "#/components/schemas/POIType"
             },
-            "example": "FuelStation",
             "description": "Filter for poi type, no filter returns all types"
           },
           {
@@ -1533,15 +1523,10 @@
           },
           {
             "in": "query",
-            "name": "filter[type]",
+            "name": "filter[poiType]",
             "schema": {
-              "type": "string",
-              "enum": [
-                "CameraCamera",
-                "FuelStation"
-              ]
+              "$ref": "#/components/schemas/POIType"
             },
-            "example": "FuelStation",
             "description": "Filter for poi type, no filter returns all types"
           },
           {
@@ -1907,15 +1892,13 @@
           },
           {
             "in": "query",
-            "name": "filter[type]",
+            "name": "filter[appType]",
             "schema": {
               "type": "string",
               "enum": [
-                "CameraCamera",
-                "FuelStation"
+                "fueling"
               ]
             },
-            "example": "FuelStation",
             "description": "Filter for poi type, no filter returns all types"
           },
           {
@@ -2264,7 +2247,7 @@
         "tags": [
           "Apps"
         ],
-        "operationId": "UdpateAppPOIsRelationships",
+        "operationId": "UpdateAppPOIsRelationships",
         "security": [
           {
             "OAuth2": [
@@ -2499,14 +2482,6 @@
                 "type": "string",
                 "example": "Zahle bargeldlos mit der PACE Fueling App"
               },
-              "insideAppArea": {
-                "type": "boolean",
-                "description": "Boolean flag if the current position is inside the app area (polygon).",
-                "example": true
-              },
-              "appArea": {
-                "$ref": "#/components/schemas/CommonGeoJSONPolygon"
-              },
               "logoUrl": {
                 "type": "string",
                 "description": "Logo URL",
@@ -2521,6 +2496,19 @@
                 "type": "string",
                 "description": "Android instant app URL",
                 "example": "http://via.placeholder.com/200x200"
+              }
+            }
+          },
+          "meta": {
+            "type": "object",
+            "properties": {
+              "insideAppArea": {
+                "type": "boolean",
+                "description": "Boolean flag if the current position is inside the app area (polygon).",
+                "example": true
+              },
+              "appArea": {
+                "$ref": "#/components/schemas/CommonGeoJSONPolygon"
               }
             }
           }
@@ -2808,7 +2796,7 @@
                 "type": "string",
                 "format": "date-time"
               },
-              "last_seenAt": {
+              "lastSeenAt": {
                 "type": "string",
                 "format": "date-time"
               }
@@ -2971,8 +2959,11 @@
                 "description": "Tracks who did last change",
                 "example": "f106ac99-213c-4cf7-8c1b-1e841516026b"
               },
-              "data": {
-                "$ref": "#/components/schemas/FieldData"
+              "fields": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/FieldData"
+                }
               }
             }
           }
