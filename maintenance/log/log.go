@@ -85,6 +85,17 @@ func RequestID(r *http.Request) string {
 	return ""
 }
 
+// RequestIDFromContext returns a unique request id or an empty string if there is none
+func RequestIDFromContext(ctx context.Context) string {
+	// create dummy request to get the request id
+	r, err := http.NewRequest("GET", "", nil)
+	if err != nil {
+		panic(err)
+	}
+
+	return RequestID(r.WithContext(ctx))
+}
+
 // Req returns the logger for the passed request
 func Req(r *http.Request) *zerolog.Logger {
 	return hlog.FromRequest(r)

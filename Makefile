@@ -21,6 +21,9 @@ jsonapi:
 		-path $(JSONAPITEST)/pay/open-api_test.go \
 		-source $(JSONAPITEST)/pay/open-api.json
 
+lint:
+	gometalinter --cyclo-over=15 --deadline 90s --skip http/jsonapi/generator/internal --skip tools --vendor ./...
+
 test:
 	JAEGER_SERVICE_NAME=unittest LOG_FORMAT=console go test -v -race -cover ./...
 

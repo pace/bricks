@@ -17,7 +17,7 @@ lint:
   stage: test
   script:
     - go get -u github.com/alecthomas/gometalinter && gometalinter --install
-    - cd $GO_PROJECT_DIR && gometalinter --cyclo-over=15 --deadline 90s --skip http/jsonapi/generator/internal --skip tools --vendor ./...
+    - cd $GO_PROJECT_DIR && make lint
   allow_failure: true
 
 test:

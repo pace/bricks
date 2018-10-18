@@ -60,9 +60,12 @@ func HandleError(rp interface{}, handlerName string, w http.ResponseWriter, r *h
 	packet.Interfaces = append(packet.Interfaces, raven.NewHttp(r))
 
 	// append additional info
-	userID, _ := oauth2.UserID(ctx)
+	userID, ok := oauth2.UserID(ctx)
 	packet.Interfaces = append(packet.Interfaces, &raven.User{ID: userID, IP: log.ProxyAwareRemote(r)})
-	appendInfoFromContext(ctx, packet, handlerName, log.RequestID(r))
+	if ok {
+		packet.Tags = append(packet.Tags, raven.Tag{Key: "user_id", Value: userID})
+	}
+	appendInfoFromContext(ctx, packet, handlerName)
 
 	raven.Capture(packet, nil)
 
@@ -78,9 +81,12 @@ func HandleWithCtx(ctx context.Context, handlerName string) {
 		packet := newPacket(rp)
 
 		// append additional info
-		userID, _ := oauth2.UserID(ctx)
+		userID, ok := oauth2.UserID(ctx)
 		packet.Interfaces = append(packet.Interfaces, &raven.User{ID: userID})
-		appendInfoFromContext(ctx, packet, handlerName, requestIDFromContext(ctx))
+		if ok {
+			packet.Tags = append(packet.Tags, raven.Tag{Key: "user_id", Value: userID})
+		}
+		appendInfoFromContext(ctx, packet, handlerName)
 
 		raven.Capture(packet, nil)
 	}
@@ -116,8 +122,11 @@ func newPacket(rp interface{}) *raven.Packet {
 	return packet
 }
 
-func appendInfoFromContext(ctx context.Context, packet *raven.Packet, handlerName, reqID string) {
-	packet.Extra["req_id"] = reqID
+func appendInfoFromContext(ctx context.Context, packet *raven.Packet, handlerName string) {
+	if reqID := log.RequestIDFromContext(ctx); reqID != "" {
+		packet.Extra["req_id"] = reqID
+		packet.Tags = append(packet.Tags, raven.Tag{Key: "req_id", Value: reqID})
+	}
 	packet.Extra["handler"] = handlerName
 	if clientID, ok := oauth2.ClientID(ctx); ok {
 		packet.Extra["oauth2_client_id"] = clientID
@@ -127,13 +136,4 @@ func appendInfoFromContext(ctx context.Context, packet *raven.Packet, handlerNam
 	}
 
 	packet.Extra["microservice"] = os.Getenv("JAEGER_SERVICE_NAME")
-}
-
-func requestIDFromContext(ctx context.Context) string {
-	// Note: a hack to get to the RequestID using a dummy request
-	r, err := http.NewRequest("GET", "/", nil)
-	if err != nil {
-		panic(fmt.Errorf("New request dummy creation failed: %v", err))
-	}
-	return log.RequestID(r.WithContext(ctx))
 }
