@@ -16,7 +16,7 @@ func Error(v ...interface{}) { log.Error().Msg(fmt.Sprint(v...)) }
 func Warn(v ...interface{}) { log.Warn().Msg(fmt.Sprint(v...)) }
 
 // Info implements logrus Info interface
-func Info(v ...interface{}) { log.Error().Msg(fmt.Sprint(v...)) }
+func Info(v ...interface{}) { log.Info().Msg(fmt.Sprint(v...)) }
 
 // Debug implements logrus Debug interface
 func Debug(v ...interface{}) { log.Debug().Msg(fmt.Sprint(v...)) }
