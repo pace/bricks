@@ -80,7 +80,7 @@ func (c *Client) SolidifiedReverse(ctx context.Context, lat, lon float64) (*Resu
 			resultLow.Address.StateDistrict = resultHigh.Address.StateDistrict
 		}
 		if resultLow.Address.State == "" {
-			resultLow.Address.State = resultHigh.Address.StateDistrict
+			resultLow.Address.State = resultHigh.Address.State
 		}
 	}
 
