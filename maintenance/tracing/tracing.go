@@ -4,6 +4,7 @@
 package tracing
 
 import (
+	"io"
 	"net/http"
 	"strings"
 
@@ -14,6 +15,13 @@ import (
 	"github.com/zenazn/goji/web/mutil"
 	"lab.jamit.de/pace/go-microservice/maintenance/log"
 )
+
+// Closer can be used in shutdown hooks to ensure that the internal queue of
+// the Reporter is drained and all buffered spans are submitted to collectors.
+var Closer io.Closer
+
+// Tracer implementation that reports tracing to Jaeger
+var Tracer opentracing.Tracer
 
 func init() {
 	cfg, err := config.FromEnv()
@@ -27,10 +35,10 @@ func init() {
 		return
 	}
 
-	tracer, _, err := cfg.NewTracer(
+	Tracer, Closer, err = cfg.NewTracer(
 		config.Metrics(prometheus.New()),
 	)
-	opentracing.SetGlobalTracer(tracer)
+	opentracing.SetGlobalTracer(Tracer)
 	if err != nil {
 		log.Fatal(err)
 	}
