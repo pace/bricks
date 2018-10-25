@@ -96,16 +96,17 @@ func queryLogger(event *pg.QueryProcessedEvent) {
 }
 
 func openTracingAdapter(event *pg.QueryProcessedEvent) {
-	name := fmt.Sprintf("PostgreSQL: %v", event.Query)
-	span, _ := opentracing.StartSpanFromContext(event.DB.Context(), name,
-		opentracing.StartTime(event.StartTime))
-
 	// start span with general info
 	q, qe := event.FormattedQuery()
 	if qe != nil {
 		// this is only a display issue not a "real" issue
 		q = qe.Error()
 	}
+
+	name := fmt.Sprintf("PostgreSQL: %s", q)
+	span, _ := opentracing.StartSpanFromContext(event.DB.Context(), name,
+		opentracing.StartTime(event.StartTime))
+
 	fields := []olog.Field{
 		olog.String("file", event.File),
 		olog.Int("line", event.Line),
