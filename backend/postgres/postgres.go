@@ -87,21 +87,32 @@ func queryLogger(event *pg.QueryProcessedEvent) {
 			Int("rows", event.Result.RowsReturned())
 	}
 
-	le.Msgf("%v", event.Query)
+	q, qe := event.FormattedQuery()
+	if qe != nil {
+		// this is only a display issue not a "real" issue
+		le.Msgf("%v", qe)
+	}
+	le.Msg(q)
 }
 
 func openTracingAdapter(event *pg.QueryProcessedEvent) {
-	name := fmt.Sprintf("PostgreSQL: %v", event.Query)
+	// start span with general info
+	q, qe := event.FormattedQuery()
+	if qe != nil {
+		// this is only a display issue not a "real" issue
+		q = qe.Error()
+	}
+
+	name := fmt.Sprintf("PostgreSQL: %s", q)
 	span, _ := opentracing.StartSpanFromContext(event.DB.Context(), name,
 		opentracing.StartTime(event.StartTime))
 
-	// start span with genral info
 	fields := []olog.Field{
 		olog.String("file", event.File),
 		olog.Int("line", event.Line),
 		olog.String("func", event.Func),
 		olog.Int("attempt", event.Attempt),
-		olog.String("query", fmt.Sprintf("%v", event.Query)),
+		olog.String("query", q),
 	}
 
 	// add error or result set info
