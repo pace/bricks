@@ -11,14 +11,7 @@ import (
 
 // GetVehicleModel fetches the vehicle model based on the passed request
 func (c *Client) GetVehicleModel(ctx context.Context, r *GetVehicleModelRequest) (*GetVehicleModelResponse, error) {
-	var q url.Values
-
-	// only add build year if not 0
-	if r.BuildYear != 0 {
-		q = url.Values{"build_year": []string{strconv.Itoa(r.BuildYear)}}
-	}
-
-	u, err := c.URL("/api/v1/vehicles/"+r.ID, q)
+	u, err := c.URL("/api/v1/vehicles/"+r.ID, r.Query())
 	if err != nil {
 		return nil, err
 	}
@@ -36,6 +29,18 @@ func (c *Client) GetVehicleModel(ctx context.Context, r *GetVehicleModelRequest)
 type GetVehicleModelRequest struct {
 	ID        string // ID of car model
 	BuildYear int    // build year to check compatibility for
+}
+
+// Query generates a HTTP query based on the request data
+func (r *GetVehicleModelRequest) Query() url.Values {
+	var q url.Values
+
+	// only add build year if not 0
+	if r.BuildYear != 0 {
+		q = url.Values{"build_year": []string{strconv.Itoa(r.BuildYear)}}
+	}
+
+	return q
 }
 
 // GetVehicleModelResponse successful API response data

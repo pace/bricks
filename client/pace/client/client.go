@@ -21,6 +21,26 @@ import (
 // ErrNotFound error for HTTP 404 responses
 var ErrNotFound = errors.New("Resource not found (HTTP 404)")
 
+// ErrRequest contains error details
+type ErrRequest struct {
+	ErrorDetail struct {
+		Type  string `json:"type"`
+		Codes []struct {
+			Param  string `json:"param"`
+			CodeID string `json:"code_id"`
+		} `json:"codes"`
+	} `json:"error"`
+}
+
+// Error implements the error interface
+func (e *ErrRequest) Error() string {
+	codes := fmt.Sprintf("Error request %s: ", e.ErrorDetail.Type)
+	for _, code := range e.ErrorDetail.Codes {
+		codes += fmt.Sprintf("Param %q: %q;", code.Param, code.CodeID)
+	}
+	return codes
+}
+
 // Client implements a generic client for cockpit, cloud and jarvis
 type Client struct {
 	Endpoint     string // Endpoint URL
@@ -107,6 +127,16 @@ func (c *Client) DoJSON(ctx context.Context, req *http.Request, v interface{}) e
 	// return not found
 	if resp.StatusCode == 404 {
 		return ErrNotFound
+	}
+
+	// return other error
+	if resp.StatusCode == 400 {
+		var errReq ErrRequest
+		err := json.NewDecoder(resp.Body).Decode(&errReq)
+		if err != nil {
+			return fmt.Errorf("Error parsing error response: %v", err)
+		}
+		return &errReq
 	}
 
 	// decode response
