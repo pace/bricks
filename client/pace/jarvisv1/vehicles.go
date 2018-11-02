@@ -84,7 +84,7 @@ type Vehicle struct {
 	Compatibility               string        `json:"compatibility"`
 	PossibleObdLocations        string        `json:"possible_obd_locations"`
 	ObdNotes                    string        `json:"obd_notes"`
-	CommandBlacklistFooBar      []interface{} `json:"command_blacklist: foo_bar"`
+	CommandBlacklist            []interface{} `json:"command_blacklist"`
 	UpdatedAt                   int           `json:"updated_at"`
 	PollingIntervalInMs         int           `json:"polling_interval_in_ms"`
 	PollingGapInMs              int           `json:"polling_gap_in_ms"`

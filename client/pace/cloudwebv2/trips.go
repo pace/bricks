@@ -155,11 +155,11 @@ const (
 	OrderDESC Order = "DESC"
 )
 
-// ListTripsRequestMode	accepts all_pages or single_page, defaults to single_page
+// ListTripsRequestMode accepts all_pages or single_page, defaults to single_page
 type ListTripsRequestMode string
 
 const (
-	// ModeAllPages returns all of the pages upto the continue at plus 25 trips
+	// ModeAllPages returns all of the pages up to the continue at plus 25 trips
 	ModeAllPages ListTripsRequestMode = "all_pages"
 	// ModeSinglePage returns the next 25 trips from continue_at onwards.
 	ModeSinglePage ListTripsRequestMode = "single_page"
@@ -185,9 +185,9 @@ type Trip struct {
 	BusinessPartnerName string          `json:"business_partner_name"`
 	Stats               *TripStats      `json:"stats"`
 	EcoScores           *TripEcoScores  `json:"eco_scores"`
-	SafetyScore         int             `json:"safety_score"`
+	SafetyScore         float64         `json:"safety_score"`
 	ManuallyCreated     bool            `json:"manually_created"`
-	UpdatedAt           int             `json:"updated_at"`
+	UpdatedAt           client.UnixTime `json:"updated_at"`
 }
 
 // TripEcoScores of a trip
@@ -205,10 +205,10 @@ type TripStats struct {
 	AvgSpeedInKmPerH     float64 `json:"avg_speed_in_km_per_h"`
 	AvgRpm               float64 `json:"avg_rpm"`
 	MaxSpeedInKmPerH     float64 `json:"max_speed_in_km_per_h"`
-	MaxRpm               int     `json:"max_rpm"`
+	MaxRpm               float64 `json:"max_rpm"`
 	DistanceInKm         float64 `json:"distance_in_km"`
-	CostInCents          int     `json:"cost_in_cents"`
-	DurationInS          int     `json:"duration_in_s"`
+	CostInCents          float64 `json:"cost_in_cents"`
+	DurationInS          float64 `json:"duration_in_s"`
 	AvgFuelUsagePer100Km float64 `json:"avg_fuel_usage_per_100_km"`
 }
 

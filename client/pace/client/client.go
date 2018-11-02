@@ -1,7 +1,7 @@
 // Copyright © 2018 by PACE Telematics GmbH. All rights reserved.
 // Created at 2018/10/30 by Vincent Landgraf
 
-// Client package contains a generic JSON API client for cockpit, cloud and jarvis
+// Package client contains a generic JSON API client for cockpit, cloud and jarvis
 package client
 
 import (
@@ -67,9 +67,8 @@ func (c *Client) URL(path string, values url.Values) (*url.URL, error) {
 }
 
 // GetJSON gets the json from the passed url and decodes its response into the given value v
-func (c *Client) GetJSON(ctx context.Context, u *url.URL, v interface{}) error {
-	uri := u.String()
-	req, err := http.NewRequest("GET", uri, nil)
+func (c *Client) GetJSON(ctx context.Context, url fmt.Stringer, v interface{}) error {
+	req, err := http.NewRequest("GET", url.String(), nil)
 	if err != nil {
 		return err
 	}
@@ -79,24 +78,36 @@ func (c *Client) GetJSON(ctx context.Context, u *url.URL, v interface{}) error {
 
 // DoJSON executes a request and decodes its response it into the given value v
 func (c *Client) DoJSON(ctx context.Context, req *http.Request, v interface{}) error {
-	req = req.WithContext(ctx)
-	req.Header.Set("Accept", "application/json")
-
 	// set language if language given
 	if c.Language != "" {
 		req.Header.Set("Accept-Language", c.Language)
 	}
+	req.Header.Set("Accept", "application/json")
+
+	resp, err := c.Do(ctx, req)
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close() // nolint: megacheck,errcheck
+
+	// decode response
+	return json.NewDecoder(resp.Body).Decode(v)
+}
+
+// Do executes a request and returns its response while logging and tracing it
+func (c *Client) Do(ctx context.Context, req *http.Request) (*http.Response, error) {
+	req = req.WithContext(ctx)
+	cmdName := fmt.Sprintf("HTTP %s %s", req.Method, req.URL.Host)
 
 	// add logging & tracing statement begin
 	startTime := time.Now()
-	span, _ := opentracing.StartSpanFromContext(ctx, "PACE DoJSON",
+	span, _ := opentracing.StartSpanFromContext(ctx, cmdName,
 		opentracing.StartTime(startTime))
 	span.LogFields(olog.String("url", req.URL.String()),
 		olog.String("method", req.Method))
 
 	// do actual request
-	resp, err := c.Do(req)
-	defer resp.Body.Close() // nolint: megacheck,errcheck
+	resp, err := c.Client.Do(req)
 
 	// add logging & tracing statement end
 	dur := float64(time.Since(startTime)) / float64(time.Millisecond)
@@ -116,17 +127,17 @@ func (c *Client) DoJSON(ctx context.Context, req *http.Request, v interface{}) e
 		span.LogFields(olog.Int("code", resp.StatusCode))
 	}
 
-	le.Msg("PACE DoJSON")
+	le.Msg(cmdName)
 	span.Finish()
 
 	// handle error if request failed
 	if err != nil {
-		return fmt.Errorf("Failed to %s %q: %v", req.Method, req.URL.String(), err)
+		return nil, fmt.Errorf("Failed to %s %q: %v", req.Method, req.URL.String(), err)
 	}
 
 	// return not found
 	if resp.StatusCode == 404 {
-		return ErrNotFound
+		return nil, ErrNotFound
 	}
 
 	// return other error
@@ -134,11 +145,10 @@ func (c *Client) DoJSON(ctx context.Context, req *http.Request, v interface{}) e
 		var errReq ErrRequest
 		err := json.NewDecoder(resp.Body).Decode(&errReq)
 		if err != nil {
-			return fmt.Errorf("Error parsing error response: %v", err)
+			return nil, fmt.Errorf("Error parsing error response: %v", err)
 		}
-		return &errReq
+		return nil, &errReq
 	}
 
-	// decode response
-	return json.NewDecoder(resp.Body).Decode(v)
+	return resp, nil
 }

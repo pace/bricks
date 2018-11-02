@@ -4,10 +4,38 @@
 package cloudwebv2
 
 import (
+	"context"
 	"reflect"
 	"testing"
 	"time"
+
+	"github.com/rs/zerolog/log"
 )
+
+func TestListAllTrips(t *testing.T) {
+	ctx := log.With().Logger().WithContext(context.Background())
+	c := New(EndpointProduction)
+	trips := make(chan *Trip)
+	go func() {
+		err := c.ListAllTrips(ctx, &ListTripsRequest{
+			UniqueIdentifier: "14dff3a0-93ce-4f19-8c54-93adf720eea7",
+			Vin:              "WVWZZZAUZFP613749",
+		}, trips)
+		if err != nil {
+			t.Error(err)
+		}
+		close(trips)
+	}()
+
+	i := 0
+	km := 0.0
+	for trip := range trips {
+		t.Logf("Trip: %s", trip.GroupIdentifier)
+		i++
+		km += trip.Stats.DistanceInKm
+	}
+	t.Logf("Trips: %d %f", i, km)
+}
 
 func TestListTripsRequest_Query(t *testing.T) {
 	type fields struct {

@@ -9,6 +9,7 @@ import (
 	"time"
 )
 
+// UnixTime for json int values that represent a unix timestamp
 type UnixTime time.Time
 
 // MarshalJSON is generated so TripStatus satisfies json.Marshaler.

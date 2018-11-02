@@ -119,3 +119,10 @@ func Stack(ctx context.Context) {
 		}
 	}
 }
+
+// WithContext returns context with enabled logger.
+// This overwrites a logger that is set on the context already
+// use this if you are not inside a request context.
+func WithContext(ctx context.Context) context.Context {
+	return log.With().Logger().WithContext(ctx)
+}
