@@ -9,6 +9,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"math"
 	"net/http"
 	"net/url"
 	"time"
@@ -45,13 +46,14 @@ func (e *ErrRequest) Error() string {
 type Client struct {
 	Endpoint     string // Endpoint URL
 	Language     string // You can specify a locale (en|de)
+	Retries      int    // using exponential backoff
 	*http.Client        // http client used for doing the requests
 }
 
 // New creates a new Client with configured endpoint and the
 // default http client
 func New(endpoint string) *Client {
-	return &Client{Endpoint: endpoint, Client: http.DefaultClient}
+	return &Client{Endpoint: endpoint, Client: http.DefaultClient, Retries: 10}
 }
 
 // URL generates a new URL for the given path and url values
@@ -84,10 +86,29 @@ func (c *Client) DoJSON(ctx context.Context, req *http.Request, v interface{}) e
 	}
 	req.Header.Set("Accept", "application/json")
 
+	tries := 0
+req:
 	resp, err := c.Do(ctx, req)
+
+	// if the err it temporary or the server returned a 500, 502 the
+	// request will be retried
+	uerr, ok := err.(*url.Error)
+	if (ok && (uerr.Temporary() || uerr.Timeout())) ||
+		(resp != nil && (resp.StatusCode == 500 || resp.StatusCode == 502)) {
+		if tries < c.Retries {
+			tries++
+			seconds := time.Second * time.Duration(math.Pow(2, float64(tries)/2))
+			log.Ctx(ctx).Info().Int("retries", tries).Err(err).Msgf("Received temporary error, will retry request after %v", seconds)
+			time.Sleep(seconds)
+			goto req
+		}
+
+		log.Ctx(ctx).Warn().Err(err).Msg("Too many retires, giving up")
+	}
 	if err != nil {
 		return err
 	}
+
 	defer resp.Body.Close() // nolint: megacheck,errcheck
 
 	// decode response
