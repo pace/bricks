@@ -16,6 +16,7 @@ import (
 
 	opentracing "github.com/opentracing/opentracing-go"
 	olog "github.com/opentracing/opentracing-go/log"
+	"golang.org/x/net/http2"
 	"lab.jamit.de/pace/go-microservice/maintenance/log"
 )
 
@@ -93,7 +94,9 @@ req:
 	// if the err it temporary or the server returned a 500, 502 the
 	// request will be retried
 	uerr, ok := err.(*url.Error)
-	if (ok && (uerr.Temporary() || uerr.Timeout())) ||
+	gaerr, _ := err.(*http2.GoAwayError)
+
+	if (ok && (uerr.Temporary() || uerr.Timeout())) || gaerr != nil ||
 		(resp != nil && (resp.StatusCode == 500 || resp.StatusCode == 502)) {
 		if tries < c.Retries {
 			tries++
