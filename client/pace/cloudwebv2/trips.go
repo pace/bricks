@@ -42,7 +42,7 @@ next:
 		trips <- trip
 	}
 
-	if len(resp.Trips) > 0 {
+	if len(resp.Trips) == r.Limit {
 		r.ContinueAt = time.Time(resp.Trips[len(resp.Trips)-1].EndTime)
 		goto next
 	}
