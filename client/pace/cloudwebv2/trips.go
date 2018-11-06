@@ -237,7 +237,31 @@ type TripPosition struct {
 	Latitude  float64 `json:"latitude,omitempty"`
 	Longitude float64 `json:"longitude,omitempty"`
 	Altitude  float64 `json:"altitude,omitempty"`
-	Latitude  float64 `json:"latitude"`
-	Longitude float64 `json:"longitude"`
-	Altitude  float64 `json:"altitude"`
+}
+
+// GeoScore pace scoring for the specified Latitude and Longitude
+type GeoScore struct {
+	ElapsedTime float64 `json:"elapsed_time,omitempty"`
+	Latitude    float64 `json:"latitude,omitempty"`
+	Longitude   float64 `json:"longitude,omitempty"`
+	Score       float64 `json:"score,omitempty"`
+}
+
+// GeoEvent combines the geo location and its event data
+type GeoEvent struct {
+	Type       string              `json:"type,omitempty"`
+	Geometry   *GeoJSON            `json:"geometry,omitempty"`
+	Properties *GeoEventProperties `json:"properties,omitempty"`
+}
+
+// GeoEventProperties custom properties for the geo event
+type GeoEventProperties struct {
+	Type        string  `json:"type,omitempty"`
+	ElapsedTime float64 `json:"elapsed_time,omitempty"`
+}
+
+// GeoJSON geo json object as defined in http://geojson.org/
+type GeoJSON struct {
+	Type        string    `json:"type,omitempty"`
+	Coordinates []float64 `json:"coordinates,omitempty"`
 }
