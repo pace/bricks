@@ -167,67 +167,76 @@ const (
 
 // Trip individual trip of a user
 type Trip struct {
-	UUID                string          `json:"uuid"`
-	Vin                 string          `json:"vin"`
-	StartMileage        int             `json:"start_mileage"`
-	StartTime           client.UnixTime `json:"start_time"`
-	EndMileage          int             `json:"end_mileage"`
-	EndTime             client.UnixTime `json:"end_time"`
-	GroupIdentifier     string          `json:"group_identifier"`
-	Status              TripStatus      `json:"status"`
-	TripType            string          `json:"trip_type"`
-	DriverName          string          `json:"driver_name"`
-	StartAddress        *TripAddress    `json:"start_address"`
-	EndAddress          *TripAddress    `json:"end_address"`
-	StartPosition       *TripPosition   `json:"start_position"`
-	EndPosition         *TripPosition   `json:"end_position"`
-	BusinessReason      string          `json:"business_reason"`
-	BusinessPartnerName string          `json:"business_partner_name"`
-	Stats               *TripStats      `json:"stats"`
-	EcoScores           *TripEcoScores  `json:"eco_scores"`
-	SafetyScore         float64         `json:"safety_score"`
-	ManuallyCreated     bool            `json:"manually_created"`
-	UpdatedAt           client.UnixTime `json:"updated_at"`
+	ID                  int             `json:"id,omitempty"`
+	UUID                string          `json:"uuid,omitempty"`
+	Vin                 string          `json:"vin,omitempty"`
+	StartMileage        int             `json:"start_mileage,omitempty"`
+	StartMileageInM     int             `json:"start_mileage_in_m,omitempty"`
+	StartTime           client.UnixTime `json:"start_time,omitempty"`
+	EndMileage          int             `json:"end_mileage,omitempty"`
+	EndMileageInM       int             `json:"end_mileage_in_m,omitempty"`
+	EndTime             client.UnixTime `json:"end_time,omitempty"`
+	GroupIdentifier     string          `json:"group_identifier,omitempty"`
+	Status              TripStatus      `json:"status,omitempty"`
+	TripType            string          `json:"trip_type,omitempty"`
+	DriverName          string          `json:"driver_name,omitempty"`
+	StartAddress        *TripAddress    `json:"start_address,omitempty"`
+	EndAddress          *TripAddress    `json:"end_address,omitempty"`
+	StartPosition       *TripPosition   `json:"start_position,omitempty"`
+	EndPosition         *TripPosition   `json:"end_position,omitempty"`
+	BusinessReason      string          `json:"business_reason,omitempty"`
+	BusinessPartnerName string          `json:"business_partner_name,omitempty"`
+	Stats               *TripStats      `json:"stats,omitempty"`
+	EcoScores           *TripEcoScores  `json:"eco_scores,omitempty"`
+	SafetyScore         float64         `json:"safety_score,omitempty"`
+	ManuallyCreated     bool            `json:"manually_created,omitempty"`
+	UpdatedAt           client.UnixTime `json:"updated_at,omitempty"`
+	GeoScore            []*GeoScore     `json:"geo,omitempty"`
+	Events              []*GeoEvent     `json:"events,omitempty"`
 }
 
 // TripEcoScores of a trip
 type TripEcoScores struct {
-	RpmScore          float64 `json:"rpm_score"`
-	AccelerationScore float64 `json:"acceleration_score"`
-	BrakingScore      float64 `json:"braking_score"`
-	IdleScore         float64 `json:"idle_score"`
-	SpeedingScore     float64 `json:"speeding_score"`
-	TotalScore        float64 `json:"total_score"`
+	RpmScore          float64 `json:"rpm_score,omitempty"`
+	AccelerationScore float64 `json:"acceleration_score,omitempty"`
+	BrakingScore      float64 `json:"braking_score,omitempty"`
+	IdleScore         float64 `json:"idle_score,omitempty"`
+	SpeedingScore     float64 `json:"speeding_score,omitempty"`
+	TotalScore        float64 `json:"total_score,omitempty"`
 }
 
 // TripStats of a trip
 type TripStats struct {
-	AvgSpeedInKmPerH     float64 `json:"avg_speed_in_km_per_h"`
-	AvgRpm               float64 `json:"avg_rpm"`
-	MaxSpeedInKmPerH     float64 `json:"max_speed_in_km_per_h"`
-	MaxRpm               float64 `json:"max_rpm"`
-	DistanceInKm         float64 `json:"distance_in_km"`
-	CostInCents          float64 `json:"cost_in_cents"`
-	DurationInS          float64 `json:"duration_in_s"`
-	AvgFuelUsagePer100Km float64 `json:"avg_fuel_usage_per_100_km"`
+	AvgSpeedInKmPerH     float64 `json:"avg_speed_in_km_per_h,omitempty"`
+	AvgRpm               float64 `json:"avg_rpm,omitempty"`
+	MaxSpeedInKmPerH     float64 `json:"max_speed_in_km_per_h,omitempty"`
+	MaxRpm               float64 `json:"max_rpm,omitempty"`
+	DistanceInKm         float64 `json:"distance_in_km,omitempty"`
+	DistanceInM          int     `json:"distance_in_m"`
+	CostInCents          float64 `json:"cost_in_cents,omitempty"`
+	DurationInS          float64 `json:"duration_in_s,omitempty"`
+	AvgFuelUsagePer100Km float64 `json:"avg_fuel_usage_per_100_km,omitempty"`
 }
 
 // TripAddress of trip start and end address
 type TripAddress struct {
-	Name             string `json:"name"`
-	SourceIdentifier string `json:"source_identifier"`
-	Street           string `json:"street"`
-	HouseNumber      string `json:"house_number"`
-	Zip              string `json:"zip"`
-	Suburb           string `json:"suburb"`
-	State            string `json:"state"`
-	City             string `json:"city"`
-	Country          string `json:"country"`
-	AddressType      string `json:"address_type"`
+	Name             string `json:"name,omitempty"`
+	SourceIdentifier string `json:"source_identifier,omitempty"`
+	Street           string `json:"street,omitempty"`
+	HouseNumber      string `json:"house_number,omitempty"`
+	Zip              string `json:"zip,omitempty"`
+	Suburb           string `json:"suburb,omitempty"`
+	State            string `json:"state,omitempty"`
+	City             string `json:"city,omitempty"`
+	Country          string `json:"country,omitempty"`
+	AddressType      string `json:"address_type,omitempty"`
 }
 
 // TripPosition of trip start and end position
 type TripPosition struct {
+	Latitude  float64 `json:"latitude,omitempty"`
+	Longitude float64 `json:"longitude,omitempty"`
+	Altitude  float64 `json:"altitude,omitempty"`
 	Latitude  float64 `json:"latitude"`
 	Longitude float64 `json:"longitude"`
 	Altitude  float64 `json:"altitude"`

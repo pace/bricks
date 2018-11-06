@@ -58,44 +58,44 @@ func (r *GetVehiclesStatsRequest) Query() url.Values {
 
 // GetVehiclesStatsResponse for a single car
 type GetVehiclesStatsResponse struct {
-	CurrentMileage          int                 `json:"current_mileage"`
-	TripCountTotal          int                 `json:"trip_count_total"`
-	TripCountBusiness       int                 `json:"trip_count_business"`
-	TripCountPersonal       int                 `json:"trip_count_personal"`
-	TripCountWork           int                 `json:"trip_count_work"`
-	RefuelCostsInCents      int                 `json:"refuel_costs_in_cents"`
-	AvgSpeedInKmPerH        float64             `json:"avg_speed_in_km_per_h"`
-	MaxSpeedInKmPerH        float64             `json:"max_speed_in_km_per_h"`
-	AvgDistanceInKm         float64             `json:"avg_distance_in_km"`
-	MaxDistanceInKm         float64             `json:"max_distance_in_km"`
-	TotalDistanceInKm       float64             `json:"total_distance_in_km"`
-	AvgEcoScore             float64             `json:"avg_eco_score"`
-	AvgFuelUsagePer100Km    float64             `json:"avg_fuel_usage_per_100_km"`
-	AvgCostsInCentsPer100Km int                 `json:"avg_costs_in_cents_per_100_km"`
-	AvgDurationInS          int                 `json:"avg_duration_in_s"`
-	MaxDurationInS          int                 `json:"max_duration_in_s"`
-	KilometersDriven        []*KilometersDriven `json:"kilometers_driven"`
-	EcoEventCounts          *EcoEventCounts     `json:"eco_event_counts"`
-	TroubleCodesCount       int                 `json:"trouble_codes_count"`
-	FirstRecordedMileageInM int                 `json:"first_recorded_mileage_in_m"`
-	AvgMonthlyDistanceInM   int                 `json:"avg_monthly_distance_in_m"`
-	CurrentMileageInM       int                 `json:"current_mileage_in_m"`
+	CurrentMileage          int                 `json:"current_mileage,omitempty"`
+	TripCountTotal          int                 `json:"trip_count_total,omitempty"`
+	TripCountBusiness       int                 `json:"trip_count_business,omitempty"`
+	TripCountPersonal       int                 `json:"trip_count_personal,omitempty"`
+	TripCountWork           int                 `json:"trip_count_work,omitempty"`
+	RefuelCostsInCents      int                 `json:"refuel_costs_in_cents,omitempty"`
+	AvgSpeedInKmPerH        float64             `json:"avg_speed_in_km_per_h,omitempty"`
+	MaxSpeedInKmPerH        float64             `json:"max_speed_in_km_per_h,omitempty"`
+	AvgDistanceInKm         float64             `json:"avg_distance_in_km,omitempty"`
+	MaxDistanceInKm         float64             `json:"max_distance_in_km,omitempty"`
+	TotalDistanceInKm       float64             `json:"total_distance_in_km,omitempty"`
+	AvgEcoScore             float64             `json:"avg_eco_score,omitempty"`
+	AvgFuelUsagePer100Km    float64             `json:"avg_fuel_usage_per_100_km,omitempty"`
+	AvgCostsInCentsPer100Km int                 `json:"avg_costs_in_cents_per_100_km,omitempty"`
+	AvgDurationInS          int                 `json:"avg_duration_in_s,omitempty"`
+	MaxDurationInS          int                 `json:"max_duration_in_s,omitempty"`
+	KilometersDriven        []*KilometersDriven `json:"kilometers_driven,omitempty"`
+	EcoEventCounts          *EcoEventCounts     `json:"eco_event_counts,omitempty"`
+	TroubleCodesCount       int                 `json:"trouble_codes_count,omitempty"`
+	FirstRecordedMileageInM int                 `json:"first_recorded_mileage_in_m,omitempty"`
+	AvgMonthlyDistanceInM   int                 `json:"avg_monthly_distance_in_m,omitempty"`
+	CurrentMileageInM       int                 `json:"current_mileage_in_m,omitempty"`
 }
 
 // KilometersDriven for a single car
 type KilometersDriven struct {
-	Date     string `json:"date"`
-	Business int    `json:"business"`
-	Personal int    `json:"personal"`
-	Work     int    `json:"work"`
-	Unset    int    `json:"unset"`
+	Date     string `json:"date,omitempty"`
+	Business int    `json:"business,omitempty"`
+	Personal int    `json:"personal,omitempty"`
+	Work     int    `json:"work,omitempty"`
+	Unset    int    `json:"unset,omitempty"`
 }
 
 // EcoEventCounts for a single car
 type EcoEventCounts struct {
-	Rpm          int `json:"rpm"`
-	Acceleration int `json:"acceleration"`
-	Braking      int `json:"braking"`
-	Idle         int `json:"idle"`
-	Speeding     int `json:"speeding"`
+	Rpm          int `json:"rpm,omitempty"`
+	Acceleration int `json:"acceleration,omitempty"`
+	Braking      int `json:"braking,omitempty"`
+	Idle         int `json:"idle,omitempty"`
+	Speeding     int `json:"speeding,omitempty"`
 }
