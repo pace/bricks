@@ -46,17 +46,17 @@ type CommonOpeningHoursTimespans struct {
 
 // CommonOpeningHours ...
 type CommonOpeningHours []struct {
-	Days      []string                       `json:"days,omitempty" jsonapi:"attr,days,omitempty" valid:"optional"` // Example: "[Montag Dienstag]"
-	Timespans []*CommonOpeningHoursTimespans `json:"timespans,omitempty" jsonapi:"attr,timespans,omitempty" valid:"optional"`
+	Days      []string                      `json:"days,omitempty" jsonapi:"attr,days,omitempty" valid:"optional"` // Example: "[Montag Dienstag]"
+	Timespans []CommonOpeningHoursTimespans `json:"timespans,omitempty" jsonapi:"attr,timespans,omitempty" valid:"optional"`
 }
 
 // Event ...
 type Event struct {
-	ID        string       `jsonapi:"primary,events,omitempty" valid:"uuid,optional"` // Event ID
-	CreatedAt time.Time    `json:"createdAt,omitempty" jsonapi:"attr,createdAt,omitempty,iso8601" valid:"optional"`
-	EventAt   time.Time    `json:"eventAt,omitempty" jsonapi:"attr,eventAt,omitempty,iso8601" valid:"optional"`
-	Fields    []*FieldData `json:"fields,omitempty" jsonapi:"attr,fields,omitempty" valid:"optional"`
-	UserID    string       `json:"userId,omitempty" jsonapi:"attr,userId,omitempty" valid:"optional,uuid"` // Tracks who did last change
+	ID        string      `jsonapi:"primary,events,omitempty" valid:"uuid,optional"` // Event ID
+	CreatedAt time.Time   `json:"createdAt,omitempty" jsonapi:"attr,createdAt,omitempty,iso8601" valid:"optional"`
+	EventAt   time.Time   `json:"eventAt,omitempty" jsonapi:"attr,eventAt,omitempty,iso8601" valid:"optional"`
+	Fields    []FieldData `json:"fields,omitempty" jsonapi:"attr,fields,omitempty" valid:"optional"`
+	UserID    string      `json:"userId,omitempty" jsonapi:"attr,userId,omitempty" valid:"optional,uuid"` // Tracks who did last change
 }
 
 // Events ...
@@ -102,7 +102,7 @@ type GasStationAddress struct {
 // GasStation ...
 type GasStation struct {
 	ID                string              `jsonapi:"primary,gasStation,omitempty" valid:"uuid,optional"` // Gas Station ID
-	Address           *GasStationAddress  `json:"address,omitempty" jsonapi:"attr,address,omitempty" valid:"optional"`
+	Address           GasStationAddress   `json:"address,omitempty" jsonapi:"attr,address,omitempty" valid:"optional"`
 	Amenities         []string            `json:"amenities,omitempty" jsonapi:"attr,amenities,omitempty" valid:"optional"` // Example: "[restaurant]"
 	Latitude          float32             `json:"latitude,omitempty" jsonapi:"attr,latitude,omitempty" valid:"optional"`   // Example: "49.013"
 	Longitude         float32             `json:"longitude,omitempty" jsonapi:"attr,longitude,omitempty" valid:"optional"` // Example: "8.425"
@@ -118,8 +118,8 @@ type GasStations []*GasStation
 
 // LocationBasedAppMeta ...
 type LocationBasedAppMeta struct {
-	AppArea       *CommonGeoJSONPolygon `json:"appArea,omitempty" jsonapi:"attr,appArea,omitempty" valid:"optional"`
-	InsideAppArea bool                  `json:"insideAppArea,omitempty" jsonapi:"attr,insideAppArea,omitempty" valid:"optional"` // Boolean flag if the current position is inside the app area (polygon).
+	AppArea       CommonGeoJSONPolygon `json:"appArea,omitempty" jsonapi:"attr,appArea,omitempty" valid:"optional"`
+	InsideAppArea bool                 `json:"insideAppArea,omitempty" jsonapi:"attr,insideAppArea,omitempty" valid:"optional"` // Boolean flag if the current position is inside the app area (polygon).
 }
 
 // LocationBasedApp ...
@@ -150,16 +150,16 @@ type LocationBasedApps []*LocationBasedApp
 
 // POI ...
 type POI struct {
-	ID         string                `jsonapi:"primary,SpeedCamera,omitempty" valid:"uuid,optional"` // POI ID
-	Active     bool                  `json:"active,omitempty" jsonapi:"attr,active,omitempty" valid:"optional"`
-	Boundary   *CommonGeoJSONPolygon `json:"boundary,omitempty" jsonapi:"attr,boundary,omitempty" valid:"optional"`
-	CountryID  CommonCountryID       `json:"countryId,omitempty" jsonapi:"attr,countryId,omitempty" valid:"optional"`
-	CreatedAt  time.Time             `json:"createdAt,omitempty" jsonapi:"attr,createdAt,omitempty,iso8601" valid:"optional"`
-	Data       []*FieldData          `json:"data,omitempty" jsonapi:"attr,data,omitempty" valid:"optional"` // a JSON field containing POI specific data
-	LastSeenAt time.Time             `json:"lastSeenAt,omitempty" jsonapi:"attr,lastSeenAt,omitempty,iso8601" valid:"optional"`
-	Metadata   []*FieldMetaData      `json:"metadata,omitempty" jsonapi:"attr,metadata,omitempty" valid:"optional"` // a JSON field containing information about data field origin and update time
-	Position   *CommonGeoJSONPoint   `json:"position,omitempty" jsonapi:"attr,position,omitempty" valid:"optional"`
-	UpdatedAt  time.Time             `json:"updatedAt,omitempty" jsonapi:"attr,updatedAt,omitempty,iso8601" valid:"optional"`
+	ID         string               `jsonapi:"primary,SpeedCamera,omitempty" valid:"uuid,optional"` // POI ID
+	Active     bool                 `json:"active,omitempty" jsonapi:"attr,active,omitempty" valid:"optional"`
+	Boundary   CommonGeoJSONPolygon `json:"boundary,omitempty" jsonapi:"attr,boundary,omitempty" valid:"optional"`
+	CountryID  CommonCountryID      `json:"countryId,omitempty" jsonapi:"attr,countryId,omitempty" valid:"optional"`
+	CreatedAt  time.Time            `json:"createdAt,omitempty" jsonapi:"attr,createdAt,omitempty,iso8601" valid:"optional"`
+	Data       []FieldData          `json:"data,omitempty" jsonapi:"attr,data,omitempty" valid:"optional"` // a JSON field containing POI specific data
+	LastSeenAt time.Time            `json:"lastSeenAt,omitempty" jsonapi:"attr,lastSeenAt,omitempty,iso8601" valid:"optional"`
+	Metadata   []FieldMetaData      `json:"metadata,omitempty" jsonapi:"attr,metadata,omitempty" valid:"optional"` // a JSON field containing information about data field origin and update time
+	Position   CommonGeoJSONPoint   `json:"position,omitempty" jsonapi:"attr,position,omitempty" valid:"optional"`
+	UpdatedAt  time.Time            `json:"updatedAt,omitempty" jsonapi:"attr,updatedAt,omitempty,iso8601" valid:"optional"`
 }
 
 // POIType POI type this applies to
@@ -177,14 +177,14 @@ type Policy struct {
 	CountryID CommonCountryID `json:"countryId,omitempty" jsonapi:"attr,countryId,omitempty" valid:"optional"`
 	CreatedAt time.Time       `json:"createdAt,omitempty" jsonapi:"attr,createdAt,omitempty,iso8601" valid:"optional"` // Time of POI creation in (iso8601 without zone - expects UTC)
 	PoiType   POIType         `json:"poiType,omitempty" jsonapi:"attr,poiType,omitempty" valid:"optional"`
-	Rules     []*PolicyRule   `json:"rules,omitempty" jsonapi:"attr,rules,omitempty" valid:"optional"`
+	Rules     []PolicyRule    `json:"rules,omitempty" jsonapi:"attr,rules,omitempty" valid:"optional"`
 	UserID    string          `json:"userId,omitempty" jsonapi:"attr,userId,omitempty" valid:"optional,uuid"` // Tracks who did last change
 }
 
 // PolicyRule ...
 type PolicyRule struct {
-	Field      FieldName             `json:"field,omitempty" jsonapi:"attr,field,omitempty" valid:"required"`
-	Priorities []*PolicyRulePriority `json:"priorities,omitempty" jsonapi:"attr,priorities,omitempty" valid:"required"`
+	Field      FieldName            `json:"field,omitempty" jsonapi:"attr,field,omitempty" valid:"required"`
+	Priorities []PolicyRulePriority `json:"priorities,omitempty" jsonapi:"attr,priorities,omitempty" valid:"required"`
 }
 
 // PolicyRulePriority ...
@@ -226,8 +226,8 @@ type SubscriptionRequestArea struct {
 
 // SubscriptionRequest ...
 type SubscriptionRequest struct {
-	ID   string                   `jsonapi:"primary,subscription,omitempty" valid:"uuid,optional"`       // Example: "0c5b01d8-8dde-4d9f-be20-0865766bae6e"
-	Area *SubscriptionRequestArea `json:"area,omitempty" jsonapi:"attr,area,omitempty" valid:"required"` /*
+	ID   string                  `jsonapi:"primary,subscription,omitempty" valid:"uuid,optional"`       // Example: "0c5b01d8-8dde-4d9f-be20-0865766bae6e"
+	Area SubscriptionRequestArea `json:"area,omitempty" jsonapi:"attr,area,omitempty" valid:"required"` /*
 	Once entered, a notification is sent
 	*/
 	PushToken string   `json:"pushToken,omitempty" jsonapi:"attr,pushToken,omitempty" valid:"required"`                                  // Firebase registration token
