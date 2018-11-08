@@ -22,8 +22,8 @@ type ApproachingResponse struct {
 	ID             string           `jsonapi:"primary,approaching,omitempty" valid:"uuid,optional"`                                                                                                                                        // Approaching ID
 	CarFuelType    string           `json:"carFuelType,omitempty" jsonapi:"attr,carFuelType,omitempty" valid:"optional,in(e85|ron91|ron95_e5|ron95_e10|ron98|ron98_e5|ron100|diesel|diesel_gtl|diesel_b7|lpg|cng|h2|Truck Diesel|AdBlue)"` // Fuel type of the car
 	ExpectedAmount float32          `json:"expectedAmount,omitempty" jsonapi:"attr,expectedAmount,omitempty" valid:"optional"`                                                                                                             // Expected amount in liters for refuel
-	GasStation     *GasStation      `json:"gasStation,omitempty" jsonapi:"attr,gasStation,omitempty" valid:"optional"`
-	PaymentMethods []*PaymentMethod `json:"paymentMethods,omitempty" jsonapi:"attr,paymentMethods,omitempty" valid:"optional"`
+	GasStation     *GasStation      `json:"gasStation,omitempty" jsonapi:"relation,gasStation,omitempty" valid:"optional"`
+	PaymentMethods []*PaymentMethod `json:"paymentMethods,omitempty" jsonapi:"relation,paymentMethods,omitempty" valid:"optional"`
 }
 
 // FuelPrice ...
@@ -62,8 +62,8 @@ type GasStation struct {
 	Longitude    float32                   `json:"longitude,omitempty" jsonapi:"attr,longitude,omitempty" valid:"optional"` // Example: "8.425"
 	OpeningHours []*GasStationOpeningHours `json:"openingHours,omitempty" jsonapi:"attr,openingHours,omitempty" valid:"optional"`
 	StationName  string                    `json:"stationName,omitempty" jsonapi:"attr,stationName,omitempty" valid:"optional"` // Example: "PACE Station"
-	FuelPrices   []*FuelPrice              `json:"fuelPrices,omitempty" jsonapi:"attr,fuelPrices,omitempty" valid:"optional"`
-	Pumps        []*Pump                   `json:"pumps,omitempty" jsonapi:"attr,pumps,omitempty" valid:"optional"`
+	FuelPrices   []*FuelPrice              `json:"fuelPrices,omitempty" jsonapi:"relation,fuelPrices,omitempty" valid:"optional"`
+	Pumps        []*Pump                   `json:"pumps,omitempty" jsonapi:"relation,pumps,omitempty" valid:"optional"`
 }
 
 // PaymentMethod ...

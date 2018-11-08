@@ -290,7 +290,8 @@ func (g *Generator) generateStructRelationships(prefix string, schema *openapi3.
 	for _, relName := range keys {
 		relSchema := schema.Properties[relName]
 		tags := make(map[string]string)
-		addJSONAPITags(tags, relName, jsonAPI)
+		tags["jsonapi"] = fmt.Sprintf("relation,%s,omitempty", relName)
+		tags["json"] = fmt.Sprintf("%s,omitempty", relName)
 		addRequiredOptionalTag(tags, relName, schema)
 
 		// check for data

@@ -44,7 +44,7 @@ type PaymentMethodsWithPaymentTokensItem struct {
 	ID                   string          `jsonapi:"primary,paymentMethod,omitempty" valid:"uuid,optional"`                                      // Payment method ID
 	IdentificationString string          `json:"identificationString,omitempty" jsonapi:"attr,identificationString,omitempty" valid:"optional"` // Example: "DE89 **** 3000"
 	Kind                 string          `json:"kind,omitempty" jsonapi:"attr,kind,omitempty" valid:"optional,in(sepa)"`                        // Example: "sepa"
-	PaymentTokens        []*PaymentToken `json:"paymentTokens,omitempty" jsonapi:"attr,paymentTokens,omitempty" valid:"optional"`
+	PaymentTokens        []*PaymentToken `json:"paymentTokens,omitempty" jsonapi:"relation,paymentTokens,omitempty" valid:"optional"`
 }
 
 // PaymentMethodsWithPaymentTokens ...

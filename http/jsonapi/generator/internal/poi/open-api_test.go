@@ -109,8 +109,8 @@ type GasStation struct {
 	OpeningHours      CommonOpeningHours  `json:"openingHours,omitempty" jsonapi:"attr,openingHours,omitempty" valid:"optional"`
 	PaymentMethods    []string            `json:"paymentMethods,omitempty" jsonapi:"attr,paymentMethods,omitempty" valid:"optional,in(sepa)"` // Example: "[sepa]"
 	StationName       string              `json:"stationName,omitempty" jsonapi:"attr,stationName,omitempty" valid:"optional"`                // Example: "PACE Station"
-	FuelPrices        []*FuelPrice        `json:"fuelPrices,omitempty" jsonapi:"attr,fuelPrices,omitempty" valid:"optional"`
-	LocationBasedApps []*LocationBasedApp `json:"locationBasedApps,omitempty" jsonapi:"attr,locationBasedApps,omitempty" valid:"optional"`
+	FuelPrices        []*FuelPrice        `json:"fuelPrices,omitempty" jsonapi:"relation,fuelPrices,omitempty" valid:"optional"`
+	LocationBasedApps []*LocationBasedApp `json:"locationBasedApps,omitempty" jsonapi:"relation,locationBasedApps,omitempty" valid:"optional"`
 }
 
 // GasStations ...
