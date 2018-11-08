@@ -53,8 +53,8 @@ type CommonOpeningHours []struct {
 // Event ...
 type Event struct {
 	ID        string       `jsonapi:"primary,events,omitempty" valid:"uuid,optional"` // Event ID
-	CreatedAt time.Time    `json:"createdAt,omitempty" jsonapi:"attr,createdAt,omitempty" valid:"optional,rfc3339WithoutZone"`
-	EventAt   time.Time    `json:"eventAt,omitempty" jsonapi:"attr,eventAt,omitempty" valid:"optional,rfc3339WithoutZone"`
+	CreatedAt time.Time    `json:"createdAt,omitempty" jsonapi:"attr,createdAt,omitempty,iso8601" valid:"optional"`
+	EventAt   time.Time    `json:"eventAt,omitempty" jsonapi:"attr,eventAt,omitempty,iso8601" valid:"optional"`
 	Fields    []*FieldData `json:"fields,omitempty" jsonapi:"attr,fields,omitempty" valid:"optional"`
 	UserID    string       `json:"userId,omitempty" jsonapi:"attr,userId,omitempty" valid:"optional,uuid"` // Tracks who did last change
 }
@@ -71,7 +71,7 @@ type FieldData struct {
 // FieldMetaData ...
 type FieldMetaData struct {
 	SourceID  string    `json:"SourceId,omitempty" jsonapi:"attr,SourceId,omitempty" valid:"optional,uuid"` // Source ID
-	UpdatedAt time.Time `json:"UpdatedAt,omitempty" jsonapi:"attr,UpdatedAt,omitempty" valid:"optional,rfc3339WithoutZone"`
+	UpdatedAt time.Time `json:"UpdatedAt,omitempty" jsonapi:"attr,UpdatedAt,omitempty,iso8601" valid:"optional"`
 	Field     FieldName `json:"field,omitempty" jsonapi:"attr,field,omitempty" valid:"optional"`
 }
 
@@ -154,12 +154,12 @@ type POI struct {
 	Active     bool                  `json:"active,omitempty" jsonapi:"attr,active,omitempty" valid:"optional"`
 	Boundary   *CommonGeoJSONPolygon `json:"boundary,omitempty" jsonapi:"attr,boundary,omitempty" valid:"optional"`
 	CountryID  CommonCountryID       `json:"countryId,omitempty" jsonapi:"attr,countryId,omitempty" valid:"optional"`
-	CreatedAt  time.Time             `json:"createdAt,omitempty" jsonapi:"attr,createdAt,omitempty" valid:"optional,rfc3339WithoutZone"`
+	CreatedAt  time.Time             `json:"createdAt,omitempty" jsonapi:"attr,createdAt,omitempty,iso8601" valid:"optional"`
 	Data       []*FieldData          `json:"data,omitempty" jsonapi:"attr,data,omitempty" valid:"optional"` // a JSON field containing POI specific data
-	LastSeenAt time.Time             `json:"lastSeenAt,omitempty" jsonapi:"attr,lastSeenAt,omitempty" valid:"optional,rfc3339WithoutZone"`
+	LastSeenAt time.Time             `json:"lastSeenAt,omitempty" jsonapi:"attr,lastSeenAt,omitempty,iso8601" valid:"optional"`
 	Metadata   []*FieldMetaData      `json:"metadata,omitempty" jsonapi:"attr,metadata,omitempty" valid:"optional"` // a JSON field containing information about data field origin and update time
 	Position   *CommonGeoJSONPoint   `json:"position,omitempty" jsonapi:"attr,position,omitempty" valid:"optional"`
-	UpdatedAt  time.Time             `json:"updatedAt,omitempty" jsonapi:"attr,updatedAt,omitempty" valid:"optional,rfc3339WithoutZone"`
+	UpdatedAt  time.Time             `json:"updatedAt,omitempty" jsonapi:"attr,updatedAt,omitempty,iso8601" valid:"optional"`
 }
 
 // POIType POI type this applies to
@@ -175,7 +175,7 @@ type Policies []*Policy
 type Policy struct {
 	ID        string          `jsonapi:"primary,policies,omitempty" valid:"uuid,optional"` // Policy ID
 	CountryID CommonCountryID `json:"countryId,omitempty" jsonapi:"attr,countryId,omitempty" valid:"optional"`
-	CreatedAt time.Time       `json:"createdAt,omitempty" jsonapi:"attr,createdAt,omitempty" valid:"optional,rfc3339WithoutZone"` // Time of POI creation in (iso8601 without zone - expects UTC)
+	CreatedAt time.Time       `json:"createdAt,omitempty" jsonapi:"attr,createdAt,omitempty,iso8601" valid:"optional"` // Time of POI creation in (iso8601 without zone - expects UTC)
 	PoiType   POIType         `json:"poiType,omitempty" jsonapi:"attr,poiType,omitempty" valid:"optional"`
 	Rules     []*PolicyRule   `json:"rules,omitempty" jsonapi:"attr,rules,omitempty" valid:"optional"`
 	UserID    string          `json:"userId,omitempty" jsonapi:"attr,userId,omitempty" valid:"optional,uuid"` // Tracks who did last change
@@ -196,12 +196,12 @@ type PolicyRulePriority struct {
 // Source ...
 type Source struct {
 	ID         string      `jsonapi:"primary,sources,omitempty" valid:"uuid,optional"` // Source ID
-	CreatedAt  time.Time   `json:"createdAt,omitempty" jsonapi:"attr,createdAt,omitempty" valid:"optional,rfc3339WithoutZone"`
-	LastDataAt time.Time   `json:"lastDataAt,omitempty" jsonapi:"attr,lastDataAt,omitempty" valid:"optional,rfc3339WithoutZone"` // timestamp of last import from source
-	Name       string      `json:"name,omitempty" jsonapi:"attr,name,omitempty" valid:"optional"`                                // source name, unique
+	CreatedAt  time.Time   `json:"createdAt,omitempty" jsonapi:"attr,createdAt,omitempty,iso8601" valid:"optional"`
+	LastDataAt time.Time   `json:"lastDataAt,omitempty" jsonapi:"attr,lastDataAt,omitempty,iso8601" valid:"optional"` // timestamp of last import from source
+	Name       string      `json:"name,omitempty" jsonapi:"attr,name,omitempty" valid:"optional"`                     // source name, unique
 	PoiType    POIType     `json:"poiType,omitempty" jsonapi:"attr,poiType,omitempty" valid:"optional"`
 	Schema     []FieldName `json:"schema,omitempty" jsonapi:"attr,schema,omitempty" valid:"optional"` // JSON field describing the structure of the updates sent by the data source
-	UpdatedAt  time.Time   `json:"updatedAt,omitempty" jsonapi:"attr,updatedAt,omitempty" valid:"optional,rfc3339WithoutZone"`
+	UpdatedAt  time.Time   `json:"updatedAt,omitempty" jsonapi:"attr,updatedAt,omitempty,iso8601" valid:"optional"`
 }
 
 // Sources ...
