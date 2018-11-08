@@ -40,17 +40,17 @@ type FuelPriceResponse *FuelPrice
 
 // GasStationAddress ...
 type GasStationAddress struct {
-	City        string `json:"city,omitempty" jsonapi:"city,omitempty" valid:"optional"`               // Example: "Karlsruhe"
-	CountryCode string `json:"countryCode,omitempty" jsonapi:"countryCode,omitempty" valid:"optional"` // Country code in as specified in ISO 3166-1.
-	HouseNo     string `json:"houseNo,omitempty" jsonapi:"houseNo,omitempty" valid:"optional"`         // Example: "18"
-	PostalCode  string `json:"postalCode,omitempty" jsonapi:"postalCode,omitempty" valid:"optional"`   // Example: "76131"
-	Street      string `json:"street,omitempty" jsonapi:"street,omitempty" valid:"optional"`           // Example: "Haid-und-Neu-Str."
+	City        string `json:"city,omitempty" jsonapi:"attr,city,omitempty" valid:"optional"`               // Example: "Karlsruhe"
+	CountryCode string `json:"countryCode,omitempty" jsonapi:"attr,countryCode,omitempty" valid:"optional"` // Country code in as specified in ISO 3166-1.
+	HouseNo     string `json:"houseNo,omitempty" jsonapi:"attr,houseNo,omitempty" valid:"optional"`         // Example: "18"
+	PostalCode  string `json:"postalCode,omitempty" jsonapi:"attr,postalCode,omitempty" valid:"optional"`   // Example: "76131"
+	Street      string `json:"street,omitempty" jsonapi:"attr,street,omitempty" valid:"optional"`           // Example: "Haid-und-Neu-Str."
 }
 
 // GasStationOpeningHours ...
 type GasStationOpeningHours struct {
-	OpenFromTo []string `json:"openFromTo,omitempty" jsonapi:"openFromTo,omitempty" valid:"optional"` // Example: "[07:30 20:30]"
-	Weekdays   []string `json:"weekdays,omitempty" jsonapi:"weekdays,omitempty" valid:"optional"`     // Example: "[Montag Dienstag]"
+	OpenFromTo []string `json:"openFromTo,omitempty" jsonapi:"attr,openFromTo,omitempty" valid:"optional"` // Example: "[07:30 20:30]"
+	Weekdays   []string `json:"weekdays,omitempty" jsonapi:"attr,weekdays,omitempty" valid:"optional"`     // Example: "[Montag Dienstag]"
 }
 
 // GasStation ...
@@ -84,8 +84,8 @@ type Pump struct {
 
 // PumpResponseVAT ...
 type PumpResponseVAT struct {
-	Amount float32 `json:"amount,omitempty" jsonapi:"amount,omitempty" valid:"optional"` // Example: "9.72"
-	Rate   float32 `json:"rate,omitempty" jsonapi:"rate,omitempty" valid:"optional"`     // Example: "0.19"
+	Amount float32 `json:"amount,omitempty" jsonapi:"attr,amount,omitempty" valid:"optional"` // Example: "9.72"
+	Rate   float32 `json:"rate,omitempty" jsonapi:"attr,rate,omitempty" valid:"optional"`     // Example: "0.19"
 }
 
 // PumpResponse ...
@@ -336,8 +336,8 @@ type ProcessPaymentCreated struct {
 
 // ProcessPaymentCreatedVAT ...
 type ProcessPaymentCreatedVAT struct {
-	Amount float32 `json:"amount,omitempty" jsonapi:"amount,omitempty" valid:"optional"` // Example: "11.07"
-	Rate   float32 `json:"rate,omitempty" jsonapi:"rate,omitempty" valid:"optional"`     // Example: "0.19"
+	Amount float32 `json:"amount,omitempty" jsonapi:"attr,amount,omitempty" valid:"optional"` // Example: "11.07"
+	Rate   float32 `json:"rate,omitempty" jsonapi:"attr,rate,omitempty" valid:"optional"`     // Example: "0.19"
 }
 
 /*

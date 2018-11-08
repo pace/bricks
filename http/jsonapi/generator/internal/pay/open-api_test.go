@@ -22,11 +22,11 @@ type AllPaymentMethods []*AllPaymentMethodsItem
 
 // PaymentMethodSEPAAddress ...
 type PaymentMethodSEPAAddress struct {
-	City        string `json:"city,omitempty" jsonapi:"city,omitempty" valid:"required"`               // Example: "Karlsruhe"
-	CountryCode string `json:"countryCode,omitempty" jsonapi:"countryCode,omitempty" valid:"required"` // Country code in as specified in ISO 3166-1.
-	HouseNo     string `json:"houseNo,omitempty" jsonapi:"houseNo,omitempty" valid:"required"`         // Example: "18"
-	PostalCode  string `json:"postalCode,omitempty" jsonapi:"postalCode,omitempty" valid:"required"`   // Example: "76131"
-	Street      string `json:"street,omitempty" jsonapi:"street,omitempty" valid:"required"`           // Example: "Haid-und-Neu-Str."
+	City        string `json:"city,omitempty" jsonapi:"attr,city,omitempty" valid:"required"`               // Example: "Karlsruhe"
+	CountryCode string `json:"countryCode,omitempty" jsonapi:"attr,countryCode,omitempty" valid:"required"` // Country code in as specified in ISO 3166-1.
+	HouseNo     string `json:"houseNo,omitempty" jsonapi:"attr,houseNo,omitempty" valid:"required"`         // Example: "18"
+	PostalCode  string `json:"postalCode,omitempty" jsonapi:"attr,postalCode,omitempty" valid:"required"`   // Example: "76131"
+	Street      string `json:"street,omitempty" jsonapi:"attr,street,omitempty" valid:"required"`           // Example: "Haid-und-Neu-Str."
 }
 
 // PaymentMethodSEPA ...
@@ -57,10 +57,10 @@ type PaymentToken struct {
 
 // TransactionRequestFueling ...
 type TransactionRequestFueling struct {
-	AppID   string `json:"appId,omitempty" jsonapi:"appId,omitempty" valid:"required"`     // Location-based App ID
-	Mileage int64  `json:"mileage,omitempty" jsonapi:"mileage,omitempty" valid:"required"` // Current mileage in meters
-	PumpID  string `json:"pumpId,omitempty" jsonapi:"pumpId,omitempty" valid:"required"`   // Pump ID
-	Vin     string `json:"vin,omitempty" jsonapi:"vin,omitempty" valid:"required"`         // Example: "1B3EL46R36N102271"
+	AppID   string `json:"appId,omitempty" jsonapi:"attr,appId,omitempty" valid:"required"`     // Location-based App ID
+	Mileage int64  `json:"mileage,omitempty" jsonapi:"attr,mileage,omitempty" valid:"required"` // Current mileage in meters
+	PumpID  string `json:"pumpId,omitempty" jsonapi:"attr,pumpId,omitempty" valid:"required"`   // Pump ID
+	Vin     string `json:"vin,omitempty" jsonapi:"attr,vin,omitempty" valid:"required"`         // Example: "1B3EL46R36N102271"
 }
 
 // TransactionRequest ...
@@ -645,16 +645,16 @@ type ProcessPaymentCreated struct {
 
 // ProcessPaymentCreatedVAT ...
 type ProcessPaymentCreatedVAT struct {
-	Amount float32 `json:"amount,omitempty" jsonapi:"amount,omitempty" valid:"optional"` // Example: "11.07"
-	Rate   float32 `json:"rate,omitempty" jsonapi:"rate,omitempty" valid:"optional"`     // Example: "0.19"
+	Amount float32 `json:"amount,omitempty" jsonapi:"attr,amount,omitempty" valid:"optional"` // Example: "11.07"
+	Rate   float32 `json:"rate,omitempty" jsonapi:"attr,rate,omitempty" valid:"optional"`     // Example: "0.19"
 }
 
 // ProcessPaymentCreatedFueling ...
 type ProcessPaymentCreatedFueling struct {
-	AppID   string `json:"appId,omitempty" jsonapi:"appId,omitempty" valid:"required"`     // Example: "c30bce97-b732-4390-af38-1ac6b017aa4c"
-	Mileage int64  `json:"mileage,omitempty" jsonapi:"mileage,omitempty" valid:"required"` // Example: "66435"
-	PumpID  string `json:"pumpId,omitempty" jsonapi:"pumpId,omitempty" valid:"required"`   // Example: "460ffaad-a3c1-4199-b69e-63949ccda82f"
-	Vin     string `json:"vin,omitempty" jsonapi:"vin,omitempty" valid:"required"`         // Example: "1B3EL46R36N102271"
+	AppID   string `json:"appId,omitempty" jsonapi:"attr,appId,omitempty" valid:"required"`     // Example: "c30bce97-b732-4390-af38-1ac6b017aa4c"
+	Mileage int64  `json:"mileage,omitempty" jsonapi:"attr,mileage,omitempty" valid:"required"` // Example: "66435"
+	PumpID  string `json:"pumpId,omitempty" jsonapi:"attr,pumpId,omitempty" valid:"required"`   // Example: "460ffaad-a3c1-4199-b69e-63949ccda82f"
+	Vin     string `json:"vin,omitempty" jsonapi:"attr,vin,omitempty" valid:"required"`         // Example: "1B3EL46R36N102271"
 }
 
 /*

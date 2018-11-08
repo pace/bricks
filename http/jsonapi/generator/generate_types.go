@@ -372,12 +372,6 @@ func addRequiredOptionalTag(tags map[string]string, name string, schema *openapi
 }
 
 func addJSONAPITags(tags map[string]string, name string, jsonAPI bool) {
-	// Add json-api tag
-	if jsonAPI {
-		tags["jsonapi"] = fmt.Sprintf("attr,%s,omitempty", name)
-	} else {
-		tags["jsonapi"] = fmt.Sprintf("%s,omitempty", name)
-	}
-	// Add json tag
+	tags["jsonapi"] = fmt.Sprintf("attr,%s,omitempty", name)
 	tags["json"] = fmt.Sprintf("%s,omitempty", name)
 }
