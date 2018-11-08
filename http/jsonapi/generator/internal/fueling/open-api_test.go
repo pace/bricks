@@ -28,11 +28,11 @@ type ApproachingResponse struct {
 
 // FuelPrice ...
 type FuelPrice struct {
-	ID          string    `jsonapi:"primary,fuelPrice,omitempty" valid:"optional"` // Fuel Price ID
-	Currency    *Currency `json:"currency,omitempty" jsonapi:"attr,currency,omitempty" valid:"optional"`
-	FuelType    string    `json:"fuelType,omitempty" jsonapi:"attr,fuelType,omitempty" valid:"optional"`       // Example: "ron95_e10"
-	Price       float32   `json:"price,omitempty" jsonapi:"attr,price,omitempty" valid:"optional"`             // Price in liters
-	ProductName string    `json:"productName,omitempty" jsonapi:"attr,productName,omitempty" valid:"optional"` // Example: "Super E10"
+	ID          string   `jsonapi:"primary,fuelPrice,omitempty" valid:"optional"` // Fuel Price ID
+	Currency    Currency `json:"currency,omitempty" jsonapi:"attr,currency,omitempty" valid:"optional"`
+	FuelType    string   `json:"fuelType,omitempty" jsonapi:"attr,fuelType,omitempty" valid:"optional"`       // Example: "ron95_e10"
+	Price       float32  `json:"price,omitempty" jsonapi:"attr,price,omitempty" valid:"optional"`             // Price in liters
+	ProductName string   `json:"productName,omitempty" jsonapi:"attr,productName,omitempty" valid:"optional"` // Example: "Super E10"
 }
 
 // FuelPriceResponse ...
@@ -77,9 +77,9 @@ type PaymentMethodResponse *PaymentMethod
 
 // Pump ...
 type Pump struct {
-	ID         string      `jsonapi:"primary,pump,omitempty" valid:"uuid,optional"`                           // Pump ID
-	Identifier string      `json:"identifier,omitempty" jsonapi:"attr,identifier,omitempty" valid:"optional"` // Pump identifier
-	Status     *PumpStatus `json:"status,omitempty" jsonapi:"attr,status,omitempty" valid:"optional"`
+	ID         string     `jsonapi:"primary,pump,omitempty" valid:"uuid,optional"`                           // Pump ID
+	Identifier string     `json:"identifier,omitempty" jsonapi:"attr,identifier,omitempty" valid:"optional"` // Pump identifier
+	Status     PumpStatus `json:"status,omitempty" jsonapi:"attr,status,omitempty" valid:"optional"`
 }
 
 // PumpResponseVAT ...
@@ -92,14 +92,14 @@ type PumpResponseVAT struct {
 type PumpResponse struct {
 	ID                string           `jsonapi:"primary,pump,omitempty" valid:"uuid,optional"` // Pump ID
 	VAT               *PumpResponseVAT `json:"VAT,omitempty" jsonapi:"attr,VAT,omitempty" valid:"optional"`
-	Currency          *Currency        `json:"currency,omitempty" jsonapi:"attr,currency,omitempty" valid:"optional"`
+	Currency          Currency         `json:"currency,omitempty" jsonapi:"attr,currency,omitempty" valid:"optional"`
 	FuelAmount        float32          `json:"fuelAmount,omitempty" jsonapi:"attr,fuelAmount,omitempty" valid:"optional"`               // Fuel amount in liters
 	FuelType          string           `json:"fuelType,omitempty" jsonapi:"attr,fuelType,omitempty" valid:"optional"`                   // Example: "ron95_e10"
 	Identifier        string           `json:"identifier,omitempty" jsonapi:"attr,identifier,omitempty" valid:"optional"`               // Pump identifier
 	PriceIncludingVAT float32          `json:"priceIncludingVAT,omitempty" jsonapi:"attr,priceIncludingVAT,omitempty" valid:"optional"` // Example: "61.09"
 	PriceWithoutVAT   float32          `json:"priceWithoutVAT,omitempty" jsonapi:"attr,priceWithoutVAT,omitempty" valid:"optional"`     // Example: "51.37"
 	ProductName       string           `json:"productName,omitempty" jsonapi:"attr,productName,omitempty" valid:"optional"`             // Example: "Super E10"
-	Status            *PumpStatus      `json:"status,omitempty" jsonapi:"attr,status,omitempty" valid:"optional"`
+	Status            PumpStatus       `json:"status,omitempty" jsonapi:"attr,status,omitempty" valid:"optional"`
 }
 
 // PumpStatus Current pump status
@@ -107,14 +107,14 @@ type PumpStatus string
 
 // TransactionRequest ...
 type TransactionRequest struct {
-	ID                string    `jsonapi:"primary,transaction,omitempty" valid:"uuid,optional"` // Transaction ID
-	Currency          *Currency `json:"currency,omitempty" jsonapi:"attr,currency,omitempty" valid:"optional"`
-	FuelingAppID      string    `json:"fuelingAppId,omitempty" jsonapi:"attr,fuelingAppId,omitempty" valid:"required"`           // Location-based App ID
-	Mileage           int64     `json:"mileage,omitempty" jsonapi:"attr,mileage,omitempty" valid:"optional"`                     // Current mileage in meters
-	PaymentToken      string    `json:"paymentToken,omitempty" jsonapi:"attr,paymentToken,omitempty" valid:"required"`           // Example: "f106ac99-213c-4cf7-8c1b-1e841516026b"
-	PriceIncludingVAT float32   `json:"priceIncludingVAT,omitempty" jsonapi:"attr,priceIncludingVAT,omitempty" valid:"optional"` // Example: "69.34"
-	PumpID            string    `json:"pumpId,omitempty" jsonapi:"attr,pumpId,omitempty" valid:"required"`                       // Pump ID
-	Vin               string    `json:"vin,omitempty" jsonapi:"attr,vin,omitempty" valid:"optional"`                             // Example: "1B3EL46R36N102271"
+	ID                string   `jsonapi:"primary,transaction,omitempty" valid:"uuid,optional"` // Transaction ID
+	Currency          Currency `json:"currency,omitempty" jsonapi:"attr,currency,omitempty" valid:"optional"`
+	FuelingAppID      string   `json:"fuelingAppId,omitempty" jsonapi:"attr,fuelingAppId,omitempty" valid:"required"`           // Location-based App ID
+	Mileage           int64    `json:"mileage,omitempty" jsonapi:"attr,mileage,omitempty" valid:"optional"`                     // Current mileage in meters
+	PaymentToken      string   `json:"paymentToken,omitempty" jsonapi:"attr,paymentToken,omitempty" valid:"required"`           // Example: "f106ac99-213c-4cf7-8c1b-1e841516026b"
+	PriceIncludingVAT float32  `json:"priceIncludingVAT,omitempty" jsonapi:"attr,priceIncludingVAT,omitempty" valid:"optional"` // Example: "69.34"
+	PumpID            string   `json:"pumpId,omitempty" jsonapi:"attr,pumpId,omitempty" valid:"required"`                       // Pump ID
+	Vin               string   `json:"vin,omitempty" jsonapi:"attr,vin,omitempty" valid:"optional"`                             // Example: "1B3EL46R36N102271"
 }
 
 // Currency ...
@@ -323,7 +323,7 @@ func WaitOnPumpStatusChangeHandler(service Service) http.Handler {
 type ProcessPaymentCreated struct {
 	ID                string                    `jsonapi:"primary,transaction,omitempty" valid:"uuid,optional"` // Transaction ID
 	VAT               *ProcessPaymentCreatedVAT `json:"VAT,omitempty" jsonapi:"attr,VAT,omitempty" valid:"optional"`
-	Currency          *Currency                 `json:"currency,omitempty" jsonapi:"attr,currency,omitempty" valid:"optional"`
+	Currency          Currency                  `json:"currency,omitempty" jsonapi:"attr,currency,omitempty" valid:"optional"`
 	FuelingAppID      string                    `json:"fuelingAppId,omitempty" jsonapi:"attr,fuelingAppId,omitempty" valid:"optional"`           // Example: "c30bce97-b732-4390-af38-1ac6b017aa4c"
 	GasStationID      string                    `json:"gasStationId,omitempty" jsonapi:"attr,gasStationId,omitempty" valid:"optional"`           // Example: "a6ec9bd7-cf0b-416c-b24f-9ce65ab3dfe1"
 	Mileage           int64                     `json:"mileage,omitempty" jsonapi:"attr,mileage,omitempty" valid:"optional"`                     // Example: "66435"

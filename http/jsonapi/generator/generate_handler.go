@@ -188,7 +188,7 @@ func (g *Generator) generateResponseInterface(route *route, schema *openapi3.Swa
 			}()
 		} else if mt := response.Value.Content.Get(jsonapiContent); mt != nil {
 			typeReference, err := g.generateTypeReference(route.serviceFunc+methodName,
-				mt.Schema)
+				mt.Schema, false)
 			if err != nil {
 				return err
 			}
@@ -254,7 +254,7 @@ func (g *Generator) generateRequestStruct(route *route, schema *openapi3.Swagger
 	// add request type
 	if body != nil {
 		if mt := body.Value.Content.Get(jsonapiContent); mt != nil {
-			ref, err := g.generateTypeReference(route.serviceFunc+"Content", mt.Schema)
+			ref, err := g.generateTypeReference(route.serviceFunc+"Content", mt.Schema, true)
 			if err != nil {
 				return err
 			}

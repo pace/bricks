@@ -25,14 +25,14 @@ type CommonCountryID string
 
 // CommonGeoJSONPoint https://tools.ietf.org/html/rfc7946#section-3.1.2
 type CommonGeoJSONPoint struct {
-	Coordinates *CommonLatLong `json:"coordinates,omitempty" jsonapi:"attr,coordinates,omitempty" valid:"optional"`
-	Type        string         `json:"type,omitempty" jsonapi:"attr,type,omitempty" valid:"optional"` // Example: "Point"
+	Coordinates CommonLatLong `json:"coordinates,omitempty" jsonapi:"attr,coordinates,omitempty" valid:"optional"`
+	Type        string        `json:"type,omitempty" jsonapi:"attr,type,omitempty" valid:"optional"` // Example: "Point"
 }
 
 // CommonGeoJSONPolygon https://tools.ietf.org/html/rfc7946#section-3.1.6; used as [bounding box](https://tools.ietf.org/html/rfc7946#section-5)
 type CommonGeoJSONPolygon struct {
-	Coordinates []*CommonLatLong `json:"coordinates,omitempty" jsonapi:"attr,coordinates,omitempty" valid:"optional"` // Example: "[[49.012 8.424] [49.1 9.34] [49.012 8.424]]"
-	Type        string           `json:"type,omitempty" jsonapi:"attr,type,omitempty" valid:"optional"`               // Example: "Polygon"
+	Coordinates []CommonLatLong `json:"coordinates,omitempty" jsonapi:"attr,coordinates,omitempty" valid:"optional"` // Example: "[[49.012 8.424] [49.1 9.34] [49.012 8.424]]"
+	Type        string          `json:"type,omitempty" jsonapi:"attr,type,omitempty" valid:"optional"`               // Example: "Polygon"
 }
 
 // CommonLatLong https://tools.ietf.org/html/rfc7946
@@ -64,15 +64,15 @@ type Events []*Event
 
 // FieldData ...
 type FieldData struct {
-	Field *FieldName `json:"field,omitempty" jsonapi:"attr,field,omitempty" valid:"optional"`
-	Value string     `json:"value,omitempty" jsonapi:"attr,value,omitempty" valid:"optional"` // escaped json
+	Field FieldName `json:"field,omitempty" jsonapi:"attr,field,omitempty" valid:"optional"`
+	Value string    `json:"value,omitempty" jsonapi:"attr,value,omitempty" valid:"optional"` // escaped json
 }
 
 // FieldMetaData ...
 type FieldMetaData struct {
-	SourceID  string     `json:"SourceId,omitempty" jsonapi:"attr,SourceId,omitempty" valid:"optional"` // Source ID
-	UpdatedAt time.Time  `json:"UpdatedAt,omitempty" jsonapi:"attr,UpdatedAt,omitempty" valid:"optional"`
-	Field     *FieldName `json:"field,omitempty" jsonapi:"attr,field,omitempty" valid:"optional"`
+	SourceID  string    `json:"SourceId,omitempty" jsonapi:"attr,SourceId,omitempty" valid:"optional"` // Source ID
+	UpdatedAt time.Time `json:"UpdatedAt,omitempty" jsonapi:"attr,UpdatedAt,omitempty" valid:"optional"`
+	Field     FieldName `json:"field,omitempty" jsonapi:"attr,field,omitempty" valid:"optional"`
 }
 
 // FieldName ...
@@ -80,11 +80,11 @@ type FieldName string
 
 // FuelPrice ...
 type FuelPrice struct {
-	ID          string    `jsonapi:"primary,fuelPrice,omitempty" valid:"uuid,optional"` // Fuel Price ID
-	Currency    *Currency `json:"currency,omitempty" jsonapi:"attr,currency,omitempty" valid:"optional"`
-	FuelType    string    `json:"fuelType,omitempty" jsonapi:"attr,fuelType,omitempty" valid:"optional"`       // Example: "ron95_e10"
-	Price       float32   `json:"price,omitempty" jsonapi:"attr,price,omitempty" valid:"optional"`             // per liter
-	ProductName string    `json:"productName,omitempty" jsonapi:"attr,productName,omitempty" valid:"optional"` // Example: "Super E10"
+	ID          string   `jsonapi:"primary,fuelPrice,omitempty" valid:"uuid,optional"` // Fuel Price ID
+	Currency    Currency `json:"currency,omitempty" jsonapi:"attr,currency,omitempty" valid:"optional"`
+	FuelType    string   `json:"fuelType,omitempty" jsonapi:"attr,fuelType,omitempty" valid:"optional"`       // Example: "ron95_e10"
+	Price       float32  `json:"price,omitempty" jsonapi:"attr,price,omitempty" valid:"optional"`             // per liter
+	ProductName string   `json:"productName,omitempty" jsonapi:"attr,productName,omitempty" valid:"optional"` // Example: "Super E10"
 }
 
 // FuelPriceResponse ...
@@ -106,7 +106,7 @@ type GasStation struct {
 	Amenities         []string            `json:"amenities,omitempty" jsonapi:"attr,amenities,omitempty" valid:"optional"` // Example: "[restaurant]"
 	Latitude          float32             `json:"latitude,omitempty" jsonapi:"attr,latitude,omitempty" valid:"optional"`   // Example: "49.013"
 	Longitude         float32             `json:"longitude,omitempty" jsonapi:"attr,longitude,omitempty" valid:"optional"` // Example: "8.425"
-	OpeningHours      *CommonOpeningHours `json:"openingHours,omitempty" jsonapi:"attr,openingHours,omitempty" valid:"optional"`
+	OpeningHours      CommonOpeningHours  `json:"openingHours,omitempty" jsonapi:"attr,openingHours,omitempty" valid:"optional"`
 	PaymentMethods    []string            `json:"paymentMethods,omitempty" jsonapi:"attr,paymentMethods,omitempty" valid:"optional"` // Example: "[sepa]"
 	StationName       string              `json:"stationName,omitempty" jsonapi:"attr,stationName,omitempty" valid:"optional"`       // Example: "PACE Station"
 	FuelPrices        []*FuelPrice        `json:"fuelPrices,omitempty" jsonapi:"attr,fuelPrices,omitempty" valid:"optional"`
@@ -153,7 +153,7 @@ type POI struct {
 	ID         string                `jsonapi:"primary,SpeedCamera,omitempty" valid:"uuid,optional"` // POI ID
 	Active     bool                  `json:"active,omitempty" jsonapi:"attr,active,omitempty" valid:"optional"`
 	Boundary   *CommonGeoJSONPolygon `json:"boundary,omitempty" jsonapi:"attr,boundary,omitempty" valid:"optional"`
-	CountryID  *CommonCountryID      `json:"countryId,omitempty" jsonapi:"attr,countryId,omitempty" valid:"optional"`
+	CountryID  CommonCountryID       `json:"countryId,omitempty" jsonapi:"attr,countryId,omitempty" valid:"optional"`
 	CreatedAt  time.Time             `json:"createdAt,omitempty" jsonapi:"attr,createdAt,omitempty" valid:"optional"`
 	Data       []*FieldData          `json:"data,omitempty" jsonapi:"attr,data,omitempty" valid:"optional"` // a JSON field containing POI specific data
 	LastSeenAt time.Time             `json:"lastSeenAt,omitempty" jsonapi:"attr,lastSeenAt,omitempty" valid:"optional"`
@@ -173,17 +173,17 @@ type Policies []*Policy
 
 // Policy ...
 type Policy struct {
-	ID        string           `jsonapi:"primary,policies,omitempty" valid:"uuid,optional"` // Policy ID
-	CountryID *CommonCountryID `json:"countryId,omitempty" jsonapi:"attr,countryId,omitempty" valid:"optional"`
-	CreatedAt time.Time        `json:"createdAt,omitempty" jsonapi:"attr,createdAt,omitempty" valid:"optional"` // Time of POI creation in (iso8601 without zone - expects UTC)
-	PoiType   *POIType         `json:"poiType,omitempty" jsonapi:"attr,poiType,omitempty" valid:"optional"`
-	Rules     []*PolicyRule    `json:"rules,omitempty" jsonapi:"attr,rules,omitempty" valid:"optional"`
-	UserID    string           `json:"userId,omitempty" jsonapi:"attr,userId,omitempty" valid:"optional"` // Tracks who did last change
+	ID        string          `jsonapi:"primary,policies,omitempty" valid:"uuid,optional"` // Policy ID
+	CountryID CommonCountryID `json:"countryId,omitempty" jsonapi:"attr,countryId,omitempty" valid:"optional"`
+	CreatedAt time.Time       `json:"createdAt,omitempty" jsonapi:"attr,createdAt,omitempty" valid:"optional"` // Time of POI creation in (iso8601 without zone - expects UTC)
+	PoiType   POIType         `json:"poiType,omitempty" jsonapi:"attr,poiType,omitempty" valid:"optional"`
+	Rules     []*PolicyRule   `json:"rules,omitempty" jsonapi:"attr,rules,omitempty" valid:"optional"`
+	UserID    string          `json:"userId,omitempty" jsonapi:"attr,userId,omitempty" valid:"optional"` // Tracks who did last change
 }
 
 // PolicyRule ...
 type PolicyRule struct {
-	Field      *FieldName            `json:"field,omitempty" jsonapi:"attr,field,omitempty" valid:"required"`
+	Field      FieldName             `json:"field,omitempty" jsonapi:"attr,field,omitempty" valid:"required"`
 	Priorities []*PolicyRulePriority `json:"priorities,omitempty" jsonapi:"attr,priorities,omitempty" valid:"required"`
 }
 
@@ -195,13 +195,13 @@ type PolicyRulePriority struct {
 
 // Source ...
 type Source struct {
-	ID         string       `jsonapi:"primary,sources,omitempty" valid:"uuid,optional"` // Source ID
-	CreatedAt  time.Time    `json:"createdAt,omitempty" jsonapi:"attr,createdAt,omitempty" valid:"optional"`
-	LastDataAt time.Time    `json:"lastDataAt,omitempty" jsonapi:"attr,lastDataAt,omitempty" valid:"optional"` // timestamp of last import from source
-	Name       string       `json:"name,omitempty" jsonapi:"attr,name,omitempty" valid:"optional"`             // source name, unique
-	PoiType    *POIType     `json:"poiType,omitempty" jsonapi:"attr,poiType,omitempty" valid:"optional"`
-	Schema     []*FieldName `json:"schema,omitempty" jsonapi:"attr,schema,omitempty" valid:"optional"` // JSON field describing the structure of the updates sent by the data source
-	UpdatedAt  time.Time    `json:"updatedAt,omitempty" jsonapi:"attr,updatedAt,omitempty" valid:"optional"`
+	ID         string      `jsonapi:"primary,sources,omitempty" valid:"uuid,optional"` // Source ID
+	CreatedAt  time.Time   `json:"createdAt,omitempty" jsonapi:"attr,createdAt,omitempty" valid:"optional"`
+	LastDataAt time.Time   `json:"lastDataAt,omitempty" jsonapi:"attr,lastDataAt,omitempty" valid:"optional"` // timestamp of last import from source
+	Name       string      `json:"name,omitempty" jsonapi:"attr,name,omitempty" valid:"optional"`             // source name, unique
+	PoiType    POIType     `json:"poiType,omitempty" jsonapi:"attr,poiType,omitempty" valid:"optional"`
+	Schema     []FieldName `json:"schema,omitempty" jsonapi:"attr,schema,omitempty" valid:"optional"` // JSON field describing the structure of the updates sent by the data source
+	UpdatedAt  time.Time   `json:"updatedAt,omitempty" jsonapi:"attr,updatedAt,omitempty" valid:"optional"`
 }
 
 // Sources ...
@@ -1466,8 +1466,8 @@ func (w *createAppResponseWriter) OK(data *LocationBasedApp) {
 
 // CreateAppRequest ...
 type CreateAppRequest struct {
-	Request *http.Request     `valid:"-"`
-	Content *LocationBasedApp `valid:"-"`
+	Request *http.Request    `valid:"-"`
+	Content LocationBasedApp `valid:"-"`
 }
 
 /*
@@ -1611,9 +1611,9 @@ func (w *updateAppResponseWriter) OK(data *LocationBasedApp) {
 
 // UpdateAppRequest ...
 type UpdateAppRequest struct {
-	Request    *http.Request     `valid:"-"`
-	Content    *LocationBasedApp `valid:"-"`
-	ParamAppID string            `valid:"optional,uuid"`
+	Request    *http.Request    `valid:"-"`
+	Content    LocationBasedApp `valid:"-"`
+	ParamAppID string           `valid:"optional,uuid"`
 }
 
 /*
@@ -1895,7 +1895,7 @@ func (w *changePoiResponseWriter) OK(data *POI) {
 // ChangePoiRequest ...
 type ChangePoiRequest struct {
 	Request    *http.Request `valid:"-"`
-	Content    *POI          `valid:"-"`
+	Content    POI           `valid:"-"`
 	ParamPoiID string        `valid:"optional,uuid"`
 }
 
@@ -1961,7 +1961,7 @@ func (w *createPolicyResponseWriter) OK(data *Policy) {
 // CreatePolicyRequest ...
 type CreatePolicyRequest struct {
 	Request *http.Request `valid:"-"`
-	Content *Policy       `valid:"-"`
+	Content Policy        `valid:"-"`
 }
 
 /*
@@ -2063,7 +2063,7 @@ func (w *createSourceResponseWriter) OK(data *Source) {
 // CreateSourceRequest ...
 type CreateSourceRequest struct {
 	Request *http.Request `valid:"-"`
-	Content *Source       `valid:"-"`
+	Content Source        `valid:"-"`
 }
 
 /*
@@ -2169,7 +2169,7 @@ func (w *updateSourceResponseWriter) OK(data *Source) {
 // UpdateSourceRequest ...
 type UpdateSourceRequest struct {
 	Request       *http.Request `valid:"-"`
-	Content       *Source       `valid:"-"`
+	Content       Source        `valid:"-"`
 	ParamSourceID string        `valid:"optional,uuid"`
 }
 
@@ -2198,8 +2198,8 @@ func (w *createSubscriptionResponseWriter) Created(data *Subscription) {
 
 // CreateSubscriptionRequest ...
 type CreateSubscriptionRequest struct {
-	Request *http.Request        `valid:"-"`
-	Content *SubscriptionRequest `valid:"-"`
+	Request *http.Request       `valid:"-"`
+	Content SubscriptionRequest `valid:"-"`
 }
 
 /*

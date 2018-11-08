@@ -66,7 +66,7 @@ type TransactionRequestFueling struct {
 // TransactionRequest ...
 type TransactionRequest struct {
 	ID                string                     `jsonapi:"primary,transaction,omitempty" valid:"uuid,optional"` // Transaction ID
-	Currency          *Currency                  `json:"currency,omitempty" jsonapi:"attr,currency,omitempty" valid:"optional"`
+	Currency          Currency                   `json:"currency,omitempty" jsonapi:"attr,currency,omitempty" valid:"optional"`
 	Fueling           *TransactionRequestFueling `json:"fueling,omitempty" jsonapi:"attr,fueling,omitempty" valid:"optional"`
 	PaymentToken      string                     `json:"paymentToken,omitempty" jsonapi:"attr,paymentToken,omitempty" valid:"required"`           // Example: "f106ac99-213c-4cf7-8c1b-1e841516026b"
 	PriceIncludingVAT float32                    `json:"priceIncludingVAT,omitempty" jsonapi:"attr,priceIncludingVAT,omitempty" valid:"optional"` // Example: "69.34"
@@ -541,9 +541,9 @@ type AuthorizePaymentMethodContent struct {
 
 // AuthorizePaymentMethodRequest ...
 type AuthorizePaymentMethodRequest struct {
-	Request              *http.Request                  `valid:"-"`
-	Content              *AuthorizePaymentMethodContent `valid:"-"`
-	ParamPaymentMethodID string                         `valid:"required,uuid"`
+	Request              *http.Request                 `valid:"-"`
+	Content              AuthorizePaymentMethodContent `valid:"-"`
+	ParamPaymentMethodID string                        `valid:"required,uuid"`
 }
 
 /*
@@ -636,7 +636,7 @@ type GetPaymentMethodsIncludingPaymentTokenRequest struct {
 type ProcessPaymentCreated struct {
 	ID                string                        `jsonapi:"primary,transaction,omitempty" valid:"uuid,optional"` // Transaction ID
 	VAT               *ProcessPaymentCreatedVAT     `json:"VAT,omitempty" jsonapi:"attr,VAT,omitempty" valid:"optional"`
-	Currency          *Currency                     `json:"currency,omitempty" jsonapi:"attr,currency,omitempty" valid:"optional"`
+	Currency          Currency                      `json:"currency,omitempty" jsonapi:"attr,currency,omitempty" valid:"optional"`
 	Fueling           *ProcessPaymentCreatedFueling `json:"fueling,omitempty" jsonapi:"attr,fueling,omitempty" valid:"optional"`
 	PaymentToken      string                        `json:"paymentToken,omitempty" jsonapi:"attr,paymentToken,omitempty" valid:"optional"`           // Example: "f106ac99-213c-4cf7-8c1b-1e841516026b"
 	PriceIncludingVAT float32                       `json:"priceIncludingVAT,omitempty" jsonapi:"attr,priceIncludingVAT,omitempty" valid:"optional"` // Example: "69.34"

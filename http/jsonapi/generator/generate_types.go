@@ -55,20 +55,24 @@ func (g *Generator) BuildTypes(schema *openapi3.Swagger) error {
 }
 
 func (g *Generator) buildType(prefix string, stmt *jen.Statement, schema *openapi3.SchemaRef) error { // nolint: gocyclo
-	// handle references
-	if schema.Ref != "" {
-		// if there is a reference to a type use it
-		stmt.Op("*").Id(nameFromSchemaRef(schema))
-		return nil
-	}
-
+	name := nameFromSchemaRef(schema)
 	val := schema.Value
 
 	switch val.Type {
 	case "array": // nolint: goconst
+		if schema.Ref != "" { // handle references
+			stmt.Id(name)
+			return nil
+		}
+
 		g.generatedArrayTypes[prefix] = true
 		return g.buildType(prefix, stmt.Index(), val.Items)
 	case "object": // nolint: goconst
+		if schema.Ref != "" { // handle references
+			stmt.Op("*").Id(name)
+			return nil
+		}
+
 		if data := val.Properties["data"]; data != nil {
 			if data.Ref != "" {
 				return g.buildType(prefix+"Ref", stmt, data)
@@ -90,6 +94,11 @@ func (g *Generator) buildType(prefix string, stmt *jen.Statement, schema *openap
 
 		return g.buildTypeStruct(prefix, stmt, val)
 	default:
+		if schema.Ref != "" { // handle references
+			stmt.Id(name)
+			return nil
+		}
+
 		// skip allOf, anyOf and oneOf, as they can't be generated
 		if len(val.AllOf)+len(val.AnyOf)+len(val.OneOf) > 0 {
 			log.Warnf("Can't generate allOf, anyOf and oneOf for type %q", prefix)
@@ -131,7 +140,7 @@ func (g *Generator) buildTypeStruct(name string, stmt *jen.Statement, schema *op
 
 // references the type from the schema or generates a new type (inline)
 // and returns
-func (g *Generator) generateTypeReference(fallbackName string, schema *openapi3.SchemaRef) (jen.Code, error) {
+func (g *Generator) generateTypeReference(fallbackName string, schema *openapi3.SchemaRef, noPtr bool) (jen.Code, error) {
 	// handle references
 	if schema.Ref != "" {
 		// if there is a reference to a type use it
@@ -145,6 +154,10 @@ func (g *Generator) generateTypeReference(fallbackName string, schema *openapi3.
 		if g.generatedArrayTypes[id] {
 			return jen.Id(id), nil
 		}
+		if noPtr {
+			return jen.Id(id), nil
+		}
+
 		return jen.Op("*").Id(id), nil
 	}
 
@@ -156,6 +169,9 @@ func (g *Generator) generateTypeReference(fallbackName string, schema *openapi3.
 		if err != nil {
 			return nil, err
 		}
+	}
+	if noPtr {
+		return jen.Id(fallbackName), nil
 	}
 
 	return jen.Op("*").Id(fallbackName), nil
