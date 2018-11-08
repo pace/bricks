@@ -12,16 +12,16 @@ import (
 
 // ApproachingRequest ...
 type ApproachingRequest struct {
-	ID             string  `jsonapi:"primary,approaching,omitempty" valid:"uuid,optional"`                            // Approaching ID
-	CarFuelType    string  `json:"carFuelType,omitempty" jsonapi:"attr,carFuelType,omitempty" valid:"required"`       // Fuel type of the car
-	ExpectedAmount float32 `json:"expectedAmount,omitempty" jsonapi:"attr,expectedAmount,omitempty" valid:"required"` // Expected amount in liters for refuel
+	ID             string  `jsonapi:"primary,approaching,omitempty" valid:"uuid,optional"`                                                                                                                                        // Approaching ID
+	CarFuelType    string  `json:"carFuelType,omitempty" jsonapi:"attr,carFuelType,omitempty" valid:"required,in(e85|ron91|ron95_e5|ron95_e10|ron98|ron98_e5|ron100|diesel|diesel_gtl|diesel_b7|lpg|cng|h2|Truck Diesel|AdBlue)"` // Fuel type of the car
+	ExpectedAmount float32 `json:"expectedAmount,omitempty" jsonapi:"attr,expectedAmount,omitempty" valid:"required"`                                                                                                             // Expected amount in liters for refuel
 }
 
 // ApproachingResponse ...
 type ApproachingResponse struct {
-	ID             string           `jsonapi:"primary,approaching,omitempty" valid:"uuid,optional"`                            // Approaching ID
-	CarFuelType    string           `json:"carFuelType,omitempty" jsonapi:"attr,carFuelType,omitempty" valid:"optional"`       // Fuel type of the car
-	ExpectedAmount float32          `json:"expectedAmount,omitempty" jsonapi:"attr,expectedAmount,omitempty" valid:"optional"` // Expected amount in liters for refuel
+	ID             string           `jsonapi:"primary,approaching,omitempty" valid:"uuid,optional"`                                                                                                                                        // Approaching ID
+	CarFuelType    string           `json:"carFuelType,omitempty" jsonapi:"attr,carFuelType,omitempty" valid:"optional,in(e85|ron91|ron95_e5|ron95_e10|ron98|ron98_e5|ron100|diesel|diesel_gtl|diesel_b7|lpg|cng|h2|Truck Diesel|AdBlue)"` // Fuel type of the car
+	ExpectedAmount float32          `json:"expectedAmount,omitempty" jsonapi:"attr,expectedAmount,omitempty" valid:"optional"`                                                                                                             // Expected amount in liters for refuel
 	GasStation     *GasStation      `json:"gasStation,omitempty" jsonapi:"attr,gasStation,omitempty" valid:"optional"`
 	PaymentMethods []*PaymentMethod `json:"paymentMethods,omitempty" jsonapi:"attr,paymentMethods,omitempty" valid:"optional"`
 }
@@ -30,9 +30,9 @@ type ApproachingResponse struct {
 type FuelPrice struct {
 	ID          string   `jsonapi:"primary,fuelPrice,omitempty" valid:"optional"` // Fuel Price ID
 	Currency    Currency `json:"currency,omitempty" jsonapi:"attr,currency,omitempty" valid:"optional"`
-	FuelType    string   `json:"fuelType,omitempty" jsonapi:"attr,fuelType,omitempty" valid:"optional"`       // Example: "ron95_e10"
-	Price       float32  `json:"price,omitempty" jsonapi:"attr,price,omitempty" valid:"optional"`             // Price in liters
-	ProductName string   `json:"productName,omitempty" jsonapi:"attr,productName,omitempty" valid:"optional"` // Example: "Super E10"
+	FuelType    string   `json:"fuelType,omitempty" jsonapi:"attr,fuelType,omitempty" valid:"optional,in(e85|ron91|ron95_e5|ron95_e10|ron98|ron98_e5|ron100|diesel|diesel_gtl|diesel_b7|lpg|cng|h2|Truck Diesel|AdBlue)"` // Example: "ron95_e10"
+	Price       float32  `json:"price,omitempty" jsonapi:"attr,price,omitempty" valid:"optional"`                                                                                                                         // Price in liters
+	ProductName string   `json:"productName,omitempty" jsonapi:"attr,productName,omitempty" valid:"optional"`                                                                                                             // Example: "Super E10"
 }
 
 // FuelPriceResponse ...
@@ -109,11 +109,11 @@ type PumpStatus string
 type TransactionRequest struct {
 	ID                string   `jsonapi:"primary,transaction,omitempty" valid:"uuid,optional"` // Transaction ID
 	Currency          Currency `json:"currency,omitempty" jsonapi:"attr,currency,omitempty" valid:"optional"`
-	FuelingAppID      string   `json:"fuelingAppId,omitempty" jsonapi:"attr,fuelingAppId,omitempty" valid:"required"`           // Location-based App ID
+	FuelingAppID      string   `json:"fuelingAppId,omitempty" jsonapi:"attr,fuelingAppId,omitempty" valid:"required,uuid"`      // Location-based App ID
 	Mileage           int64    `json:"mileage,omitempty" jsonapi:"attr,mileage,omitempty" valid:"optional"`                     // Current mileage in meters
 	PaymentToken      string   `json:"paymentToken,omitempty" jsonapi:"attr,paymentToken,omitempty" valid:"required"`           // Example: "f106ac99-213c-4cf7-8c1b-1e841516026b"
 	PriceIncludingVAT float32  `json:"priceIncludingVAT,omitempty" jsonapi:"attr,priceIncludingVAT,omitempty" valid:"optional"` // Example: "69.34"
-	PumpID            string   `json:"pumpId,omitempty" jsonapi:"attr,pumpId,omitempty" valid:"required"`                       // Pump ID
+	PumpID            string   `json:"pumpId,omitempty" jsonapi:"attr,pumpId,omitempty" valid:"required,uuid"`                  // Pump ID
 	Vin               string   `json:"vin,omitempty" jsonapi:"attr,vin,omitempty" valid:"optional"`                             // Example: "1B3EL46R36N102271"
 }
 
@@ -324,13 +324,13 @@ type ProcessPaymentCreated struct {
 	ID                string                    `jsonapi:"primary,transaction,omitempty" valid:"uuid,optional"` // Transaction ID
 	VAT               *ProcessPaymentCreatedVAT `json:"VAT,omitempty" jsonapi:"attr,VAT,omitempty" valid:"optional"`
 	Currency          Currency                  `json:"currency,omitempty" jsonapi:"attr,currency,omitempty" valid:"optional"`
-	FuelingAppID      string                    `json:"fuelingAppId,omitempty" jsonapi:"attr,fuelingAppId,omitempty" valid:"optional"`           // Example: "c30bce97-b732-4390-af38-1ac6b017aa4c"
-	GasStationID      string                    `json:"gasStationId,omitempty" jsonapi:"attr,gasStationId,omitempty" valid:"optional"`           // Example: "a6ec9bd7-cf0b-416c-b24f-9ce65ab3dfe1"
+	FuelingAppID      string                    `json:"fuelingAppId,omitempty" jsonapi:"attr,fuelingAppId,omitempty" valid:"optional,uuid"`      // Example: "c30bce97-b732-4390-af38-1ac6b017aa4c"
+	GasStationID      string                    `json:"gasStationId,omitempty" jsonapi:"attr,gasStationId,omitempty" valid:"optional,uuid"`      // Example: "a6ec9bd7-cf0b-416c-b24f-9ce65ab3dfe1"
 	Mileage           int64                     `json:"mileage,omitempty" jsonapi:"attr,mileage,omitempty" valid:"optional"`                     // Example: "66435"
 	PaymentToken      string                    `json:"paymentToken,omitempty" jsonapi:"attr,paymentToken,omitempty" valid:"optional"`           // Example: "f106ac99-213c-4cf7-8c1b-1e841516026b"
 	PriceIncludingVAT float32                   `json:"priceIncludingVAT,omitempty" jsonapi:"attr,priceIncludingVAT,omitempty" valid:"optional"` // Example: "69.34"
 	PriceWithoutVAT   float32                   `json:"priceWithoutVAT,omitempty" jsonapi:"attr,priceWithoutVAT,omitempty" valid:"optional"`     // Example: "58.27"
-	PumpID            string                    `json:"pumpId,omitempty" jsonapi:"attr,pumpId,omitempty" valid:"optional"`                       // Example: "460ffaad-a3c1-4199-b69e-63949ccda82f"
+	PumpID            string                    `json:"pumpId,omitempty" jsonapi:"attr,pumpId,omitempty" valid:"optional,uuid"`                  // Example: "460ffaad-a3c1-4199-b69e-63949ccda82f"
 	Vin               string                    `json:"vin,omitempty" jsonapi:"attr,vin,omitempty" valid:"optional"`                             // Example: "1B3EL46R36N102271"
 }
 

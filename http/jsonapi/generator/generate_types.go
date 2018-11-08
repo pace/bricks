@@ -42,7 +42,7 @@ func (g *Generator) BuildTypes(schema *openapi3.Swagger) error {
 			continue
 		}
 
-		err := g.buildType(name, t, schemaType)
+		err := g.buildType(name, t, schemaType, make(map[string]string))
 		if err != nil {
 			return err
 		}
@@ -54,7 +54,7 @@ func (g *Generator) BuildTypes(schema *openapi3.Swagger) error {
 	return nil
 }
 
-func (g *Generator) buildType(prefix string, stmt *jen.Statement, schema *openapi3.SchemaRef) error { // nolint: gocyclo
+func (g *Generator) buildType(prefix string, stmt *jen.Statement, schema *openapi3.SchemaRef, tags map[string]string) error { // nolint: gocyclo
 	name := nameFromSchemaRef(schema)
 	val := schema.Value
 
@@ -66,7 +66,7 @@ func (g *Generator) buildType(prefix string, stmt *jen.Statement, schema *openap
 		}
 
 		g.generatedArrayTypes[prefix] = true
-		return g.buildType(prefix, stmt.Index(), val.Items)
+		return g.buildType(prefix, stmt.Index(), val.Items, tags)
 	case "object": // nolint: goconst
 		if schema.Ref != "" { // handle references
 			stmt.Op("*").Id(name)
@@ -75,7 +75,7 @@ func (g *Generator) buildType(prefix string, stmt *jen.Statement, schema *openap
 
 		if data := val.Properties["data"]; data != nil {
 			if data.Ref != "" {
-				return g.buildType(prefix+"Ref", stmt, data)
+				return g.buildType(prefix+"Ref", stmt, data, make(map[string]string))
 			} else if data.Value.Type == "array" { // nolint: goconst
 				item := prefix + "Item"
 				stmt.Index().Op("*").Id(item)
@@ -106,7 +106,7 @@ func (g *Generator) buildType(prefix string, stmt *jen.Statement, schema *openap
 			return nil
 		}
 
-		err := g.goType(stmt, val, make(map[string]string))
+		err := g.goType(stmt, val, tags)
 		if err != nil {
 			return err
 		}
@@ -165,7 +165,7 @@ func (g *Generator) generateTypeReference(fallbackName string, schema *openapi3.
 	t, ok := g.newType(fallbackName)
 	if ok {
 		g.addGoDoc(fallbackName, schema.Value.Description)
-		err := g.buildType(fallbackName, g.goSource.Add(t), schema)
+		err := g.buildType(fallbackName, g.goSource.Add(t), schema, make(map[string]string))
 		if err != nil {
 			return nil, err
 		}
@@ -242,7 +242,7 @@ func (g *Generator) structJSONAPI(prefix string, stmt *jen.Statement, schema *op
 func (g *Generator) generateAttrField(prefix, name string, schema *openapi3.SchemaRef, tags map[string]string) (*jen.Statement, error) {
 	field := jen.Id(goNameHelper(name))
 
-	err := g.buildType(prefix+goNameHelper(name), field, schema)
+	err := g.buildType(prefix+goNameHelper(name), field, schema, tags)
 	if err != nil {
 		return nil, err
 	}
