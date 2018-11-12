@@ -40,7 +40,6 @@
 [[constraint]]
   name = "github.com/google/jsonapi"
   branch = "master"
-  source = "github.com/pace/jsonapi"
 
 [prune]
   go-tests = true

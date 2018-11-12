@@ -109,6 +109,14 @@
   version = "v6.14.1"
 
 [[projects]]
+  branch = "master"
+  digest = "1:d64295b5ec8d005079c11a1b647a1792ca8260eafbbbb10ef8092e5ca85038be"
+  name = "github.com/gocarina/gocsv"
+  packages = ["."]
+  pruneopts = "UT"
+  revision = "cde31a6ec2a87636e8a5f13d18468e9dd683149e"
+
+[[projects]]
   digest = "1:97df918963298c287643883209a2c3f642e6593379f97ab400c2a2e219ab647d"
   name = "github.com/golang/protobuf"
   packages = ["proto"]
@@ -118,12 +126,11 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:ebcdf6cc382a94c0bd8e2233062a4111569dc6bfcf1e40ca24d49d177f7b83b7"
+  digest = "1:57472edc40c3c75ea895ddbc14a07a8bf9967599d1d7c9cbceb89aa40b5b7f01"
   name = "github.com/google/jsonapi"
   packages = ["."]
   pruneopts = "UT"
-  revision = "1e4c7a7b7ffeec44fe9deba5dc63b14eff4aca30"
-  source = "github.com/pace/jsonapi"
+  revision = "d0428f63eb511f08685bda2d0a6af1d7532fb1c0"
 
 [[projects]]
   digest = "1:c79fb010be38a59d657c48c6ba1d003a8aa651fa56b579d959d74573b7dff8e1"
@@ -329,9 +336,15 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:76ee51c3f468493aff39dbacc401e8831fbb765104cbf613b89bef01cf4bad70"
+  digest = "1:d1209fa9ed40a3a24de8498a9bead59eb3333f16a73fa23ba1fc6677a3cfc9d7"
   name = "golang.org/x/net"
-  packages = ["context"]
+  packages = [
+    "context",
+    "http/httpguts",
+    "http2",
+    "http2/hpack",
+    "idna",
+  ]
   pruneopts = "UT"
   revision = "26e67e76b6c3f6ce91f7c52def5af501b4e0f3a2"
 
@@ -342,6 +355,29 @@
   packages = ["unix"]
   pruneopts = "UT"
   revision = "ebe1bf3edb3325c393447059974de898d5133eb8"
+
+[[projects]]
+  digest = "1:a2ab62866c75542dd18d2b069fec854577a20211d7c0ea6ae746072a1dccdd18"
+  name = "golang.org/x/text"
+  packages = [
+    "collate",
+    "collate/build",
+    "internal/colltab",
+    "internal/gen",
+    "internal/tag",
+    "internal/triegen",
+    "internal/ucd",
+    "language",
+    "secure/bidirule",
+    "transform",
+    "unicode/bidi",
+    "unicode/cldr",
+    "unicode/norm",
+    "unicode/rangetable",
+  ]
+  pruneopts = "UT"
+  revision = "f21a4dfb5e38f5895301dc265a8def02365cc3d0"
+  version = "v0.3.0"
 
 [[projects]]
   digest = "1:342378ac4dcb378a5448dd723f0784ae519383532f5e70ade24132c4c8693202"
@@ -362,6 +398,7 @@
     "github.com/getsentry/raven-go",
     "github.com/go-pg/pg",
     "github.com/go-redis/redis",
+    "github.com/gocarina/gocsv",
     "github.com/google/jsonapi",
     "github.com/gorilla/mux",
     "github.com/mattn/go-isatty",
@@ -376,6 +413,8 @@
     "github.com/spf13/cobra",
     "github.com/uber/jaeger-client-go/config",
     "github.com/uber/jaeger-lib/metrics/prometheus",
+    "github.com/zenazn/goji/web/mutil",
+    "golang.org/x/net/http2",
   ]
   solver-name = "gps-cdcl"
   solver-version = 1

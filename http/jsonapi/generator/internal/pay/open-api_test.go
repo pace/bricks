@@ -14,7 +14,7 @@ import (
 type AllPaymentMethodsItem struct {
 	ID                   string `jsonapi:"primary,paymentMethod,omitempty" valid:"uuid,optional"`                                      // Payment method ID
 	IdentificationString string `json:"identificationString,omitempty" jsonapi:"attr,identificationString,omitempty" valid:"optional"` // Example: "DE89 **** 3000"
-	Kind                 string `json:"kind,omitempty" jsonapi:"attr,kind,omitempty" valid:"optional"`                                 // Example: "sepa"
+	Kind                 string `json:"kind,omitempty" jsonapi:"attr,kind,omitempty" valid:"optional,in(sepa)"`                        // Example: "sepa"
 }
 
 // AllPaymentMethods ...
@@ -22,29 +22,29 @@ type AllPaymentMethods []*AllPaymentMethodsItem
 
 // PaymentMethodSEPAAddress ...
 type PaymentMethodSEPAAddress struct {
-	City        string `json:"city,omitempty" jsonapi:"city,omitempty" valid:"required"`               // Example: "Karlsruhe"
-	CountryCode string `json:"countryCode,omitempty" jsonapi:"countryCode,omitempty" valid:"required"` // Country code in as specified in ISO 3166-1.
-	HouseNo     string `json:"houseNo,omitempty" jsonapi:"houseNo,omitempty" valid:"required"`         // Example: "18"
-	PostalCode  string `json:"postalCode,omitempty" jsonapi:"postalCode,omitempty" valid:"required"`   // Example: "76131"
-	Street      string `json:"street,omitempty" jsonapi:"street,omitempty" valid:"required"`           // Example: "Haid-und-Neu-Str."
+	City        string `json:"city,omitempty" jsonapi:"attr,city,omitempty" valid:"required"`               // Example: "Karlsruhe"
+	CountryCode string `json:"countryCode,omitempty" jsonapi:"attr,countryCode,omitempty" valid:"required"` // Country code in as specified in ISO 3166-1.
+	HouseNo     string `json:"houseNo,omitempty" jsonapi:"attr,houseNo,omitempty" valid:"required"`         // Example: "18"
+	PostalCode  string `json:"postalCode,omitempty" jsonapi:"attr,postalCode,omitempty" valid:"required"`   // Example: "76131"
+	Street      string `json:"street,omitempty" jsonapi:"attr,street,omitempty" valid:"required"`           // Example: "Haid-und-Neu-Str."
 }
 
 // PaymentMethodSEPA ...
 type PaymentMethodSEPA struct {
-	ID        string                    `jsonapi:"primary,paymentMethod,omitempty" valid:"uuid,optional"` // The ID of this payment method.
-	Address   *PaymentMethodSEPAAddress `json:"address,omitempty" jsonapi:"attr,address,omitempty" valid:"required"`
-	FirstName string                    `json:"firstName,omitempty" jsonapi:"attr,firstName,omitempty" valid:"required"` // Example: "Jon"
-	Iban      string                    `json:"iban,omitempty" jsonapi:"attr,iban,omitempty" valid:"required"`           // Example: "DE89370400440532013000"
-	Kind      string                    `json:"kind,omitempty" jsonapi:"attr,kind,omitempty" valid:"required"`
-	LastName  string                    `json:"lastName,omitempty" jsonapi:"attr,lastName,omitempty" valid:"required"` // Example: "Smith"
+	ID        string                   `jsonapi:"primary,paymentMethod,omitempty" valid:"uuid,optional"` // The ID of this payment method.
+	Address   PaymentMethodSEPAAddress `json:"address,omitempty" jsonapi:"attr,address,omitempty" valid:"required"`
+	FirstName string                   `json:"firstName,omitempty" jsonapi:"attr,firstName,omitempty" valid:"required"` // Example: "Jon"
+	Iban      string                   `json:"iban,omitempty" jsonapi:"attr,iban,omitempty" valid:"required"`           // Example: "DE89370400440532013000"
+	Kind      string                   `json:"kind,omitempty" jsonapi:"attr,kind,omitempty" valid:"required,in(sepa)"`
+	LastName  string                   `json:"lastName,omitempty" jsonapi:"attr,lastName,omitempty" valid:"required"` // Example: "Smith"
 }
 
 // PaymentMethodsWithPaymentTokensItem ...
 type PaymentMethodsWithPaymentTokensItem struct {
 	ID                   string          `jsonapi:"primary,paymentMethod,omitempty" valid:"uuid,optional"`                                      // Payment method ID
 	IdentificationString string          `json:"identificationString,omitempty" jsonapi:"attr,identificationString,omitempty" valid:"optional"` // Example: "DE89 **** 3000"
-	Kind                 string          `json:"kind,omitempty" jsonapi:"attr,kind,omitempty" valid:"optional"`                                 // Example: "sepa"
-	PaymentTokens        []*PaymentToken `json:"paymentTokens,omitempty" jsonapi:"attr,paymentTokens,omitempty" valid:"optional"`
+	Kind                 string          `json:"kind,omitempty" jsonapi:"attr,kind,omitempty" valid:"optional,in(sepa)"`                        // Example: "sepa"
+	PaymentTokens        []*PaymentToken `json:"paymentTokens,omitempty" jsonapi:"relation,paymentTokens,omitempty" valid:"optional"`
 }
 
 // PaymentMethodsWithPaymentTokens ...
@@ -57,19 +57,19 @@ type PaymentToken struct {
 
 // TransactionRequestFueling ...
 type TransactionRequestFueling struct {
-	AppID   string `json:"appId,omitempty" jsonapi:"appId,omitempty" valid:"required"`     // Location-based App ID
-	Mileage int64  `json:"mileage,omitempty" jsonapi:"mileage,omitempty" valid:"required"` // Current mileage in meters
-	PumpID  string `json:"pumpId,omitempty" jsonapi:"pumpId,omitempty" valid:"required"`   // Pump ID
-	Vin     string `json:"vin,omitempty" jsonapi:"vin,omitempty" valid:"required"`         // Example: "1B3EL46R36N102271"
+	AppID   string `json:"appId,omitempty" jsonapi:"attr,appId,omitempty" valid:"required,uuid"`   // Location-based App ID
+	Mileage int64  `json:"mileage,omitempty" jsonapi:"attr,mileage,omitempty" valid:"required"`    // Current mileage in meters
+	PumpID  string `json:"pumpId,omitempty" jsonapi:"attr,pumpId,omitempty" valid:"required,uuid"` // Pump ID
+	Vin     string `json:"vin,omitempty" jsonapi:"attr,vin,omitempty" valid:"required"`            // Example: "1B3EL46R36N102271"
 }
 
 // TransactionRequest ...
 type TransactionRequest struct {
-	ID                string                     `jsonapi:"primary,transaction,omitempty" valid:"uuid,optional"` // Transaction ID
-	Currency          *Currency                  `json:"currency,omitempty" jsonapi:"attr,currency,omitempty" valid:"optional"`
-	Fueling           *TransactionRequestFueling `json:"fueling,omitempty" jsonapi:"attr,fueling,omitempty" valid:"optional"`
-	PaymentToken      string                     `json:"paymentToken,omitempty" jsonapi:"attr,paymentToken,omitempty" valid:"required"`           // Example: "f106ac99-213c-4cf7-8c1b-1e841516026b"
-	PriceIncludingVAT float32                    `json:"priceIncludingVAT,omitempty" jsonapi:"attr,priceIncludingVAT,omitempty" valid:"optional"` // Example: "69.34"
+	ID                string                    `jsonapi:"primary,transaction,omitempty" valid:"uuid,optional"` // Transaction ID
+	Currency          Currency                  `json:"currency,omitempty" jsonapi:"attr,currency,omitempty" valid:"optional"`
+	Fueling           TransactionRequestFueling `json:"fueling,omitempty" jsonapi:"attr,fueling,omitempty" valid:"optional"`
+	PaymentToken      string                    `json:"paymentToken,omitempty" jsonapi:"attr,paymentToken,omitempty" valid:"required"`           // Example: "f106ac99-213c-4cf7-8c1b-1e841516026b"
+	PriceIncludingVAT float32                   `json:"priceIncludingVAT,omitempty" jsonapi:"attr,priceIncludingVAT,omitempty" valid:"optional"` // Example: "69.34"
 }
 
 // Currency ...
@@ -424,7 +424,7 @@ type GetPaymentMethodsRequest struct {
 type CreatePaymentMethodSEPACreated struct {
 	ID                   string `jsonapi:"primary,paymentMethod,omitempty" valid:"uuid,optional"`                                      // Payment method ID
 	IdentificationString string `json:"identificationString,omitempty" jsonapi:"attr,identificationString,omitempty" valid:"optional"` // Example: "DE89 **** 3000"
-	Kind                 string `json:"kind,omitempty" jsonapi:"attr,kind,omitempty" valid:"optional"`
+	Kind                 string `json:"kind,omitempty" jsonapi:"attr,kind,omitempty" valid:"optional,in(sepa)"`
 }
 
 /*
@@ -541,9 +541,9 @@ type AuthorizePaymentMethodContent struct {
 
 // AuthorizePaymentMethodRequest ...
 type AuthorizePaymentMethodRequest struct {
-	Request              *http.Request                  `valid:"-"`
-	Content              *AuthorizePaymentMethodContent `valid:"-"`
-	ParamPaymentMethodID string                         `valid:"required,uuid"`
+	Request              *http.Request                 `valid:"-"`
+	Content              AuthorizePaymentMethodContent `valid:"-"`
+	ParamPaymentMethodID string                        `valid:"required,uuid"`
 }
 
 /*
@@ -634,27 +634,27 @@ type GetPaymentMethodsIncludingPaymentTokenRequest struct {
 
 // ProcessPaymentCreated ...
 type ProcessPaymentCreated struct {
-	ID                string                        `jsonapi:"primary,transaction,omitempty" valid:"uuid,optional"` // Transaction ID
-	VAT               *ProcessPaymentCreatedVAT     `json:"VAT,omitempty" jsonapi:"attr,VAT,omitempty" valid:"optional"`
-	Currency          *Currency                     `json:"currency,omitempty" jsonapi:"attr,currency,omitempty" valid:"optional"`
-	Fueling           *ProcessPaymentCreatedFueling `json:"fueling,omitempty" jsonapi:"attr,fueling,omitempty" valid:"optional"`
-	PaymentToken      string                        `json:"paymentToken,omitempty" jsonapi:"attr,paymentToken,omitempty" valid:"optional"`           // Example: "f106ac99-213c-4cf7-8c1b-1e841516026b"
-	PriceIncludingVAT float32                       `json:"priceIncludingVAT,omitempty" jsonapi:"attr,priceIncludingVAT,omitempty" valid:"optional"` // Example: "69.34"
-	PriceWithoutVAT   float32                       `json:"priceWithoutVAT,omitempty" jsonapi:"attr,priceWithoutVAT,omitempty" valid:"optional"`     // Example: "58.27"
+	ID                string                       `jsonapi:"primary,transaction,omitempty" valid:"uuid,optional"` // Transaction ID
+	VAT               ProcessPaymentCreatedVAT     `json:"VAT,omitempty" jsonapi:"attr,VAT,omitempty" valid:"optional"`
+	Currency          Currency                     `json:"currency,omitempty" jsonapi:"attr,currency,omitempty" valid:"optional"`
+	Fueling           ProcessPaymentCreatedFueling `json:"fueling,omitempty" jsonapi:"attr,fueling,omitempty" valid:"optional"`
+	PaymentToken      string                       `json:"paymentToken,omitempty" jsonapi:"attr,paymentToken,omitempty" valid:"optional"`           // Example: "f106ac99-213c-4cf7-8c1b-1e841516026b"
+	PriceIncludingVAT float32                      `json:"priceIncludingVAT,omitempty" jsonapi:"attr,priceIncludingVAT,omitempty" valid:"optional"` // Example: "69.34"
+	PriceWithoutVAT   float32                      `json:"priceWithoutVAT,omitempty" jsonapi:"attr,priceWithoutVAT,omitempty" valid:"optional"`     // Example: "58.27"
 }
 
 // ProcessPaymentCreatedVAT ...
 type ProcessPaymentCreatedVAT struct {
-	Amount float32 `json:"amount,omitempty" jsonapi:"amount,omitempty" valid:"optional"` // Example: "11.07"
-	Rate   float32 `json:"rate,omitempty" jsonapi:"rate,omitempty" valid:"optional"`     // Example: "0.19"
+	Amount float32 `json:"amount,omitempty" jsonapi:"attr,amount,omitempty" valid:"optional"` // Example: "11.07"
+	Rate   float32 `json:"rate,omitempty" jsonapi:"attr,rate,omitempty" valid:"optional"`     // Example: "0.19"
 }
 
 // ProcessPaymentCreatedFueling ...
 type ProcessPaymentCreatedFueling struct {
-	AppID   string `json:"appId,omitempty" jsonapi:"appId,omitempty" valid:"required"`     // Example: "c30bce97-b732-4390-af38-1ac6b017aa4c"
-	Mileage int64  `json:"mileage,omitempty" jsonapi:"mileage,omitempty" valid:"required"` // Example: "66435"
-	PumpID  string `json:"pumpId,omitempty" jsonapi:"pumpId,omitempty" valid:"required"`   // Example: "460ffaad-a3c1-4199-b69e-63949ccda82f"
-	Vin     string `json:"vin,omitempty" jsonapi:"vin,omitempty" valid:"required"`         // Example: "1B3EL46R36N102271"
+	AppID   string `json:"appId,omitempty" jsonapi:"attr,appId,omitempty" valid:"required,uuid"`   // Example: "c30bce97-b732-4390-af38-1ac6b017aa4c"
+	Mileage int64  `json:"mileage,omitempty" jsonapi:"attr,mileage,omitempty" valid:"required"`    // Example: "66435"
+	PumpID  string `json:"pumpId,omitempty" jsonapi:"attr,pumpId,omitempty" valid:"required,uuid"` // Example: "460ffaad-a3c1-4199-b69e-63949ccda82f"
+	Vin     string `json:"vin,omitempty" jsonapi:"attr,vin,omitempty" valid:"required"`            // Example: "1B3EL46R36N102271"
 }
 
 /*

@@ -181,7 +181,7 @@ to-many from being serialized.
 **All `Marshal` and `Unmarshal` methods expect pointers to struct
 instance or slices of the same contained with the `interface{}`s**
 
-Now you have your structs prepared to be seralized or materialized, What
+Now you have your structs prepared to be serialized or materialized, What
 about the rest?
 
 ### Create Record Example
@@ -341,6 +341,23 @@ func (post Post) JSONAPIRelationshipMeta(relation string) *Meta {
 	}
 	return nil
 }
+```
+
+### Custom types
+
+Custom types are supported for primitive types, only, as attributes.  Examples,
+
+```go
+type CustomIntType int
+type CustomFloatType float64
+type CustomStringType string
+```
+
+Types like following are not supported, but may be in the future:
+
+```go
+type CustomMapType map[string]interface{}
+type CustomSliceMapType []map[string]interface{}
 ```
 
 ### Errors

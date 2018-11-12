@@ -30,7 +30,11 @@ func (g *Generator) goType(stmt *jen.Statement, schema *openapi3.Schema, tags ma
 		case "binary":
 			stmt.Index().Byte()
 		case "date-time":
-			addValidator(tags, "rfc3339WithoutZone")
+			if jsonapi, ok := tags["jsonapi"]; ok { // add hint for jsonapi that time is in iso8601 format
+				tags["jsonapi"] = jsonapi + ",iso8601"
+			} else {
+				addValidator(tags, "rfc3339WithoutZone")
+			}
 			stmt.Qual("time", "Time")
 		case "date":
 			addValidator(tags, "time(2006-01-02)")

@@ -6,8 +6,10 @@ package poi
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"net/http/httptest"
 	"strconv"
+	"strings"
 	"testing"
 
 	"lab.jamit.de/pace/go-microservice/http/jsonapi/runtime"
@@ -85,7 +87,11 @@ func (s *testService) ChangePoi(context.Context, ChangePoiResponseWriter, *Chang
 func (s *testService) GetPolicies(context.Context, GetPoliciesResponseWriter, *GetPoliciesRequest) error {
 	return nil
 }
-func (s *testService) CreatePolicy(context.Context, CreatePolicyResponseWriter, *CreatePolicyRequest) error {
+func (s *testService) CreatePolicy(ctx context.Context, w CreatePolicyResponseWriter, r *CreatePolicyRequest) error {
+	if r.Content.Rules[0].Priorities[0].SourceID != "f106ac99-213c-4cf7-8c1b-1e841516026b" {
+		return fmt.Errorf("Expected first rule first property source id to equal %q", "f106ac99-213c-4cf7-8c1b-1e841516026b")
+	}
+
 	return nil
 }
 func (s *testService) GetPolicy(context.Context, GetPolicyResponseWriter, *GetPolicyRequest) error {
@@ -142,6 +148,7 @@ func TestHandler(t *testing.T) {
 	if len(data.Data) != 10 {
 		t.Error("Expected 10 apps")
 	}
+	fmt.Printf("%#v", data)
 	if data.Data[0]["type"] != "locationBasedApp" {
 		t.Error("Expected type locationBasedApp")
 	}
@@ -152,5 +159,46 @@ func TestHandler(t *testing.T) {
 	}
 	if meta["insideAppArea"] != true {
 		t.Error("Expected insideAppArea to be true")
+	}
+}
+
+func TestCreatePolicyHandler(t *testing.T) {
+	r := Router(&testService{t})
+	rec := httptest.NewRecorder()
+	req := httptest.NewRequest("POST", "/poi/beta/policies", strings.NewReader(`{
+		"data": {
+			"id": "f106ac99-213c-4cf7-8c1b-1e841516026b",
+			"type": "policies",
+			"attributes": {
+				"poiType": "SpeedCamera",
+				"userId": "f106ac99-213c-4cf7-8c1b-1e841516026b",
+				"countryId": "DE",
+				"createdAt": "2018-01-01T00:00:00Z",
+				"rules": [
+					{
+						"field": "name",
+						"priorities": [
+							{
+								"sourceId": "f106ac99-213c-4cf7-8c1b-1e841516026b",
+								"timeToLive": 0
+							}
+						]
+					}
+				]
+			}
+		}
+	}`))
+	req.Header.Set("Accept", runtime.JSONAPIContentType)
+	req.Header.Set("Content-Type", runtime.JSONAPIContentType)
+
+	r.ServeHTTP(rec, req)
+
+	resp := rec.Result()
+	defer resp.Body.Close()
+
+	if resp.StatusCode != 200 {
+		t.Errorf("expected OK got: %d", resp.StatusCode)
+		t.Error(rec.Body.String())
+		return
 	}
 }
