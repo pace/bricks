@@ -6,11 +6,12 @@
 package jsonapi
 
 import (
-	"github.com/prometheus/client_golang/prometheus"
-	"lab.jamit.de/pace/go-microservice/http/oauth2"
 	"net/http"
 	"strconv"
 	"time"
+
+	"github.com/prometheus/client_golang/prometheus"
+	"lab.jamit.de/pace/go-microservice/http/oauth2"
 )
 
 var (
@@ -29,6 +30,11 @@ var (
 		[]string{"method", "path", "service"},
 	)
 )
+
+func init() {
+	prometheus.MustRegister(paceAPIHTTPRequestTotal)
+	prometheus.MustRegister(paceAPIHTTPRequestDurationSeconds)
+}
 
 // Metric is an http.ResponseWriter implementing metrics collector
 // because the metrics depend on the http StatusCode.

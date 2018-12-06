@@ -6,7 +6,10 @@ package jsonapi
 import (
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
+
+	"lab.jamit.de/pace/go-microservice/maintenance/metrics"
 )
 
 func TestCaptureStatus(t *testing.T) {
@@ -25,5 +28,13 @@ func TestCaptureStatus(t *testing.T) {
 
 	if resp.StatusCode != 204 {
 		t.Errorf("Failed to return correct 204 response status, got: %v", resp.StatusCode)
+	}
+
+	rec = httptest.NewRecorder()
+	req = httptest.NewRequest("GET", "/metrics", nil)
+	metrics.Handler().ServeHTTP(rec, req)
+
+	if !strings.Contains(rec.Body.String(), "pace_api_http_request_duration") {
+		t.Errorf("Expected pace api metrics got: %v", rec.Body.String())
 	}
 }
