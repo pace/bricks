@@ -19,6 +19,8 @@ import (
 func Router() *mux.Router {
 	r := mux.NewRouter()
 
+	r.Use(metricsMiddleware)
+
 	// last resort error handler
 	r.Use(errors.Handler())
 
