@@ -12,6 +12,7 @@ import (
 	"github.com/go-pg/pg"
 	opentracing "github.com/opentracing/opentracing-go"
 	olog "github.com/opentracing/opentracing-go/log"
+	"github.com/prometheus/client_golang/prometheus"
 	"github.com/rs/zerolog"
 	"lab.jamit.de/pace/go-microservice/maintenance/log"
 )
@@ -24,9 +25,37 @@ type config struct {
 	Database string `env:"POSTGRES_DB" envDefault:"postgres"`
 }
 
+var (
+	pacePostgresQueryTotal = prometheus.NewCounterVec(
+		prometheus.CounterOpts{
+			Name: "pace_postgres_query_total",
+			Help: "Collects stats about the number of postgres queries made",
+		},
+		[]string{"query", "database", "addr"},
+	)
+	pacePostgresQueryFailed = prometheus.NewCounterVec(
+		prometheus.CounterOpts{
+			Name: "pace_postgres_query_failed",
+			Help: "Collects stats about the number of postgres queries failed",
+		},
+		[]string{"query", "database", "addr"},
+	)
+	pacePostgresQueryDurationSeconds = prometheus.NewHistogramVec(
+		prometheus.HistogramOpts{
+			Name: "pace_postgres_query_duration_seconds",
+			Help: "Collect performance metrics for each postgres query",
+		},
+		[]string{"query", "database", "addr"},
+	)
+)
+
 var cfg config
 
 func init() {
+	prometheus.MustRegister(pacePostgresQueryTotal)
+	prometheus.MustRegister(pacePostgresQueryFailed)
+	prometheus.MustRegister(pacePostgresQueryDurationSeconds)
+
 	// parse log config
 	err := env.Parse(&cfg)
 	if err != nil {
@@ -56,6 +85,9 @@ func CustomConnectionPool(opts *pg.Options) *pg.DB {
 	db := pg.Connect(opts)
 	db.OnQueryProcessed(queryLogger)
 	db.OnQueryProcessed(openTracingAdapter)
+	db.OnQueryProcessed(func(event *pg.QueryProcessedEvent) {
+		metricsAdapter(event, opts)
+	})
 	return db
 }
 
@@ -126,4 +158,26 @@ func openTracingAdapter(event *pg.QueryProcessedEvent) {
 
 	span.LogFields(fields...)
 	span.Finish()
+}
+
+func metricsAdapter(event *pg.QueryProcessedEvent, opts *pg.Options) {
+	dur := float64(time.Since(event.StartTime)) / float64(time.Millisecond)
+	q, qe := event.FormattedQuery()
+	if qe != nil {
+		// this is only a display issue not a "real" issue
+		q = qe.Error()
+	}
+	labels := prometheus.Labels{
+		"query":    q,
+		"database": opts.Database,
+		"addr":     opts.Addr,
+	}
+
+	pacePostgresQueryTotal.With(labels).Inc()
+
+	if event.Error != nil {
+		pacePostgresQueryFailed.With(labels).Inc()
+	}
+
+	pacePostgresQueryDurationSeconds.With(labels).Observe(dur)
 }
