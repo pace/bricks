@@ -13,6 +13,7 @@ import (
 	"github.com/go-redis/redis"
 	opentracing "github.com/opentracing/opentracing-go"
 	olog "github.com/opentracing/opentracing-go/log"
+	"github.com/prometheus/client_golang/prometheus"
 	"github.com/rs/zerolog"
 	"lab.jamit.de/pace/go-microservice/maintenance/log"
 )
@@ -35,9 +36,37 @@ type config struct {
 	IdleCheckFrequency time.Duration `env:"REDIS_IDLE_CHECK_FREQUENCY"`
 }
 
+var (
+	paceRedisCmdTotal = prometheus.NewCounterVec(
+		prometheus.CounterOpts{
+			Name: "pace_redis_cmd_total",
+			Help: "Collects stats about the number of redis requests made",
+		},
+		[]string{"method"},
+	)
+	paceRedisCmdFailed = prometheus.NewCounterVec(
+		prometheus.CounterOpts{
+			Name: "pace_redis_cmd_failed",
+			Help: "Collects stats about the number of redis requests failed",
+		},
+		[]string{"method"},
+	)
+	paceRedisCmdDurationSeconds = prometheus.NewHistogramVec(
+		prometheus.HistogramOpts{
+			Name: "pace_redis_cmd_duration_seconds",
+			Help: "Collect performance metrics for each method",
+		},
+		[]string{"method"},
+	)
+)
+
 var cfg config
 
 func init() {
+	prometheus.MustRegister(paceRedisCmdTotal)
+	prometheus.MustRegister(paceRedisCmdFailed)
+	prometheus.MustRegister(paceRedisCmdDurationSeconds)
+
 	// parse log config
 	err := env.Parse(&cfg)
 	if err != nil {
@@ -136,6 +165,10 @@ func (lt *logtracer) handle(realProcess func(redis.Cmder) error) func(redis.Cmde
 		span.LogFields(olog.String("cmd", cmder.Name()))
 		defer span.Finish()
 
+		paceRedisCmdTotal.With(prometheus.Labels{
+			"method": cmder.Name(),
+		}).Inc()
+
 		// execute redis command
 		err := realProcess(cmder)
 
@@ -143,11 +176,18 @@ func (lt *logtracer) handle(realProcess func(redis.Cmder) error) func(redis.Cmde
 		if err != nil {
 			span.LogFields(olog.Error(err))
 			le = le.Err(err)
+			paceRedisCmdFailed.With(prometheus.Labels{
+				"method": cmder.Name(),
+			}).Inc()
 		}
 
 		// do log statement
 		dur := float64(time.Since(startTime)) / float64(time.Millisecond)
 		le.Float64("duration", dur).Msg("Redis query")
+
+		paceRedisCmdDurationSeconds.With(prometheus.Labels{
+			"method": cmder.Name(),
+		}).Observe(dur)
 
 		return err
 	}
