@@ -119,7 +119,7 @@ func queryLogger(event *pg.QueryProcessedEvent) {
 			Int("rows", event.Result.RowsReturned())
 	}
 
-	q, qe := event.FormattedQuery()
+	q, qe := event.UnformattedQuery()
 	if qe != nil {
 		// this is only a display issue not a "real" issue
 		le.Msgf("%v", qe)
@@ -129,7 +129,7 @@ func queryLogger(event *pg.QueryProcessedEvent) {
 
 func openTracingAdapter(event *pg.QueryProcessedEvent) {
 	// start span with general info
-	q, qe := event.FormattedQuery()
+	q, qe := event.UnformattedQuery()
 	if qe != nil {
 		// this is only a display issue not a "real" issue
 		q = qe.Error()
@@ -162,7 +162,7 @@ func openTracingAdapter(event *pg.QueryProcessedEvent) {
 
 func metricsAdapter(event *pg.QueryProcessedEvent, opts *pg.Options) {
 	dur := float64(time.Since(event.StartTime)) / float64(time.Millisecond)
-	q, qe := event.FormattedQuery()
+	q, qe := event.UnformattedQuery()
 	if qe != nil {
 		// this is only a display issue not a "real" issue
 		q = qe.Error()
