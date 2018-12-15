@@ -8,6 +8,11 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 )
 
+const (
+	kb = 1024
+	mb = kb * kb
+)
+
 var (
 	paceHTTPInFlightGauge = prometheus.NewGauge(prometheus.GaugeOpts{
 		Name: "pace_http_in_flight_requests",
@@ -28,7 +33,7 @@ var (
 		prometheus.HistogramOpts{
 			Name:    "pace_http_request_duration_milliseconds",
 			Help:    "A histogram of latencies for requests.",
-			Buckets: []float64{.1, .25, .5, 1, 2.5, 5, 10},
+			Buckets: []float64{10, 50, 100, 300, 600, 1000, 2500, 5000, 10000, 60000},
 		},
 		[]string{"code", "method"},
 	)
@@ -37,9 +42,13 @@ var (
 	// ObserverVec.
 	paceHTTPResponseSize = prometheus.NewHistogramVec(
 		prometheus.HistogramOpts{
-			Name:    "pace_http_request_size_bytes",
-			Help:    "A histogram of response sizes for requests.",
-			Buckets: []float64{100, 200, 500, 900, 1500},
+			Name: "pace_http_request_size_bytes",
+			Help: "A histogram of response sizes for requests.",
+			Buckets: []float64{
+				100,
+				kb, 10 * kb, 100 * kb,
+				1 * mb, 5 * mb, 10 * mb, 100 * mb,
+			},
 		},
 		[]string{"code", "method"},
 	)
@@ -53,6 +62,7 @@ func init() {
 func metricsMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		paceHTTPInFlightGauge.Inc()
+		defer paceHTTPInFlightGauge.Dec()
 		startTime := time.Now()
 		srw := statusWriter{ResponseWriter: w}
 		next.ServeHTTP(&srw, r)
@@ -64,7 +74,6 @@ func metricsMiddleware(next http.Handler) http.Handler {
 		paceHTTPCounter.With(labels).Inc()
 		paceHTTPDuration.With(labels).Observe(dur)
 		paceHTTPResponseSize.With(labels).Observe(float64(srw.length))
-		paceHTTPInFlightGauge.Dec()
 	})
 }
 
