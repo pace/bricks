@@ -53,8 +53,9 @@ var (
 	)
 	paceRedisCmdDurationSeconds = prometheus.NewHistogramVec(
 		prometheus.HistogramOpts{
-			Name: "pace_redis_cmd_duration_seconds",
-			Help: "Collect performance metrics for each method",
+			Name:    "pace_redis_cmd_duration_seconds",
+			Help:    "Collect performance metrics for each method",
+			Buckets: []float64{.1, .25, .5, 1, 2.5, 5, 10, 60},
 		},
 		[]string{"method"},
 	)

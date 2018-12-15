@@ -31,21 +31,36 @@ var (
 			Name: "pace_postgres_query_total",
 			Help: "Collects stats about the number of postgres queries made",
 		},
-		[]string{"query", "database", "addr"},
+		[]string{"database"},
 	)
 	pacePostgresQueryFailed = prometheus.NewCounterVec(
 		prometheus.CounterOpts{
 			Name: "pace_postgres_query_failed",
 			Help: "Collects stats about the number of postgres queries failed",
 		},
-		[]string{"query", "database", "addr"},
+		[]string{"database"},
 	)
 	pacePostgresQueryDurationSeconds = prometheus.NewHistogramVec(
 		prometheus.HistogramOpts{
-			Name: "pace_postgres_query_duration_seconds",
-			Help: "Collect performance metrics for each postgres query",
+			Name:    "pace_postgres_query_duration_seconds",
+			Help:    "Collect performance metrics for each postgres query",
+			Buckets: []float64{.1, .25, .5, 1, 2.5, 5, 10, 60},
 		},
-		[]string{"query", "database", "addr"},
+		[]string{"database"},
+	)
+	pacePostgresQueryRowsTotal = prometheus.NewCounterVec(
+		prometheus.CounterOpts{
+			Name: "pace_postgres_query_rows_total",
+			Help: "Collects stats about the number of rows returned by a postgres query",
+		},
+		[]string{"database"},
+	)
+	pacePostgresQueryAffectedTotal = prometheus.NewCounterVec(
+		prometheus.CounterOpts{
+			Name: "pace_postgres_query_affected_total",
+			Help: "Collects stats about the number of rows affected by a postgres query",
+		},
+		[]string{"database"},
 	)
 )
 
@@ -55,6 +70,8 @@ func init() {
 	prometheus.MustRegister(pacePostgresQueryTotal)
 	prometheus.MustRegister(pacePostgresQueryFailed)
 	prometheus.MustRegister(pacePostgresQueryDurationSeconds)
+	prometheus.MustRegister(pacePostgresQueryRowsTotal)
+	prometheus.MustRegister(pacePostgresQueryAffectedTotal)
 
 	// parse log config
 	err := env.Parse(&cfg)
@@ -162,21 +179,18 @@ func openTracingAdapter(event *pg.QueryProcessedEvent) {
 
 func metricsAdapter(event *pg.QueryProcessedEvent, opts *pg.Options) {
 	dur := float64(time.Since(event.StartTime)) / float64(time.Millisecond)
-	q, qe := event.UnformattedQuery()
-	if qe != nil {
-		// this is only a display issue not a "real" issue
-		q = qe.Error()
-	}
 	labels := prometheus.Labels{
-		"query":    q,
-		"database": opts.Database,
-		"addr":     opts.Addr,
+		"database": opts.Addr + "/" + opts.Database,
 	}
 
 	pacePostgresQueryTotal.With(labels).Inc()
 
 	if event.Error != nil {
 		pacePostgresQueryFailed.With(labels).Inc()
+	} else {
+		r := event.Result
+		pacePostgresQueryRowsTotal.With(labels).Add(float64(r.RowsReturned()))
+		pacePostgresQueryAffectedTotal.With(labels).Add(float64(r.RowsAffected()))
 	}
 
 	pacePostgresQueryDurationSeconds.With(labels).Observe(dur)
