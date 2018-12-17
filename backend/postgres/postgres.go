@@ -6,6 +6,7 @@ package postgres
 
 import (
 	"fmt"
+	"math"
 	"time"
 
 	"github.com/caarlos0/env"
@@ -190,7 +191,7 @@ func metricsAdapter(event *pg.QueryProcessedEvent, opts *pg.Options) {
 	} else {
 		r := event.Result
 		pacePostgresQueryRowsTotal.With(labels).Add(float64(r.RowsReturned()))
-		pacePostgresQueryAffectedTotal.With(labels).Add(float64(r.RowsAffected()))
+		pacePostgresQueryAffectedTotal.With(labels).Add(math.Max(0, float64(r.RowsAffected())))
 	}
 
 	pacePostgresQueryDurationSeconds.With(labels).Observe(dur)
