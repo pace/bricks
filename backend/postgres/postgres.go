@@ -20,8 +20,8 @@ import (
 
 type config struct {
 	Port     int    `env:"POSTGRES_PORT" envDefault:"5432"`
-	Host     string `env:"POSTGRES_HOST" envDefault:"localhost"`
-	Password string `env:"POSTGRES_PASSWORD" envDefault:"pace1234!"`
+	Host     string `env:"POSTGRES_HOST" envDefault:"postgres"`
+	Password string `env:"POSTGRES_PASSWORD" envDefault:"mysecretpassword"`
 	User     string `env:"POSTGRES_USER" envDefault:"postgres"`
 	Database string `env:"POSTGRES_DB" envDefault:"postgres"`
 }

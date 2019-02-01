@@ -19,7 +19,7 @@ import (
 )
 
 type config struct {
-	Addrs              []string      `env:"REDIS_HOSTS" envSeparator:"," envDefault:"localhost:6379"`
+	Addrs              []string      `env:"REDIS_HOSTS" envSeparator:"," envDefault:"redis:6379"`
 	Password           string        `env:"REDIS_PASSWORD"`
 	DB                 int           `env:"REDIS_DB"`
 	MaxRetries         int           `env:"REDIS_MAX_RETRIES"`
