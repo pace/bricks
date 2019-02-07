@@ -6,8 +6,6 @@ package livetest
 import (
 	"context"
 	"fmt"
-	"runtime/debug"
-	"strings"
 	"time"
 
 	opentracing "github.com/opentracing/opentracing-go"
@@ -71,10 +69,7 @@ func executeTest(ctx context.Context, t TestFunc, name string) error {
 		defer func() {
 			err := recover()
 			if err != SkipNow || err != FailNow {
-				lines := strings.Split(string(debug.Stack()[:]), "\n")
-				for _, line := range lines {
-					proxy.Error(line)
-				}
+				log.Stack(ctx)
 				proxy.Fail()
 			}
 		}()
