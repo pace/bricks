@@ -57,7 +57,7 @@ func (c *Client) SolidifiedReverse(ctx context.Context, lat, lon float64) (*Resu
 		return nil, err
 	}
 
-	if resultHigh != nil {
+	if resultHigh != nil && resultHigh.Address != nil && resultLow != nil && resultLow.Address != nil {
 		if resultLow.Address.City == "" {
 			resultLow.Address.City = resultHigh.Address.City
 		}
@@ -82,6 +82,8 @@ func (c *Client) SolidifiedReverse(ctx context.Context, lat, lon float64) (*Resu
 		if resultLow.Address.State == "" {
 			resultLow.Address.State = resultHigh.Address.State
 		}
+	} else {
+		return nil, ErrUnableToGeocode
 	}
 
 	return resultLow, nil
@@ -147,8 +149,7 @@ func (c *Client) Reverse(ctx context.Context, lat, lon float64, zoom int) (*Resu
 	defer resp.Body.Close() // nolint: errcheck
 
 	if resp.StatusCode != http.StatusOK {
-		err = ErrRequestFailed
-		return nil, err
+		return nil, ErrRequestFailed
 	}
 
 	// parse response
@@ -158,9 +159,8 @@ func (c *Client) Reverse(ctx context.Context, lat, lon float64, zoom int) (*Resu
 	}
 
 	// Handle geocoding error
-	if result.Error == ErrUnableToGeocode.Error() {
-		err = ErrUnableToGeocode
-		return nil, err
+	if result.Error == "Unable to geocode" {
+		return nil, ErrUnableToGeocode
 	}
 
 	return &result, nil

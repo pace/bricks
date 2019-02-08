@@ -14,14 +14,16 @@ func TestIntegrationReverse(t *testing.T) {
 	ctx := context.Background()
 	ctx = log.With().Logger().WithContext(ctx)
 
-	_, err := DefaultClient.Reverse(ctx, 0, 0, 18)
+	d, err := DefaultClient.Reverse(ctx, 0, 0, 18)
 	if err != ErrUnableToGeocode {
-		t.Error("expected unable to geocode error, got: ", err)
+		t.Errorf("expected unable to geocode error, got: %v; %+v", err, d)
+		return
 	}
 
 	res, err := DefaultClient.Reverse(ctx, 49.01251, 8.42636, 18)
 	if err != nil {
 		t.Error("expected error, got: ", err)
+		return
 	}
 
 	expected := "Haid-und-Neu-Straße 18, 76131 Karlsruhe"

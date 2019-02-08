@@ -47,7 +47,7 @@ func TestWorkQueueOneTaskWithErr(t *testing.T) {
 		t.Error("expected error")
 		return
 	}
-	expected := "Failed to some work: Some error"
+	expected := "failed to some work: Some error"
 	if q.Err().Error() != expected {
 		t.Errorf("expected error %q, got: %q", q.Err().Error(), expected)
 	}
