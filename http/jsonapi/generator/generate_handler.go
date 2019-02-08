@@ -159,7 +159,7 @@ func (g *Generator) generateResponseInterface(route *route, schema *openapi3.Swa
 		// error responses have an error message parameter
 		codeNum, err := strconv.Atoi(code)
 		if err != nil {
-			return fmt.Errorf("Failed to parse response code %s: %v", code, err)
+			return fmt.Errorf("failed to parse response code %s: %v", code, err)
 		}
 
 		// generate method name

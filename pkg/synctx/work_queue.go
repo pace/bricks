@@ -45,7 +45,7 @@ func (queue *WorkQueue) Add(description string, fn WorkFunc) {
 		// if one of the work queue items fails the whole
 		// queue will be canceled
 		if err != nil {
-			queue.setErr(fmt.Errorf("Failed to %s: %v", description, err))
+			queue.setErr(fmt.Errorf("failed to %s: %v", description, err))
 			queue.cancel()
 		}
 		queue.wg.Done()

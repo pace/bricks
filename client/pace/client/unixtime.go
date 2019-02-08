@@ -22,7 +22,7 @@ func (r UnixTime) MarshalJSON() ([]byte, error) {
 func (r *UnixTime) UnmarshalJSON(data []byte) error {
 	var timestamp int64
 	if err := json.Unmarshal(data, &timestamp); err != nil {
-		return fmt.Errorf("Unix timestamp should be an number, got %s", data)
+		return fmt.Errorf("unix timestamp should be an number, got %s", data)
 	}
 	*r = UnixTime(time.Unix(timestamp, 0))
 	return nil

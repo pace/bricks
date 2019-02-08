@@ -69,7 +69,7 @@ func (g *Generator) goType(stmt *jen.Statement, schema *openapi3.Schema, tags ma
 			return err
 		}
 	default:
-		return fmt.Errorf("Unknown type: %s", schema.Type)
+		return fmt.Errorf("unknown type: %s", schema.Type)
 	}
 
 	// add enum validation

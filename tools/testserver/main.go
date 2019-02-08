@@ -111,7 +111,7 @@ func main() {
 				t.Fail()
 			}
 			if resp.StatusCode != 200 {
-				t.Log("Received status code: %d", resp.StatusCode)
+				t.Logf("Received status code: %d", resp.StatusCode)
 				t.Fail()
 			}
 		},

@@ -25,7 +25,7 @@ func Unmarshal(w http.ResponseWriter, r *http.Request, data interface{}) bool {
 	accept := r.Header.Get("Accept")
 	if accept != JSONAPIContentType {
 		WriteError(w, http.StatusNotAcceptable,
-			fmt.Errorf("Request needs to be send with %q header, containing value: %q", "Accept", JSONAPIContentType))
+			fmt.Errorf("request needs to be send with %q header, containing value: %q", "Accept", JSONAPIContentType))
 		return false
 	}
 
@@ -33,7 +33,7 @@ func Unmarshal(w http.ResponseWriter, r *http.Request, data interface{}) bool {
 	contentType := r.Header.Get("Content-Type")
 	if contentType != JSONAPIContentType {
 		WriteError(w, http.StatusUnsupportedMediaType,
-			fmt.Errorf("Request needs to be send with %q header, containing value: %q", "Accept", JSONAPIContentType))
+			fmt.Errorf("request needs to be send with %q header, containing value: %q", "Accept", JSONAPIContentType))
 		return false
 	}
 
@@ -41,7 +41,7 @@ func Unmarshal(w http.ResponseWriter, r *http.Request, data interface{}) bool {
 	err := jsonapi.UnmarshalPayload(r.Body, data)
 	if err != nil {
 		WriteError(w, http.StatusUnprocessableEntity,
-			fmt.Errorf("Can't parse content: %v", err))
+			fmt.Errorf("can't parse content: %v", err))
 		return false
 	}
 
@@ -59,6 +59,6 @@ func Marshal(w http.ResponseWriter, data interface{}, code int) {
 	// write marshaled response body
 	err := jsonapi.MarshalPayload(w, data)
 	if err != nil {
-		panic(fmt.Errorf("Failed to marshal jsonapi response for %#v: %s", data, err))
+		panic(fmt.Errorf("failed to marshal jsonapi response for %#v: %s", data, err))
 	}
 }

@@ -46,14 +46,14 @@ func testRun(ctx context.Context, tests []TestFunc) {
 			Int("test", i+1).Logger()
 		ctx = logger.WithContext(ctx)
 
-		err := executeTest(ctx, test, fmt.Sprintf("test-%d", i+1))
+		err = executeTest(ctx, test, fmt.Sprintf("test-%d", i+1))
 		if err != nil {
 			break
 		}
 	}
 
 	if err != nil {
-		log.Errorf("Failed to run tests: %v", err)
+		log.Errorf("failed to run tests: %v", err)
 	}
 }
 
@@ -68,7 +68,7 @@ func executeTest(ctx context.Context, t TestFunc, name string) error {
 	func() {
 		defer func() {
 			err := recover()
-			if err != SkipNow || err != FailNow {
+			if err != ErrSkipNow || err != ErrFailNow {
 				log.Stack(ctx)
 				proxy.Fail()
 			}
@@ -80,21 +80,21 @@ func executeTest(ctx context.Context, t TestFunc, name string) error {
 	proxy.okIfNoSkipFail()
 	paceLivetestDurationSeconds.WithLabelValues(cfg.ServiceName).Observe(duration)
 
-	switch proxy.State {
+	switch proxy.state {
 	case StateFailed:
 		logger.Warn().Msg("Test failed!")
-		span.LogEvent("Test failed!")
+		span.LogKV("test", "failed")
 		paceLivetestTotal.WithLabelValues(cfg.ServiceName, "failed").Add(1)
 	case StateOK:
 		logger.Info().Msg("Test succeeded!")
-		span.LogEvent("Test succeeded!")
+		span.LogKV("test", "succeeded")
 		paceLivetestTotal.WithLabelValues(cfg.ServiceName, "succeeded").Add(1)
 	case StateSkipped:
 		logger.Info().Msg("Test skipped!")
-		span.LogEvent("Test skipped!")
+		span.LogKV("test", "skipped")
 		paceLivetestTotal.WithLabelValues(cfg.ServiceName, "skipped").Add(1)
 	default:
-		panic(fmt.Errorf("Invalid state: %v", proxy.State))
+		panic(fmt.Errorf("invalid state: %v", proxy.state))
 	}
 
 	return nil

@@ -41,7 +41,7 @@ func ValidateStruct(w http.ResponseWriter, r *http.Request, data interface{}, so
 		case error:
 			panic(err) // programming error, e.g. not used with struct
 		default:
-			panic(fmt.Errorf("Unhandled error case: %s", err))
+			panic(fmt.Errorf("unhandled error case: %s", err))
 		}
 
 		return false
@@ -59,7 +59,7 @@ func generateValidationErrors(validErrors valid.Errors, jsonapiErrors *Errors, s
 		case valid.Error:
 			*jsonapiErrors = append(*jsonapiErrors, generateValidationError(e, source))
 		default:
-			panic(fmt.Errorf("Unhandled error case: %s", e))
+			panic(fmt.Errorf("unhandled error case: %s", e))
 		}
 	}
 }

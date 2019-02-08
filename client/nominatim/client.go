@@ -26,7 +26,7 @@ type Client struct {
 }
 
 // ErrUnableToGeocode lat/lon don't match to a known address
-var ErrUnableToGeocode = errors.New("Unable to geocode")
+var ErrUnableToGeocode = errors.New("unable to geocode")
 
 // ErrRequestFailed either the connection was lost or similar
 var ErrRequestFailed = errors.New("HTTP request failed")
@@ -125,7 +125,7 @@ func (c *Client) Reverse(ctx context.Context, lat, lon float64, zoom int) (*Resu
 	// prepate request
 	u, err := url.Parse(c.Endpoint)
 	if err != nil {
-		return nil, fmt.Errorf("Failed to parse nominatim endpoint URL %q: %v", c.Endpoint, err)
+		return nil, fmt.Errorf("failed to parse nominatim endpoint URL %q: %v", c.Endpoint, err)
 	}
 	u.Path = "nominatim/reverse"
 	values := make(url.Values)
