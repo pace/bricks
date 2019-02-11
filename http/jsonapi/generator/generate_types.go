@@ -308,7 +308,7 @@ func (g *Generator) generateStructRelationships(prefix string, schema *openapi3.
 		// check for data
 		data := relSchema.Value.Properties["data"]
 		if data == nil || data.Value == nil {
-			return nil, fmt.Errorf("No data for relationship %s context %s", relName, prefix)
+			return nil, fmt.Errorf("no data for relationship %s context %s", relName, prefix)
 		}
 
 		// generate relationship field

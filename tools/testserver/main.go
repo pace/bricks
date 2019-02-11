@@ -19,6 +19,7 @@ import (
 	"lab.jamit.de/pace/go-microservice/maintenance/errors"
 	"lab.jamit.de/pace/go-microservice/maintenance/log"
 	_ "lab.jamit.de/pace/go-microservice/maintenance/tracing"
+	"lab.jamit.de/pace/go-microservice/testing/livetest"
 )
 
 // pace lat/lon
@@ -99,6 +100,23 @@ func main() {
 
 	s := pacehttp.Server(h)
 	log.Logger().Info().Str("addr", s.Addr).Msg("Starting testserver ...")
+
+	go livetest.Test(context.Background(), []livetest.TestFunc{
+		func(t *livetest.T) {
+			t.Log("Test /test query")
+
+			resp, err := http.Get("http://localhost:3000/test")
+			if err != nil {
+				t.Error(err)
+				t.Fail()
+			}
+			if resp.StatusCode != 200 {
+				t.Logf("Received status code: %d", resp.StatusCode)
+				t.Fail()
+			}
+		},
+	})
+
 	log.Fatal(s.ListenAndServe())
 }
 

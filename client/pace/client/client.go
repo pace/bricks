@@ -21,7 +21,7 @@ import (
 )
 
 // ErrNotFound error for HTTP 404 responses
-var ErrNotFound = errors.New("Resource not found (HTTP 404)")
+var ErrNotFound = errors.New("resource not found (HTTP 404)")
 
 // ErrRequest contains error details
 type ErrRequest struct {
@@ -61,7 +61,7 @@ func New(endpoint string) *Client {
 func (c *Client) URL(path string, values url.Values) (*url.URL, error) {
 	u, err := url.Parse(c.Endpoint)
 	if err != nil {
-		return nil, fmt.Errorf("Endpoint URL %q can't be parsed: %v", c.Endpoint, err)
+		return nil, fmt.Errorf("endpoint URL %q can't be parsed: %v", c.Endpoint, err)
 	}
 
 	u.Path = path
@@ -156,7 +156,7 @@ func (c *Client) Do(ctx context.Context, req *http.Request) (*http.Response, err
 
 	// handle error if request failed
 	if err != nil {
-		return nil, fmt.Errorf("Failed to %s %q: %v", req.Method, req.URL.String(), err)
+		return nil, fmt.Errorf("failed to %s %q: %v", req.Method, req.URL.String(), err)
 	}
 
 	// return not found

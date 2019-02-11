@@ -38,6 +38,7 @@ testserver:
 	POSTGRES_USER=testserveruser \
 	POSTGRES_DB=testserver \
 	POSTGRES_PASSWORD=pace1234! \
+	PACE_LIVETEST_INTERVAL=1m \
 	go run ./tools/testserver/main.go
 
 docker.all: docker.jaeger docker.postgres.setup docker.redis

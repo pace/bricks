@@ -144,13 +144,15 @@ func TestHandler(t *testing.T) {
 	err := json.NewDecoder(resp.Body).Decode(&data)
 	if err != nil {
 		t.Fatal(err)
+		return
 	}
 	if len(data.Data) != 10 {
 		t.Error("Expected 10 apps")
+		return
 	}
-	fmt.Printf("%#v", data)
 	if data.Data[0]["type"] != "locationBasedApp" {
 		t.Error("Expected type locationBasedApp")
+		return
 	}
 	meta, ok := data.Data[0]["meta"].(map[string]interface{})
 	if !ok {

@@ -87,7 +87,7 @@ func ScanParameters(w http.ResponseWriter, r *http.Request, parameters ...*ScanP
 			// single parameter scanning
 			scanData = strings.Join(input, " ")
 		default:
-			panic(fmt.Errorf("Impossible scanning location: %d", param.Location))
+			panic(fmt.Errorf("impossible scanning location: %d", param.Location))
 		}
 
 		n, _ := fmt.Sscan(scanData, param.Data) // nolint: gosec

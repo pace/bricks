@@ -14,9 +14,9 @@ import (
 
 type introspecter func(mdw *Middleware, token string, resp *introspectResponse) error
 
-var errInvalidToken = errors.New("User token is invalid")
-var errUpstreamConnection = errors.New("Problem connecting to the introspection endpoint")
-var errBadUpstreamResponse = errors.New("Bad upstream response when introspecting token")
+var errInvalidToken = errors.New("user token is invalid")
+var errUpstreamConnection = errors.New("problem connecting to the introspection endpoint")
+var errBadUpstreamResponse = errors.New("bad upstream response when introspecting token")
 
 type introspectResponse struct {
 	Active   bool   `json:"active"`
