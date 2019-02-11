@@ -1,57 +1,70 @@
 // Copyright © 2018 by PACE Telematics GmbH. All rights reserved.
 // Created at 2019/02/01 by Vincent Landgraf
 
-package livetest_test
+package livetest
 
 import (
 	"context"
-	"log"
+	"net/http/httptest"
+	"strings"
+	"testing"
 	"time"
 
-	"lab.jamit.de/pace/go-microservice/testing/livetest"
+	"lab.jamit.de/pace/go-microservice/maintenance/metrics"
 )
 
-func ExampleTest() {
+func TestExample(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Millisecond*100)
 	defer cancel()
 
-	err := livetest.Test(ctx, []livetest.TestFunc{
-		func(t *livetest.T) {
+	err := Test(ctx, []TestFunc{
+		func(t *T) {
 			t.Logf("Executed test no %d", 1)
 		},
-		func(t *livetest.T) {
+		func(t *T) {
 			t.Log("Executed test no 2")
 		},
-		func(t *livetest.T) {
+		func(t *T) {
 			t.Fatal("Fail test no 3")
 		},
-		func(t *livetest.T) {
+		func(t *T) {
 			t.Fatalf("Fail test no %d", 4)
 		},
-		func(t *livetest.T) {
+		func(t *T) {
 			t.Skip("Skipping test no 5")
 		},
-		func(t *livetest.T) {
+		func(t *T) {
 			t.Skipf("Skipping test no %d", 5)
 		},
-		func(t *livetest.T) {
+		func(t *T) {
 			t.SkipNow()
 		},
-		func(t *livetest.T) {
+		func(t *T) {
 			t.Fail()
 		},
-		func(t *livetest.T) {
+		func(t *T) {
 			t.FailNow()
 		},
-		func(t *livetest.T) {
+		func(t *T) {
 			t.Error("Some")
 		},
-		func(t *livetest.T) {
+		func(t *T) {
 			t.Errorf("formatted")
 		},
 	})
 	if err != context.DeadlineExceeded {
-		log.Fatal(err)
+		t.Error(err)
+		return
 	}
-	// Output:
+
+	req := httptest.NewRequest("GET", "/metrics", nil)
+	resp := httptest.NewRecorder()
+	metrics.Handler().ServeHTTP(resp, req)
+	body := resp.Body.String()
+
+	if !strings.Contains(body, `pace_livetest_total{result="failed"d,service="go-microservice"} 6`) ||
+		!strings.Contains(body, `pace_livetest_total{result="skipped",service="go-microservice"} 3`) ||
+		!strings.Contains(body, `pace_livetest_total{result="succeeded",service="go-microservice"} 2`) {
+		t.Error("expected other pace_livetest_total counts")
+	}
 }

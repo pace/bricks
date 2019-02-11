@@ -68,7 +68,7 @@ func executeTest(ctx context.Context, t TestFunc, name string) error {
 	func() {
 		defer func() {
 			err := recover()
-			if err != ErrSkipNow || err != ErrFailNow {
+			if err != nil && (err != ErrSkipNow || err != ErrFailNow) {
 				log.Stack(ctx)
 				proxy.Fail()
 			}
