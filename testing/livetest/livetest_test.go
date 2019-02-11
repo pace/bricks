@@ -67,14 +67,10 @@ func TestIntegrationExample(t *testing.T) {
 	metrics.Handler().ServeHTTP(resp, req)
 	body := resp.Body.String()
 
-	for i := 0; i < 10; i++ {
-		if strings.Contains(body, `pace_livetest_total{result="failed",service="go-microservice"} 6`) &&
-			strings.Contains(body, `pace_livetest_total{result="skipped",service="go-microservice"} 3`) &&
-			strings.Contains(body, `pace_livetest_total{result="succeeded",service="go-microservice"} 2`) {
-			return // test os ok
-		}
-		time.Sleep(time.Millisecond * 10)
+	sn := cfg.ServiceName
+	if !strings.Contains(body, `pace_livetest_total{result="failed",service="`+sn+`"} 6`) ||
+		!strings.Contains(body, `pace_livetest_total{result="skipped",service="`+sn+`"} 3`) ||
+		!strings.Contains(body, `pace_livetest_total{result="succeeded",service="`+sn+`"} 2`) {
+		t.Errorf("expected other pace_livetest_total counts, got: %v", body)
 	}
-
-	t.Errorf("expected other pace_livetest_total counts, got: %v", body)
 }
