@@ -13,7 +13,12 @@ import (
 	"lab.jamit.de/pace/go-microservice/maintenance/metrics"
 )
 
-func TestExample(t *testing.T) {
+func TestIntegrationExample(t *testing.T) {
+	if testing.Short() {
+		t.Skip()
+		return
+	}
+
 	ctx, cancel := context.WithTimeout(context.Background(), time.Millisecond*100)
 	defer cancel()
 
@@ -62,9 +67,14 @@ func TestExample(t *testing.T) {
 	metrics.Handler().ServeHTTP(resp, req)
 	body := resp.Body.String()
 
-	if !strings.Contains(body, `pace_livetest_total{result="failed"d,service="go-microservice"} 6`) ||
-		!strings.Contains(body, `pace_livetest_total{result="skipped",service="go-microservice"} 3`) ||
-		!strings.Contains(body, `pace_livetest_total{result="succeeded",service="go-microservice"} 2`) {
-		t.Error("expected other pace_livetest_total counts")
+	for i := 0; i < 10; i++ {
+		if strings.Contains(body, `pace_livetest_total{result="failed",service="go-microservice"} 6`) &&
+			strings.Contains(body, `pace_livetest_total{result="skipped",service="go-microservice"} 3`) &&
+			strings.Contains(body, `pace_livetest_total{result="succeeded",service="go-microservice"} 2`) {
+			return // test os ok
+		}
+		time.Sleep(time.Millisecond * 10)
 	}
+
+	t.Errorf("expected other pace_livetest_total counts, got: %v", body)
 }
