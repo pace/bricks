@@ -44,6 +44,13 @@ func NewTestProxy(ctx context.Context, name string) *T {
 	return &T{name: name, ctx: ctx, state: StateRunning}
 }
 
+// Context returns the livetest context. Useful
+// for passing timeout and/or logging constraints from
+// the test executor to the individual case
+func (t *T) Context() context.Context {
+	return t.ctx
+}
+
 // Error logs an error message with the test
 func (t *T) Error(args ...interface{}) {
 	log.Ctx(t.ctx).Error().Msg(fmt.Sprint(args...))
