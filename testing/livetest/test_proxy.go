@@ -8,7 +8,7 @@ import (
 	"errors"
 	"fmt"
 
-	"lab.jamit.de/pace/go-microservice/maintenance/log"
+	"github.com/pace/bricks/maintenance/log"
 )
 
 // ErrSkipNow is used as a panic if ErrSkipNow is called on the test

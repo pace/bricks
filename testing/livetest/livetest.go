@@ -9,7 +9,7 @@ import (
 	"time"
 
 	opentracing "github.com/opentracing/opentracing-go"
-	"lab.jamit.de/pace/go-microservice/maintenance/log"
+	"github.com/pace/bricks/maintenance/log"
 )
 
 // TestFunc represents a single test (possibly with sub tests)

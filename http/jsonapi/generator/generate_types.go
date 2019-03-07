@@ -9,7 +9,7 @@ import (
 
 	"github.com/dave/jennifer/jen"
 	"github.com/getkin/kin-openapi/openapi3"
-	"lab.jamit.de/pace/go-microservice/maintenance/log"
+	"github.com/pace/bricks/maintenance/log"
 )
 
 const (

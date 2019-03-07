@@ -9,7 +9,7 @@ import (
 	"strconv"
 	"strings"
 
-	"lab.jamit.de/pace/go-microservice/maintenance/log"
+	"github.com/pace/bricks/maintenance/log"
 )
 
 // Note: we don't use the jsonapi.ErrorObject because it doesn't implement the

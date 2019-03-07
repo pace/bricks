@@ -8,8 +8,8 @@ import (
 	"os"
 	"path/filepath"
 
-	"lab.jamit.de/pace/go-microservice/http/jsonapi/generator"
-	"lab.jamit.de/pace/go-microservice/maintenance/log"
+	"github.com/pace/bricks/http/jsonapi/generator"
+	"github.com/pace/bricks/maintenance/log"
 )
 
 var pkg, path, source string

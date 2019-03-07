@@ -1,22 +1,24 @@
-# go-microservice
+# PACE Bricks
 
-A tool and kit to help the go developer to stick to pace standards and fasten certain processes.
+![](artwork/PACE-Bricks_Header_LightBackground.png)
+
+Opinionated microservice kit to help developers to build microservices with go.
 
 ## Install
 
-    go get -u lab.jamit.de/pace/go-microservice/cmd/pace
+    go get -u github.com/pace/bricks/cmd/pb
 
 ## Usage
 
-    pace -h
+    pb -h
 
 ### Environment variables
 
-#### `PACE_EDITOR`
+#### `PACE_BRICKS_EDITOR`
 
 The path to the editor that should be used for opening a project. Defaults to `$EDITOR`.
 
-#### `PACE_PATH`
+#### `PACE_BRICKS_PATH`
 
 The path where new project should be created. Defaults to `$HOME/PACE`.
 

@@ -14,7 +14,7 @@ import (
 	"github.com/dave/jennifer/jen"
 )
 
-const errorsPkg = "lab.jamit.de/pace/go-microservice/maintenance/errors"
+const errorsPkg = "github.com/pace/bricks/maintenance/errors"
 
 // CommandOptions are applied when generating the different
 // microservice commands
@@ -74,9 +74,9 @@ func Commands(path string, options CommandOptions) {
 }
 
 func generateDaemonMain(f *jen.File, cmdName string) {
-	httpPkg := "lab.jamit.de/pace/go-microservice/http"
-	logPkg := "lab.jamit.de/pace/go-microservice/maintenance/log"
-	trancing := "lab.jamit.de/pace/go-microservice/maintenance/tracing"
+	httpPkg := "github.com/pace/bricks/http"
+	logPkg := "github.com/pace/bricks/maintenance/log"
+	trancing := "github.com/pace/bricks/maintenance/tracing"
 
 	f.ImportAlias(httpPkg, "pacehttp")
 	f.Anon(trancing)

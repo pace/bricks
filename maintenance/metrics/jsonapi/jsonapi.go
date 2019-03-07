@@ -11,7 +11,7 @@ import (
 	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
-	"lab.jamit.de/pace/go-microservice/http/oauth2"
+	"github.com/pace/bricks/http/oauth2"
 )
 
 var (

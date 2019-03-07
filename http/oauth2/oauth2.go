@@ -11,7 +11,7 @@ import (
 	"github.com/caarlos0/env"
 	opentracing "github.com/opentracing/opentracing-go"
 	olog "github.com/opentracing/opentracing-go/log"
-	"lab.jamit.de/pace/go-microservice/maintenance/log"
+	"github.com/pace/bricks/maintenance/log"
 	"net/http"
 	"strings"
 )

@@ -8,7 +8,7 @@ import (
 	"log"
 	"time"
 
-	"lab.jamit.de/pace/go-microservice/testing/livetest"
+	"github.com/pace/bricks/testing/livetest"
 )
 
 func ExampleTest() {

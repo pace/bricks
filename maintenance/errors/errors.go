@@ -11,9 +11,9 @@ import (
 	"os"
 
 	raven "github.com/getsentry/raven-go"
-	"lab.jamit.de/pace/go-microservice/http/jsonapi/runtime"
-	"lab.jamit.de/pace/go-microservice/http/oauth2"
-	"lab.jamit.de/pace/go-microservice/maintenance/log"
+	"github.com/pace/bricks/http/jsonapi/runtime"
+	"github.com/pace/bricks/http/oauth2"
+	"github.com/pace/bricks/maintenance/log"
 )
 
 // PanicWrap wraps a panic for HandleRequest
@@ -112,7 +112,7 @@ func newPacket(rp interface{}) *raven.Packet {
 		packet = raven.NewPacket(rvalStr, raven.NewException(errors.New(rvalStr), raven.NewStacktrace(2, 3, nil)))
 	}
 
-	// extraxt ErrWithExtra info and append it to the packet
+	// extract ErrWithExtra info and append it to the packet
 	if ee, ok := rp.(raven.ErrWithExtra); ok {
 		for k, v := range ee.ExtraInfo() {
 			packet.Extra[k] = v

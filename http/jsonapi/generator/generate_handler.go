@@ -14,14 +14,14 @@ import (
 
 	"github.com/dave/jennifer/jen"
 	"github.com/getkin/kin-openapi/openapi3"
-	"lab.jamit.de/pace/go-microservice/maintenance/log"
+	"github.com/pace/bricks/maintenance/log"
 )
 
 const (
 	pkgGorillaMux     = "github.com/gorilla/mux"
-	pkgJSONAPIRuntime = "lab.jamit.de/pace/go-microservice/http/jsonapi/runtime"
-	pkgJSONAPIMetrics = "lab.jamit.de/pace/go-microservice/maintenance/metrics/jsonapi"
-	pkgMaintErrors    = "lab.jamit.de/pace/go-microservice/maintenance/errors"
+	pkgJSONAPIRuntime = "github.com/pace/bricks/http/jsonapi/runtime"
+	pkgJSONAPIMetrics = "github.com/pace/bricks/maintenance/metrics/jsonapi"
+	pkgMaintErrors    = "github.com/pace/bricks/maintenance/errors"
 	pkgOpentracing    = "github.com/opentracing/opentracing-go"
 )
 

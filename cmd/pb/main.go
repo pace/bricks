@@ -8,15 +8,15 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/pace/bricks/internal/service"
+	"github.com/pace/bricks/internal/service/generate"
+	"github.com/pace/bricks/maintenance/log"
 	"github.com/spf13/cobra"
-	"lab.jamit.de/pace/go-microservice/internal/service"
-	"lab.jamit.de/pace/go-microservice/internal/service/generate"
-	"lab.jamit.de/pace/go-microservice/maintenance/log"
 )
 
 func main() {
 	rootCmd := &cobra.Command{
-		Use:  "pace [command]",
+		Use:  "pb [command]",
 		Args: cobra.MaximumNArgs(1),
 	}
 	addRootCommands(rootCmd)

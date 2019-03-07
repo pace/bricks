@@ -10,7 +10,7 @@ import (
 	"testing"
 	"time"
 
-	"lab.jamit.de/pace/go-microservice/maintenance/metrics"
+	"github.com/pace/bricks/maintenance/metrics"
 )
 
 func TestIntegrationExample(t *testing.T) {

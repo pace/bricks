@@ -9,8 +9,8 @@ import (
 	"strings"
 	"testing"
 
-	"lab.jamit.de/pace/go-microservice/http/jsonapi/runtime"
-	"lab.jamit.de/pace/go-microservice/maintenance/log"
+	"github.com/pace/bricks/http/jsonapi/runtime"
+	"github.com/pace/bricks/maintenance/log"
 )
 
 type testService struct {

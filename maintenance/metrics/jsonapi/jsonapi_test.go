@@ -9,7 +9,7 @@ import (
 	"strings"
 	"testing"
 
-	"lab.jamit.de/pace/go-microservice/maintenance/metrics"
+	"github.com/pace/bricks/maintenance/metrics"
 )
 
 func TestCaptureStatus(t *testing.T) {

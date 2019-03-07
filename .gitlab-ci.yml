@@ -1,7 +1,7 @@
 image: golang:1.11
 
 variables:
-  GO_PROJECT_DIR: /go/src/lab.jamit.de/pace/go-microservice
+  GO_PROJECT_DIR: /go/src/github.com/pace/bricks
 
 before_script:
   - mkdir -p $GO_PROJECT_DIR

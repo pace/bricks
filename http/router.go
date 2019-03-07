@@ -7,11 +7,11 @@ import (
 	"net/http/pprof"
 
 	"github.com/gorilla/mux"
-	"lab.jamit.de/pace/go-microservice/maintenance/errors"
-	"lab.jamit.de/pace/go-microservice/maintenance/health"
-	"lab.jamit.de/pace/go-microservice/maintenance/log"
-	"lab.jamit.de/pace/go-microservice/maintenance/metrics"
-	"lab.jamit.de/pace/go-microservice/maintenance/tracing"
+	"github.com/pace/bricks/maintenance/errors"
+	"github.com/pace/bricks/maintenance/health"
+	"github.com/pace/bricks/maintenance/log"
+	"github.com/pace/bricks/maintenance/metrics"
+	"github.com/pace/bricks/maintenance/tracing"
 )
 
 // Router returns the default microservice endpoints for

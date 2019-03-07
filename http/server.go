@@ -10,7 +10,7 @@ import (
 	"time"
 
 	"github.com/caarlos0/env"
-	"lab.jamit.de/pace/go-microservice/maintenance/log"
+	"github.com/pace/bricks/maintenance/log"
 )
 
 func init() {

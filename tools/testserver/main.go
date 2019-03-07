@@ -12,14 +12,14 @@ import (
 
 	opentracing "github.com/opentracing/opentracing-go"
 	olog "github.com/opentracing/opentracing-go/log"
-	"lab.jamit.de/pace/go-microservice/backend/postgres"
-	"lab.jamit.de/pace/go-microservice/backend/redis"
-	pacehttp "lab.jamit.de/pace/go-microservice/http"
-	"lab.jamit.de/pace/go-microservice/http/oauth2"
-	"lab.jamit.de/pace/go-microservice/maintenance/errors"
-	"lab.jamit.de/pace/go-microservice/maintenance/log"
-	_ "lab.jamit.de/pace/go-microservice/maintenance/tracing"
-	"lab.jamit.de/pace/go-microservice/testing/livetest"
+	"github.com/pace/bricks/backend/postgres"
+	"github.com/pace/bricks/backend/redis"
+	pacehttp "github.com/pace/bricks/http"
+	"github.com/pace/bricks/http/oauth2"
+	"github.com/pace/bricks/maintenance/errors"
+	"github.com/pace/bricks/maintenance/log"
+	_ "github.com/pace/bricks/maintenance/tracing"
+	"github.com/pace/bricks/testing/livetest"
 )
 
 // pace lat/lon
