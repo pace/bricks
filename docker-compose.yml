@@ -4,14 +4,14 @@ services:
   postgres:
     image: postgres:9.5.12
     volumes:
-      - ./tmp/cockpit-postgres:/var/lib/postgresql/data
+      - ./tmp/postgres:/var/lib/postgresql/data
     ports:
       - "5432:5432"
 
   redis:
     image: redis:latest
     volumes:
-      - ./tmp/cockpit-redis:/data
+      - ./tmp/redis:/data
     ports:
       - "6379:6379"
 
