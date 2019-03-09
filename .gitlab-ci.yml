@@ -1,7 +1,5 @@
 image: golang:1.12
 
-variables:
-
 before_script:
   - export LOG_FORMAT=console
   - export JAEGER_SERVICE_NAME=unittest
@@ -20,11 +18,9 @@ lint:
 test:
   stage: test
   script:
-    - curl https://raw.githubusercontent.com/golang/dep/master/install.sh | sh
     - cd $CI_PROJECT_DIR && go test -v -cover -race -short ./...
 
 integration:
   stage: integration
   script:
-    - curl https://raw.githubusercontent.com/golang/dep/master/install.sh | sh
     - cd $CI_PROJECT_DIR && go test -v -cover -race -run TestIntegration ./...
