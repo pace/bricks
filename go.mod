@@ -1,7 +1,7 @@
 module github.com/pace/bricks
 
 require (
-	github.com/asaskevich/govalidator v0.0.0-20180720115003-f9ffefc3facf // indirect
+	github.com/asaskevich/govalidator v0.0.0-20180720115003-f9ffefc3facf
 	github.com/beorn7/perks v0.0.0-20180321164747-3a771d992973 // indirect
 	github.com/caarlos0/env v3.3.0+incompatible
 	github.com/certifi/gocertifi v0.0.0-20180118203423-deb3ae2ef261 // indirect
