@@ -41,7 +41,7 @@ func main() {
 		// do dummy database query
 		cdb := db.WithContext(ctx)
 		var result struct {
-			Calc int
+			Calc int //nolint
 		}
 		res, err := cdb.QueryOne(&result, `SELECT ? + ? AS Calc`, 10, 10)
 		if err != nil {
@@ -101,11 +101,12 @@ func main() {
 	s := pacehttp.Server(h)
 	log.Logger().Info().Str("addr", s.Addr).Msg("Starting testserver ...")
 
+	// nolint:errcheck
 	go livetest.Test(context.Background(), []livetest.TestFunc{
 		func(t *livetest.T) {
 			t.Log("Test /test query")
 
-			resp, err := http.Get("http://localhost:3000/test")
+			resp, err := http.Get("http://localhost:5000/test")
 			if err != nil {
 				t.Error(err)
 				t.Fail()

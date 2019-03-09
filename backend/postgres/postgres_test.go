@@ -10,7 +10,7 @@ func TestConnectionPool(t *testing.T) {
 	var result struct {
 		Calc int
 	}
-	db.QueryOne(&result, `SELECT ? + ? AS Calc`, 10, 10)
+	db.QueryOne(&result, `SELECT ? + ? AS Calc`, 10, 10) //nolint:errcheck
 
 	// Note: This test can't actually test the logging correctly
 	// but the code will be accessed
