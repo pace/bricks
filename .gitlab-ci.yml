@@ -1,11 +1,8 @@
-image: golang:1.11
+image: golang:1.12
 
 variables:
-  GO_PROJECT_DIR: /go/src/github.com/pace/bricks
 
 before_script:
-  - mkdir -p $GO_PROJECT_DIR
-  - cp -r $CI_PROJECT_DIR/* $GO_PROJECT_DIR
   - export LOG_FORMAT=console
   - export JAEGER_SERVICE_NAME=unittest
 
@@ -16,19 +13,18 @@ stages:
 lint:
   stage: test
   script:
-    - go get -u github.com/alecthomas/gometalinter && gometalinter --install
-    - cd $GO_PROJECT_DIR && make lint
+    - curl -sfL https://install.goreleaser.com/github.com/golangci/golangci-lint.sh | sh -s -- -b $(go env GOPATH)/bin v1.15.0
+    - cd $CI_PROJECT_DIR && golangci-lint run
   allow_failure: true
 
 test:
   stage: test
   script:
     - curl https://raw.githubusercontent.com/golang/dep/master/install.sh | sh
-    - cd $GO_PROJECT_DIR && dep ensure && go test -v -cover -race -short ./...
+    - cd $CI_PROJECT_DIR && go test -v -cover -race -short ./...
 
 integration:
   stage: integration
   script:
     - curl https://raw.githubusercontent.com/golang/dep/master/install.sh | sh
-    - cd $GO_PROJECT_DIR && dep ensure && go test -v -cover -race -run TestIntegration ./...
-
+    - cd $CI_PROJECT_DIR && go test -v -cover -race -run TestIntegration ./...
