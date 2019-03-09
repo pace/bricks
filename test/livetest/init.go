@@ -13,7 +13,7 @@ import (
 
 type config struct {
 	Interval    time.Duration `env:"PACE_LIVETEST_INTERVAL" envDefault:"1h"`
-	ServiceName string        `env:"JAEGER_SERVICE_NAME" envDefault:"go-microservice"`
+	ServiceName string        `env:"JAEGER_SERVICE_NAME" envDefault:"pace-bricks"`
 }
 
 var (

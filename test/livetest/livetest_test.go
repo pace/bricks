@@ -10,7 +10,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/pace/bricks/maintenance/metrics"
+	"github.com/pace/bricks/maintenance/metric"
 )
 
 func TestIntegrationExample(t *testing.T) {
@@ -64,7 +64,7 @@ func TestIntegrationExample(t *testing.T) {
 
 	req := httptest.NewRequest("GET", "/metrics", nil)
 	resp := httptest.NewRecorder()
-	metrics.Handler().ServeHTTP(resp, req)
+	metric.Handler().ServeHTTP(resp, req)
 	body := resp.Body.String()
 
 	sn := cfg.ServiceName

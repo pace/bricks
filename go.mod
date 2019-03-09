@@ -1,8 +1,7 @@
 module github.com/pace/bricks
 
 require (
-	github.com/alecthomas/gometalinter v3.0.0+incompatible // indirect
-	github.com/alecthomas/units v0.0.0-20151022065526-2efee857e7cf // indirect
+	github.com/asaskevich/govalidator v0.0.0-20180720115003-f9ffefc3facf // indirect
 	github.com/beorn7/perks v0.0.0-20180321164747-3a771d992973 // indirect
 	github.com/caarlos0/env v3.3.0+incompatible
 	github.com/certifi/gocertifi v0.0.0-20180118203423-deb3ae2ef261 // indirect
@@ -14,18 +13,15 @@ require (
 	github.com/go-pg/pg v6.14.5+incompatible
 	github.com/go-redis/redis v6.14.1+incompatible
 	github.com/google/jsonapi v0.0.0-20181016150055-d0428f63eb51
-	github.com/google/shlex v0.0.0-20181106134648-c34317bd91bf // indirect
 	github.com/gorilla/context v1.1.1 // indirect
 	github.com/gorilla/mux v1.6.2
 	github.com/inconshreveable/mousetrap v1.0.0 // indirect
 	github.com/jinzhu/inflection v0.0.0-20180308033659-04140366298a // indirect
 	github.com/mattn/go-isatty v0.0.4
 	github.com/matttproud/golang_protobuf_extensions v1.0.1 // indirect
-	github.com/nicksnyder/go-i18n v1.10.0 // indirect
 	github.com/onsi/ginkgo v1.8.0 // indirect
 	github.com/onsi/gomega v1.4.3 // indirect
 	github.com/opentracing/opentracing-go v1.0.2
-	github.com/pelletier/go-toml v1.2.0 // indirect
 	github.com/pkg/errors v0.8.0 // indirect
 	github.com/pmezard/go-difflib v1.0.0
 	github.com/prometheus/client_golang v0.8.0
@@ -44,6 +40,4 @@ require (
 	go.uber.org/atomic v1.3.2 // indirect
 	golang.org/x/net v0.0.0-20180911220305-26e67e76b6c3 // indirect
 	golang.org/x/sync v0.0.0-20190227155943-e225da77a7e6 // indirect
-	gopkg.in/alecthomas/gometalinter.v3 v3.0.0 // indirect
-	gopkg.in/alecthomas/kingpin.v3-unstable v3.0.0-20180810215634-df19058c872c // indirect
 )

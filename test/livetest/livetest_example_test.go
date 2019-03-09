@@ -8,7 +8,7 @@ import (
 	"log"
 	"time"
 
-	"github.com/pace/bricks/testing/livetest"
+	"github.com/pace/bricks/test/livetest"
 )
 
 func ExampleTest() {

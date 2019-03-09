@@ -19,7 +19,7 @@ import (
 	"github.com/pace/bricks/maintenance/errors"
 	"github.com/pace/bricks/maintenance/log"
 	_ "github.com/pace/bricks/maintenance/tracing"
-	"github.com/pace/bricks/testing/livetest"
+	"github.com/pace/bricks/test/livetest"
 )
 
 // pace lat/lon

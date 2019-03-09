@@ -20,7 +20,7 @@ import (
 const (
 	pkgGorillaMux     = "github.com/gorilla/mux"
 	pkgJSONAPIRuntime = "github.com/pace/bricks/http/jsonapi/runtime"
-	pkgJSONAPIMetrics = "github.com/pace/bricks/maintenance/metrics/jsonapi"
+	pkgJSONAPIMetrics = "github.com/pace/bricks/maintenance/metric/jsonapi"
 	pkgMaintErrors    = "github.com/pace/bricks/maintenance/errors"
 	pkgOpentracing    = "github.com/opentracing/opentracing-go"
 )

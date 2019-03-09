@@ -10,7 +10,7 @@ import (
 	"github.com/pace/bricks/maintenance/errors"
 	"github.com/pace/bricks/maintenance/health"
 	"github.com/pace/bricks/maintenance/log"
-	"github.com/pace/bricks/maintenance/metrics"
+	"github.com/pace/bricks/maintenance/metric"
 	"github.com/pace/bricks/maintenance/tracing"
 )
 
@@ -35,7 +35,7 @@ func Router() *mux.Router {
 	))
 
 	// for prometheus
-	r.Handle("/metrics", metrics.Handler())
+	r.Handle("/metrics", metric.Handler())
 
 	// for the API gateway
 	r.Handle("/health", health.Handler())

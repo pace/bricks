@@ -9,7 +9,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/pace/bricks/maintenance/metrics"
+	"github.com/pace/bricks/maintenance/metric"
 )
 
 func TestCaptureStatus(t *testing.T) {
@@ -32,7 +32,7 @@ func TestCaptureStatus(t *testing.T) {
 
 	rec = httptest.NewRecorder()
 	req = httptest.NewRequest("GET", "/metrics", nil)
-	metrics.Handler().ServeHTTP(rec, req)
+	metric.Handler().ServeHTTP(rec, req)
 
 	if !strings.Contains(rec.Body.String(), "pace_api_http_request_duration") {
 		t.Errorf("Expected pace api metrics got: %v", rec.Body.String())

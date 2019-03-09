@@ -8,7 +8,7 @@ import (
 	opentracing "github.com/opentracing/opentracing-go"
 	runtime "github.com/pace/bricks/http/jsonapi/runtime"
 	errors "github.com/pace/bricks/maintenance/errors"
-	metrics "github.com/pace/bricks/maintenance/metrics/jsonapi"
+	metrics "github.com/pace/bricks/maintenance/metric/jsonapi"
 	"net/http"
 	"time"
 )
