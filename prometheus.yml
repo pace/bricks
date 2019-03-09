@@ -1,0 +1,6 @@
+scrape_configs:
+- job_name: fueling
+  scrape_interval: 15s
+  static_configs:
+  - targets:
+    - pb:5000
