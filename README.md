@@ -33,6 +33,10 @@ The path where new project should be created. Defaults to `$HOME/PACE`.
 Use `make testserver` to test logging and tracing with postgres, redis and external http service.
 Use `make docker.all` to create/start all docker containers.
 
+## Configuration
+
+All of the microservices follow the [TWELVE-FACTOR APP](https://12factor.net/) standard of environment based configuration.
+
 ### http/jsonapi
 
 In `http/jsonapi/generator/internal` multiple test APIs can be found. The

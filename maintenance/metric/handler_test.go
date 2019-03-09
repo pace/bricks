@@ -1,7 +1,7 @@
 // Copyright © 2018 by PACE Telematics GmbH. All rights reserved.
 // Created at 2018/09/05 by Vincent Landgraf
 
-package metrics
+package metric
 
 import (
 	"net/http/httptest"

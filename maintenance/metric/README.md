@@ -1,6 +1,6 @@
 ## Metrics
 
-To provide metrics all services have to implement the Prometheus metrics API.
+Each microservice will expose the metrics defined here by exposing a prometheus handler on `"/metrics"`.
 
 The defined metrics should follow the best practices defined [here](https://prometheus.io/docs/practices/naming/).
 
