@@ -4,4 +4,4 @@
 package transport
 
 // DefaultTransport can be used by HTTP clients via the `Transport` field
-var DefaultTransport = ChainWithDefaultTransport(&LoggingRoundTripper{})
+var DefaultTransport = Chain(&LoggingRoundTripper{})

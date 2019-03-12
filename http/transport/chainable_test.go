@@ -12,7 +12,7 @@ import (
 func TestRoundTripperChaining(t *testing.T) {
 	t.Run("Chain empty", func(t *testing.T) {
 		transport := &recordingTransport{}
-		c := &RoundTripperChain{RoundTrippers: []ChainableRoundTripper{}, Transport: transport}
+		c := Chain().Final(transport)
 
 		url := "/foo"
 		req := httptest.NewRequest("GET", url, nil)
@@ -32,8 +32,8 @@ func TestRoundTripperChaining(t *testing.T) {
 	})
 	t.Run("Chain contains one element", func(t *testing.T) {
 		transport := &recordingTransport{}
-		rt := &addHeaderRoundTripper{key: "foo", value: "bar"}
-		c := &RoundTripperChain{RoundTrippers: []ChainableRoundTripper{rt}, Transport: transport}
+		c := Chain()
+		c.Use(&addHeaderRoundTripper{key: "foo", value: "bar"}).Final(transport)
 
 		url := "/foo"
 		req := httptest.NewRequest("GET", url, nil)
@@ -59,7 +59,7 @@ func TestRoundTripperChaining(t *testing.T) {
 		rt1 := &addHeaderRoundTripper{key: "foo", value: "bar"}
 		rt2 := &addHeaderRoundTripper{key: "foo", value: "baroverride"}
 		rt3 := &addHeaderRoundTripper{key: "Authorization", value: "Bearer 123"}
-		c := &RoundTripperChain{RoundTrippers: []ChainableRoundTripper{rt1, rt2, rt3}, Transport: transport}
+		c := Chain(rt1, rt2, rt3).Final(transport)
 
 		url := "/foo"
 		req := httptest.NewRequest("GET", url, nil)
