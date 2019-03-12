@@ -12,7 +12,7 @@ import (
 	"lab.jamit.de/pace/go-microservice/maintenance/log"
 )
 
-// LoggingRoundTripper implements the ChainableRoundTripper interface
+// LoggingRoundTripper implements a chainable round tripper for logging
 type LoggingRoundTripper struct {
 	transport http.RoundTripper
 }
