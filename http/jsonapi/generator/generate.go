@@ -89,7 +89,9 @@ func (g *Generator) BuildSource(source, packagePath, packageName string) (string
 func (g *Generator) BuildSchema(schema *openapi3.Swagger, packagePath, packageName string) (string, error) {
 	g.generatedTypes = make(map[string]bool)
 	g.generatedArrayTypes = make(map[string]bool)
+
 	g.goSource = jen.NewFilePathName(packagePath, packageName)
+	g.goSource.PackageComment("// nolint")
 	g.goSource.ImportAlias(pkgJSONAPIMetrics, "metrics")
 	g.goSource.ImportAlias(pkgOpentracing, "opentracing")
 

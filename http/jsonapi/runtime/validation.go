@@ -70,7 +70,7 @@ func generateValidationErrors(validErrors valid.Errors, jsonapiErrors *Errors, s
 // Since the actual data structure and the incoming JSON are very
 // different, fork and add struct field tags. Add custom tag
 // and use a custom tag to produce correct source pointer/parameter.
-// https://lab.jamit.de/pace/go-microservice/issues/10
+// https://github.com/pace/bricks/issues/10
 
 // generateValidationError generates a new jsonapi error based
 // on the given govalidator error

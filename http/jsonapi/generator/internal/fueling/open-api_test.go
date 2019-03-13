@@ -1,12 +1,13 @@
+// nolint
 package fueling
 
 import (
 	"context"
 	mux "github.com/gorilla/mux"
 	opentracing "github.com/opentracing/opentracing-go"
-	runtime "lab.jamit.de/pace/go-microservice/http/jsonapi/runtime"
-	errors "lab.jamit.de/pace/go-microservice/maintenance/errors"
-	metrics "lab.jamit.de/pace/go-microservice/maintenance/metrics/jsonapi"
+	runtime "github.com/pace/bricks/http/jsonapi/runtime"
+	errors "github.com/pace/bricks/maintenance/errors"
+	metrics "github.com/pace/bricks/maintenance/metric/jsonapi"
 	"net/http"
 )
 

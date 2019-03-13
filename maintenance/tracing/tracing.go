@@ -13,7 +13,7 @@ import (
 	"github.com/uber/jaeger-client-go/config"
 	"github.com/uber/jaeger-lib/metrics/prometheus"
 	"github.com/zenazn/goji/web/mutil"
-	"lab.jamit.de/pace/go-microservice/maintenance/log"
+	"github.com/pace/bricks/maintenance/log"
 )
 
 // Closer can be used in shutdown hooks to ensure that the internal queue of

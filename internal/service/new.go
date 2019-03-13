@@ -9,7 +9,7 @@ import (
 	"os"
 	"path/filepath"
 
-	"lab.jamit.de/pace/go-microservice/internal/service/generate"
+	"github.com/pace/bricks/internal/service/generate"
 )
 
 // NewOptions collection of options to apply while or

@@ -12,8 +12,8 @@ import (
 	"testing"
 
 	"github.com/gorilla/mux"
-	"lab.jamit.de/pace/go-microservice/http/jsonapi/runtime"
-	"lab.jamit.de/pace/go-microservice/maintenance/log"
+	"github.com/pace/bricks/http/jsonapi/runtime"
+	"github.com/pace/bricks/maintenance/log"
 )
 
 func TestHealthHandler(t *testing.T) {

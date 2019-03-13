@@ -32,7 +32,7 @@ func TestSuccessfulIntrospection(t *testing.T) {
 		rw.Header().Set("X-UID", "SOME_USER_ID")
 
 		// Send response to be tested
-		json.NewEncoder(rw).Encode(data)
+		json.NewEncoder(rw).Encode(data) //nolint:errcheck
 	}))
 
 	defer server.Close()
@@ -94,7 +94,7 @@ func Test400UpstreamResponse(t *testing.T) {
 
 func TestUnparsableUpstreamResponse(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
-		rw.Write([]byte("Not JSON."))
+		rw.Write([]byte("Not JSON.")) //nolint:errcheck
 	}))
 
 	defer server.Close()
@@ -120,7 +120,7 @@ func TestBadTokenResponse(t *testing.T) {
 		}
 
 		// Send response to be tested
-		json.NewEncoder(rw).Encode(data)
+		json.NewEncoder(rw).Encode(data) //nolint:errcheck
 	}))
 
 	defer server.Close()

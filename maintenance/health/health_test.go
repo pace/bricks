@@ -8,7 +8,7 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"lab.jamit.de/pace/go-microservice/maintenance/log"
+	"github.com/pace/bricks/maintenance/log"
 )
 
 func TestHandler(t *testing.T) {

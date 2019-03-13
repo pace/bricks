@@ -9,7 +9,7 @@ import (
 	"net/http"
 	"net/url"
 
-	"lab.jamit.de/pace/go-microservice/maintenance/log"
+	"github.com/pace/bricks/maintenance/log"
 )
 
 type introspecter func(mdw *Middleware, token string, resp *introspectResponse) error
