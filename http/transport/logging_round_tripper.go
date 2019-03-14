@@ -9,7 +9,7 @@ import (
 	"strings"
 	"time"
 
-	"lab.jamit.de/pace/go-microservice/maintenance/log"
+	"github.com/pace/bricks/maintenance/log"
 )
 
 // LoggingRoundTripper implements a chainable round tripper for logging
