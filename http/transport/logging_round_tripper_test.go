@@ -12,7 +12,7 @@ import (
 	"strings"
 	"testing"
 
-	zlog "github.com/rs/zerolog"
+	"github.com/pace/bricks/maintenance/log"
 )
 
 func TestLoggingRoundTripper(t *testing.T) {
@@ -21,7 +21,7 @@ func TestLoggingRoundTripper(t *testing.T) {
 
 	// create context with logger, capture log output with `out`
 	out := &bytes.Buffer{}
-	ctx := zlog.New(out).WithContext(context.Background())
+	ctx := log.Output(out).WithContext(context.Background())
 
 	// create request with context and url
 	req := httptest.NewRequest("GET", "/foo", nil).WithContext(ctx)
@@ -38,15 +38,16 @@ func TestLoggingRoundTripper(t *testing.T) {
 		t.Fatalf("Expected err to be nil, got %#v", err)
 	}
 
-	got := string(out.Bytes())
+	got := out.String()
 	if !strings.Contains(got, "duration") {
 		t.Errorf("Expected duration to be contained in log output, got %v", got)
 	}
 
-	gotWithoutDuration := got[:strings.Index(got, "duration")] + got[strings.Index(got, "code"):]
-	ex := `{"level":"debug","url":"http://example.com/foo","method":"GET","code":200,"message":"HTTP GET example.com"}`
-	if !strings.Contains(gotWithoutDuration, ex) {
-		t.Errorf("Expected %v to be contained in log output, got %v", ex, gotWithoutDuration)
+	exs := []string{`"level":"debug"`, `"url":"http://example.com/foo"`, `"method":"GET"`, `"code":200`, `"message":"HTTP GET example.com"`}
+	for _, ex := range exs {
+		if !strings.Contains(got, ex) {
+			t.Errorf("Expected %v to be contained in log output, got %v", ex, got)
+		}
 	}
 }
 

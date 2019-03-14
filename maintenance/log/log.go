@@ -5,6 +5,7 @@ package log
 
 import (
 	"context"
+	"io"
 	"net/http"
 	"os"
 	"runtime/debug"
@@ -125,4 +126,10 @@ func Stack(ctx context.Context) {
 // use this if you are not inside a request context.
 func WithContext(ctx context.Context) context.Context {
 	return log.With().Logger().WithContext(ctx)
+}
+
+// Output duplicates the current logger and sets w as its output.
+func Output(w io.Writer) *zerolog.Logger {
+	logger := Logger().Output(w)
+	return &logger
 }
