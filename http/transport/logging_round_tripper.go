@@ -39,6 +39,10 @@ func (l *LoggingRoundTripper) RoundTrip(req *http.Request) (*http.Response, erro
 
 	dur := float64(time.Since(startTime)) / float64(time.Millisecond)
 	le = le.Float64("duration", dur)
+	attempt := attemptFromCtx(ctx)
+	if attempt > 0 {
+		le = le.Int("attempt", int(attempt))
+	}
 
 	if err != nil {
 		le.Err(err).Msg(logEventMsg(req))

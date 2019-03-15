@@ -34,6 +34,10 @@ func (l *JaegerRoundTripper) RoundTrip(req *http.Request) (*http.Response, error
 
 	resp, err := l.Transport().RoundTrip(req.WithContext(ctx))
 
+	attempt := attemptFromCtx(ctx)
+	if attempt > 0 {
+		span.LogFields(olog.Int("attempt", int(attempt)))
+	}
 	if err != nil {
 		span.LogFields(olog.Error(err))
 		return nil, err

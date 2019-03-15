@@ -29,6 +29,10 @@ func TestJaegerRoundTripper(t *testing.T) {
 		}
 
 		spanString := fmt.Sprintf("%#v", tr.span)
+
+		if strings.Contains(spanString, "attempt") {
+			t.Errorf("Expected attempt to not be included in span %q", spanString)
+		}
 		exs := []string{`operationName:"GET /foo"`, "numericVal:202"}
 		for _, ex := range exs {
 			if !strings.Contains(spanString, ex) {
@@ -51,6 +55,27 @@ func TestJaegerRoundTripper(t *testing.T) {
 
 		spanString := fmt.Sprintf("%#v", tr.span)
 		exs := []string{`operationName:"GET /bar"`, `log.Field{key:"error"`}
+		for _, ex := range exs {
+			if !strings.Contains(spanString, ex) {
+				t.Errorf("Expected %q to be included in span %v", ex, spanString)
+			}
+		}
+	})
+	t.Run("With retries", func(t *testing.T) {
+		tr := &retriedTransport{body: "", statusCodes: []int{502, 503, 200}}
+		l := Chain(NewRetryRoundTripper(nil), &JaegerRoundTripper{})
+		l.Final(tr)
+
+		req := httptest.NewRequest("GET", "/bar", nil)
+		_, err := l.RoundTrip(req)
+
+		if err != nil {
+			t.Fatalf("Expected err to be nil, got %#v", err)
+		}
+
+		span := opentracing.SpanFromContext(tr.ctx)
+		spanString := fmt.Sprintf("%#v", span)
+		exs := []string{`operationName:"GET /bar"`, `log.Field{key:"attempt", fieldType:2, numericVal:2`}
 		for _, ex := range exs {
 			if !strings.Contains(spanString, ex) {
 				t.Errorf("Expected %q to be included in span %v", ex, spanString)
