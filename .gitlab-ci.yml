@@ -3,6 +3,8 @@ image: golang:1.12
 before_script:
   - export LOG_FORMAT=console
   - export JAEGER_SERVICE_NAME=unittest
+  - export JAEGER_SAMPLER_TYPE=const
+  - export JAEGER_SAMPLER_PARAM=1
 
 stages:
   - test
