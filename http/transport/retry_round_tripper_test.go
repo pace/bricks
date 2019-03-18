@@ -38,7 +38,7 @@ func TestRetryRoundTripper(t *testing.T) {
 		if tr.body != string(body) {
 			t.Errorf("Expected body %q, got %q", tr.body, string(body))
 		}
-		if got, ex := attemptFromCtx(tr.ctx), attempt(4); got != ex {
+		if got, ex := attemptFromCtx(tr.ctx), int32(4); got != ex {
 			t.Errorf("Expected %d attempts, got %d", ex, got)
 		}
 	})
@@ -59,7 +59,7 @@ func TestRetryRoundTripper(t *testing.T) {
 		if ex, got := 1, tr.attempts; got != ex {
 			t.Errorf("Expected %d attempts, got %d", ex, got)
 		}
-		if got, ex := attemptFromCtx(tr.ctx), attempt(1); got != ex {
+		if got, ex := attemptFromCtx(tr.ctx), int32(1); got != ex {
 			t.Errorf("Expected %d attempts, got %d", ex, got)
 		}
 	})

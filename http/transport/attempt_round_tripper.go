@@ -6,18 +6,16 @@ package transport
 import (
 	"context"
 	"net/http"
-	"sync"
+	"sync/atomic"
 )
 
-type ctxkey string
-type attempt int
+type ctxkey int
 
-var attemptKey = ctxkey("attempt")
+var attemptKey ctxkey
 
 type attemptRoundTripper struct {
 	transport http.RoundTripper
-	attemptMu sync.Mutex
-	attempt   attempt
+	attempt   int32
 }
 
 func (l *attemptRoundTripper) Transport() http.RoundTripper {
@@ -29,20 +27,18 @@ func (l *attemptRoundTripper) SetTransport(rt http.RoundTripper) {
 }
 
 func (l *attemptRoundTripper) RoundTrip(req *http.Request) (*http.Response, error) {
-	l.attemptMu.Lock()
-	l.attempt++
-	ctx := context.WithValue(req.Context(), attemptKey, l.attempt)
-	l.attemptMu.Unlock()
+	a := atomic.AddInt32(&l.attempt, 1)
+	ctx := context.WithValue(req.Context(), attemptKey, a)
 
 	return l.Transport().RoundTrip(req.WithContext(ctx))
 }
 
-func attemptFromCtx(ctx context.Context) attempt {
-	a, ok := ctx.Value(attemptKey).(attempt)
+func attemptFromCtx(ctx context.Context) int32 {
+	a, ok := ctx.Value(attemptKey).(int32)
 	if !ok {
-		return attempt(0)
+		return 0
 	}
-	return attempt(a)
+	return a
 }
 
 func transportWithAttempt(rt http.RoundTripper) http.RoundTripper {
