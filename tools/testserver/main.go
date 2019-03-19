@@ -28,6 +28,17 @@ var (
 	lon = 8.427087
 )
 
+type OauthBackend struct{}
+
+func (*OauthBackend) IntrospectToken(ctx context.Context, token string) (*oauth2.IntrospectResponse, error) {
+	return &oauth2.IntrospectResponse{
+		Active:   true,
+		ClientID: "some client",
+		Scope:    "email profile",
+		UserID:   "285ec1fc-2843-4ed8-bfa8-4217880c8348",
+	}, nil
+}
+
 func main() {
 	db := postgres.ConnectionPool()
 	rdb := redis.Client()
@@ -80,13 +91,8 @@ func main() {
 
 	// Test OAuth
 	//
-	// This middleware is configured against an Oauth application registered
-	// in cp-1-dev called GolangTests.
-	m := oauth2.Middleware{
-		URL:          "https://cp-1-dev.pacelink.net",
-		ClientID:     "7d51282118633c3a7412d7456368ddfe172b7987d20b8e3e60ae18e8681fac61",
-		ClientSecret: "141f891391d2b529bbf37b5ae5f57000f8b093956121db51c90fefb83930175c",
-	}
+	// This middleware is configured against an Oauth application dummy
+	m := oauth2.Middleware{Backend: new(OauthBackend)}
 
 	sr := h.PathPrefix("/test").Subrouter()
 	sr.Use(m.Handler)
