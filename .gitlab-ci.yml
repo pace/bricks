@@ -27,4 +27,4 @@ integration:
     - apk update
     - apk add py-pip
     - pip install docker-compose
-    - /usr/local/bin/docker-compose run bricks make integration
+    - docker-compose run bricks make integration
