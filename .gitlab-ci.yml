@@ -1,8 +1,5 @@
 image: golang:1.12
 
-services:
-  - docker:dind
-
 stages:
   - test
   - integration
@@ -21,6 +18,8 @@ test:
 
 integration:
   stage: integration
-  image: docker:stable
+  image: docker/compose:latest
+  services:
+    - docker:dind
   script:
     - docker-compose run bricks make integration
