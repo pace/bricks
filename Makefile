@@ -4,7 +4,7 @@
 
 JSONAPITEST=http/jsonapi/generator/internal
 JSONAPIGEN="./tools/jsonapigen/main.go"
-GOPATH:=~/go
+GOPATH?=~/go
 
 export JAEGER_SERVICE_NAME:=unittest
 export JAEGER_SAMPLER_TYPE:=const
