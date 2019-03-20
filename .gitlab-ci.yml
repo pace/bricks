@@ -4,10 +4,13 @@ stages:
   - test
   - integration
 
+variables:
+  GOPATH: "/tmp/go"
+
 lint:
   stage: test
   script:
-    - cd $CI_PROJECT_DIR && GOPATH=/tmp/go make lint
+    - cd $CI_PROJECT_DIR && make lint
   allow_failure: true
 
 test:
