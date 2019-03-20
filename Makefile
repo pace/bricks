@@ -37,7 +37,7 @@ $(GOPATH)/bin/golangci-lint:
 test:
 	go test -count=1 -v -cover -race -short ./...
 
-integration: build
+integration:
 	go test -count=1 -v -cover -race -run TestIntegration ./...
 
 testserver:
