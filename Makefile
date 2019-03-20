@@ -4,6 +4,7 @@
 
 JSONAPITEST=http/jsonapi/generator/internal
 JSONAPIGEN="./tools/jsonapigen/main.go"
+GOPATH:=~/go
 
 export JAEGER_SERVICE_NAME:=unittest
 export JAEGER_SAMPLER_TYPE:=const
@@ -27,8 +28,11 @@ jsonapi:
 build:
 	docker build .
 
-lint:
-	gometalinter --cyclo-over=15 --deadline 90s --skip http/jsonapi/generator/internal --skip tools --vendor ./...
+lint: $(GOPATH)/bin/golangci-lint
+	$(GOPATH)/bin/golangci-lint run
+
+$(GOPATH)/bin/golangci-lint:
+	curl -sfL https://install.goreleaser.com/github.com/golangci/golangci-lint.sh | sh -s -- -b $(GOPATH)/bin v1.15.0
 
 test:
 	go test -count=1 -v -cover -race -short ./...

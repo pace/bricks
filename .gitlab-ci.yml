@@ -7,8 +7,7 @@ stages:
 lint:
   stage: test
   script:
-    - curl -sfL https://install.goreleaser.com/github.com/golangci/golangci-lint.sh | sh -s -- -b $(go env GOPATH)/bin v1.15.0
-    - cd $CI_PROJECT_DIR && golangci-lint run
+    - cd $CI_PROJECT_DIR && GOPATH=/tmp/go make lint
   allow_failure: true
 
 test:
@@ -18,8 +17,10 @@ test:
 
 integration:
   stage: integration
-  image: docker/compose:1.23.2
+  image: docker:latest
   services:
     - docker:dind
   script:
-    - docker-compose run bricks make integration
+    - curl -L "https://github.com/docker/compose/releases/download/1.23.2/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
+    - chmod +x /usr/local/bin/docker-compose
+    - /usr/local/bin/docker-compose run bricks make integration
