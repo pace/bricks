@@ -89,10 +89,6 @@ func (m *Middleware) Handler(next http.Handler) http.Handler {
 	})
 }
 
-func (m *Middleware) addIntrospectFunc(b TokenIntrospecter) {
-	m.Backend = b
-}
-
 func fromIntrospectResponse(s *IntrospectResponse, tokenValue string) token {
 	t := token{
 		userID:   s.UserID,
