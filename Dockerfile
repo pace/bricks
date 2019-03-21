@@ -1,19 +1,10 @@
-######### BUILDER
-
 FROM golang:1.12 as builder
 WORKDIR /tmp/pace-bricks
 ADD . .
 
 # Build go files completely statically
-RUN GOPATH=/tmp/go CGO_ENABLED=0 go build -a -ldflags '-extldflags "-static"' -o $GOPATH/bin/pb-testserver ./tools/testserver && \
-    GOPATH=/tmp/go CGO_ENABLED=0 go build -a -ldflags '-extldflags "-static"' -o $GOPATH/bin/pb ./cmd/pb
-
-######### RUN
-
-FROM alpine
-RUN apk update && apk add ca-certificates && apk add tzdata && rm -rf /var/cache/apk/*
-COPY --from=builder /go/bin/pb-testserver /usr/local/bin/
-COPY --from=builder /go/bin/pb /usr/local/bin/
+RUN GOPATH=/tmp/go CGO_ENABLED=0 go build -a -ldflags '-extldflags "-static"' -o /usr/local/bin/pb-testserver ./tools/testserver
+RUN GOPATH=/tmp/go CGO_ENABLED=0 go build -a -ldflags '-extldflags "-static"' -o /usr/local/bin/pb ./cmd/pb
 
 EXPOSE 5000
 

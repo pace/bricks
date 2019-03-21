@@ -6,29 +6,17 @@ package oauth2
 import (
 	"context"
 	"fmt"
-	"github.com/gorilla/mux"
-	"github.com/pace/bricks/maintenance/log"
 	"net/http"
 	"net/http/httptest"
 	"testing"
+
+	"github.com/gorilla/mux"
+	"github.com/pace/bricks/maintenance/log"
 )
 
 func Example() {
 	r := mux.NewRouter()
-
-	// Alternatively, you can construct the Middleware using ENV variables and
-	// our custom constructor `NewMiddlware`, example:
-	//
-	// `OAUTH2_URL=XXX OAUTH2_CLIENT_ID=YYY OAUTH2_CLIENT_SECRET=ZZZ bin_to_start_your_service`
-	//
-	// Then, in your code:
-	//
-	// middleware = NewMiddleware()
-	middleware := Middleware{
-		URL:          "http://localhost:3000",
-		ClientID:     "13972c02189a6e938a4730bc81c2a20cc4e03ef5406d20d2150110584d6b3e6c",
-		ClientSecret: "7d26f8918a83bd155a936bbe780f32503a88cb8bd3e8acf25248357dff31668e",
-	}
+	middleware := Middleware{}
 
 	r.Use(middleware.Handler)
 

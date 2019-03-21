@@ -8,12 +8,12 @@ package oauth2
 
 import (
 	"context"
-	"github.com/caarlos0/env"
+	"net/http"
+	"strings"
+
 	opentracing "github.com/opentracing/opentracing-go"
 	olog "github.com/opentracing/opentracing-go/log"
 	"github.com/pace/bricks/maintenance/log"
-	"net/http"
-	"strings"
 )
 
 type ctxkey string
@@ -24,10 +24,7 @@ const headerPrefix = "Bearer "
 
 // Middleware holds data necessary for Oauth processing
 type Middleware struct {
-	URL            string
-	ClientID       string
-	ClientSecret   string
-	introspectFunc introspecter
+	Backend TokenIntrospecter
 }
 
 type token struct {
@@ -37,24 +34,9 @@ type token struct {
 	scopes   []string
 }
 
-type config struct {
-	URL          string `env:"OAUTH2_URL" envDefault:"https://cp-1-prod.pacelink.net"`
-	ClientID     string `env:"OAUTH2_CLIENT_ID"`
-	ClientSecret string `env:"OAUTH2_CLIENT_SECRET"`
-}
-
 // NewMiddleware creates a new Oauth middleware
-func NewMiddleware() *Middleware {
-	var cfg config
-	err := env.Parse(&cfg)
-	if err != nil {
-		log.Fatalf("Failed to parse oauth2 environment: %v", err)
-	}
-	return &Middleware{
-		URL:          cfg.URL,
-		ClientID:     cfg.ClientID,
-		ClientSecret: cfg.ClientSecret,
-	}
+func NewMiddleware(backend TokenIntrospecter) *Middleware {
+	return &Middleware{Backend: backend}
 }
 
 // Handler will parse the bearer token, introspect it, and put the token and other
@@ -74,25 +56,19 @@ func (m *Middleware) Handler(next http.Handler) http.Handler {
 		}
 
 		tokenValue := items[1]
-		var s introspectResponse
 		var introspectErr error
 
-		if m.introspectFunc != nil {
-			introspectErr = m.introspectFunc(m, tokenValue, &s)
-		} else {
-			introspectErr = introspect(m, tokenValue, &s)
-		}
-
-		switch introspectErr {
-		case errBadUpstreamResponse:
+		s, err := m.Backend.IntrospectToken(ctx, tokenValue)
+		switch err {
+		case ErrBadUpstreamResponse:
 			log.Req(r).Info().Msg(introspectErr.Error())
 			http.Error(w, introspectErr.Error(), http.StatusBadGateway)
 			return
-		case errUpstreamConnection:
+		case ErrUpstreamConnection:
 			log.Req(r).Info().Msg(introspectErr.Error())
 			http.Error(w, introspectErr.Error(), http.StatusUnauthorized)
 			return
-		case errInvalidToken:
+		case ErrInvalidToken:
 			log.Req(r).Info().Msg(introspectErr.Error())
 			http.Error(w, introspectErr.Error(), http.StatusUnauthorized)
 			return
@@ -113,11 +89,7 @@ func (m *Middleware) Handler(next http.Handler) http.Handler {
 	})
 }
 
-func (m *Middleware) addIntrospectFunc(f introspecter) {
-	m.introspectFunc = f
-}
-
-func fromIntrospectResponse(s introspectResponse, tokenValue string) token {
+func fromIntrospectResponse(s *IntrospectResponse, tokenValue string) token {
 	t := token{
 		userID:   s.UserID,
 		value:    tokenValue,

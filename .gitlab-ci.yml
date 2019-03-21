@@ -1,28 +1,30 @@
 image: golang:1.12
 
-before_script:
-  - export LOG_FORMAT=console
-  - export JAEGER_SERVICE_NAME=unittest
-  - export JAEGER_SAMPLER_TYPE=const
-  - export JAEGER_SAMPLER_PARAM=1
-
 stages:
   - test
   - integration
 
+variables:
+  GOPATH: "/tmp/go"
+
 lint:
   stage: test
   script:
-    - curl -sfL https://install.goreleaser.com/github.com/golangci/golangci-lint.sh | sh -s -- -b $(go env GOPATH)/bin v1.15.0
-    - cd $CI_PROJECT_DIR && golangci-lint run
+    - cd $CI_PROJECT_DIR && make lint
   allow_failure: true
 
 test:
   stage: test
   script:
-    - cd $CI_PROJECT_DIR && go test -v -cover -race -short ./...
+    - cd $CI_PROJECT_DIR && make test
 
 integration:
   stage: integration
+  image: docker:latest
+  services:
+    - docker:dind
   script:
-    - cd $CI_PROJECT_DIR && go test -v -cover -race -run TestIntegration ./...
+    - apk update
+    - apk add py-pip
+    - pip install docker-compose
+    - docker-compose run bricks make integration
