@@ -3,5 +3,15 @@
 
 package transport
 
-// DefaultTransport can be used by HTTP clients via the `Transport` field
-var DefaultTransport = Chain(&LoggingRoundTripper{})
+import "net/http"
+
+// NewDefaultTransport returns a transport with retry, jaeger and logging support.
+// Has to be finalized with a HTTP round tripper `final`. If `final` is nil `http.DefaultTransport` is used as finalizer.
+func NewDefaultTransport(final http.RoundTripper) *RoundTripperChain {
+	c := Chain(NewRetryRoundTripper(nil), &JaegerRoundTripper{}, &LoggingRoundTripper{})
+	if final == nil {
+		return c.Final(http.DefaultTransport)
+	}
+
+	return c.Final(final)
+}
