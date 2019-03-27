@@ -5,24 +5,14 @@ package transport
 
 import (
 	"bytes"
-	"context"
 	"fmt"
 	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
-	"net/url"
-	"strings"
 	"testing"
-
-	"github.com/opentracing/opentracing-go"
-	"github.com/pace/bricks/maintenance/log"
 )
 
 func TestNewDefaultTransport(t *testing.T) {
-	// create context with logger, capture log output with `out`
-	out := &bytes.Buffer{}
-	ctx := log.Output(out).WithContext(context.Background())
-
 	t.Run("Finalizer nil", func(t *testing.T) {
 		b := "Hello World"
 		tr := NewDefaultTransport(nil)
@@ -31,7 +21,7 @@ func TestNewDefaultTransport(t *testing.T) {
 		}))
 		defer ts.Close()
 
-		req := httptest.NewRequest("GET", ts.URL, nil).WithContext(ctx)
+		req := httptest.NewRequest("GET", ts.URL, nil)
 		resp, err := tr.RoundTrip(req)
 
 		body, err := ioutil.ReadAll(resp.Body)
@@ -45,16 +35,10 @@ func TestNewDefaultTransport(t *testing.T) {
 	})
 
 	t.Run("Finalizer given", func(t *testing.T) {
-		tr := &retriedTransport{body: "abc", statusCodes: []int{408, 502, 503, 504, 200}}
+		tr := &transportWithBody{body: "abc"}
 		dt := NewDefaultTransport(tr)
 
-		// create request with context and url
-		req := httptest.NewRequest("GET", "/foo", nil).WithContext(ctx)
-		url, err := url.Parse("http://example.com/foo")
-		if err != nil {
-			panic(err)
-		}
-		req.URL = url
+		req := httptest.NewRequest("GET", "/foo", nil)
 		resp, err := dt.RoundTrip(req)
 
 		if err != nil {
@@ -65,39 +49,20 @@ func TestNewDefaultTransport(t *testing.T) {
 		if err != nil {
 			t.Fatalf("Expected readable body, got error: %q", err.Error())
 		}
-		if tr.body != string(body) {
-			t.Errorf("Expected body %q, got %q", tr.body, string(body))
-		}
-
-		// test retry attempts
-		if got, ex := attemptFromCtx(tr.ctx), int32(4); got != ex {
-			t.Errorf("Expected %d attempts, got %d", ex, got)
-		}
-
-		// test jaeger
-		span := opentracing.SpanFromContext(tr.ctx)
-		spanString := fmt.Sprintf("%#v", span)
-		exs := []string{`operationName:"GET /foo"`, `log.Field{key:"attempt", fieldType:2, numericVal:4`, "numericVal:200"}
-		for _, ex := range exs {
-			if !strings.Contains(spanString, ex) {
-				t.Errorf("Expected %q to be included in span %v", ex, spanString)
-			}
-		}
-
-		// test logging
-		got := out.String()
-		if !strings.Contains(got, "duration") {
-			t.Errorf("Expected duration to be contained in log output, got %v", got)
-		}
-		if strings.Contains(got, "retries") {
-			t.Errorf("Expected retries to not be contained in log output, got %v", got)
-		}
-
-		exs = []string{`"level":"debug"`, `"url":"http://example.com/foo"`, `"method":"GET"`, `"code":200`, `"message":"HTTP GET example.com"`}
-		for _, ex := range exs {
-			if !strings.Contains(got, ex) {
-				t.Errorf("Expected %v to be contained in log output, got %v", ex, got)
-			}
+		if ex, got := tr.body, string(body); ex != got {
+			t.Errorf("Expected body %q, got %q", ex, got)
 		}
 	})
+}
+
+type transportWithBody struct {
+	// returned response as string
+	body string
+}
+
+func (t *transportWithBody) RoundTrip(req *http.Request) (*http.Response, error) {
+	body := ioutil.NopCloser(bytes.NewReader([]byte(t.body)))
+	resp := &http.Response{Body: body, StatusCode: 200}
+
+	return resp, nil
 }
