@@ -17,7 +17,7 @@ func TestRetryRoundTripper(t *testing.T) {
 	req := httptest.NewRequest("GET", "/foo", nil)
 
 	t.Run("Successful response after some retries", func(t *testing.T) {
-		rt := NewRetryRoundTripper(nil)
+		rt := NewDefaultRetryRoundTripper()
 		tr := &retriedTransport{body: "abc", statusCodes: []int{408, 502, 503, 504, 200}}
 		rt.SetTransport(tr)
 
@@ -43,7 +43,7 @@ func TestRetryRoundTripper(t *testing.T) {
 		}
 	})
 	t.Run("No retry after error response", func(t *testing.T) {
-		rt := NewRetryRoundTripper(nil)
+		rt := NewDefaultRetryRoundTripper()
 		e := errors.New("abc")
 		tr := &retriedTransport{err: e}
 		rt.SetTransport(tr)

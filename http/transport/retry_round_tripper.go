@@ -38,13 +38,13 @@ var DefaultRetryTransport = retry.Transport{
 }
 
 // NewRetryRoundTripper returns a retry round tripper with the specified retry transport.
-// If the provided transport is nil, we use `DefaultRetryTransport`.
 func NewRetryRoundTripper(rt *retry.Transport) *RetryRoundTripper {
-	if rt == nil {
-		return &RetryRoundTripper{RetryTransport: &DefaultRetryTransport}
-	}
-
 	return &RetryRoundTripper{RetryTransport: rt}
+}
+
+// NewDefaultRetryRoundTripper returns a retry round tripper with `DefaultRetryTransport` as transport.
+func NewDefaultRetryRoundTripper() *RetryRoundTripper {
+	return &RetryRoundTripper{RetryTransport: &DefaultRetryTransport}
 }
 
 // Transport returns the RoundTripper to make HTTP requests

@@ -3,5 +3,8 @@
 
 package transport
 
-// DefaultTransport can be used by HTTP clients via the `Transport` field
-var DefaultTransport = Chain(&LoggingRoundTripper{})
+// NewDefaultTransportChain returns a transport chain with retry, jaeger and logging support.
+// If not explicitly finalized via `Final` it uses `http.DefaultTransport` as finalizer.
+func NewDefaultTransportChain() *RoundTripperChain {
+	return Chain(NewDefaultRetryRoundTripper(), &JaegerRoundTripper{}, &LoggingRoundTripper{})
+}
