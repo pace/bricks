@@ -63,7 +63,7 @@ func TestJaegerRoundTripper(t *testing.T) {
 	})
 	t.Run("With retries", func(t *testing.T) {
 		tr := &retriedTransport{body: "", statusCodes: []int{502, 503, 200}}
-		l := Chain(NewRetryRoundTripper(nil), &JaegerRoundTripper{})
+		l := Chain(NewDefaultRetryRoundTripper(), &JaegerRoundTripper{})
 		l.Final(tr)
 
 		req := httptest.NewRequest("GET", "/bar", nil)
