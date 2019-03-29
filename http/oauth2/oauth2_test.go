@@ -45,7 +45,7 @@ func TestRequest(t *testing.T) {
 		value:    "somevalue",
 		userID:   "someuserid",
 		clientID: "someclientid",
-		scopes:   []string{"scope1 scope2"},
+		scope:    Scope("scope1 scope2"),
 	}
 
 	r := httptest.NewRequest("GET", "http://example.com", nil)
@@ -74,13 +74,13 @@ func TestSuccessfulAccessors(t *testing.T) {
 	expectedBearerToken := "somevalue"
 	expectedUserID := "someuserid"
 	expectedClientID := "someclientid"
-	expectedScopes := []string{"scope1", "scope2"}
+	expectedScopes := Scope("scope1 scope2")
 
 	var to = token{
 		value:    expectedBearerToken,
 		userID:   expectedUserID,
 		clientID: expectedClientID,
-		scopes:   expectedScopes,
+		scope:    expectedScopes,
 	}
 
 	ctx := context.WithValue(context.TODO(), tokenKey, &to)
