@@ -4,9 +4,6 @@
 package oauth2
 
 import (
-	"fmt"
-	"index/suffixarray"
-	"regexp"
 	"strings"
 )
 
@@ -17,19 +14,24 @@ type Scope string
 // in the provided scope t. This can be useful to check if a scope has all
 // required permissions to access an endpoint.
 func (s *Scope) IsIncludedIn(t Scope) bool {
-	// build index for substring search in logarithmic time
-	index := suffixarray.New([]byte(t))
-
 	// permission list of scope s
-	ps := s.toSlice()
+	pss := s.toSlice()
+	// permission list of scope t
+	pts := t.toSlice()
 
-	for _, p := range ps {
-		expr := fmt.Sprintf(" %s | %s$|^%s ", p, p, p)
-		r, _ := regexp.Compile(expr)
-		res := index.FindAllIndex(r, -1)
+	var found bool
 
-		// return false if permission not found in scope t
-		if len(res) == 0 {
+	for _, ps := range pss {
+		found = false
+
+		for _, pt := range pts {
+			if ps == pt {
+				found = true
+				break
+			}
+		}
+
+		if found == false {
 			return false
 		}
 	}

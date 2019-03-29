@@ -6,7 +6,7 @@ package oauth2
 import "testing"
 
 func TestIsIncludedIn(t *testing.T) {
-	requiredScope := Scope("a:read b:write:x c")
+	requiredScope := Scope("a:read b:write:x c f*")
 
 	tcs := []struct {
 		t  Scope
@@ -18,9 +18,10 @@ func TestIsIncludedIn(t *testing.T) {
 		{Scope("a"), false},
 		{Scope("b:write"), false},
 		{Scope("c a:read"), false},
-		{Scope("b:write:x c a:read"), true},
-		{Scope("a:read b:write:x c d"), true},
-		{Scope("foo a:read c bar b:write:x"), true},
+		{Scope("b:write:x c a:read f*"), true},
+		{Scope("a:read b:write:x c f* d"), true},
+		{Scope("foo a:read c f* bar b:write:x"), true},
+		{Scope("a:read c fg bar b:write:x"), false},
 	}
 
 	for _, tc := range tcs {
