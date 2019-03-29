@@ -31,7 +31,7 @@ type token struct {
 	value    string
 	userID   string
 	clientID string
-	scopes   []string
+	scope    Scope
 }
 
 // NewMiddleware creates a new Oauth middleware
@@ -96,11 +96,7 @@ func fromIntrospectResponse(s *IntrospectResponse, tokenValue string) token {
 		clientID: s.ClientID,
 	}
 
-	if s.Scope != "" {
-		scopes := strings.Split(s.Scope, " ")
-		t.scopes = scopes
-	}
-
+	t.scope = Scope(s.Scope)
 	return t
 }
 
@@ -128,21 +124,16 @@ func BearerToken(ctx context.Context) (string, bool) {
 	return token.value, true
 }
 
-// HasScope checks if scope is stored in ctx
-func HasScope(ctx context.Context, scope string) bool {
+// HasScope extracts an access token T from context and checks if
+// the permissions represented by the provided scope are included in T.
+func HasScope(ctx context.Context, scope Scope) bool {
 	token := tokenFromContext(ctx)
 
 	if token == nil {
 		return false
 	}
 
-	for _, v := range token.scopes {
-		if v == scope {
-			return true
-		}
-	}
-
-	return false
+	return scope.IsIncludedIn(token.scope)
 }
 
 // UserID returns the userID stored in ctx
@@ -164,7 +155,7 @@ func Scopes(ctx context.Context) []string {
 		return []string{}
 	}
 
-	return token.scopes
+	return token.scope.toSlice()
 }
 
 // ClientID returns the clientID stored in ctx

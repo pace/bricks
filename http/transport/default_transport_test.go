@@ -28,6 +28,9 @@ func TestNewDefaultTransportChain(t *testing.T) {
 		}
 
 		body, err := ioutil.ReadAll(resp.Body)
+		if err != nil {
+			t.Fatalf("Expected readable body, got error: %q", err.Error())
+		}
 
 		if ex, got := b, string(body); ex != got {
 			t.Errorf("Expected body %q, got %q", ex, got)

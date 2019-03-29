@@ -25,6 +25,6 @@ integration:
     - docker:dind
   script:
     - apk update
-    - apk add py-pip
+    - apk add py-pip build-base python2-dev libffi-dev openssl-dev
     - pip install docker-compose
     - docker-compose run bricks make integration
