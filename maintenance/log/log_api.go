@@ -4,25 +4,35 @@
 package log
 
 import (
-	"fmt"
-
-	"github.com/rs/zerolog/log"
+	"github.com/pace/bricks/maintenance/terminationlog"
 )
 
 // Fatal implements log Fatal interface
-func Fatal(v ...interface{}) { log.Fatal().Msg(fmt.Sprint(v...)) }
+func Fatal(v ...interface{}) {
+	terminationlog.Fatal(v...)
+}
 
 // Fatalln implements log Fatalln interface
-func Fatalln(v ...interface{}) { Fatal(v...) }
+func Fatalln(v ...interface{}) {
+	terminationlog.Fatalln(v...)
+}
 
 // Fatalf implements log Fatalf interface
-func Fatalf(format string, v ...interface{}) { log.Fatal().Msg(fmt.Sprintf(format, v...)) }
+func Fatalf(format string, v ...interface{}) {
+	terminationlog.Fatalf(format, v...)
+}
 
 // Print implements log Print interface
-func Print(v ...interface{}) { Debug(v...) }
+func Print(v ...interface{}) {
+	Debug(v...)
+}
 
 // Println implements log Println interface
-func Println(v ...interface{}) { Debug(v...) }
+func Println(v ...interface{}) {
+	Debug(v...)
+}
 
 // Printf implements log Printf interface
-func Printf(format string, v ...interface{}) { Debugf(format, v...) }
+func Printf(format string, v ...interface{}) {
+	Debugf(format, v...)
+}
