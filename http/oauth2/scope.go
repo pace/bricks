@@ -19,10 +19,8 @@ func (s *Scope) IsIncludedIn(t Scope) bool {
 	// permission list of scope t
 	pts := t.toSlice()
 
-	var found bool
-
 	for _, ps := range pss {
-		found = false
+		found := false
 
 		for _, pt := range pts {
 			if ps == pt {
@@ -31,7 +29,7 @@ func (s *Scope) IsIncludedIn(t Scope) bool {
 			}
 		}
 
-		if found == false {
+		if !found {
 			return false
 		}
 	}
