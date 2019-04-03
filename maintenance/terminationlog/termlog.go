@@ -27,7 +27,7 @@ func init() {
 		logFile = file
 
 		// redirect stderr to the termLog
-		syscall.Dup2(int(logFile.Fd()), 2)
+		syscall.Dup2(int(logFile.Fd()), 2) // nolint: errcheck
 	}
 }
 
