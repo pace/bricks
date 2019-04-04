@@ -69,6 +69,7 @@ func executeTest(ctx context.Context, t TestFunc, name string) error {
 		defer func() {
 			err := recover()
 			if err != nil && (err != ErrSkipNow || err != ErrFailNow) {
+				logger.Error().Msgf("PANIC: %+v", err)
 				log.Stack(ctx)
 				proxy.Fail()
 			}
