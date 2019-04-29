@@ -12,7 +12,7 @@ export JAEGER_SAMPLER_PARAM:=1
 export LOG_FORMAT:=console
 
 install:
-	go install ./cmd/pace
+	go install ./cmd/pb
 
 jsonapi:
 	go run $(JSONAPIGEN) -pkg poi \
