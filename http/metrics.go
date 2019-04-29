@@ -24,25 +24,25 @@ var (
 			Name: "pace_http_request_total",
 			Help: "A counter for requests to the wrapped handler.",
 		},
-		[]string{"code", "method"},
+		[]string{"code", "method", "source"},
 	)
 
-	// duration is partitioned by the HTTP method and handler. It uses custom
-	// buckets based on the expected request duration.
+	// Duration is labeled by the request method and source, and response code.
+	// It uses custom buckets based on the expected request duration.
 	paceHTTPDuration = prometheus.NewHistogramVec(
 		prometheus.HistogramOpts{
 			Name:    "pace_http_request_duration_milliseconds",
 			Help:    "A histogram of latencies for requests.",
 			Buckets: []float64{10, 50, 100, 300, 600, 1000, 2500, 5000, 10000, 60000},
 		},
-		[]string{"code", "method"},
+		[]string{"code", "method", "source"},
 	)
 
-	// responseSize has no labels, making it a zero-dimensional
-	// ObserverVec.
+	// ResponseSize is labeled by the request method and source, and response code.
+	// It uses custom buckets based on the expected response size.
 	paceHTTPResponseSize = prometheus.NewHistogramVec(
 		prometheus.HistogramOpts{
-			Name: "pace_http_request_size_bytes",
+			Name: "pace_http_request_size_bytes", // TODO: rename request -> response and check that it doesn't break anything
 			Help: "A histogram of response sizes for requests.",
 			Buckets: []float64{
 				100,
@@ -50,7 +50,7 @@ var (
 				1 * mb, 5 * mb, 10 * mb, 100 * mb,
 			},
 		},
-		[]string{"code", "method"},
+		[]string{"code", "method", "source"},
 	)
 )
 
@@ -70,6 +70,7 @@ func metricsMiddleware(next http.Handler) http.Handler {
 		labels := prometheus.Labels{
 			"code":   strconv.Itoa(srw.status),
 			"method": r.Method,
+			"source": filterRequestSource(r.Header.Get("Request-Source")),
 		}
 		paceHTTPCounter.With(labels).Inc()
 		paceHTTPDuration.With(labels).Observe(dur)
@@ -95,4 +96,12 @@ func (w *statusWriter) Write(b []byte) (int, error) {
 	n, err := w.ResponseWriter.Write(b)
 	w.length += n
 	return n, err
+}
+
+func filterRequestSource(source string) string {
+	switch source {
+	case "uptime", "kubernetes", "nginx", "livetest":
+		return source
+	}
+	return ""
 }
