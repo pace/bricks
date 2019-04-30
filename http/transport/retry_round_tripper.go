@@ -31,10 +31,23 @@ func RetryCodes(codes ...int) retry.Retryer {
 	}
 }
 
+// Context aborts if the request's context is finished
+func Context() retry.Retryer {
+	return func(a retry.Attempt) (retry.Decision, error) {
+		ctx := a.Request.Context()
+		select {
+		case <-ctx.Done():
+			return retry.Abort, nil
+		default:
+			return retry.Ignore, nil
+		}
+	}
+}
+
 // DefaultRetryTransport is used as default retry mechanism
 var DefaultRetryTransport = retry.Transport{
 	Delay: retry.Constant(100 * time.Millisecond),
-	Retry: retry.All(retry.Max(9), retry.EOF(), retry.Net(), retry.Temporary(), RetryCodes(408, 502, 503, 504)),
+	Retry: retry.All(retry.Max(9), retry.EOF(), retry.Net(), retry.Temporary(), RetryCodes(408, 502, 503, 504), Context()),
 }
 
 // NewRetryRoundTripper returns a retry round tripper with the specified retry transport.
