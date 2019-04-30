@@ -33,7 +33,7 @@ func Unmarshal(w http.ResponseWriter, r *http.Request, data interface{}) bool {
 	contentType := r.Header.Get("Content-Type")
 	if contentType != JSONAPIContentType {
 		WriteError(w, http.StatusUnsupportedMediaType,
-			fmt.Errorf("request needs to be send with %q header, containing value: %q", "Accept", JSONAPIContentType))
+			fmt.Errorf("request needs to be send with %q header, containing value: %q", "Content-Type", JSONAPIContentType))
 		return false
 	}
 
