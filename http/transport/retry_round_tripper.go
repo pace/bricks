@@ -47,7 +47,7 @@ func Context() retry.Retryer {
 // DefaultRetryTransport is used as default retry mechanism
 var DefaultRetryTransport = retry.Transport{
 	Delay: retry.Constant(100 * time.Millisecond),
-	Retry: retry.All(retry.Max(9), retry.EOF(), retry.Net(), retry.Temporary(), RetryCodes(408, 502, 503, 504), Context()),
+	Retry: retry.All(Context(), retry.Max(9), retry.EOF(), retry.Net(), retry.Temporary(), RetryCodes(408, 502, 503, 504)),
 }
 
 // NewRetryRoundTripper returns a retry round tripper with the specified retry transport.
