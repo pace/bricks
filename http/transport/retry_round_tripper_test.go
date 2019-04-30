@@ -63,6 +63,27 @@ func TestRetryRoundTripper(t *testing.T) {
 			t.Errorf("Expected %d attempts, got %d", ex, got)
 		}
 	})
+	t.Run("No retry after context is finished", func(t *testing.T) {
+		rt := NewDefaultRetryRoundTripper()
+		tr := &retriedTransport{body: "abc", statusCodes: []int{408, 502, 503, 504, 200}}
+		rt.SetTransport(tr)
+
+		ctx, cancel := context.WithCancel(context.Background())
+		// cancel directly, so the original request is performed and
+		// then the retry mechanism aborts on the second attempt
+		cancel()
+		_, err := rt.RoundTrip(req.WithContext(ctx))
+
+		if err != nil {
+			t.Fatalf("Expected err to be nil, got %#v", err)
+		}
+		if ex, got := 1, tr.attempts; got != ex {
+			t.Errorf("Expected %d attempts, got %d", ex, got)
+		}
+		if got, ex := attemptFromCtx(tr.ctx), int32(1); got != ex {
+			t.Errorf("Expected %d attempts, got %d", ex, got)
+		}
+	})
 }
 
 type retriedTransport struct {
