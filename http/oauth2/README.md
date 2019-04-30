@@ -6,7 +6,7 @@ Oauth2 middleware for http.
 
 * `OAUTH2_URL` default: `"https://cp-1-prod.pacelink.net"`
     * URL of the Oauth server that provides `/oauth2/introspect`
-* `OAUTH2_CLIENT`
+* `OAUTH2_CLIENT_ID`
     * ID of the oauth2 client
-* `OAUTH2_SECRET`
+* `OAUTH2_CLIENT_SECRET`
     * Secret of the oauth2 client
