@@ -4,6 +4,7 @@
 package http
 
 import (
+	"net/http"
 	"net/http/pprof"
 
 	"github.com/gorilla/mux"
@@ -41,11 +42,12 @@ func Router() *mux.Router {
 	r.Handle("/health", health.Handler())
 
 	// for debugging purposes (e.g. deadlock, ...)
-	r.HandleFunc("/debug/pprof/", pprof.Index)
-	r.HandleFunc("/debug/pprof/cmdline", pprof.Cmdline)
-	r.HandleFunc("/debug/pprof/profile", pprof.Profile)
-	r.HandleFunc("/debug/pprof/symbol", pprof.Symbol)
-	r.HandleFunc("/debug/pprof/trace", pprof.Trace)
+	p := r.PathPrefix("/debug/pprof").Subrouter()
+	p.HandleFunc("/cmdline", pprof.Cmdline)
+	p.HandleFunc("/profile", pprof.Profile)
+	p.HandleFunc("/symbol", pprof.Symbol)
+	p.HandleFunc("/trace", pprof.Trace)
+	p.PathPrefix("/").Handler(http.HandlerFunc(pprof.Index))
 
 	return r
 }
