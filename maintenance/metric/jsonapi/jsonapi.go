@@ -68,33 +68,31 @@ type Metric struct {
 	http.ResponseWriter
 	request      *http.Request
 	requestStart time.Time
+	sizeWritten  int
 }
 
 // NewMetric creates a new metric collector (per request) with given
 // service and path (pattern! not the request path) and collects the
 // pace_api_http_size_bytes histogram metric.
 func NewMetric(serviceName, path string, w http.ResponseWriter, r *http.Request) *Metric {
-	if r.ContentLength == -1 {
-		// replace body reader with one that reports back to us at the end
-		r.Body = &lenCallbackReader{
-			r: r.Body,
-			onEOF: func(size int) {
-				AddPaceAPIHTTPSizeBytes(float64(size), r.Method, path, serviceName, TypeRequest)
-			},
-		}
-	} else {
-		AddPaceAPIHTTPSizeBytes(float64(r.ContentLength), r.Method, path, serviceName, TypeRequest)
-	}
-
-	// TODO(mn): response body size
-
-	return &Metric{
+	m := Metric{
 		serviceName:    serviceName,
 		path:           path,
 		ResponseWriter: w,
 		request:        r,
 		requestStart:   time.Now(),
 	}
+
+	// collect pace_api_http_size_bytes histogram metric for the request and response
+	r.Body = &lenCallbackReader{
+		r: r.Body,
+		onEOF: func(size int) {
+			AddPaceAPIHTTPSizeBytes(float64(size), r.Method, path, serviceName, TypeRequest)
+			AddPaceAPIHTTPSizeBytes(float64(m.sizeWritten), r.Method, path, serviceName, TypeResponse)
+		},
+	}
+
+	return &m
 }
 
 // WriteHeader captures the status code for metric submission and
@@ -106,6 +104,12 @@ func (m *Metric) WriteHeader(statusCode int) {
 	duration := float64(time.Since(m.requestStart).Nanoseconds()) / float64(time.Second)
 	AddPaceAPIHTTPRequestDurationSeconds(duration, m.request.Method, m.path, m.serviceName)
 	m.ResponseWriter.WriteHeader(statusCode)
+}
+
+// Write captures the length of the response body.
+func (m *Metric) Write(p []byte) (int, error) {
+	m.sizeWritten += len(p)
+	return m.ResponseWriter.Write(p)
 }
 
 // IncPaceAPIHTTPRequestTotal increments the pace_api_http_request_total counter metric
