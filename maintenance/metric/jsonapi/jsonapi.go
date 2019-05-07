@@ -10,8 +10,18 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/prometheus/client_golang/prometheus"
 	"github.com/pace/bricks/http/oauth2"
+	"github.com/prometheus/client_golang/prometheus"
+)
+
+const (
+	kb = 1024
+	mb = kb * kb
+)
+
+const (
+	TypeRequest  = "req"
+	TypeResponse = "resp"
 )
 
 var (
@@ -29,11 +39,23 @@ var (
 		},
 		[]string{"method", "path", "service"},
 	)
+	paceAPIHTTPSizeBytes = prometheus.NewHistogramVec(
+		prometheus.HistogramOpts{
+			Name: "pace_api_http_size_bytes",
+			Help: "Collect request and response body size for each API endpoint partitioned by method, path and service",
+			Buckets: []float64{
+				100, kb, 10 * kb, 100 * kb,
+				1 * mb, 5 * mb, 10 * mb, 100 * mb,
+			},
+		},
+		[]string{"method", "path", "service", "type"},
+	)
 )
 
 func init() {
 	prometheus.MustRegister(paceAPIHTTPRequestTotal)
 	prometheus.MustRegister(paceAPIHTTPRequestDurationSeconds)
+	prometheus.MustRegister(paceAPIHTTPSizeBytes)
 }
 
 // Metric is an http.ResponseWriter implementing metrics collector
@@ -47,8 +69,14 @@ type Metric struct {
 }
 
 // NewMetric creates a new metric collector (per request) with given
-// service and path (pattern! not the request path)
+// service and path (pattern! not the request path) and collects the
+// pace_api_http_size_bytes histogram metric.
 func NewMetric(serviceName, path string, w http.ResponseWriter, r *http.Request) *Metric {
+	if r.ContentLength == -1 {
+		// TODO(mn): unknown size. use TeeReader to get the length?
+	} else {
+		AddPaceAPIHTTPSizeBytes(float64(r.ContentLength), r.Method, path, serviceName, TypeRequest)
+	}
 	return &Metric{
 		serviceName:    serviceName,
 		path:           path,
@@ -87,4 +115,14 @@ func AddPaceAPIHTTPRequestDurationSeconds(duration float64, method, path, servic
 		"path":    path,
 		"service": service,
 	}).Observe(duration)
+}
+
+// AddPaceAPIHTTPSizeBytes adds an observed value for the pace_api_http_size_bytes histogram metric.
+func AddPaceAPIHTTPSizeBytes(size float64, method, path, service, requestOrResponse string) {
+	paceAPIHTTPSizeBytes.With(prometheus.Labels{
+		"method":  method,
+		"path":    path,
+		"service": service,
+		"type":    requestOrResponse,
+	}).Observe(size)
 }
