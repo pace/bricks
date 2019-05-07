@@ -83,7 +83,13 @@ func NewMetric(serviceName, path string, w http.ResponseWriter, r *http.Request)
 		requestStart:   time.Now(),
 	}
 
-	// collect pace_api_http_size_bytes histogram metric for the request and response
+	// Collect pace_api_http_size_bytes histogram metric for the request and response.
+	// Now we start our counters to count how many bytes are read from the request and
+	// to the response body. Once the body is closed (which the server always does,
+	// according to the http.Request.Body documentation) we add our readings to the
+	// metrics. This is basically a callback after the handler finished.
+	// A special case is when the handler did not read the body. In that case our
+	// lenCallbackReader counts the length of the rest as well (by reading it).
 	r.Body = &lenCallbackReader{
 		r: r.Body,
 		onEOF: func(size int) {
