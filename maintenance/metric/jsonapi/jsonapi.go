@@ -6,6 +6,8 @@
 package jsonapi
 
 import (
+	"io"
+	"io/ioutil"
 	"net/http"
 	"strconv"
 	"time"
@@ -73,10 +75,19 @@ type Metric struct {
 // pace_api_http_size_bytes histogram metric.
 func NewMetric(serviceName, path string, w http.ResponseWriter, r *http.Request) *Metric {
 	if r.ContentLength == -1 {
-		// TODO(mn): unknown size. use TeeReader to get the length?
+		// replace body reader with one that reports back to us at the end
+		r.Body = &lenCallbackReader{
+			r: r.Body,
+			onEOF: func(size int) {
+				AddPaceAPIHTTPSizeBytes(float64(size), r.Method, path, serviceName, TypeRequest)
+			},
+		}
 	} else {
 		AddPaceAPIHTTPSizeBytes(float64(r.ContentLength), r.Method, path, serviceName, TypeRequest)
 	}
+
+	// TODO(mn): response body size
+
 	return &Metric{
 		serviceName:    serviceName,
 		path:           path,
@@ -125,4 +136,25 @@ func AddPaceAPIHTTPSizeBytes(size float64, method, path, service, requestOrRespo
 		"service": service,
 		"type":    requestOrResponse,
 	}).Observe(size)
+}
+
+// lenCallbackReader is a reader that reports the total size before closing
+type lenCallbackReader struct {
+	r     io.ReadCloser
+	size  int
+	onEOF func(int)
+}
+
+func (r *lenCallbackReader) Read(p []byte) (int, error) {
+	n, err := r.r.Read(p)
+	r.size += n
+	return n, err
+}
+
+func (r *lenCallbackReader) Close() error {
+	// read everything left
+	n, _ := io.Copy(ioutil.Discard, r.r)
+	r.size += int(n)
+	r.onEOF(r.size)
+	return r.r.Close()
 }
