@@ -91,7 +91,7 @@ func NewMetric(serviceName, path string, w http.ResponseWriter, r *http.Request)
 	// A special case is when the handler did not read the body. In that case our
 	// lenCallbackReader counts the length of the rest as well (by reading it).
 	r.Body = &lenCallbackReader{
-		r: r.Body,
+		reader: r.Body,
 		onEOF: func(size int) {
 			AddPaceAPIHTTPSizeBytes(float64(size), r.Method, path, serviceName, TypeRequest)
 			AddPaceAPIHTTPSizeBytes(float64(m.sizeWritten), r.Method, path, serviceName, TypeResponse)
@@ -150,21 +150,21 @@ func AddPaceAPIHTTPSizeBytes(size float64, method, path, service, requestOrRespo
 
 // lenCallbackReader is a reader that reports the total size before closing
 type lenCallbackReader struct {
-	r     io.ReadCloser
-	size  int
-	onEOF func(int)
+	reader io.ReadCloser
+	size   int
+	onEOF  func(int)
 }
 
 func (r *lenCallbackReader) Read(p []byte) (int, error) {
-	n, err := r.r.Read(p)
+	n, err := r.reader.Read(p)
 	r.size += n
 	return n, err
 }
 
 func (r *lenCallbackReader) Close() error {
 	// read everything left
-	n, _ := io.Copy(ioutil.Discard, r.r)
+	n, _ := io.Copy(ioutil.Discard, r.reader)
 	r.size += int(n)
 	r.onEOF(r.size)
-	return r.r.Close()
+	return r.reader.Close()
 }
