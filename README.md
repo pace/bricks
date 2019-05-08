@@ -6,7 +6,7 @@ Opinionated microservice kit to help developers to build microservices with go.
 
 ## Install
 
-    go get -u github.com/pace/bricks/cmd/pb
+    go get github.com/pace/bricks/cmd/pb
 
 ## Usage
 
