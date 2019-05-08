@@ -114,8 +114,9 @@ func (m *Metric) WriteHeader(statusCode int) {
 
 // Write captures the length of the response body.
 func (m *Metric) Write(p []byte) (int, error) {
-	m.sizeWritten += len(p)
-	return m.ResponseWriter.Write(p)
+	size, err := m.ResponseWriter.Write(p)
+	m.sizeWritten += size
+	return size, err
 }
 
 // IncPaceAPIHTTPRequestTotal increments the pace_api_http_request_total counter metric
