@@ -4,15 +4,16 @@
 package transport
 
 import (
-	"github.com/stretchr/testify/assert"
 	"net/http/httptest"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
 func TestRequestSourceRoundTripper(t *testing.T) {
 	req := httptest.NewRequest("GET", "/foo", nil)
 
-	rt := RequestSourceRoundTripper{Header: "foobar"}
+	rt := RequestSourceRoundTripper{SourceName: "foobar"}
 	rt.SetTransport(&transportWithResponse{})
 
 	_, err := rt.RoundTrip(req)
