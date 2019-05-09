@@ -117,7 +117,6 @@ The defined metrics should follow the best practices defined [here](https://prom
         * **Method** (GET, PUT, POST, ...) - HTTP method
         * **Path** ("/beta/cars", "/beta/cars/{id}", ...) - Path to the endpoint as defined in the OpenAPIv3 spec
         * **Service** (car, dtc, ...) - name of the microservice
-        * **Source** (*empty string*, uptime, kubernetes, nginx, livetest) - value of the `Request-Source` HTTP request header
         * **ClientID** (unknown, "XYZ") - OAuth2 ClientID to filter usage per business partner, app, cockpit, ...
 
 * `pace_api_http_request_duration_seconds` (Histogram)
@@ -129,7 +128,6 @@ The defined metrics should follow the best practices defined [here](https://prom
         * **Method** (GET, PUT, POST, ...) - HTTP method
         * **Path** ("/beta/cars", "/beta/cars/{id}", ...) - Path to the endpoint as defined in the OpenAPIv3 spec
         * **Service** (car, dtc, ...) - name of the microservice
-        * **Source** (*empty string*, uptime, kubernetes, nginx, livetest) - value of the `Request-Source` HTTP request header
 
 * `pace_api_http_size_bytes` (Histogram)
     * Collect performance metrics for each API endpoint
@@ -140,5 +138,4 @@ The defined metrics should follow the best practices defined [here](https://prom
         * **Method** (GET, PUT, POST, ...) - HTTP method
         * **Path** ("/beta/cars", "/beta/cars/{id}", ...) - Path to the endpoint as defined in the OpenAPIv3 spec
         * **Service** (car, dtc, ...) - name of the microservice
-        * **Source** (*empty string*, uptime, kubernetes, nginx, livetest) - value of the `Request-Source` HTTP request header
         * **Type** (req, resp) - HTTP request or response
