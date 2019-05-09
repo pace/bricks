@@ -42,7 +42,7 @@ var (
 	// It uses custom buckets based on the expected response size.
 	paceHTTPResponseSize = prometheus.NewHistogramVec(
 		prometheus.HistogramOpts{
-			Name: "pace_http_request_size_bytes", // TODO: rename request -> response and check that it doesn't break anything
+			Name: "pace_http_response_size_bytes",
 			Help: "A histogram of response sizes for requests.",
 			Buckets: []float64{
 				100,
