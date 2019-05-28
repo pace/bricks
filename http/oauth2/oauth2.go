@@ -56,21 +56,20 @@ func (m *Middleware) Handler(next http.Handler) http.Handler {
 		}
 
 		tokenValue := items[1]
-		var introspectErr error
 
 		s, err := m.Backend.IntrospectToken(ctx, tokenValue)
 		switch err {
 		case ErrBadUpstreamResponse:
-			log.Req(r).Info().Msg(introspectErr.Error())
-			http.Error(w, introspectErr.Error(), http.StatusBadGateway)
+			log.Req(r).Info().Msg(err.Error())
+			http.Error(w, err.Error(), http.StatusBadGateway)
 			return
 		case ErrUpstreamConnection:
-			log.Req(r).Info().Msg(introspectErr.Error())
-			http.Error(w, introspectErr.Error(), http.StatusUnauthorized)
+			log.Req(r).Info().Msg(err.Error())
+			http.Error(w, err.Error(), http.StatusBadGateway)
 			return
 		case ErrInvalidToken:
-			log.Req(r).Info().Msg(introspectErr.Error())
-			http.Error(w, introspectErr.Error(), http.StatusUnauthorized)
+			log.Req(r).Info().Msg(err.Error())
+			http.Error(w, err.Error(), http.StatusUnauthorized)
 			return
 		}
 

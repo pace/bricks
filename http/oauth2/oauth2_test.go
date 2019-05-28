@@ -6,6 +6,7 @@ package oauth2
 import (
 	"context"
 	"fmt"
+	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -13,6 +14,71 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/pace/bricks/maintenance/log"
 )
+
+type tokenIntrospecterWithError struct {
+	returnedErr error
+}
+
+func (t *tokenIntrospecterWithError) IntrospectToken(ctx context.Context, token string) (*IntrospectResponse, error) {
+	return nil, t.returnedErr
+}
+
+func TestHandlerIntrospectError(t *testing.T) {
+	testCases := []struct {
+		desc         string
+		returnedErr  error
+		expectedCode int
+		expectedBody string
+	}{
+		{
+			desc:         "token introspecter returns ErrBadUpstreamResponse",
+			returnedErr:  ErrBadUpstreamResponse,
+			expectedCode: 502,
+			expectedBody: "bad upstream response when introspecting token\n",
+		},
+		{
+			desc:         "token introspecter returns ErrUpstreamConnection",
+			returnedErr:  ErrUpstreamConnection,
+			expectedCode: 502,
+			expectedBody: "problem connecting to the introspection endpoint\n",
+		},
+		{
+			desc:         "token introspecter returns ErrInvalidToken",
+			returnedErr:  ErrInvalidToken,
+			expectedCode: 401,
+			expectedBody: "user token is invalid\n",
+		},
+	}
+	for _, tC := range testCases {
+		t.Run(tC.desc, func(t *testing.T) {
+			m := NewMiddleware(&tokenIntrospecterWithError{returnedErr: tC.returnedErr})
+			r := mux.NewRouter()
+			r.Use(m.Handler)
+			r.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {})
+
+			req := httptest.NewRequest("GET", "/", nil)
+			req.Header.Set("Authorization", "Bearer some-token")
+
+			w := httptest.NewRecorder()
+			r.ServeHTTP(w, req)
+
+			resp := w.Result()
+			body, err := ioutil.ReadAll(resp.Body)
+			defer resp.Body.Close()
+			if err != nil {
+				t.Fatal(err)
+			}
+
+			if got, ex := resp.StatusCode, tC.expectedCode; got != ex {
+				t.Errorf("Expected status code %d, got %d", ex, got)
+			}
+
+			if got, ex := string(body), tC.expectedBody; got != ex {
+				t.Errorf("Expected body %q, got %q", ex, got)
+			}
+		})
+	}
+}
 
 func Example() {
 	r := mux.NewRouter()
