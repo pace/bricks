@@ -6,23 +6,41 @@ import (
 	"strings"
 
 	"github.com/pace/bricks/http/jsonapi/runtime"
+	"github.com/pace/bricks/maintenance/log"
 )
 
 type jsonApiErrorWriter struct {
 	http.ResponseWriter
 	req        *http.Request
 	statusCode int
+	hasErr     bool
+	hasBytes   bool
 }
 
+var errErrorAlreadySet = errors.New("jsonapi error already recorded in a previous write")
+var errBadWriteOrder = errors.New("cannot encode jsonapi error because of previous writes")
+
 func (e *jsonApiErrorWriter) Write(b []byte) (int, error) {
+	if e.hasErr {
+		log.Req(e.req).Error().Err(errErrorAlreadySet).Msg("JSON API error writer")
+		return 0, nil
+	}
 	repliesJsonApi := e.Header().Get("Content-Type") == runtime.JSONAPIContentType
 	requestsJsonApi := e.req.Header.Get("Accept") == runtime.JSONAPIContentType
 	if e.statusCode >= 400 && requestsJsonApi && !repliesJsonApi {
-		runtime.WriteError(e, e.statusCode, errors.New(strings.Trim(string(b), "\n")))
+		if e.hasBytes {
+			return 0, errBadWriteOrder
+		}
+		e.hasErr = true
+		runtime.WriteError(e.ResponseWriter, e.statusCode, errors.New(strings.Trim(string(b), "\n")))
 		return 0, nil
 	}
 
-	return e.ResponseWriter.Write(b)
+	n, err := e.ResponseWriter.Write(b)
+	if err == nil && n > 0 {
+		e.hasBytes = true
+	}
+	return n, err
 }
 
 func (e *jsonApiErrorWriter) WriteHeader(code int) {
@@ -35,6 +53,6 @@ func (e *jsonApiErrorWriter) WriteHeader(code int) {
 // Content-Type: application/vnd.api+json
 func JsonApiErrorWriterMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		next.ServeHTTP(&jsonApiErrorWriter{w, r, 0}, r)
+		next.ServeHTTP(&jsonApiErrorWriter{ResponseWriter: w, req: r}, r)
 	})
 }
