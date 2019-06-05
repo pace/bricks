@@ -2,7 +2,6 @@ package http
 
 import (
 	"encoding/json"
-	"fmt"
 	"io"
 	"io/ioutil"
 	"net/http"
@@ -11,18 +10,18 @@ import (
 
 	"github.com/gorilla/mux"
 	"github.com/pace/bricks/http/jsonapi/runtime"
-	"github.com/stretchr/testify/assert"
 )
 
+const payload = "dummy response data"
+
 func TestJsonApiErrorMiddleware(t *testing.T) {
-	payload := "dummy response data"
 	for _, statusCode := range []int{200, 201, 400, 402, 500, 503} {
 		for _, responseContentType := range []string{"text/plain", "text/html", runtime.JSONAPIContentType} {
 			r := mux.NewRouter()
 			r.HandleFunc("/foo", func(w http.ResponseWriter, r *http.Request) {
 				w.Header().Set("Content-Type", responseContentType)
 				w.WriteHeader(statusCode)
-				io.WriteString(w, payload)
+				_, _ = io.WriteString(w, payload)
 			}).Methods("GET")
 			r.Use(JsonApiErrorWriterMiddleware)
 
@@ -35,11 +34,17 @@ func TestJsonApiErrorMiddleware(t *testing.T) {
 			resp := rec.Result()
 			b, err := ioutil.ReadAll(resp.Body)
 			resp.Body.Close()
-			assert.NoError(t, err)
+			if err != nil {
+				t.Fatal(err)
+			}
 
-			assert.Equal(t, statusCode, resp.StatusCode)
+			if statusCode != resp.StatusCode {
+				t.Fatalf("status codes differ: expected %v, got %v", statusCode, resp.StatusCode)
+			}
 			if resp.StatusCode < 400 || responseContentType == runtime.JSONAPIContentType {
-				assert.Equal(t, payload, string(b))
+				if payload != string(b) {
+					t.Fatalf("payloads differ: expected %v, got %v", payload, string(b))
+				}
 			} else {
 				var e struct {
 					List runtime.Errors `json:"errors"`
@@ -47,14 +52,98 @@ func TestJsonApiErrorMiddleware(t *testing.T) {
 
 				err := json.Unmarshal(b, &e)
 				if err != nil {
-					fmt.Println(string(b))
+					t.Fatal(err)
 				}
-				assert.NoError(t, err)
-				assert.Len(t, e.List, 1)
-				assert.Equal(t, payload, e.List[0].Title)
+				if len(e.List) != 1 {
+					t.Fatalf("expected only one record, got %v", len(e.List))
+				}
+				if payload != e.List[0].Title {
+					t.Fatalf("error titles differ: expected %v, got %v", payload, e.List[0].Title)
+				}
 			}
 		}
 
 	}
+}
 
+func TestJsonApiErrorMiddlewareMultipleErrorWrite(t *testing.T) {
+	r := mux.NewRouter()
+	r.HandleFunc("/foo", func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(400)
+		w.Header().Set("Content-Type", "text/html")
+		if _, err := io.WriteString(w, payload); err != nil {
+			t.Fatal(err)
+		}
+		if jsonWriter, ok := w.(*jsonApiErrorWriter); ok && !jsonWriter.hasErr {
+			t.Fatal("expected hasErr flag to be set")
+		}
+		if _, err := io.WriteString(w, payload); err != nil {
+			t.Fatal(err)
+		}
+		if _, err := io.WriteString(w, payload); err != nil {
+			t.Fatal(err)
+		}
+	}).Methods("GET")
+	r.Use(JsonApiErrorWriterMiddleware)
+
+	rec := httptest.NewRecorder()
+	req := httptest.NewRequest("GET", "/foo", nil)
+	req.Header.Set("Accept", runtime.JSONAPIContentType)
+	r.ServeHTTP(rec, req)
+	resp := rec.Result()
+	b, err := ioutil.ReadAll(resp.Body)
+	resp.Body.Close()
+	if err != nil {
+		t.Fatal(err)
+	}
+	var e struct {
+		List runtime.Errors `json:"errors"`
+	}
+	if err := json.Unmarshal(b, &e); err != nil {
+		t.Fatal(err)
+	}
+	if len(e.List) != 1 {
+		t.Fatalf("expected only one record, got %v", len(e.List))
+	}
+	if payload != e.List[0].Title {
+		t.Fatalf("error titles differ: expected %v, got %v", payload, e.List[0].Title)
+	}
+}
+
+func TestJsonApiErrorMiddlewareInvalidWriteOrder(t *testing.T) {
+	r := mux.NewRouter()
+	r.HandleFunc("/foo", func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(200)
+		if _, err := io.WriteString(w, payload); err != nil {
+			t.Fatal(err)
+		}
+		jsonWriter, ok := w.(*jsonApiErrorWriter)
+		if ok && !jsonWriter.hasBytes {
+			t.Fatal("expected hasBytes flag to be set")
+		}
+		w.WriteHeader(400)
+		w.Header().Set("Content-Type", "text/plain")
+		if _, err := io.WriteString(w, payload); err == nil {
+			t.Fatal("expected error, got nil")
+		} else {
+			if err != errBadWriteOrder {
+				t.Fatalf("expected error to be: %v", errBadWriteOrder)
+			}
+		}
+	}).Methods("GET")
+	r.Use(JsonApiErrorWriterMiddleware)
+
+	rec := httptest.NewRecorder()
+	req := httptest.NewRequest("GET", "/foo", nil)
+	req.Header.Set("Accept", runtime.JSONAPIContentType)
+	r.ServeHTTP(rec, req)
+	resp := rec.Result()
+	b, err := ioutil.ReadAll(resp.Body)
+	resp.Body.Close()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if payload != string(b) {
+		t.Fatalf("bad response body, expected %q, got %q", payload, string(b))
+	}
 }
