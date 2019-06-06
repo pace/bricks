@@ -17,12 +17,11 @@ type jsonApiErrorWriter struct {
 	hasBytes   bool
 }
 
-var errErrorAlreadySet = errors.New("jsonapi error already recorded in a previous write")
 var errBadWriteOrder = errors.New("cannot encode jsonapi error because of previous writes")
 
 func (e *jsonApiErrorWriter) Write(b []byte) (int, error) {
 	if e.hasErr {
-		log.Req(e.req).Error().Err(errErrorAlreadySet).Msg("JSON API error writer")
+		log.Req(e.req).Warn().Msgf("Error already sent, ignoring: %q", string(b))
 		return 0, nil
 	}
 	repliesJsonApi := e.Header().Get("Content-Type") == runtime.JSONAPIContentType
