@@ -123,13 +123,7 @@ func TestJsonApiErrorMiddlewareInvalidWriteOrder(t *testing.T) {
 		}
 		w.WriteHeader(400)
 		w.Header().Set("Content-Type", "text/plain")
-		if _, err := io.WriteString(w, payload); err == nil {
-			t.Fatal("expected error, got nil")
-		} else {
-			if err != errBadWriteOrder {
-				t.Fatalf("expected error to be: %v", errBadWriteOrder)
-			}
-		}
+		_, _ = io.WriteString(w, payload) // will get discarded
 	}).Methods("GET")
 	r.Use(JsonApiErrorWriterMiddleware)
 

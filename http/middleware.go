@@ -17,8 +17,6 @@ type jsonApiErrorWriter struct {
 	hasBytes   bool
 }
 
-var errBadWriteOrder = errors.New("cannot encode jsonapi error because of previous writes")
-
 func (e *jsonApiErrorWriter) Write(b []byte) (int, error) {
 	if e.hasErr {
 		log.Req(e.req).Warn().Msgf("Error already sent, ignoring: %q", string(b))
@@ -28,7 +26,8 @@ func (e *jsonApiErrorWriter) Write(b []byte) (int, error) {
 	requestsJsonApi := e.req.Header.Get("Accept") == runtime.JSONAPIContentType
 	if e.statusCode >= 400 && requestsJsonApi && !repliesJsonApi {
 		if e.hasBytes {
-			return 0, errBadWriteOrder
+			log.Req(e.req).Warn().Msgf("Body already contains data from previous writes: ignoring: %q", string(b))
+			return 0, nil
 		}
 		e.hasErr = true
 		runtime.WriteError(e.ResponseWriter, e.statusCode, errors.New(strings.Trim(string(b), "\n")))
