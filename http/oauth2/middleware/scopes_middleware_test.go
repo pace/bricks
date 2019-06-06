@@ -51,11 +51,11 @@ func TestScopesMiddleware(t *testing.T) {
 			t.Fatal(err)
 		}
 
-		if got, ex := resp.StatusCode, 401; got != ex {
+		if got, ex := resp.StatusCode, 403; got != ex {
 			t.Errorf("Expected status code %d, got %d", ex, got)
 		}
 
-		if got, ex := string(body), fmt.Sprintf("Unauthorized - requires scope %q\n", "foo:read"); got != ex {
+		if got, ex := string(body), fmt.Sprintf("Forbidden - requires scope %q\n", "foo:read"); got != ex {
 			t.Errorf("Expected body %q, got %q", ex, got)
 		}
 	})

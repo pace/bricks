@@ -33,6 +33,6 @@ func (m *ScopesMiddleware) Handler(next http.Handler) http.Handler {
 			next.ServeHTTP(w, r)
 			return
 		}
-		http.Error(w, fmt.Sprintf("Unauthorized - requires scope %q", m.RequiredScopes[routeName]), http.StatusUnauthorized)
+		http.Error(w, fmt.Sprintf("Forbidden - requires scope %q", m.RequiredScopes[routeName]), http.StatusForbidden)
 	})
 }
