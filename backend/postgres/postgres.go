@@ -13,9 +13,9 @@ import (
 	"github.com/go-pg/pg"
 	opentracing "github.com/opentracing/opentracing-go"
 	olog "github.com/opentracing/opentracing-go/log"
+	"github.com/pace/bricks/maintenance/log"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/rs/zerolog"
-	"github.com/pace/bricks/maintenance/log"
 )
 
 type config struct {
@@ -24,6 +24,44 @@ type config struct {
 	Password string `env:"POSTGRES_PASSWORD" envDefault:"mysecretpassword"`
 	User     string `env:"POSTGRES_USER" envDefault:"postgres"`
 	Database string `env:"POSTGRES_DB" envDefault:"postgres"`
+	// Maximum number of retries before giving up.
+	MaxRetries int `env:"POSTGRES_MAX_RETRIES" envDefault:"5"`
+	// Whether to retry queries cancelled because of statement_timeout.
+	RetryStatementTimeout bool `env:"POSTGRES_RETRY_STATEMENT_TIMEOUT" envDefault:"false"`
+	// Minimum backoff between each retry.
+	// -1 disables backoff.
+	MinRetryBackoff time.Duration `env:"POSTGRES_MIN_RETRY_BACKOFF" envDefault:"250ms"`
+	// Maximum backoff between each retry.
+	// -1 disables backoff.
+	MaxRetryBackoff time.Duration `env:"POSTGRES_MAX_RETRY_BACKOFF" envDefault:"4s"`
+	// Dial timeout for establishing new connections.
+	DialTimeout time.Duration `env:"POSTGRES_DIAL_TIMEOUT" envDefault:"5s"`
+	// Timeout for socket reads. If reached, commands will fail
+	// with a timeout instead of blocking.
+	ReadTimeout time.Duration `env:"POSTGRES_READ_TIMEOUT" envDefault:"30s"`
+	// Timeout for socket writes. If reached, commands will fail
+	// with a timeout instead of blocking.
+	WriteTimeout time.Duration `env:"POSTGRES_WRITE_TIMEOUT" envDefault:"30s"`
+	// Maximum number of socket connections.
+	PoolSize int `env:"POSTGRES_POOL_SIZE" envDefault:"100"`
+	// Minimum number of idle connections which is useful when establishing
+	// new connection is slow.
+	MinIdleConns int `env:"POSTGRES_MIN_IDLE_CONNECTIONS" envDefault:"10"`
+	// Connection age at which client retires (closes) the connection.
+	// It is useful with proxies like PgBouncer and HAProxy.
+	MaxConnAge time.Duration `env:"POSTGRES_MAX_CONN_AGE" envDefault:"30m"`
+	// Time for which client waits for free connection if all
+	// connections are busy before returning an error.
+	PoolTimeout time.Duration `env:"POSTGRES_POOL_TIMEOUT" envDefault:"31s"`
+	// Amount of time after which client closes idle connections.
+	// Should be less than server's timeout.
+	// -1 disables idle timeout check.
+	IdleTimeout time.Duration `env:"POSTGRES_IDLE_TIMEOUT" envDefault:"5m"`
+	// Frequency of idle checks made by idle connections reaper.
+	// -1 disables idle connections reaper,
+	// but idle connections are still discarded by the client
+	// if IdleTimeout is set.
+	IdleCheckFrequency time.Duration `env:"POSTGRES_IDLE_CHECK_FREQUENCY" envDefault:"1m"`
 }
 
 var (
@@ -86,10 +124,23 @@ func init() {
 // instrumented with tracing and logging
 func ConnectionPool() *pg.DB {
 	return CustomConnectionPool(&pg.Options{
-		Addr:     fmt.Sprintf("%s:%d", cfg.Host, cfg.Port),
-		User:     cfg.User,
-		Password: cfg.Password,
-		Database: cfg.Database,
+		Addr:                  fmt.Sprintf("%s:%d", cfg.Host, cfg.Port),
+		User:                  cfg.User,
+		Password:              cfg.Password,
+		Database:              cfg.Database,
+		MaxRetries:            cfg.MaxRetries,
+		RetryStatementTimeout: cfg.RetryStatementTimeout,
+		MinRetryBackoff:       cfg.MinRetryBackoff,
+		MaxRetryBackoff:       cfg.MaxRetryBackoff,
+		DialTimeout:           cfg.DialTimeout,
+		ReadTimeout:           cfg.ReadTimeout,
+		WriteTimeout:          cfg.WriteTimeout,
+		PoolSize:              cfg.PoolSize,
+		MinIdleConns:          cfg.MinIdleConns,
+		MaxConnAge:            cfg.MaxConnAge,
+		PoolTimeout:           cfg.PoolTimeout,
+		IdleTimeout:           cfg.IdleTimeout,
+		IdleCheckFrequency:    cfg.IdleCheckFrequency,
 	})
 }
 
