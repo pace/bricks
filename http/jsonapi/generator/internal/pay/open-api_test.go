@@ -753,7 +753,7 @@ This API is responsible for managing payment methods for users as well as author
 */
 func Router(service Service) *mux.Router {
 	router := mux.NewRouter()
-	// Subrouter s1 - https://api.pace.cloud/pay
+	// Subrouter s1 - Path: /pay
 	s1 := router.PathPrefix("/pay").Subrouter()
 	s1.Methods("DELETE").Path("/beta/payment-methods/{paymentMethodId}/paymentTokens/{paymentTokenId}").Handler(DeletePaymentTokenHandler(service)).Name("DeletePaymentToken")
 	s1.Methods("POST").Path("/beta/payment-methods/{paymentMethodId}/authorize").Handler(AuthorizePaymentMethodHandler(service)).Name("AuthorizePaymentMethod")

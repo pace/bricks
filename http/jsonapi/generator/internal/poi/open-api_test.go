@@ -2424,7 +2424,7 @@ POI API
 */
 func Router(service Service) *mux.Router {
 	router := mux.NewRouter()
-	// Subrouter s1 - https://api.pace.cloud/poi
+	// Subrouter s1 - Path: /poi
 	s1 := router.PathPrefix("/poi").Subrouter()
 	s1.Methods("GET").Path("/beta/apps/query").Handler(CheckForPaceAppHandler(service)).Name("CheckForPaceApp")
 	s1.Methods("POST").Path("/beta/tiles/query").Handler(GetTilesHandler(service)).Name("GetTiles")

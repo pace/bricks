@@ -11,6 +11,9 @@
   "servers": [
     {
       "url": "https://api.pace.cloud/fueling"
+    },
+    {
+      "url": "https://localhost/fueling"
     }
   ],
   "paths": {

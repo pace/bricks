@@ -329,18 +329,24 @@ func (g *Generator) buildRouter(routes []*route, schema *openapi3.Swagger) error
 	routeStmts[0] = jen.Id("router").Op(":=").Qual(pkgGorillaMux, "NewRouter").Call()
 
 	// Note: we don't restrict host, scheme and port to ease development
-	// but generate subrouters for each server
-	for i, server := range schema.Servers {
-		subrouterID := fmt.Sprintf("s%d", i+1)
+	paths := make(map[string]struct{})
+	for _, server := range schema.Servers {
 		url, err := url.Parse(server.URL)
 		if err != nil {
 			return err
 		}
+		paths[url.Path] = struct{}{}
+	}
+
+	// but generate subrouters for each server
+	i := 0
+	for path, _ := range paths {
+		subrouterID := fmt.Sprintf("s%d", i+1)
 
 		// init and return the router
-		routeStmts = append(routeStmts, jen.Comment(fmt.Sprintf("Subrouter %s - %v", subrouterID, url)))
+		routeStmts = append(routeStmts, jen.Comment(fmt.Sprintf("Subrouter %s - Path: %s", subrouterID, path)))
 		routeStmts = append(routeStmts, jen.Id(subrouterID).Op(":=").Id("router").
-			Dot("PathPrefix").Call(jen.Lit(url.Path)).Dot("Subrouter").Call())
+			Dot("PathPrefix").Call(jen.Lit(path)).Dot("Subrouter").Call())
 
 		// sort the routes with query parameter to the top
 		sortableRoutes := sortableRouteList(routes)
