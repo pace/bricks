@@ -540,7 +540,7 @@ Fueling API
 */
 func Router(service Service) *mux.Router {
 	router := mux.NewRouter()
-	// Subrouter s1 - https://api.pace.cloud/fueling
+	// Subrouter s1 - Path: /fueling
 	s1 := router.PathPrefix("/fueling").Subrouter()
 	s1.Methods("GET").Path("/beta/gas-stations/{gasStationId}/pumps/{pumpId}/wait-for-status-change").Handler(WaitOnPumpStatusChangeHandler(service)).Name("WaitOnPumpStatusChange")
 	s1.Methods("GET").Path("/beta/gas-stations/{gasStationId}/pumps/{pumpId}").Handler(GetPumpHandler(service)).Name("GetPump")
