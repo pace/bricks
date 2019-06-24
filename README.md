@@ -12,7 +12,7 @@ A pace/bricks microservice is:
 * deployed into a **kubernetes cluster**
 * configured using **environment variables** ([TWELVE-FACTOR APP](https://12factor.net/))
 * monitored using **prometheus**
-* reports errors tp **sentry**
+* reports errors to **sentry**
 * samples traces to **jaeger**
 * **logs** to stdout using json
 * offers **health** endpoints
