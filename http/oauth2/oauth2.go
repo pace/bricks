@@ -169,6 +169,13 @@ func ClientID(ctx context.Context) (string, bool) {
 
 }
 
+// ContextTransfer sources the oauth2 token from the sourceCtx
+// and returning a new context based on the targetCtx
+func ContextTransfer(sourceCtx context.Context, targetCtx context.Context) context.Context {
+	token := tokenFromContext(sourceCtx)
+	return context.WithValue(targetCtx, tokenKey, token)
+}
+
 func tokenFromContext(ctx context.Context) *token {
 	val := ctx.Value(tokenKey)
 

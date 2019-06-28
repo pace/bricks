@@ -150,6 +150,8 @@ func TestSuccessfulAccessors(t *testing.T) {
 	}
 
 	ctx := context.WithValue(context.TODO(), tokenKey, &to)
+	newCtx := context.TODO()
+	ctx = ContextTransfer(ctx, newCtx)
 
 	uid, _ := UserID(ctx)
 	cid, _ := ClientID(ctx)
