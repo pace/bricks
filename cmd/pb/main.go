@@ -76,7 +76,7 @@ func addRootCommands(rootCmd *cobra.Command) {
 func addServiceCommands(cmdService *cobra.Command) {
 	var restSource string
 	cmdServiceNew := &cobra.Command{
-		Use:  "new [name]",
+		Use:  "new NAME",
 		Args: cobra.ExactArgs(1),
 		Run: func(cmd *cobra.Command, args []string) {
 			service.New(args[0], service.NewOptions{
@@ -88,7 +88,7 @@ func addServiceCommands(cmdService *cobra.Command) {
 	cmdService.AddCommand(cmdServiceNew)
 
 	cmdServiceClone := &cobra.Command{
-		Use:  "clone [name]",
+		Use:  "clone NAME",
 		Args: cobra.ExactArgs(1),
 		Run: func(cmd *cobra.Command, args []string) {
 			service.Clone(args[0])
@@ -97,7 +97,7 @@ func addServiceCommands(cmdService *cobra.Command) {
 	cmdService.AddCommand(cmdServiceClone)
 
 	cmdServicePath := &cobra.Command{
-		Use:  "path [name]",
+		Use:  "path NAME",
 		Args: cobra.ExactArgs(1),
 		Run: func(cmd *cobra.Command, args []string) {
 			service.Path(args[0])
@@ -106,7 +106,7 @@ func addServiceCommands(cmdService *cobra.Command) {
 	cmdService.AddCommand(cmdServicePath)
 
 	cmdServiceEdit := &cobra.Command{
-		Use:  "edit [name]",
+		Use:  "edit NAME",
 		Args: cobra.ExactArgs(1),
 		Run: func(cmd *cobra.Command, args []string) {
 			service.Edit(args[0])
@@ -116,7 +116,7 @@ func addServiceCommands(cmdService *cobra.Command) {
 
 	var runCmd string
 	cmdServiceRun := &cobra.Command{
-		Use:  "run [name]",
+		Use:  "run NAME",
 		Args: cobra.ExactArgs(1),
 		Run: func(cmd *cobra.Command, args []string) {
 			service.Run(args[0], service.RunOptions{
@@ -130,7 +130,7 @@ func addServiceCommands(cmdService *cobra.Command) {
 
 	var testGoConvey bool
 	cmdServiceTest := &cobra.Command{
-		Use:  "test [name]",
+		Use:  "test NAME",
 		Args: cobra.ExactArgs(1),
 		Run: func(cmd *cobra.Command, args []string) {
 			service.Test(args[0], service.TestOptions{GoConvey: testGoConvey})
@@ -140,7 +140,7 @@ func addServiceCommands(cmdService *cobra.Command) {
 	cmdService.AddCommand(cmdServiceTest)
 
 	cmdServiceLint := &cobra.Command{
-		Use:  "lint [name]",
+		Use:  "lint NAME",
 		Args: cobra.ExactArgs(1),
 		Run: func(cmd *cobra.Command, args []string) {
 			service.Lint(args[0])
@@ -177,7 +177,7 @@ func addServiceGenerateCommands(cmdServiceGenerate *cobra.Command) {
 
 	var commandsPath string
 	cmdCommands := &cobra.Command{
-		Use:  "commands [name]",
+		Use:  "commands NAME",
 		Args: cobra.ExactArgs(1),
 		Run: func(cmd *cobra.Command, args []string) {
 			generate.Commands(commandsPath,
@@ -189,7 +189,7 @@ func addServiceGenerateCommands(cmdServiceGenerate *cobra.Command) {
 
 	var dockerfilePath string
 	cmdDockerfile := &cobra.Command{
-		Use:  "dockerfile [name]",
+		Use:  "dockerfile NAME",
 		Args: cobra.ExactArgs(1),
 		Run: func(cmd *cobra.Command, args []string) {
 			generate.Dockerfile(dockerfilePath, generate.DockerfileOptions{
@@ -203,7 +203,7 @@ func addServiceGenerateCommands(cmdServiceGenerate *cobra.Command) {
 
 	var makefilePath string
 	cmdMakefile := &cobra.Command{
-		Use:  "makefile [name]",
+		Use:  "makefile NAME",
 		Args: cobra.ExactArgs(1),
 		Run: func(cmd *cobra.Command, args []string) {
 			generate.Makefile(makefilePath, generate.MakefileOptions{
