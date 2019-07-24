@@ -5,9 +5,11 @@ package runtime
 
 import (
 	"fmt"
+	"net"
 	"net/http"
 
 	"github.com/google/jsonapi"
+	"github.com/pace/bricks/maintenance/log"
 )
 
 // Unmarshal processes the request content and fills passed data struct with the
@@ -59,6 +61,11 @@ func Marshal(w http.ResponseWriter, data interface{}, code int) {
 	// write marshaled response body
 	err := jsonapi.MarshalPayload(w, data)
 	if err != nil {
-		panic(fmt.Errorf("failed to marshal jsonapi response for %#v: %s", data, err))
+		switch err.(type) {
+		case *net.OpError:
+			log.Errorf("Connection error: %s", err)
+		default:
+			panic(fmt.Errorf("failed to marshal jsonapi response for %#v: %s", data, err))
+		}
 	}
 }
