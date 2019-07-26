@@ -22,7 +22,7 @@ integration:
   stage: integration
   image: docker:latest
   services:
-    - docker:dind
+    - docker:18-dind
   script:
     - apk update
     - apk add py-pip build-base python2-dev libffi-dev openssl-dev

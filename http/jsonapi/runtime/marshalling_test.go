@@ -4,7 +4,9 @@
 package runtime
 
 import (
+	"fmt"
 	"io/ioutil"
+	"net"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -139,4 +141,43 @@ func TestMarshalArticle(t *testing.T) {
 	if expectation != string(b[:]) {
 		t.Errorf("Expected %q got: %q", expectation, string(b[:]))
 	}
+}
+
+func TestMarshalPanic(t *testing.T) {
+	defer func() {
+		if r := recover(); r == nil {
+			t.Fatal("Expected panic in Marshal")
+		}
+	}()
+
+	rec := httptest.NewRecorder()
+	Marshal(rec, make(chan int), http.StatusOK)
+}
+
+type writer struct {
+}
+
+func (writer) Header() http.Header {
+	return http.Header{}
+}
+
+func (writer) WriteHeader(statusCode int) {
+
+}
+
+func (writer) Write(buf []byte) (int, error) {
+	return 0, &net.OpError{
+		Op:  "write",
+		Err: fmt.Errorf("Test connection error"),
+	}
+}
+
+func TestMarshalConnectionError(t *testing.T) {
+	defer func() {
+		if r := recover(); r != nil {
+			t.Fatal("Was not expecting a panic")
+		}
+	}()
+	rec := writer{}
+	Marshal(rec, &struct{}{}, http.StatusOK)
 }
