@@ -1,4 +1,4 @@
-# PACE Bricks
+# PACE Bricks [![Build Status](https://travis-ci.org/pace/bricks.svg?branch=master)](https://travis-ci.org/pace/bricks.svg?branch=master) [![Coverage Status](https://coveralls.io/repos/github/pace/bricks/badge.svg?branch=master)](https://coveralls.io/github/pace/bricks?branch=master)
 
 ![](artwork/PACE-Bricks_Header_LightBackground.png)
 

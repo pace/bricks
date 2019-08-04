@@ -11,6 +11,15 @@ export JAEGER_SAMPLER_TYPE:=const
 export JAEGER_SAMPLER_PARAM:=1
 export LOG_FORMAT:=console
 
+test:
+	go test -mod vendor -count=1 -v -cover -race -short ./...
+
+integration:
+	go test -mod vendor -count=1 -v -cover -race -run TestIntegration ./...
+
+ci:
+	go test -mod vendor -count=1 -v -covermode=atomic -coverprofile=coverage.out -race ./...
+
 install:
 	go install ./cmd/pb
 
@@ -33,12 +42,6 @@ lint: $(GOPATH)/bin/golangci-lint
 
 $(GOPATH)/bin/golangci-lint:
 	curl -sfL https://install.goreleaser.com/github.com/golangci/golangci-lint.sh | sh -s -- -b $(GOPATH)/bin v1.15.0
-
-test:
-	go test -count=1 -v -cover -race -short ./...
-
-integration:
-	go test -count=1 -v -cover -race -run TestIntegration ./...
 
 testserver:
 	docker build .
