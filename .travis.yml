@@ -1,0 +1,17 @@
+language: go
+
+service:
+- postgres
+- redis
+
+env:
+- GO111MODULE=on
+
+go:
+- 1.12.x
+
+after_success:
+- GO111MODULE=off go get github.com/mattn/goveralls
+- $GOPATH/bin/goveralls -coverprofile=coverage.out -service=travis-ci -repotoken $COVERALLS_TOKEN
+
+script: make ci

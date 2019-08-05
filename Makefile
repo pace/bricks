@@ -1,6 +1,6 @@
 # Copyright © 2018 by PACE Telematics GmbH. All rights reserved.
 # Created at 2018/08/24 by Vincent Landgraf
-.PHONY: install test jsonapi build integration
+.PHONY: install test jsonapi build integration ci
 
 JSONAPITEST=http/jsonapi/generator/internal
 JSONAPIGEN="./tools/jsonapigen/main.go"
@@ -13,6 +13,15 @@ export LOG_FORMAT:=console
 
 install:
 	go install ./cmd/pb
+
+test:
+	go test -mod vendor -count=1 -v -cover -race -short ./...
+
+integration:
+	go test -mod vendor -count=1 -v -cover -race -run TestIntegration ./...
+
+ci:
+	go test -mod vendor -count=1 -v -covermode=atomic -coverprofile=coverage.out -race ./...
 
 jsonapi:
 	go run $(JSONAPIGEN) -pkg poi \
@@ -33,12 +42,6 @@ lint: $(GOPATH)/bin/golangci-lint
 
 $(GOPATH)/bin/golangci-lint:
 	curl -sfL https://install.goreleaser.com/github.com/golangci/golangci-lint.sh | sh -s -- -b $(GOPATH)/bin v1.15.0
-
-test:
-	go test -count=1 -v -cover -race -short ./...
-
-integration:
-	go test -count=1 -v -cover -race -run TestIntegration ./...
 
 testserver:
 	docker build .
