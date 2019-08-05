@@ -1,4 +1,4 @@
-# PACE Bricks [![Build Status](https://travis-ci.org/pace/bricks.svg?branch=master)](https://travis-ci.org/pace/bricks.svg?branch=master) [![Coverage Status](https://coveralls.io/repos/github/pace/bricks/badge.svg?branch=master)](https://coveralls.io/github/pace/bricks?branch=master)
+# PACE Bricks [![Build Status](https://travis-ci.org/pace/bricks.svg?branch=master)](https://travis-ci.org/pace/bricks.svg?branch=master) [![Coverage Status](https://coveralls.io/repos/github/pace/bricks/badge.svg?branch=master)](https://coveralls.io/github/pace/bricks?branch=master) [![Go Report Card](https://goreportcard.com/badge/github.com/pace/bricks)](https://goreportcard.com/report/github.com/pace/bricks) [![MIT License](https://img.shields.io/badge/license-MIT-green.svg)](https://github.com/pace/bricks/blob/master/LICENSE.md)
 
 ![](artwork/PACE-Bricks_Header_LightBackground.png)
 
