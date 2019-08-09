@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"reflect"
 	"strings"
+	"time"
 )
 
 // ScanIn help to avoid missuse using iota for the possible values
@@ -88,6 +89,33 @@ func ScanParameters(w http.ResponseWriter, r *http.Request, parameters ...*ScanP
 			scanData = strings.Join(input, " ")
 		default:
 			panic(fmt.Errorf("impossible scanning location: %d", param.Location))
+		}
+
+		// handle string and dates types
+		switch v := param.Data.(type) {
+		case *time.Time:
+			// zero value case - empty case
+			if len(scanData) == 0 {
+				continue
+			}
+
+			// parse value
+			ti, err := time.Parse(time.RFC3339Nano, scanData)
+			if err != nil {
+				WriteError(w, http.StatusBadRequest, &Error{
+					Title:  fmt.Sprintf("invalid time value for %s", param.Name),
+					Detail: fmt.Sprintf("time value not in RFC3339 format got: %q", scanData),
+					Source: &map[string]interface{}{
+						"parameter": param.Name,
+					},
+				})
+				return false
+			}
+			*v = ti
+			continue
+		case *string:
+			*v = scanData
+			continue
 		}
 
 		n, _ := fmt.Sscan(scanData, param.Data) // nolint: gosec

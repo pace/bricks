@@ -7,6 +7,7 @@ import (
 	"encoding/json"
 	"net/http/httptest"
 	"testing"
+	"time"
 )
 
 func TestScanNumericParametersInPath(t *testing.T) {
@@ -251,6 +252,62 @@ func TestScanNumericParametersInQueryFloatArrayFail(t *testing.T) {
 	}
 	if r := "num"; (*errObj.Source)["parameter"] != r {
 		t.Errorf("expected source parameter %q got: %q", r, (*errObj.Source)["parameter"])
+	}
+}
+
+func TestScanStringParameters(t *testing.T) {
+	req := httptest.NewRequest("GET", "/foo?value0=12%20asdd&value1=", nil)
+	rec := httptest.NewRecorder()
+	var param0 string
+	var param1 string
+	ok := ScanParameters(rec, req,
+		&ScanParameter{&param0, ScanInQuery, "", "value0"},
+	)
+
+	// Parsing
+	if !ok {
+		t.Errorf("expected the scanning to be successful")
+	}
+
+	// string
+	if param0 != "12 asdd" {
+		t.Errorf("expected parsing result %#v got: %#v", "12 asdd", param0)
+	}
+	if param1 != "" {
+		t.Errorf("expected parsing result %#v got: %#v", "", param1)
+	}
+}
+
+func TestScanTimeParameters(t *testing.T) {
+	req := httptest.NewRequest("GET", "/foo?value0=1937-01-01T12:00:27.87%2B00:20&value1=&value2=1937-01-01T12:00:27.87Z00:20", nil)
+	rec := httptest.NewRecorder()
+	var param0 time.Time
+	var param1 time.Time
+	var param2 time.Time
+	ok := ScanParameters(rec, req,
+		&ScanParameter{&param0, ScanInQuery, "", "value0"},
+		&ScanParameter{&param1, ScanInQuery, "", "value1"},
+		&ScanParameter{&param2, ScanInQuery, "", "value2"},
+	)
+
+	// Parsing
+	if ok {
+		t.Errorf("expected the scanning to be not successful, %v, %v, %v", param0, param1, param2)
+	}
+
+	// time
+	ti, err := time.Parse(time.RFC3339Nano, "1937-01-01T12:00:27.87+00:20")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !param0.Equal(ti) {
+		t.Errorf("expected parsing result %q got: %q", ti, param0)
+	}
+	if !param1.IsZero() {
+		t.Errorf("expected zero due to err as parsing result, got: %q", param1)
+	}
+	if !param2.IsZero() {
+		t.Errorf("expected zero due to err as parsing result, got: %q", param2)
 	}
 }
 
