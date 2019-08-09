@@ -83,7 +83,7 @@ github.com/rs/zerolog/internal/json
 github.com/spf13/cobra
 # github.com/spf13/pflag v1.0.2
 github.com/spf13/pflag
-# github.com/streadway/handy v0.0.0-20190108123426-d5acb3125c2a
+# github.com/streadway/handy v0.0.0-20190108123426-d5acb3125c2a => github.com/Teelevision/handy v0.0.0-20190809134549-d074bcaebcac
 github.com/streadway/handy/retry
 # github.com/uber/jaeger-client-go v2.14.0+incompatible
 github.com/uber/jaeger-client-go/config
