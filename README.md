@@ -56,3 +56,14 @@ Read our [contributors guide](CONTRIBUTING.md).
 |-|-|
 | `PACE_BRICKS_EDITOR` |  The path to the editor that should be used for opening a project. Defaults to `$EDITOR`. |
 | `PACE_BRICKS_PATH` | The path where new project should be created. Defaults to `$HOME/PACE`. |
+
+## Bugs
+
+If you experience this error: https://github.com/golang/go/issues/33563
+
+Add this to your `go.mod`:
+
+`replace github.com/streadway/handy => github.com/Teelevision/handy
+v0.0.0-20190809134549-d074bcaebcac`
+
+More details: https://github.com/golang/go/issues/33566
