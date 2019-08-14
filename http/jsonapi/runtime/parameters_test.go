@@ -256,7 +256,7 @@ func TestScanNumericParametersInQueryFloatArrayFail(t *testing.T) {
 }
 
 func TestScanStringParameters(t *testing.T) {
-	req := httptest.NewRequest("GET", "/foo?value0=12%20asdd&value1=", nil)
+	req := httptest.NewRequest("GET", "/foo?value0=12%20asd+d&value1=", nil)
 	rec := httptest.NewRecorder()
 	var param0 string
 	var param1 string
@@ -270,8 +270,8 @@ func TestScanStringParameters(t *testing.T) {
 	}
 
 	// string
-	if param0 != "12 asdd" {
-		t.Errorf("expected parsing result %#v got: %#v", "12 asdd", param0)
+	if param0 != "12 asd d" {
+		t.Errorf("expected parsing result %#v got: %#v", "12 asd d", param0)
 	}
 	if param1 != "" {
 		t.Errorf("expected parsing result %#v got: %#v", "", param1)
