@@ -6,12 +6,24 @@
 package jsonapi
 
 import (
+	"io"
+	"io/ioutil"
 	"net/http"
 	"strconv"
 	"time"
 
-	"github.com/prometheus/client_golang/prometheus"
 	"github.com/pace/bricks/http/oauth2"
+	"github.com/prometheus/client_golang/prometheus"
+)
+
+const (
+	kb = 1024
+	mb = kb * kb
+)
+
+const (
+	TypeRequest  = "req"
+	TypeResponse = "resp"
 )
 
 var (
@@ -29,11 +41,23 @@ var (
 		},
 		[]string{"method", "path", "service"},
 	)
+	paceAPIHTTPSizeBytes = prometheus.NewHistogramVec(
+		prometheus.HistogramOpts{
+			Name: "pace_api_http_size_bytes",
+			Help: "Collect request and response body size for each API endpoint partitioned by method, path and service",
+			Buckets: []float64{
+				100, kb, 10 * kb, 100 * kb,
+				1 * mb, 5 * mb, 10 * mb, 100 * mb,
+			},
+		},
+		[]string{"method", "path", "service", "type"},
+	)
 )
 
 func init() {
 	prometheus.MustRegister(paceAPIHTTPRequestTotal)
 	prometheus.MustRegister(paceAPIHTTPRequestDurationSeconds)
+	prometheus.MustRegister(paceAPIHTTPSizeBytes)
 }
 
 // Metric is an http.ResponseWriter implementing metrics collector
@@ -44,18 +68,37 @@ type Metric struct {
 	http.ResponseWriter
 	request      *http.Request
 	requestStart time.Time
+	sizeWritten  int
 }
 
 // NewMetric creates a new metric collector (per request) with given
-// service and path (pattern! not the request path)
+// service and path (pattern! not the request path) and collects the
+// pace_api_http_size_bytes histogram metric.
 func NewMetric(serviceName, path string, w http.ResponseWriter, r *http.Request) *Metric {
-	return &Metric{
+	m := Metric{
 		serviceName:    serviceName,
 		path:           path,
 		ResponseWriter: w,
 		request:        r,
 		requestStart:   time.Now(),
 	}
+
+	// Collect pace_api_http_size_bytes histogram metric for the request and response.
+	// Now we start our counters to count how many bytes are read from the request and
+	// to the response body. Once the body is closed (which the server always does,
+	// according to the http.Request.Body documentation) we add our readings to the
+	// metrics. This is basically a callback after the handler finished.
+	// A special case is when the handler did not read the body. In that case our
+	// lenCallbackReader counts the length of the rest as well (by reading it).
+	r.Body = &lenCallbackReader{
+		reader: r.Body,
+		onEOF: func(size int) {
+			AddPaceAPIHTTPSizeBytes(float64(size), r.Method, path, serviceName, TypeRequest)
+			AddPaceAPIHTTPSizeBytes(float64(m.sizeWritten), r.Method, path, serviceName, TypeResponse)
+		},
+	}
+
+	return &m
 }
 
 // WriteHeader captures the status code for metric submission and
@@ -67,6 +110,13 @@ func (m *Metric) WriteHeader(statusCode int) {
 	duration := float64(time.Since(m.requestStart).Nanoseconds()) / float64(time.Second)
 	AddPaceAPIHTTPRequestDurationSeconds(duration, m.request.Method, m.path, m.serviceName)
 	m.ResponseWriter.WriteHeader(statusCode)
+}
+
+// Write captures the length of the response body.
+func (m *Metric) Write(p []byte) (int, error) {
+	size, err := m.ResponseWriter.Write(p)
+	m.sizeWritten += size
+	return size, err
 }
 
 // IncPaceAPIHTTPRequestTotal increments the pace_api_http_request_total counter metric
@@ -87,4 +137,35 @@ func AddPaceAPIHTTPRequestDurationSeconds(duration float64, method, path, servic
 		"path":    path,
 		"service": service,
 	}).Observe(duration)
+}
+
+// AddPaceAPIHTTPSizeBytes adds an observed value for the pace_api_http_size_bytes histogram metric.
+func AddPaceAPIHTTPSizeBytes(size float64, method, path, service, requestOrResponse string) {
+	paceAPIHTTPSizeBytes.With(prometheus.Labels{
+		"method":  method,
+		"path":    path,
+		"service": service,
+		"type":    requestOrResponse,
+	}).Observe(size)
+}
+
+// lenCallbackReader is a reader that reports the total size before closing
+type lenCallbackReader struct {
+	reader io.ReadCloser
+	size   int
+	onEOF  func(int)
+}
+
+func (r *lenCallbackReader) Read(p []byte) (int, error) {
+	n, err := r.reader.Read(p)
+	r.size += n
+	return n, err
+}
+
+func (r *lenCallbackReader) Close() error {
+	// read everything left
+	n, _ := io.Copy(ioutil.Discard, r.reader)
+	r.size += int(n)
+	r.onEOF(r.size)
+	return r.reader.Close()
 }
