@@ -506,10 +506,42 @@ func (g *Generator) buildHandler(method string, op *openapi3.Operation, pattern 
 				// otherwise directly call the service
 				if requestBody {
 					g.Line().Comment("Unmarshal the service request body")
-					g.If(jen.Qual(pkgJSONAPIRuntime, "Unmarshal").Call(
-						jen.Id("w"),
-						jen.Id("r"),
-						jen.Op("&").Id("request").Dot("Content"))).Block(invokeService)
+					isArray := false
+					mt := op.RequestBody.Value.Content.Get(jsonapiContent)
+					if mt != nil {
+						data := mt.Schema.Value.Properties["data"]
+						if data != nil && data.Value.Type == "array" {
+							isArray = true
+						}
+					}
+					if isArray {
+						typeName := nameFromSchemaRef(mt.Schema.Value.Properties["data"].Value.Items)
+						g.List(jen.Id("ok"), jen.Id("data")).Op(":=").
+							Qual(pkgJSONAPIRuntime, "UnmarshalMany").
+							Call(
+								jen.Id("w"),
+								jen.Id("r"),
+								jen.Qual("reflect", "TypeOf").Call(jen.New(jen.Id(typeName))),
+							)
+						g.If(jen.Id("ok")).Block(
+							jen.Comment("Move the data"),
+							jen.For(jen.List(jen.Id("_"), jen.Id("elem")).Op(":=").Range().Call(jen.Id("data"))).
+								Block(
+									jen.Id("request").Dot("Content").
+										Op("=").
+										Append(
+											jen.Id("request").Dot("Content"),
+											jen.Id("e").Assert(jen.Id("*"+typeName)),
+										),
+								),
+							invokeService,
+						)
+					} else {
+						g.If(jen.Qual(pkgJSONAPIRuntime, "Unmarshal").Call(
+							jen.Id("w"),
+							jen.Id("r"),
+							jen.Op("&").Id("request").Dot("Content"))).Block(invokeService)
+					}
 				} else {
 					g.Line().Add(invokeService)
 				}
