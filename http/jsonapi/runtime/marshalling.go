@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"net"
 	"net/http"
+	"reflect"
 
 	"github.com/google/jsonapi"
 	"github.com/pace/bricks/maintenance/log"
@@ -49,6 +50,49 @@ func Unmarshal(w http.ResponseWriter, r *http.Request, data interface{}) bool {
 
 	// validate request
 	return ValidateRequest(w, r, data)
+}
+
+// UnmarshalMany processes the request content that has an array of objects and fills passed data struct with the
+// correct jsonapi content. After un-marshaling the struct will be validated with
+// specified go-validator struct tags.
+// In case of an error, an jsonapi error message will be directly send to the client
+func UnmarshalMany(w http.ResponseWriter, r *http.Request, t reflect.Type) (bool, []interface{}) {
+	// don't leak , but error can't be handled
+	defer r.Body.Close() // nolint: errcheck
+
+	// verify that the client accepts our response
+	// Note: logically this would be done before marshalling,
+	//       to prevent stale backend/frontend state we respond before
+	// 		 Additionally, marshal has no access to the request struct
+	accept := r.Header.Get("Accept")
+	if accept != JSONAPIContentType {
+		WriteError(w, http.StatusNotAcceptable,
+			fmt.Errorf("request needs to be send with %q header, containing value: %q", "Accept", JSONAPIContentType))
+		return false, nil
+	}
+
+	// if the client didn't send a content type, don't verify
+	contentType := r.Header.Get("Content-Type")
+	if contentType != JSONAPIContentType {
+		WriteError(w, http.StatusUnsupportedMediaType,
+			fmt.Errorf("request needs to be send with %q header, containing value: %q", "Content-Type", JSONAPIContentType))
+		return false, nil
+	}
+
+	// parse request
+	data, err := jsonapi.UnmarshalManyPayload(r.Body, t)
+	if err != nil {
+		WriteError(w, http.StatusUnprocessableEntity,
+			fmt.Errorf("can't parse content: %v", err))
+		return false, nil
+	}
+	// validate request
+	for _, elem := range data {
+		if !ValidateStruct(w, r, elem, "pointer") {
+			return false, nil
+		}
+	}
+	return true, data
 }
 
 // Marshal the given data and writes them into the response writer, sets
