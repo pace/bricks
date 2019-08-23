@@ -511,7 +511,9 @@ func (g *Generator) buildHandler(method string, op *openapi3.Operation, pattern 
 					if mt != nil {
 						data := mt.Schema.Value.Properties["data"]
 						if data != nil && data.Value.Type == "array" {
-							isArray = true
+							if data.Ref != "" && data.Value.Items.Ref != "" {
+								isArray = true
+							}
 						}
 					}
 					if isArray {
@@ -531,7 +533,7 @@ func (g *Generator) buildHandler(method string, op *openapi3.Operation, pattern 
 										Op("=").
 										Append(
 											jen.Id("request").Dot("Content"),
-											jen.Id("e").Assert(jen.Id("*"+typeName)),
+											jen.Id("elem").Assert(jen.Id("*"+typeName)),
 										),
 								),
 							invokeService,

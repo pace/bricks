@@ -24,6 +24,9 @@ jsonapi:
 	go run $(JSONAPIGEN) -pkg pay \
 		-path $(JSONAPITEST)/pay/open-api_test.go \
 		-source $(JSONAPITEST)/pay/open-api.json
+	go run $(JSONAPIGEN) -pkg articles \
+		-path $(JSONAPITEST)/articles/open-api_test.go \
+		-source $(JSONAPITEST)/articles/open-api.json
 
 build:
 	docker build .
