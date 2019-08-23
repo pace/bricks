@@ -42,3 +42,5 @@ require (
 	golang.org/x/net v0.0.0-20180911220305-26e67e76b6c3 // indirect
 	golang.org/x/sync v0.0.0-20190227155943-e225da77a7e6 // indirect
 )
+
+replace github.com/streadway/handy => github.com/Teelevision/handy v0.0.0-20190809134549-d074bcaebcac

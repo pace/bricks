@@ -37,7 +37,7 @@ func Context() retry.Retryer {
 		ctx := a.Request.Context()
 		select {
 		case <-ctx.Done():
-			return retry.Abort, nil
+			return retry.Abort, ctx.Err()
 		default:
 			return retry.Ignore, nil
 		}
