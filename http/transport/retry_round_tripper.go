@@ -67,12 +67,12 @@ func (l *RetryRoundTripper) Transport() http.RoundTripper {
 
 // SetTransport sets the RoundTripper to make HTTP requests
 func (l *RetryRoundTripper) SetTransport(rt http.RoundTripper) {
-	l.transport = transportWithAttempt(rt)
-	l.RetryTransport.Next = l.Transport()
+	l.transport = rt
 }
 
 // RoundTrip executes a HTTP request with retrying
 func (l *RetryRoundTripper) RoundTrip(req *http.Request) (*http.Response, error) {
+	l.RetryTransport.Next = transportWithAttempt(l.Transport())
 	resp, err := l.RetryTransport.RoundTrip(req)
 
 	if err != nil {
