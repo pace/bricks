@@ -36,6 +36,19 @@
             "required": true,
             "description": "Gas station ID",
             "example": "93db55b6-a9ab-4597-a253-49a1718cea0a"
+          },
+          {
+            "in": "header",
+            "name": "Accept-Language",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "de",
+                "en"
+              ]
+            },
+            "required": false,
+            "example": "de"
           }
         ],
         "requestBody": {

@@ -460,7 +460,16 @@ func (g *Generator) buildHandler(method string, op *openapi3.Operation, pattern 
 				// vars in case parameters are given
 				g.Line().Comment("Scan and validate incoming request parameters")
 				if len(route.operation.Parameters) > 0 {
-					g.Id("vars").Op(":=").Qual(pkgGorillaMux, "Vars").Call(jen.Id("r"))
+					// path parameters need the vars
+					needVars := false
+					for _, param := range route.operation.Parameters {
+						if param.Value.In == "path" {
+							needVars = true
+						}
+					}
+					if needVars {
+						g.Id("vars").Op(":=").Qual(pkgGorillaMux, "Vars").Call(jen.Id("r"))
+					}
 
 					// all parameters need to be parsed
 					g.If().Op("!").Qual(pkgJSONAPIRuntime, "ScanParameters").CallFunc(func(g *jen.Group) {
@@ -469,12 +478,14 @@ func (g *Generator) buildHandler(method string, op *openapi3.Operation, pattern 
 
 						for _, param := range route.operation.Parameters {
 							name := generateParamName(param)
-							g.Op("&").Qual(pkgJSONAPIRuntime, "ScanParameter").Block(
-								jen.Id("Data").Op(":").Op("&").Id("request").Dot(name).Op(","),
-								jen.Id("Location").Op(":").Qual(pkgJSONAPIRuntime, "ScanIn"+strings.Title(param.Value.In)).Op(","),
-								jen.Id("Input").Op(":").Id("vars").Index(jen.Lit(param.Value.Name)).Op(","),
-								jen.Id("Name").Op(":").Lit(param.Value.Name).Op(","),
-							)
+							g.Op("&").Qual(pkgJSONAPIRuntime, "ScanParameter").BlockFunc(func(g *jen.Group) {
+								g.Id("Data").Op(":").Op("&").Id("request").Dot(name).Op(",")
+								g.Id("Location").Op(":").Qual(pkgJSONAPIRuntime, "ScanIn"+strings.Title(param.Value.In)).Op(",")
+								if param.Value.In == "path" {
+									g.Id("Input").Op(":").Id("vars").Index(jen.Lit(param.Value.Name)).Op(",")
+								}
+								g.Id("Name").Op(":").Lit(param.Value.Name).Op(",")
+							})
 						}
 					}).Block(jen.Return())
 				}

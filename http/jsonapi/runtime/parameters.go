@@ -18,6 +18,8 @@ const (
 	ScanInPath ScanIn = iota
 	// ScanInQuery hints the scanner to scan the request url query
 	ScanInQuery
+	// ScanInHeader ints the scanner to scan the request header
+	ScanInHeader
 )
 
 // ScanParameter configured the ScanParameters function
@@ -86,6 +88,8 @@ func ScanParameters(w http.ResponseWriter, r *http.Request, parameters ...*ScanP
 
 			// single parameter scanning
 			scanData = strings.Join(input, " ")
+		case ScanInHeader:
+			scanData = r.Header.Get(param.Name)
 		default:
 			panic(fmt.Errorf("impossible scanning location: %d", param.Location))
 		}

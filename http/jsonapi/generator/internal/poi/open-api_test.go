@@ -264,26 +264,21 @@ func GetAppsHandler(service Service) http.Handler {
 		}
 
 		// Scan and validate incoming request parameters
-		vars := mux.Vars(r)
 		if !runtime.ScanParameters(w, r, &runtime.ScanParameter{
 			Data:     &request.ParamPageNumber,
 			Location: runtime.ScanInQuery,
-			Input:    vars["page[number]"],
 			Name:     "page[number]",
 		}, &runtime.ScanParameter{
 			Data:     &request.ParamPageSize,
 			Location: runtime.ScanInQuery,
-			Input:    vars["page[size]"],
 			Name:     "page[size]",
 		}, &runtime.ScanParameter{
 			Data:     &request.ParamFilterAppType,
 			Location: runtime.ScanInQuery,
-			Input:    vars["filter[appType]"],
 			Name:     "filter[appType]",
 		}, &runtime.ScanParameter{
 			Data:     &request.ParamFilterQuery,
 			Location: runtime.ScanInQuery,
-			Input:    vars["filter[query]"],
 			Name:     "filter[query]",
 		}) {
 			return
@@ -357,46 +352,37 @@ func CheckForPaceAppHandler(service Service) http.Handler {
 		}
 
 		// Scan and validate incoming request parameters
-		vars := mux.Vars(r)
 		if !runtime.ScanParameters(w, r, &runtime.ScanParameter{
 			Data:     &request.ParamPageNumber,
 			Location: runtime.ScanInQuery,
-			Input:    vars["page[number]"],
 			Name:     "page[number]",
 		}, &runtime.ScanParameter{
 			Data:     &request.ParamPageSize,
 			Location: runtime.ScanInQuery,
-			Input:    vars["page[size]"],
 			Name:     "page[size]",
 		}, &runtime.ScanParameter{
 			Data:     &request.ParamFilterLatitude,
 			Location: runtime.ScanInQuery,
-			Input:    vars["filter[latitude]"],
 			Name:     "filter[latitude]",
 		}, &runtime.ScanParameter{
 			Data:     &request.ParamFilterLongitude,
 			Location: runtime.ScanInQuery,
-			Input:    vars["filter[longitude]"],
 			Name:     "filter[longitude]",
 		}, &runtime.ScanParameter{
 			Data:     &request.ParamFilterGpsSource,
 			Location: runtime.ScanInQuery,
-			Input:    vars["filter[gpsSource]"],
 			Name:     "filter[gpsSource]",
 		}, &runtime.ScanParameter{
 			Data:     &request.ParamFilterAppType,
 			Location: runtime.ScanInQuery,
-			Input:    vars["filter[appType]"],
 			Name:     "filter[appType]",
 		}, &runtime.ScanParameter{
 			Data:     &request.ParamFilterAccuracy,
 			Location: runtime.ScanInQuery,
-			Input:    vars["filter[accuracy]"],
 			Name:     "filter[accuracy]",
 		}, &runtime.ScanParameter{
 			Data:     &request.ParamFilterDeviation,
 			Location: runtime.ScanInQuery,
-			Input:    vars["filter[deviation]"],
 			Name:     "filter[deviation]",
 		}) {
 			return
@@ -650,26 +636,21 @@ func GetEventsHandler(service Service) http.Handler {
 		}
 
 		// Scan and validate incoming request parameters
-		vars := mux.Vars(r)
 		if !runtime.ScanParameters(w, r, &runtime.ScanParameter{
 			Data:     &request.ParamPageNumber,
 			Location: runtime.ScanInQuery,
-			Input:    vars["page[number]"],
 			Name:     "page[number]",
 		}, &runtime.ScanParameter{
 			Data:     &request.ParamPageSize,
 			Location: runtime.ScanInQuery,
-			Input:    vars["page[size]"],
 			Name:     "page[size]",
 		}, &runtime.ScanParameter{
 			Data:     &request.ParamFilterSourceID,
 			Location: runtime.ScanInQuery,
-			Input:    vars["filter[sourceId]"],
 			Name:     "filter[sourceId]",
 		}, &runtime.ScanParameter{
 			Data:     &request.ParamFilterUserID,
 			Location: runtime.ScanInQuery,
-			Input:    vars["filter[userId]"],
 			Name:     "filter[userId]",
 		}) {
 			return
@@ -707,71 +688,57 @@ func GetGasStationsHandler(service Service) http.Handler {
 		}
 
 		// Scan and validate incoming request parameters
-		vars := mux.Vars(r)
 		if !runtime.ScanParameters(w, r, &runtime.ScanParameter{
 			Data:     &request.ParamPageNumber,
 			Location: runtime.ScanInQuery,
-			Input:    vars["page[number]"],
 			Name:     "page[number]",
 		}, &runtime.ScanParameter{
 			Data:     &request.ParamPageSize,
 			Location: runtime.ScanInQuery,
-			Input:    vars["page[size]"],
 			Name:     "page[size]",
 		}, &runtime.ScanParameter{
 			Data:     &request.ParamFilterPoiType,
 			Location: runtime.ScanInQuery,
-			Input:    vars["filter[poiType]"],
 			Name:     "filter[poiType]",
 		}, &runtime.ScanParameter{
 			Data:     &request.ParamFilterAppType,
 			Location: runtime.ScanInQuery,
-			Input:    vars["filter[appType]"],
 			Name:     "filter[appType]",
 		}, &runtime.ScanParameter{
 			Data:     &request.ParamFilterGpsSource,
 			Location: runtime.ScanInQuery,
-			Input:    vars["filter[gpsSource]"],
 			Name:     "filter[gpsSource]",
 		}, &runtime.ScanParameter{
 			Data:     &request.ParamInclude,
 			Location: runtime.ScanInQuery,
-			Input:    vars["include"],
 			Name:     "include",
 		}, &runtime.ScanParameter{
 			Data:     &request.ParamFilterLatitude,
 			Location: runtime.ScanInQuery,
-			Input:    vars["filter[latitude]"],
 			Name:     "filter[latitude]",
 		}, &runtime.ScanParameter{
 			Data:     &request.ParamFilterLongitude,
 			Location: runtime.ScanInQuery,
-			Input:    vars["filter[longitude]"],
 			Name:     "filter[longitude]",
 		}, &runtime.ScanParameter{
 			Data:     &request.ParamFilterRadius,
 			Location: runtime.ScanInQuery,
-			Input:    vars["filter[radius]"],
 			Name:     "filter[radius]",
 		}, &runtime.ScanParameter{
 			Data:     &request.ParamFilterAccuracy,
 			Location: runtime.ScanInQuery,
-			Input:    vars["filter[accuracy]"],
 			Name:     "filter[accuracy]",
 		}, &runtime.ScanParameter{
 			Data:     &request.ParamFilterDeviation,
 			Location: runtime.ScanInQuery,
-			Input:    vars["filter[deviation]"],
 			Name:     "filter[deviation]",
 		}, &runtime.ScanParameter{
 			Data:     &request.ParamFilterBoundingBox,
 			Location: runtime.ScanInQuery,
-			Input:    vars["filter[boundingBox]"],
 			Name:     "filter[boundingBox]",
 		}, &runtime.ScanParameter{
 			Data:     &request.ParamFilterPath,
 			Location: runtime.ScanInQuery,
-			Input:    vars["filter[path]"],
 			Name:     "filter[path]",
 		}) {
 			return
@@ -851,31 +818,25 @@ func GetPoisHandler(service Service) http.Handler {
 		}
 
 		// Scan and validate incoming request parameters
-		vars := mux.Vars(r)
 		if !runtime.ScanParameters(w, r, &runtime.ScanParameter{
 			Data:     &request.ParamPageNumber,
 			Location: runtime.ScanInQuery,
-			Input:    vars["page[number]"],
 			Name:     "page[number]",
 		}, &runtime.ScanParameter{
 			Data:     &request.ParamPageSize,
 			Location: runtime.ScanInQuery,
-			Input:    vars["page[size]"],
 			Name:     "page[size]",
 		}, &runtime.ScanParameter{
 			Data:     &request.ParamFilterPoiType,
 			Location: runtime.ScanInQuery,
-			Input:    vars["filter[poiType]"],
 			Name:     "filter[poiType]",
 		}, &runtime.ScanParameter{
 			Data:     &request.ParamFilterAppID,
 			Location: runtime.ScanInQuery,
-			Input:    vars["filter[appId]"],
 			Name:     "filter[appId]",
 		}, &runtime.ScanParameter{
 			Data:     &request.ParamFilterQuery,
 			Location: runtime.ScanInQuery,
-			Input:    vars["filter[query]"],
 			Name:     "filter[query]",
 		}) {
 			return
@@ -1000,31 +961,25 @@ func GetPoliciesHandler(service Service) http.Handler {
 		}
 
 		// Scan and validate incoming request parameters
-		vars := mux.Vars(r)
 		if !runtime.ScanParameters(w, r, &runtime.ScanParameter{
 			Data:     &request.ParamPageNumber,
 			Location: runtime.ScanInQuery,
-			Input:    vars["page[number]"],
 			Name:     "page[number]",
 		}, &runtime.ScanParameter{
 			Data:     &request.ParamPageSize,
 			Location: runtime.ScanInQuery,
-			Input:    vars["page[size]"],
 			Name:     "page[size]",
 		}, &runtime.ScanParameter{
 			Data:     &request.ParamFilterPoiType,
 			Location: runtime.ScanInQuery,
-			Input:    vars["filter[poiType]"],
 			Name:     "filter[poiType]",
 		}, &runtime.ScanParameter{
 			Data:     &request.ParamFilterCountryID,
 			Location: runtime.ScanInQuery,
-			Input:    vars["filter[countryId]"],
 			Name:     "filter[countryId]",
 		}, &runtime.ScanParameter{
 			Data:     &request.ParamFilterUserID,
 			Location: runtime.ScanInQuery,
-			Input:    vars["filter[userId]"],
 			Name:     "filter[userId]",
 		}) {
 			return
@@ -1140,26 +1095,21 @@ func GetSourcesHandler(service Service) http.Handler {
 		}
 
 		// Scan and validate incoming request parameters
-		vars := mux.Vars(r)
 		if !runtime.ScanParameters(w, r, &runtime.ScanParameter{
 			Data:     &request.ParamPageNumber,
 			Location: runtime.ScanInQuery,
-			Input:    vars["page[number]"],
 			Name:     "page[number]",
 		}, &runtime.ScanParameter{
 			Data:     &request.ParamPageSize,
 			Location: runtime.ScanInQuery,
-			Input:    vars["page[size]"],
 			Name:     "page[size]",
 		}, &runtime.ScanParameter{
 			Data:     &request.ParamFilterPoiType,
 			Location: runtime.ScanInQuery,
-			Input:    vars["filter[poiType]"],
 			Name:     "filter[poiType]",
 		}, &runtime.ScanParameter{
 			Data:     &request.ParamFilterName,
 			Location: runtime.ScanInQuery,
-			Input:    vars["filter[name]"],
 			Name:     "filter[name]",
 		}) {
 			return
