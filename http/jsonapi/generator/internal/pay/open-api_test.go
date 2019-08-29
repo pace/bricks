@@ -297,11 +297,9 @@ func GetPaymentMethodsIncludingCreditCheckHandler(service Service) http.Handler 
 		}
 
 		// Scan and validate incoming request parameters
-		vars := mux.Vars(r)
 		if !runtime.ScanParameters(w, r, &runtime.ScanParameter{
 			Data:     &request.ParamInclude,
 			Location: runtime.ScanInQuery,
-			Input:    vars["include"],
 			Name:     "include",
 		}) {
 			return
@@ -339,11 +337,9 @@ func GetPaymentMethodsIncludingPaymentTokenHandler(service Service) http.Handler
 		}
 
 		// Scan and validate incoming request parameters
-		vars := mux.Vars(r)
 		if !runtime.ScanParameters(w, r, &runtime.ScanParameter{
 			Data:     &request.ParamInclude,
 			Location: runtime.ScanInQuery,
-			Input:    vars["include"],
 			Name:     "include",
 		}) {
 			return

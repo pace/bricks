@@ -193,6 +193,10 @@ func ApproachingAtTheForecourtHandler(service Service) http.Handler {
 			Location: runtime.ScanInPath,
 			Input:    vars["gasStationId"],
 			Name:     "gasStationId",
+		}, &runtime.ScanParameter{
+			Data:     &request.ParamAcceptLanguage,
+			Location: runtime.ScanInHeader,
+			Name:     "Accept-Language",
 		}) {
 			return
 		}
@@ -293,17 +297,14 @@ func WaitOnPumpStatusChangeHandler(service Service) http.Handler {
 		}, &runtime.ScanParameter{
 			Data:     &request.ParamUpdate,
 			Location: runtime.ScanInQuery,
-			Input:    vars["update"],
 			Name:     "update",
 		}, &runtime.ScanParameter{
 			Data:     &request.ParamLastStatus,
 			Location: runtime.ScanInQuery,
-			Input:    vars["lastStatus"],
 			Name:     "lastStatus",
 		}, &runtime.ScanParameter{
 			Data:     &request.ParamTimeout,
 			Location: runtime.ScanInQuery,
-			Input:    vars["timeout"],
 			Name:     "timeout",
 		}) {
 			return
@@ -414,9 +415,10 @@ func (w *approachingAtTheForecourtResponseWriter) Created(data ApproachingRespon
 
 // ApproachingAtTheForecourtRequest ...
 type ApproachingAtTheForecourtRequest struct {
-	Request           *http.Request      `valid:"-"`
-	Content           ApproachingRequest `valid:"-"`
-	ParamGasStationID string             `valid:"required,uuid"`
+	Request             *http.Request      `valid:"-"`
+	Content             ApproachingRequest `valid:"-"`
+	ParamGasStationID   string             `valid:"required,uuid"`
+	ParamAcceptLanguage string             `valid:"optional,in(de|en)"`
 }
 
 /*

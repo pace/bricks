@@ -72,10 +72,10 @@ func TestRetryRoundTripper(t *testing.T) {
 		// cancel directly, so the original request is performed and
 		// then the retry mechanism aborts on the second attempt
 		cancel()
-		_, err := rt.RoundTrip(req.WithContext(ctx))
+		resp, err := rt.RoundTrip(req.WithContext(ctx))
 
-		if err != nil {
-			t.Fatalf("Expected err to be nil, got %#v", err)
+		if resp == nil && err == nil {
+			t.Fatalf("Expected err or response")
 		}
 		if ex, got := 1, tr.attempts; got != ex {
 			t.Errorf("Expected %d attempts, got %d", ex, got)

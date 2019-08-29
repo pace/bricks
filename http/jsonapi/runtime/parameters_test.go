@@ -254,6 +254,31 @@ func TestScanNumericParametersInQueryFloatArrayFail(t *testing.T) {
 	}
 }
 
+func TestScanParametersHeader(t *testing.T) {
+	req := httptest.NewRequest("GET", "/foo", nil)
+	req.Header.Set("num", "123")
+	rec := httptest.NewRecorder()
+	var param int
+	ok := ScanParameters(rec, req,
+		&ScanParameter{&param, ScanInHeader, "", "num"},
+	)
+
+	// Parsing
+	if !ok {
+		t.Errorf("expected the scanning to be failing")
+	}
+
+	// Parsing
+	if !ok {
+		t.Errorf("expected the scanning to be successful")
+	}
+
+	// Iint
+	if param != int(123) {
+		t.Errorf("expected parsing result %#v got: %#v", int(123), param)
+	}
+}
+
 func TestScanParametersError(t *testing.T) {
 	req := httptest.NewRequest("GET", "/foo?num=-12", nil)
 	rec := httptest.NewRecorder()
