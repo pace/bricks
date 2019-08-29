@@ -9,6 +9,7 @@ import (
 	"net"
 	"net/http"
 	"net/http/httptest"
+	"reflect"
 	"strings"
 	"testing"
 )
@@ -111,6 +112,74 @@ func TestUnmarshalArticle(t *testing.T) {
 		t.Errorf("article.ID expected \"This is my first blog\" got: %q", article.Title)
 	}
 }
+
+func TestUnmarshalArticles(t *testing.T) {
+	rec := httptest.NewRecorder()
+	req := httptest.NewRequest("POST", "/", strings.NewReader(`{"data":[
+	{
+		"type":"article",
+		"id": "82180c8d-0ab6-4946-9298-61d3c8d13da4",
+		"attributes": {
+			"title": "This is the first article"
+		}
+	},
+	{
+		"type":"article",
+		"id": "f3bbdbac-903c-4f2f-9721-600a1201ee41",
+		"attributes": {
+			"title": "This is the second article"
+		}
+	}
+	]}`))
+	req.Header.Set("Accept", JSONAPIContentType)
+	req.Header.Set("Content-Type", JSONAPIContentType)
+	type Article struct {
+		ID    string `jsonapi:"primary,article" valid:"optional,uuid"`
+		Title string `jsonapi:"attr,title" valid:"required"`
+	}
+
+	ok, articles := UnmarshalMany(rec, req, reflect.TypeOf(new(Article)))
+
+	if !ok {
+		t.Error("Un-marshalling many should have been ok")
+	}
+
+	resp := rec.Result()
+	defer resp.Body.Close()
+	if resp.StatusCode != http.StatusOK {
+		t.Errorf("Expected status code %d got: %d", http.StatusOK, resp.StatusCode)
+		b, err := ioutil.ReadAll(resp.Body)
+		if err != nil {
+			t.Fatal(err)
+		}
+		t.Error(string(b[:]))
+	}
+
+	if len(articles) != 2 {
+		t.Errorf("Expected 2 articles, got %d", len(articles))
+	}
+	expected := []*Article{
+		&Article{
+			ID:    "82180c8d-0ab6-4946-9298-61d3c8d13da4",
+			Title: "This is the first article",
+		},
+		&Article{
+			ID:    "f3bbdbac-903c-4f2f-9721-600a1201ee41",
+			Title: "This is the second article",
+		},
+	}
+	for i := range articles {
+		got := articles[i].(*Article)
+		if expected[i].ID != got.ID {
+			t.Errorf("article.ID expected %q got: %q", expected[i].ID, got.ID)
+		}
+		if expected[i].Title != got.Title {
+			t.Errorf("article.ID expected \"%s\" got: %q", expected[i].ID, got.Title)
+		}
+	}
+
+}
+
 func TestMarshalArticle(t *testing.T) {
 	rec := httptest.NewRecorder()
 

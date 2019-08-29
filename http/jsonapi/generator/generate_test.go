@@ -18,6 +18,7 @@ func TestGenerator(t *testing.T) {
 		{"PACE Fueling API", "./internal/fueling/open-api_test.go", "./internal/fueling/open-api.json", "fueling"},
 		{"PACE Payment API", "./internal/pay/open-api_test.go", "./internal/pay/open-api.json", "pay"},
 		{"PACE POI API", "./internal/poi/open-api_test.go", "./internal/poi/open-api.json", "poi"},
+		{"Articles Test Service API", "./internal/articles/open-api_test.go", "./internal/articles/open-api.json", "articles"},
 	}
 
 	for _, testCase := range cases {
