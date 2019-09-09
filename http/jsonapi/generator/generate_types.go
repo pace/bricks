@@ -93,27 +93,9 @@ func (g *Generator) buildType(prefix string, stmt *jen.Statement, schema *openap
 				return nil
 			}
 			if val.AdditionalProperties.Value != nil {
-				switch val.AdditionalProperties.Value.Type {
-				case "boolean":
-					stmt.Bool()
-				case "integer":
-					if val.AdditionalProperties.Value.Format == "" {
-						stmt.Int()
-					}
-					if val.AdditionalProperties.Value.Format == "int32" {
-						stmt.Int32()
-					}
-					if val.AdditionalProperties.Value.Format == "int64" {
-						stmt.Int64()
-					}
-				case "number":
-					if val.AdditionalProperties.Value.Format == "float" {
-						stmt.Float32()
-					} else {
-						stmt.Float64()
-					}
-				case "string":
-					stmt.String()
+				err := g.goType(stmt, val.AdditionalProperties.Value, make(map[string]string))
+				if err != nil {
+					return err
 				}
 			}
 			return nil
