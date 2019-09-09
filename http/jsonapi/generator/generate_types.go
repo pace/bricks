@@ -76,6 +76,14 @@ func (g *Generator) buildType(prefix string, stmt *jen.Statement, schema *openap
 			}
 			return nil
 		}
+		if val.AdditionalPropertiesAllowed != nil && *val.AdditionalPropertiesAllowed {
+			stmt.Map(jen.String()).Interface()
+			return nil
+		}
+		if val.AdditionalProperties != nil && val.AdditionalProperties.Ref != "" {
+			stmt.Map(jen.String()).Op("*").Id(nameFromSchemaRef(val.AdditionalProperties))
+			return nil
+		}
 
 		if data := val.Properties["data"]; data != nil {
 			if data.Ref != "" {

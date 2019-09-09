@@ -226,6 +226,16 @@
                         }
                     }
                 }
+            },
+            "MapType1": {
+                "type": "object",
+                "additionalProperties": true
+            },
+            "MapType2": {
+                "type": "object",
+                "additionalProperties": {
+                    "$ref": "#/components/schemas/Comment"
+                }
             }
         }
     }
