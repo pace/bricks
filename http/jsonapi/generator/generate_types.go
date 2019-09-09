@@ -77,11 +77,45 @@ func (g *Generator) buildType(prefix string, stmt *jen.Statement, schema *openap
 			return nil
 		}
 		if val.AdditionalPropertiesAllowed != nil && *val.AdditionalPropertiesAllowed {
+			if len(val.Properties) > 0 {
+				log.Warnf("%s properties are ignored. Only %s of type map[string]interface{} is generated ", prefix, prefix)
+			}
 			stmt.Map(jen.String()).Interface()
 			return nil
 		}
-		if val.AdditionalProperties != nil && val.AdditionalProperties.Ref != "" {
-			stmt.Map(jen.String()).Op("*").Id(nameFromSchemaRef(val.AdditionalProperties))
+		if val.AdditionalProperties != nil {
+			if len(val.Properties) > 0 {
+				log.Warnf("%s properties are ignored. Only %s of type map[string]type is generated ", prefix, prefix)
+			}
+			stmt.Map(jen.String())
+			if val.AdditionalProperties.Ref != "" {
+				stmt.Op("*").Id(nameFromSchemaRef(val.AdditionalProperties))
+				return nil
+			}
+			if val.AdditionalProperties.Value != nil {
+				switch val.AdditionalProperties.Value.Type {
+				case "boolean":
+					stmt.Bool()
+				case "integer":
+					if val.AdditionalProperties.Value.Format == "" {
+						stmt.Int()
+					}
+					if val.AdditionalProperties.Value.Format == "int32" {
+						stmt.Int32()
+					}
+					if val.AdditionalProperties.Value.Format == "int64" {
+						stmt.Int64()
+					}
+				case "number":
+					if val.AdditionalProperties.Value.Format == "float" {
+						stmt.Float32()
+					} else {
+						stmt.Float64()
+					}
+				case "string":
+					stmt.String()
+				}
+			}
 			return nil
 		}
 

@@ -229,12 +229,48 @@
             },
             "MapType1": {
                 "type": "object",
-                "additionalProperties": true
+                "additionalProperties": true,
+                "properties": {
+                    "something": {
+                        "type": "string"
+                    }
+                }
             },
-            "MapType2": {
+            "MapType3": {
                 "type": "object",
                 "additionalProperties": {
                     "$ref": "#/components/schemas/Comment"
+                }
+            },
+            "MapTypeInt": {
+                "type": "object",
+                "additionalProperties": {
+                    "type": "integer",
+                    "format": "int64"
+                }
+            },
+            "MapTypeBool": {
+                "type": "object",
+                "additionalProperties": {
+                    "type": "boolean"
+                }
+            },
+            "MapTypeNumber": {
+                "type": "object",
+                "additionalProperties": {
+                    "type": "number",
+                    "format": "float"
+                }
+            },
+            "MapTypeString": {
+                "type": "object",
+                "additionalProperties": {
+                    "type": "string"
+                },
+                "properties": {
+                    "something": {
+                        "type": "string"
+                    }
                 }
             }
         }
