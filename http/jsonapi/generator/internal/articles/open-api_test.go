@@ -28,6 +28,24 @@ type InlineRef struct {
 	Something string `json:"something,omitempty" jsonapi:"attr,something,omitempty" valid:"optional"`
 }
 
+// MapType1 ...
+type MapType1 map[string]interface{}
+
+// MapType3 ...
+type MapType3 map[string]*Comment
+
+// MapTypeBool ...
+type MapTypeBool map[string]bool
+
+// MapTypeInt ...
+type MapTypeInt map[string]int64
+
+// MapTypeNumber ...
+type MapTypeNumber map[string]float32
+
+// MapTypeString ...
+type MapTypeString map[string]string
+
 /*
 UpdateArticleCommentsHandler handles request/response marshaling and validation for
  Patch /api/articles/{uuid}/relationships/comments
