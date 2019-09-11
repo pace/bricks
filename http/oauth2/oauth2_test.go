@@ -210,3 +210,12 @@ func TestUnsucessfulAccessors(t *testing.T) {
 		t.Fatalf("Expected hasScope to return false, got: %v", hasScope)
 	}
 }
+
+func TestWithBearerToken(t *testing.T) {
+	ctx := context.Background()
+	ctx = WithBearerToken(ctx, "some access token")
+	token, ok := BearerToken(ctx)
+	if !ok || token != "some access token" {
+		t.Error("could not store bearer token in context")
+	}
+}
