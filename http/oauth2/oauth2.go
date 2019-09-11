@@ -185,3 +185,10 @@ func tokenFromContext(ctx context.Context) *token {
 
 	return val.(*token)
 }
+
+// WithBearerToken returns a new context that has the given bearer token set.
+// Use BearerToken() to retrieve the token. Use Request() to obtain a request
+// with the Authorization header set accordingly.
+func WithBearerToken(ctx context.Context, bearerToken string) context.Context {
+	return context.WithValue(ctx, tokenKey, &token{value: bearerToken})
+}
