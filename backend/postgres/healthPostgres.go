@@ -31,7 +31,7 @@ func (h postgresHealthCheck) Name() string {
 func (h postgresHealthCheck) HealthCheck(currTime time.Time) error {
 	h.State.m.Lock()
 	defer h.State.m.Unlock()
-	if currTime.Sub(h.State.moment).Seconds() > float64(cfg.HealthMaxRequestInSec) {
+	if currTime.Sub(h.State.moment).Seconds() > float64(cfg.HealthMaxRequest) {
 		//Readcheck
 		errRead := h.pool.Select("1")
 		if errRead != nil {

@@ -9,7 +9,7 @@ import (
 
 type HealthCheck interface {
 	Name() string
-	InitHealthcheck() error
+	InitHealthCheck() error
 	HealthCheck(currTime time.Time) error
 	CleanUp() error
 }
@@ -17,11 +17,17 @@ type HealthCheck interface {
 type handler struct{}
 
 var checks []HealthCheck
+var initErrors = make(map[string]error)
 var router *mux.Router
 
 func (h *handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	for _, hc := range checks {
-		if err := hc.HealthCheck(time.Now()); err == nil {
+		if err := initErrors[hc.Name()]; err != nil {
+			w.Header().Set("Content-Type", "text/plain")
+			w.WriteHeader(http.StatusServiceUnavailable)
+			w.Write([]byte("Not OK:\n"[:])) // nolint: gosec,errcheck
+			w.Write([]byte(err.Error()[:])) // nolint: gosec,errcheck
+		} else if err := hc.HealthCheck(time.Now()); err == nil {
 			// to increase performance of the request set
 			// content type and write status code explicitly
 			w.Header().Set("Content-Type", "text/plain")
@@ -33,18 +39,27 @@ func (h *handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			w.Write([]byte("Not OK:\n"[:])) // nolint: gosec,errcheck
 			w.Write([]byte(err.Error()[:])) // nolint: gosec,errcheck
 		}
+		return
 	}
 }
 
 // RegisterHealthCheck register a healthCheck that need to be routed
+// names must be uniq
 func RegisterHealthCheck(hc HealthCheck) {
+	for _, val := range checks {
+		if val.Name() == hc.Name() {
+			log.Warnf("Health checks can only be added once, tried to add another health check with name %v", val.Name())
+			return
+		}
+	}
 	if router == nil {
-		log.Warnf("Tryied to add HealthCheck ( %T ) without a router", hc)
+		log.Warnf("Tried to add HealthCheck ( %T ) without a router", hc)
 		return
 	}
 	checks = append(checks, hc)
-	if err := hc.InitHealthcheck(); err != nil {
+	if err := hc.InitHealthCheck(); err != nil {
 		log.Warnf("Error initialising HealthCheck  %T: %v", hc, err)
+		initErrors[hc.Name()] = err
 	}
 	router.Handle("/health/"+hc.Name(), Handler())
 }
