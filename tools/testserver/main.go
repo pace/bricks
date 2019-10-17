@@ -10,13 +10,14 @@ import (
 	"net/http"
 	"time"
 
-	opentracing "github.com/opentracing/opentracing-go"
+	"github.com/opentracing/opentracing-go"
 	olog "github.com/opentracing/opentracing-go/log"
 	"github.com/pace/bricks/backend/postgres"
 	"github.com/pace/bricks/backend/redis"
 	pacehttp "github.com/pace/bricks/http"
 	"github.com/pace/bricks/http/oauth2"
 	"github.com/pace/bricks/maintenance/errors"
+	"github.com/pace/bricks/maintenance/health/servicehealthcheck"
 	"github.com/pace/bricks/maintenance/log"
 	_ "github.com/pace/bricks/maintenance/tracing"
 	"github.com/pace/bricks/test/livetest"
@@ -123,6 +124,8 @@ func main() {
 			}
 		},
 	})
+
+	servicehealthcheck.InitialiseHealthChecker(h)
 
 	log.Fatal(s.ListenAndServe())
 }

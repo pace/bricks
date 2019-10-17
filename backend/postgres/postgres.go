@@ -6,12 +6,13 @@ package postgres
 
 import (
 	"fmt"
+	"github.com/pace/bricks/maintenance/health/servicehealthcheck"
 	"math"
 	"time"
 
 	"github.com/caarlos0/env"
 	"github.com/go-pg/pg"
-	opentracing "github.com/opentracing/opentracing-go"
+	"github.com/opentracing/opentracing-go"
 	olog "github.com/opentracing/opentracing-go/log"
 	"github.com/pace/bricks/maintenance/log"
 	"github.com/prometheus/client_golang/prometheus"
@@ -62,6 +63,8 @@ type config struct {
 	// but idle connections are still discarded by the client
 	// if IdleTimeout is set.
 	IdleCheckFrequency time.Duration `env:"POSTGRES_IDLE_CHECK_FREQUENCY" envDefault:"1m"`
+	// Name of the Table that is created to try if database is writeable
+	HealthcheckTableName string `env:"POSTGRES_HEALTHCHECK_TABLE" envDefault:"healthcheck"`
 }
 
 var (
@@ -117,6 +120,8 @@ func init() {
 	if err != nil {
 		log.Fatalf("Failed to parse postgres environment: %v", err)
 	}
+	servicehealthcheck.RegisterHealthCheck(&postgresHealthCheck{})
+
 }
 
 // ConnectionPool returns a new database connection pool
