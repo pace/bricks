@@ -43,3 +43,5 @@ Configuration for the PostgreSQL connection pool of the microservice.
     * Frequency of idle checks made by idle connections reaper
 * `POSTGRES_HEALTHCHECK_TABLE` default: `healthcheck`
     * Name of the Table that is created to try if database is writeable 
+ * `POSTGRES_HEALTHCHECK_MAX_REQUEST_SEC` default: `10s`
+    * Amount of time to cache the last health check result 

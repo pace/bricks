@@ -64,7 +64,9 @@ type config struct {
 	// if IdleTimeout is set.
 	IdleCheckFrequency time.Duration `env:"POSTGRES_IDLE_CHECK_FREQUENCY" envDefault:"1m"`
 	// Name of the Table that is created to try if database is writeable
-	HealthcheckTableName string `env:"POSTGRES_HEALTHCHECK_TABLE" envDefault:"healthcheck"`
+	HealthTableName string `env:"POSTGRES_HEALTHCHECK_TABLE" envDefault:"healthcheck"`
+	// Amount of time to cache the last health check result
+	HealthMaxRequest time.Duration `env:"POSTGRES_HEALTHCHECK_MAX_REQUEST_SEC envDefault:"10s"`
 }
 
 var (
@@ -249,6 +251,5 @@ func metricsAdapter(event *pg.QueryProcessedEvent, opts *pg.Options) {
 		pacePostgresQueryRowsTotal.With(labels).Add(float64(r.RowsReturned()))
 		pacePostgresQueryAffectedTotal.With(labels).Add(math.Max(0, float64(r.RowsAffected())))
 	}
-
 	pacePostgresQueryDurationSeconds.With(labels).Observe(dur)
 }

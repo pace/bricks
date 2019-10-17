@@ -1,13 +1,10 @@
 package postgres
 
 import (
-	"github.com/caarlos0/env"
 	"github.com/go-pg/pg"
 	"sync"
 	"time"
 )
-
-const MaxAgeOfRequestInSec = 10
 
 type connectionState struct {
 	moment    time.Time
@@ -22,14 +19,9 @@ type postgresHealthCheck struct {
 }
 
 func (h postgresHealthCheck) InitHealthcheck() error {
-	// parse log config
-	err := env.Parse(&cfg)
-	if err != nil {
-		cfg.HealthcheckTableName = "healthcheck"
-	}
 	h.pool = ConnectionPool()
 	h.State = connectionState{m: sync.Mutex{}}
-	return err
+	return nil
 }
 
 func (h postgresHealthCheck) Name() string {
@@ -39,7 +31,7 @@ func (h postgresHealthCheck) Name() string {
 func (h postgresHealthCheck) HealthCheck(currTime time.Time) error {
 	h.State.m.Lock()
 	defer h.State.m.Unlock()
-	if currTime.Sub(h.State.moment).Seconds() > MaxAgeOfRequestInSec {
+	if currTime.Sub(h.State.moment).Seconds() > float64(cfg.HealthMaxRequestInSec) {
 		//Readcheck
 		errRead := h.pool.Select("1")
 		if errRead != nil {
@@ -50,9 +42,9 @@ func (h postgresHealthCheck) HealthCheck(currTime time.Time) error {
 			return h.State.err
 		}
 		//writecheck - create Table if not exist and add Data
-		_, errWrite := h.pool.Exec(`CREATE TABLE IF NOT EXISTS ` + cfg.HealthcheckTableName + `(ok boolean);`)
+		_, errWrite := h.pool.Exec(`CREATE TABLE IF NOT EXISTS ` + cfg.HealthTableName + `(ok boolean);`)
 		if errWrite == nil {
-			_, errWrite = h.pool.Exec("INSERT INTO " + cfg.HealthcheckTableName + "(ok) VALUES (true);")
+			_, errWrite = h.pool.Exec("INSERT INTO " + cfg.HealthTableName + "(ok) VALUES (true);")
 		}
 		h.State.isHealthy = errWrite == nil
 		h.State.err = errWrite
@@ -62,7 +54,7 @@ func (h postgresHealthCheck) HealthCheck(currTime time.Time) error {
 }
 
 func (h postgresHealthCheck) CleanUp() error {
-	_, err := h.pool.Exec("DROP TABLE IF EXISTS" + cfg.HealthcheckTableName)
+	_, err := h.pool.Exec("DROP TABLE IF EXISTS" + cfg.HealthTableName)
 	return err
 
 }
