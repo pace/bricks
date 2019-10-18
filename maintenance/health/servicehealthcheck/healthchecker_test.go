@@ -52,9 +52,8 @@ func setup(t *testHealthChecker) {
 	rec := httptest.NewRecorder()
 	InitialiseHealthChecker(r)
 	RegisterHealthCheck(t)
-	req := httptest.NewRequest("GET", "/health/test", nil)
+	req := httptest.NewRequest("GET", "/health/"+t.Name(), nil)
 	Handler().ServeHTTP(rec, req)
-
 	resp = rec.Result()
 	defer resp.Body.Close()
 
@@ -76,7 +75,7 @@ func TestHandlerOK(t *testing.T) {
 }
 
 func TestHandlerInitErr(t *testing.T) {
-	setup(&testHealthChecker{name: "test", initErr: true})
+	setup(&testHealthChecker{name: "TestHandlerInitErr", initErr: true})
 	if resp.StatusCode != 503 {
 		t.Errorf("Expected /health to respond with 503, got: %d", resp.StatusCode)
 	}
@@ -91,7 +90,7 @@ func TestHandlerInitErr(t *testing.T) {
 }
 
 func TestHandlerHealthCheckErr(t *testing.T) {
-	setup(&testHealthChecker{name: "test", healthCheckErr: true})
+	setup(&testHealthChecker{name: "TestHandlerHealthCheckErr", healthCheckErr: true})
 	if resp.StatusCode != 503 {
 		t.Errorf("Expected /health to respond with 503, got: %d", resp.StatusCode)
 	}

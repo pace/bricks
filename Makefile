@@ -35,7 +35,7 @@ lint: $(GOPATH)/bin/golangci-lint
 	$(GOPATH)/bin/golangci-lint run
 
 $(GOPATH)/bin/golangci-lint:
-	curl -sfL https://install.goreleaser.com/github.com/golangci/golangci-lint.sh | sh -s -- -b $(GOPATH)/bin v1.15.0
+	curl -sfL https://install.goreleaser.com/github.com/golangci/golangci-lint.sh | sh -s -- -b $(GOPATH)/bin v1.21.0
 
 test:
 	go test -count=1 -v -cover -race -short ./...

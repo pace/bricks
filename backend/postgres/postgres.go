@@ -66,7 +66,7 @@ type config struct {
 	// Name of the Table that is created to try if database is writeable
 	HealthTableName string `env:"POSTGRES_HEALTHCHECK_TABLE" envDefault:"healthcheck"`
 	// Amount of time to cache the last health check result
-	HealthMaxRequest time.Duration `env:"POSTGRES_HEALTHCHECK_MAX_REQUEST_SEC envDefault:"10s"`
+	HealthMaxRequest time.Duration `env:"POSTGRES_HEALTHCHECK_MAX_REQUEST_SEC" envDefault:"10s"`
 }
 
 var (

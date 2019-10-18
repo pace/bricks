@@ -14,26 +14,26 @@ type connectionState struct {
 }
 
 type postgresHealthCheck struct {
-	State connectionState
+	State *connectionState
 	pool  *pg.DB
 }
 
-func (h postgresHealthCheck) InitHealthcheck() error {
+func (h *postgresHealthCheck) InitHealthCheck() error {
 	h.pool = ConnectionPool()
-	h.State = connectionState{m: sync.Mutex{}}
+	h.State = &connectionState{m: sync.Mutex{}}
 	return nil
 }
 
-func (h postgresHealthCheck) Name() string {
+func (h *postgresHealthCheck) Name() string {
 	return "postgres"
 }
 
-func (h postgresHealthCheck) HealthCheck(currTime time.Time) error {
+func (h *postgresHealthCheck) HealthCheck(currTime time.Time) error {
 	h.State.m.Lock()
 	defer h.State.m.Unlock()
 	if currTime.Sub(h.State.moment).Seconds() > float64(cfg.HealthMaxRequest) {
 		//Readcheck
-		errRead := h.pool.Select("1")
+		_, errRead := h.pool.Exec(`SELECT 1; `)
 		if errRead != nil {
 			h.State.isHealthy = false
 			h.State.moment = currTime
@@ -53,7 +53,7 @@ func (h postgresHealthCheck) HealthCheck(currTime time.Time) error {
 	return h.State.err
 }
 
-func (h postgresHealthCheck) CleanUp() error {
+func (h *postgresHealthCheck) CleanUp() error {
 	_, err := h.pool.Exec("DROP TABLE IF EXISTS" + cfg.HealthTableName)
 	return err
 
