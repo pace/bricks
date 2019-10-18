@@ -1,9 +1,11 @@
+// Copyright © 2019 by PACE Telematics GmbH. All rights reserved.
+// Created at 2019/10/18 Charlotte Pröller
+
 package redis
 
 import (
 	"github.com/go-redis/redis"
 	"github.com/pace/bricks/maintenance/health/servicehealthcheck"
-	"sync"
 	"time"
 )
 
@@ -14,7 +16,7 @@ type redisHealthCheck struct {
 
 func (h *redisHealthCheck) InitHealthCheck() error {
 	h.client = Client()
-	h.State = &servicehealthcheck.ConnectionState{M: sync.Mutex{}}
+	h.State = servicehealthcheck.NewConnectionState()
 	return nil
 }
 
@@ -22,31 +24,24 @@ func (h *redisHealthCheck) Name() string {
 	return "redis"
 }
 
-// HealthCheck if the last result is outdated, redis is checked for writeability and readability,
+// HealthCheck checks if the redis is healthy. If the last result is outdated, redis is checked for writeability and readability,
 // otherwise return the old result
-func (h *redisHealthCheck) HealthCheck(currTime time.Time) error {
-	h.State.M.Lock()
-	defer h.State.M.Unlock()
+func (h *redisHealthCheck) HealthCheck(currTime time.Time) (bool, error) {
 	if currTime.Sub(h.State.LastCheck) > cfg.HealthMaxRequest {
-		//Set initial to healthy:
-		h.State.IsHealthy = true
-		h.State.Err = nil
-		h.State.LastCheck = currTime
-		//Try writing:
+		h.State.SetHealthy(currTime)
+		//Try writing
 		errWrite := h.client.Append(cfg.HealthKey, "true").Err()
 		if errWrite != nil {
-			h.State.IsHealthy = false
-			h.State.Err = errWrite
+			h.State.SetErrorState(errWrite, currTime)
 
 		} else {
 			//If writing worked try reading
 			errRead := h.client.Get(cfg.HealthKey).Err()
-			h.State.IsHealthy = errRead == nil
-			h.State.Err = errRead
+			h.State.SetErrorState(errRead, currTime)
 		}
 
 	}
-	return h.State.Err
+	return h.State.GetState()
 }
 
 func (h *redisHealthCheck) CleanUp() error {

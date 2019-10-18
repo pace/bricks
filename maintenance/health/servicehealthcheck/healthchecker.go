@@ -1,3 +1,6 @@
+// Copyright © 2019 by PACE Telematics GmbH. All rights reserved.
+// Created at 2019/10/18 Charlotte Pröller
+
 package servicehealthcheck
 
 import (
@@ -12,7 +15,7 @@ import (
 type HealthCheck interface {
 	Name() string
 	InitHealthCheck() error
-	HealthCheck(currTime time.Time) error
+	HealthCheck(currTime time.Time) (bool, error)
 	CleanUp() error
 }
 
@@ -20,9 +23,9 @@ type HealthCheck interface {
 // It offers a Mutex and the Date of the last check for caching the result
 type ConnectionState struct {
 	LastCheck time.Time
-	IsHealthy bool
-	Err       error
-	M         sync.Mutex
+	isHealthy bool
+	err       error
+	m         sync.Mutex
 }
 
 type handler struct{}
@@ -33,6 +36,30 @@ var checks = make(map[string]HealthCheck)
 // initErrors map with all errors that happened in the initialisation of the health checks
 var initErrors = make(map[string]error)
 var router *mux.Router
+
+func (cs *ConnectionState) setConnectionState(healthy bool, err error, mom time.Time) {
+	cs.m.Lock()
+	defer cs.m.Unlock()
+	cs.isHealthy = healthy
+	cs.err = err
+	cs.LastCheck = mom
+}
+
+func (cs *ConnectionState) SetErrorState(err error, mom time.Time) {
+	cs.setConnectionState(false, err, mom)
+}
+
+func (cs *ConnectionState) SetHealthy(mom time.Time) {
+	cs.setConnectionState(true, nil, mom)
+}
+
+func (cs *ConnectionState) GetState() (bool, error) {
+	return cs.isHealthy, cs.err
+}
+
+func NewConnectionState() *ConnectionState {
+	return &ConnectionState{m: sync.Mutex{}}
+}
 
 func (h *handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	route := r.URL.Path
@@ -46,7 +73,7 @@ func (h *handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 				w.WriteHeader(http.StatusServiceUnavailable)
 				w.Write([]byte("Not OK:\n"[:])) // nolint: gosec,errcheck
 				w.Write([]byte(err.Error()[:])) // nolint: gosec,errcheck
-			} else if err := hc.HealthCheck(time.Now()); err == nil {
+			} else if healthy, err := hc.HealthCheck(time.Now()); healthy {
 				// to increase performance of the request set
 				// content type and write status code explicitly
 				w.Header().Set("Content-Type", "text/plain")

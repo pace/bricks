@@ -1,5 +1,5 @@
-// Copyright © 2018 by PACE Telematics GmbH. All rights reserved.
-// Created at 2018/09/05 by Vincent Landgraf
+// Copyright © 2019 by PACE Telematics GmbH. All rights reserved.
+// Created at 2019/10/18 Charlotte Pröller
 
 package servicehealthcheck
 
@@ -33,11 +33,11 @@ func (t *testHealthChecker) InitHealthCheck() error {
 	}
 }
 
-func (t *testHealthChecker) HealthCheck(currTime time.Time) error {
+func (t *testHealthChecker) HealthCheck(currTime time.Time) (bool, error) {
 	if t.healthCheckErr {
-		return errors.New("healtherror")
+		return false, errors.New("healtherror")
 	} else {
-		return nil
+		return true, nil
 	}
 }
 
