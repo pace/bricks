@@ -1,7 +1,7 @@
 // Copyright © 2018 by PACE Telematics GmbH. All rights reserved.
 // Created at 2018/09/12 by Vincent Landgraf
 
-package postgres
+package redis
 
 import (
 	"github.com/gorilla/mux"
@@ -16,7 +16,7 @@ import (
 
 var resp *http.Response
 
-func setup(t *postgresHealthCheck) {
+func setup(t *redisHealthCheck) {
 	r := mux.NewRouter()
 	rec := httptest.NewRecorder()
 	servicehealthcheck.InitialiseHealthChecker(r)
@@ -27,13 +27,14 @@ func setup(t *postgresHealthCheck) {
 	defer resp.Body.Close()
 }
 
+// TestIntegrationHealthCheck tests if redis health check ist working like expected
 func TestIntegrationHealthCheck(t *testing.T) {
 	if testing.Short() {
 		t.SkipNow()
 	}
-	setup(&postgresHealthCheck{})
+	setup(&redisHealthCheck{})
 	if resp.StatusCode != 200 {
-		t.Errorf("Expected /health/postgres to respond with 200, got: %d", resp.StatusCode)
+		t.Errorf("Expected /health/redis to respond with 200, got: %d", resp.StatusCode)
 	}
 
 	data, err := ioutil.ReadAll(resp.Body)
@@ -41,7 +42,7 @@ func TestIntegrationHealthCheck(t *testing.T) {
 		log.Fatal(err)
 	}
 	if string(data[:]) != "OK\n" {
-		t.Errorf("Expected /health/postgres to return OK, got: %q", string(data[:]))
+		t.Errorf("Expected /health/redis to return OK, got: %q", string(data[:]))
 	}
 
 }

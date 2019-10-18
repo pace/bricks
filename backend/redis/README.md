@@ -1,7 +1,7 @@
 
 ## Environment based configuration
 
-* `REDIS_HOSTS` default: `localhost:6379`
+* `REDIS_HOSTS` default: `redis:6379`
     * host:port addresses, can be multiple separated by comma.
 * `REDIS_PASSWORD`
     * Optional password. Must match the password specified in the `requirepass` server configuration option.
@@ -40,3 +40,7 @@
 * `REDIS_IDLE_CHECK_FREQUENCY` default: `1m`
     * Frequency of idle checks made by idle connections reaper. Default is 1 minute. -1 disables idle connections reaper, but idle connections are still discarded by the client if IdleTimeout is set.
     * Everything that can be parsed by [ParseDuration](https://golang.org/pkg/time/#ParseDuration)
+* `REDIS_HEALTH_KEY` default: `healthy`
+    * Name of the that is written to check, if redis is healthy
+* `POSTGRES_HEALTHCHECK_MAX_REQUEST_SEC` default: `10s`
+    * Amount of time to cache the last health check result 

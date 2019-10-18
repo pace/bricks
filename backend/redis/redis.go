@@ -7,15 +7,16 @@ package redis
 import (
 	"context"
 	"fmt"
+	"github.com/pace/bricks/maintenance/health/servicehealthcheck"
 	"time"
 
 	"github.com/caarlos0/env"
 	"github.com/go-redis/redis"
-	opentracing "github.com/opentracing/opentracing-go"
+	"github.com/opentracing/opentracing-go"
 	olog "github.com/opentracing/opentracing-go/log"
+	"github.com/pace/bricks/maintenance/log"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/rs/zerolog"
-	"github.com/pace/bricks/maintenance/log"
 )
 
 type config struct {
@@ -34,6 +35,10 @@ type config struct {
 	PoolTimeout        time.Duration `env:"REDIS_POOL_TIMEOUT"`
 	IdleTimeout        time.Duration `env:"REDIS_IDLE_TIMEOUT"`
 	IdleCheckFrequency time.Duration `env:"REDIS_IDLE_CHECK_FREQUENCY"`
+	// Name of the Table that is created to try if database is writeable
+	HealthKey string `env:"REDIS_HEALTH_KEY" envDefault:"healthy"`
+	// Amount of time to cache the last health check result
+	HealthMaxRequest time.Duration `env:"REDIS_HEALTHCHECK_MAX_REQUEST_SEC" envDefault:"10s"`
 }
 
 var (
@@ -73,6 +78,7 @@ func init() {
 	if err != nil {
 		log.Fatalf("Failed to parse redis environment: %v", err)
 	}
+	servicehealthcheck.RegisterHealthCheck(&redisHealthCheck{})
 }
 
 // Client with environment based configuration

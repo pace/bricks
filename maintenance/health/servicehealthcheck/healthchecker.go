@@ -5,6 +5,7 @@ import (
 	"github.com/pace/bricks/maintenance/log"
 	"net/http"
 	"strings"
+	"sync"
 	"time"
 )
 
@@ -15,9 +16,21 @@ type HealthCheck interface {
 	CleanUp() error
 }
 
+// ConnectionState can be used for Health Checks
+// It offers a Mutex and the Date of the last check for caching the result
+type ConnectionState struct {
+	LastCheck time.Time
+	IsHealthy bool
+	Err       error
+	M         sync.Mutex
+}
+
 type handler struct{}
 
+// checks map with all health checks, key: Name of the check
 var checks = make(map[string]HealthCheck)
+
+// initErrors map with all errors that happened in the initialisation of the health checks
 var initErrors = make(map[string]error)
 var router *mux.Router
 
@@ -27,6 +40,7 @@ func (h *handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	if len(splitRoute) == 2 && splitRoute[0] == "" && checks[splitRoute[1]] != nil {
 		hc := checks[splitRoute[1]]
 		if splitRoute[1] == hc.Name() {
+			//If it was not possible to initialise this health check, then show the initialisation error
 			if err := initErrors[hc.Name()]; err != nil {
 				w.Header().Set("Content-Type", "text/plain")
 				w.WriteHeader(http.StatusServiceUnavailable)
@@ -71,6 +85,7 @@ func RegisterHealthCheck(hc HealthCheck) {
 	router.Handle("/health/"+hc.Name(), Handler())
 }
 
+// InitialiseHealthChecker must be called so the healthchecker can register new health checks as routes
 func InitialiseHealthChecker(r *mux.Router) {
 	router = r
 }
