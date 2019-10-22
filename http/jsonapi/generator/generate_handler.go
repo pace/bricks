@@ -23,6 +23,7 @@ const (
 	pkgJSONAPIMetrics = "github.com/pace/bricks/maintenance/metric/jsonapi"
 	pkgMaintErrors    = "github.com/pace/bricks/maintenance/errors"
 	pkgOpentracing    = "github.com/opentracing/opentracing-go"
+	pkgOauth2         = "github.com/http/oauth2"
 )
 
 const serviceInterface = "Service"
@@ -340,7 +341,7 @@ func (g *Generator) buildRouter(routes []*route, schema *openapi3.Swagger) error
 
 	// but generate subrouters for each server
 	i := 0
-	for path, _ := range paths {
+	for path := range paths {
 		subrouterID := fmt.Sprintf("s%d", i+1)
 
 		// init and return the router
@@ -436,6 +437,29 @@ func (g *Generator) buildHandler(method string, op *openapi3.Operation, pattern 
 			).BlockFunc(func(g *jen.Group) {
 				// recover panics
 				g.Defer().Qual(pkgMaintErrors, "HandleRequest").Call(jen.Lit(handler), jen.Id("w"), jen.Id("r"))
+
+				//FIXME: HERE AUTHENTICATION
+				//IF Authentication contains oAuth:
+				for _, sl := range *op.Security {
+					value, ok := sl["OAuth2"]
+					if ok {
+						_ = value
+						g.Var().Id("err")
+
+						if len(value) < 1 {
+							//FIXME error handling here!
+						}
+						context := value[0]
+						introspector := jen.Op("&").Id("IntrospectResponse").Values(jen.Id("returnedScope").Op(":").Lit(context))
+						g.Id("r").Id("err").Op("=").Qual(pkgOauth2, "ValidateRequest").Call(jen.Id("r"), introspector)
+
+					}
+					_, ok = sl["ProfileKey"]
+					if ok {
+						//FIXME -> add ProfileKey implementierung
+						//otherwise ProfileKey => env passwort
+					}
+				}
 
 				// set tracing context
 				g.Line().Comment("Trace the service function handler execution")

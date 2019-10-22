@@ -11,7 +11,7 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	mux "github.com/gorilla/mux"
+	"github.com/gorilla/mux"
 	"github.com/pace/bricks/http/oauth2"
 )
 
@@ -66,7 +66,7 @@ func setupRouter(requiredScope string, tokenScope string) *mux.Router {
 		"GetFoo": oauth2.Scope(requiredScope),
 	}
 	m := NewScopesMiddleware(rs)
-	om := oauth2.NewMiddleware(&tokenIntrospecter{returnedScope: tokenScope})
+	om := oauth2.NewMiddleware(&TokenIntrospecter{returnedScope: tokenScope})
 
 	r := mux.NewRouter()
 	r.Use(om.Handler)
@@ -85,11 +85,11 @@ func setupRequest() *http.Request {
 	return req
 }
 
-type tokenIntrospecter struct {
+type TokenIntrospecter struct {
 	returnedScope string
 }
 
-func (t *tokenIntrospecter) IntrospectToken(ctx context.Context, token string) (*oauth2.IntrospectResponse, error) {
+func (t *TokenIntrospecter) IntrospectToken(ctx context.Context, token string) (*oauth2.IntrospectResponse, error) {
 	resp := &oauth2.IntrospectResponse{Active: true, Scope: t.returnedScope}
 	return resp, nil
 }

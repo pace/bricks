@@ -8,10 +8,11 @@ package oauth2
 
 import (
 	"context"
+	"github.com/pace/bricks/maintenance/errors"
 	"net/http"
 	"strings"
 
-	opentracing "github.com/opentracing/opentracing-go"
+	"github.com/opentracing/opentracing-go"
 	olog "github.com/opentracing/opentracing-go/log"
 	"github.com/pace/bricks/maintenance/log"
 )
@@ -39,25 +40,13 @@ func NewMiddleware(backend TokenIntrospecter) *Middleware {
 	return &Middleware{Backend: backend}
 }
 
+var ErrTokenMissing = errors.New("unauthorized")
+
 // Handler will parse the bearer token, introspect it, and put the token and other
 // relevant information back in the context.
 func (m *Middleware) Handler(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		// Setup tracing
-		span, ctx := opentracing.StartSpanFromContext(r.Context(), "Oauth2")
-		defer span.Finish()
-
-		qualifiedToken := r.Header.Get("Authorization")
-
-		items := strings.Split(qualifiedToken, headerPrefix)
-		if len(items) < 2 {
-			http.Error(w, "Unauthorized", http.StatusUnauthorized)
-			return
-		}
-
-		tokenValue := items[1]
-
-		s, err := m.Backend.IntrospectToken(ctx, tokenValue)
+		nextReq, err := ValidateRequest(r, m.Backend)
 		switch err {
 		case ErrBadUpstreamResponse:
 			log.Req(r).Info().Msg(err.Error())
@@ -71,21 +60,44 @@ func (m *Middleware) Handler(next http.Handler) http.Handler {
 			log.Req(r).Info().Msg(err.Error())
 			http.Error(w, err.Error(), http.StatusUnauthorized)
 			return
+		case ErrTokenMissing:
+			log.Req(r).Info().Msg(err.Error())
+			http.Error(w, err.Error(), http.StatusUnauthorized)
+			return
 		}
-
-		t := fromIntrospectResponse(s, tokenValue)
-
-		ctx = context.WithValue(ctx, tokenKey, &t)
-
-		log.Req(r).Info().
-			Str("client_id", t.clientID).
-			Str("user_id", t.userID).
-			Msg("Oauth2")
-
-		span.LogFields(olog.String("client_id", t.clientID), olog.String("user_id", t.userID))
-
-		next.ServeHTTP(w, r.WithContext(ctx))
+		next.ServeHTTP(w, nextReq)
 	})
+}
+
+func ValidateRequest(r *http.Request, tokenIntrospektor TokenIntrospecter) (*http.Request, error) {
+	// Setup tracing
+	span, ctx := opentracing.StartSpanFromContext(r.Context(), "Oauth2")
+	defer span.Finish()
+
+	qualifiedToken := r.Header.Get("Authorization")
+
+	items := strings.Split(qualifiedToken, headerPrefix)
+	if len(items) < 2 {
+		return r, ErrTokenMissing
+	}
+	tokenValue := items[1]
+
+	s, err := tokenIntrospektor.IntrospectToken(ctx, tokenValue)
+	if err != nil {
+		return r, err
+	}
+	t := fromIntrospectResponse(s, tokenValue)
+
+	ctx = context.WithValue(ctx, tokenKey, &t)
+
+	log.Req(r).Info().
+		Str("client_id", t.clientID).
+		Str("user_id", t.userID).
+		Msg("Oauth2")
+
+	span.LogFields(olog.String("client_id", t.clientID), olog.String("user_id", t.userID))
+	return r.WithContext(ctx), nil
+
 }
 
 func fromIntrospectResponse(s *IntrospectResponse, tokenValue string) token {
