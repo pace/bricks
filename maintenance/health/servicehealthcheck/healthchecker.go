@@ -65,28 +65,37 @@ func NewConnectionState() *ConnectionState {
 func (h *handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	route := r.URL.Path
 	splitRoute := strings.Split(route, "/health/")
-	if len(splitRoute) == 2 && splitRoute[0] == "" && checks[splitRoute[1]] != nil {
-		checksLock.RLock()
-		defer checksLock.RUnlock()
-		name := splitRoute[1]
-		if hc := checks[name]; hc != nil {
-			//If it was not possible to initialise this health check, then show the initialisation error
-			if err := initErrors[name]; err != nil {
-				h.writeError(w, err, http.StatusServiceUnavailable, name)
-			} else if healthy, err := hc.HealthCheck(); healthy {
-				// to increase performance of the request set
-				// content type and write status code explicitly
-				w.Header().Set("Content-Type", "text/plain")
-				w.WriteHeader(http.StatusOK)
-				w.Write([]byte("OK\n")) // nolint: gosec,errcheck
-			} else {
-				h.writeError(w, err, http.StatusServiceUnavailable, name)
-			}
-		} else {
-			h.writeError(w, errors.New("Health Check not registered\n"), http.StatusNotFound, name)
-		}
-	} else {
+
+	//Check the route first
+	if len(splitRoute) < 2 || splitRoute[0] != "" {
 		h.writeError(w, errors.New("Route not Valid\n"), http.StatusBadRequest, route)
+		return
+	}
+
+	checksLock.RLock()
+	defer checksLock.RUnlock()
+	name := splitRoute[1]
+
+	if checks[name] == nil {
+		h.writeError(w, errors.New("Health Check not registered\n"), http.StatusNotFound, name)
+		return
+	}
+	hc := checks[name]
+	// If it was not possible to initialise this health check, then show the initialisation error
+	if err := initErrors[name]; err != nil {
+		h.writeError(w, err, http.StatusServiceUnavailable, name)
+		return
+	}
+
+	// this is the actual health check
+	if healthy, err := hc.HealthCheck(); healthy {
+		// to increase performance of the request set
+		// content type and write status code explicitly
+		w.Header().Set("Content-Type", "text/plain")
+		w.WriteHeader(http.StatusOK)
+		w.Write([]byte("OK\n")) // nolint: gosec,errcheck
+	} else {
+		h.writeError(w, err, http.StatusServiceUnavailable, name)
 	}
 }
 
