@@ -6,13 +6,11 @@ package servicehealthcheck
 import (
 	"github.com/gorilla/mux"
 	"github.com/pace/bricks/maintenance/errors"
+	"github.com/pace/bricks/maintenance/log"
 	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
 	"testing"
-	"time"
-
-	"github.com/pace/bricks/maintenance/log"
 )
 
 type testHealthChecker struct {
@@ -33,7 +31,7 @@ func (t *testHealthChecker) InitHealthCheck() error {
 	}
 }
 
-func (t *testHealthChecker) HealthCheck(currTime time.Time) (bool, error) {
+func (t *testHealthChecker) HealthCheck() (bool, error) {
 	if t.healthCheckErr {
 		return false, errors.New("healtherror")
 	} else {
@@ -51,7 +49,7 @@ func setup(t *testHealthChecker) {
 	r := mux.NewRouter()
 	rec := httptest.NewRecorder()
 	InitialiseHealthChecker(r)
-	RegisterHealthCheck(t)
+	RegisterHealthCheck(t, t.Name())
 	req := httptest.NewRequest("GET", "/health/"+t.Name(), nil)
 	Handler().ServeHTTP(rec, req)
 	resp = rec.Result()
@@ -84,8 +82,8 @@ func TestHandlerInitErr(t *testing.T) {
 	if err != nil {
 		log.Fatal(err)
 	}
-	if string(data[:]) != "Not OK:\ninitError" {
-		t.Errorf("Expected health to return Not OK:\ninitError, got: %q", string(data[:]))
+	if string(data[:]) != "Error \n" {
+		t.Errorf("Expected health to return Error \\n, got: %q", string(data[:]))
 	}
 }
 
@@ -99,7 +97,7 @@ func TestHandlerHealthCheckErr(t *testing.T) {
 	if err != nil {
 		log.Fatal(err)
 	}
-	if string(data[:]) != "Not OK:\nhealtherror" {
-		t.Errorf("Expected health to return Not OK:\nhealtherror, got: %q", string(data[:]))
+	if string(data[:]) != "Error \n" {
+		t.Errorf("Expected health to return Error \\n, got: %q", string(data[:]))
 	}
 }

@@ -9,34 +9,33 @@ import (
 	"time"
 )
 
-type postgresHealthCheck struct {
+type PgHealthCheck struct {
 	State *servicehealthcheck.ConnectionState
-	pool  *pg.DB
+	Pool  *pg.DB
 }
 
-func (h *postgresHealthCheck) InitHealthCheck() error {
-	h.pool = ConnectionPool()
+func (h *PgHealthCheck) InitHealthCheck() error {
+	if h.Pool == nil {
+		h.Pool = ConnectionPool()
+	}
 	h.State = servicehealthcheck.NewConnectionState()
+
 	return nil
 }
 
-func (h *postgresHealthCheck) Name() string {
-	return "postgres"
-}
-
-func (h *postgresHealthCheck) HealthCheck(currTime time.Time) (bool, error) {
-
+func (h *PgHealthCheck) HealthCheck() (bool, error) {
+	currTime := time.Now()
 	if currTime.Sub(h.State.LastCheck) > cfg.HealthMaxRequest {
 		h.State.SetHealthy(currTime)
 		//Readcheck
-		_, errRead := h.pool.Exec(`SELECT 1; `)
+		_, errRead := h.Pool.Exec(`SELECT 1; `)
 		if errRead != nil {
 			h.State.SetErrorState(errRead, currTime)
 		} else {
 			//writecheck - create Table if not exist and add Data
-			_, errWrite := h.pool.Exec(`CREATE TABLE IF NOT EXISTS ` + cfg.HealthTableName + `(ok boolean);`)
+			_, errWrite := h.Pool.Exec(`CREATE TABLE IF NOT EXISTS ` + cfg.HealthTableName + `(ok boolean);`)
 			if errWrite == nil {
-				_, errWrite = h.pool.Exec("INSERT INTO " + cfg.HealthTableName + "(ok) VALUES (true);")
+				_, errWrite = h.Pool.Exec("INSERT INTO " + cfg.HealthTableName + "(ok) VALUES (true);")
 			}
 			if errWrite != nil {
 				h.State.SetErrorState(errWrite, currTime)
@@ -46,8 +45,8 @@ func (h *postgresHealthCheck) HealthCheck(currTime time.Time) (bool, error) {
 	return h.State.GetState()
 }
 
-func (h *postgresHealthCheck) CleanUp() error {
-	_, err := h.pool.Exec("DROP TABLE IF EXISTS" + cfg.HealthTableName)
+func (h *PgHealthCheck) CleanUp() error {
+	_, err := h.Pool.Exec("DROP TABLE IF EXISTS " + cfg.HealthTableName)
 	return err
 
 }

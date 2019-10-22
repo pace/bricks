@@ -122,11 +122,11 @@ func init() {
 	if err != nil {
 		log.Fatalf("Failed to parse postgres environment: %v", err)
 	}
-	servicehealthcheck.RegisterHealthCheck(&postgresHealthCheck{})
+	servicehealthcheck.RegisterHealthCheck(&PgHealthCheck{}, "postgresdefault")
 
 }
 
-// ConnectionPool returns a new database connection pool
+// ConnectionPool returns a new database connection Pool
 // that is already configured with the correct credentials and
 // instrumented with tracing and logging
 func ConnectionPool() *pg.DB {
@@ -151,13 +151,17 @@ func ConnectionPool() *pg.DB {
 	})
 }
 
-// CustomConnectionPool returns a new database connection pool
+// CustomConnectionPool returns a new database connection Pool
 // that is already configured with the correct credentials and
 // instrumented with tracing and logging using the passed options
+//
+// Fot a health check for this connection a PgHealthCheck needs to
+// be registered:
+//  servicehealthcheck.RegisterHealthCheck(...)
 func CustomConnectionPool(opts *pg.Options) *pg.DB {
 	log.Logger().Info().Str("addr", opts.Addr).
 		Str("user", opts.User).Str("database", opts.Database).
-		Msg("PostgreSQL connection pool created")
+		Msg("PostgreSQL connection Pool created")
 	db := pg.Connect(opts)
 	db.OnQueryProcessed(queryLogger)
 	db.OnQueryProcessed(openTracingAdapter)

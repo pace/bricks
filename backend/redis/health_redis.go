@@ -20,13 +20,10 @@ func (h *redisHealthCheck) InitHealthCheck() error {
 	return nil
 }
 
-func (h *redisHealthCheck) Name() string {
-	return "redis"
-}
-
 // HealthCheck checks if the redis is healthy. If the last result is outdated, redis is checked for writeability and readability,
 // otherwise return the old result
-func (h *redisHealthCheck) HealthCheck(currTime time.Time) (bool, error) {
+func (h *redisHealthCheck) HealthCheck() (bool, error) {
+	currTime := time.Now()
 	if currTime.Sub(h.State.LastCheck) > cfg.HealthMaxRequest {
 		h.State.SetHealthy(currTime)
 		//Try writing

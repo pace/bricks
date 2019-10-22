@@ -35,7 +35,7 @@ type config struct {
 	PoolTimeout        time.Duration `env:"REDIS_POOL_TIMEOUT"`
 	IdleTimeout        time.Duration `env:"REDIS_IDLE_TIMEOUT"`
 	IdleCheckFrequency time.Duration `env:"REDIS_IDLE_CHECK_FREQUENCY"`
-	// Name of the Table that is created to try if database is writeable
+	// Name of the key that is written to check, if redis is healthy
 	HealthKey string `env:"REDIS_HEALTH_KEY" envDefault:"healthy"`
 	// Amount of time to cache the last health check result
 	HealthMaxRequest time.Duration `env:"REDIS_HEALTHCHECK_MAX_REQUEST_SEC" envDefault:"10s"`
@@ -78,7 +78,7 @@ func init() {
 	if err != nil {
 		log.Fatalf("Failed to parse redis environment: %v", err)
 	}
-	servicehealthcheck.RegisterHealthCheck(&redisHealthCheck{})
+	servicehealthcheck.RegisterHealthCheck(&redisHealthCheck{}, "redis")
 }
 
 // Client with environment based configuration

@@ -5,6 +5,7 @@ package servicehealthcheck
 
 import (
 	"github.com/gorilla/mux"
+	"github.com/pace/bricks/maintenance/errors"
 	"github.com/pace/bricks/maintenance/log"
 	"net/http"
 	"strings"
@@ -13,9 +14,8 @@ import (
 )
 
 type HealthCheck interface {
-	Name() string
 	InitHealthCheck() error
-	HealthCheck(currTime time.Time) (bool, error)
+	HealthCheck() (bool, error)
 	CleanUp() error
 }
 
@@ -32,6 +32,7 @@ type handler struct{}
 
 // checks map with all health checks, key: Name of the check
 var checks = make(map[string]HealthCheck)
+var checksLock = sync.RWMutex{}
 
 // initErrors map with all errors that happened in the initialisation of the health checks
 var initErrors = make(map[string]error)
@@ -46,7 +47,7 @@ func (cs *ConnectionState) setConnectionState(healthy bool, err error, mom time.
 }
 
 func (cs *ConnectionState) SetErrorState(err error, mom time.Time) {
-	cs.setConnectionState(false, err, mom)
+	cs.setConnectionState(err == nil, err, mom)
 }
 
 func (cs *ConnectionState) SetHealthy(mom time.Time) {
@@ -65,54 +66,59 @@ func (h *handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	route := r.URL.Path
 	splitRoute := strings.Split(route, "/health/")
 	if len(splitRoute) == 2 && splitRoute[0] == "" && checks[splitRoute[1]] != nil {
-		hc := checks[splitRoute[1]]
-		if splitRoute[1] == hc.Name() {
+		checksLock.RLock()
+		defer checksLock.RUnlock()
+		name := splitRoute[1]
+		if hc := checks[name]; hc != nil {
 			//If it was not possible to initialise this health check, then show the initialisation error
-			if err := initErrors[hc.Name()]; err != nil {
-				w.Header().Set("Content-Type", "text/plain")
-				w.WriteHeader(http.StatusServiceUnavailable)
-				w.Write([]byte("Not OK:\n"[:])) // nolint: gosec,errcheck
-				w.Write([]byte(err.Error()[:])) // nolint: gosec,errcheck
-			} else if healthy, err := hc.HealthCheck(time.Now()); healthy {
+			if err := initErrors[name]; err != nil {
+				h.writeError(w, err, http.StatusServiceUnavailable, name)
+			} else if healthy, err := hc.HealthCheck(); healthy {
 				// to increase performance of the request set
 				// content type and write status code explicitly
 				w.Header().Set("Content-Type", "text/plain")
 				w.WriteHeader(http.StatusOK)
-				w.Write([]byte("OK\n"[:])) // nolint: gosec,errcheck
+				w.Write([]byte("OK\n")) // nolint: gosec,errcheck
 			} else {
-				w.Header().Set("Content-Type", "text/plain")
-				w.WriteHeader(http.StatusServiceUnavailable)
-				w.Write([]byte("Not OK:\n"[:])) // nolint: gosec,errcheck
-				w.Write([]byte(err.Error()[:])) // nolint: gosec,errcheck
+				h.writeError(w, err, http.StatusServiceUnavailable, name)
 			}
+		} else {
+			h.writeError(w, errors.New("Health Check not registered\n"), http.StatusNotFound, name)
 		}
 	} else {
-		w.Header().Set("Content-Type", "text/plain")
-		w.WriteHeader(http.StatusBadRequest)
-		w.Write([]byte("Health Check not registered\n"[:])) // nolint: gosec,errcheck
+		h.writeError(w, errors.New("Route not Valid\n"), http.StatusBadRequest, route)
 	}
+}
+
+func (h *handler) writeError(w http.ResponseWriter, err error, errorCode int, name string) {
+	w.Header().Set("Content-Type", "text/plain")
+	w.WriteHeader(errorCode)
+	w.Write([]byte("Error \n")) // nolint: gosec,errcheck
+	log.Warnf("helthcheck %v was not healthy %v", name, err)
 }
 
 // RegisterHealthCheck register a healthCheck that need to be routed
 // names must be uniq
-func RegisterHealthCheck(hc HealthCheck) {
-	if checks[hc.Name()] != nil {
-		log.Warnf("Health checks can only be added once, tried to add another health check with name %v", hc.Name())
+func RegisterHealthCheck(hc HealthCheck, name string) {
+	if checks[name] != nil {
+		log.Debugf("Health checks can only be added once, tried to add another health check with name %v", name)
 		return
 	}
 	if router == nil {
 		log.Warnf("Tried to add HealthCheck ( %T ) without a router", hc)
 		return
 	}
-	checks[hc.Name()] = hc
+	checksLock.Lock()
+	defer checksLock.Unlock()
+	checks[name] = hc
 	if err := hc.InitHealthCheck(); err != nil {
 		log.Warnf("Error initialising HealthCheck  %T: %v", hc, err)
-		initErrors[hc.Name()] = err
+		initErrors[name] = err
 	}
-	router.Handle("/health/"+hc.Name(), Handler())
+	router.Handle("/health/"+name, Handler())
 }
 
-// InitialiseHealthChecker must be called so the healthchecker can register new health checks as routes
+// InitialiseHealthChecker must be called so the health checker can register new health checks as routes
 func InitialiseHealthChecker(r *mux.Router) {
 	router = r
 }
