@@ -55,7 +55,6 @@ func setup(t *testHealthChecker) {
 	Handler().ServeHTTP(rec, req)
 	resp = rec.Result()
 	defer resp.Body.Close()
-
 }
 
 func TestHandlerOK(t *testing.T) {
@@ -63,14 +62,7 @@ func TestHandlerOK(t *testing.T) {
 	if resp.StatusCode != 200 {
 		t.Errorf("Expected /health to respond with 200, got: %d", resp.StatusCode)
 	}
-
-	data, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
-		log.Fatal(err)
-	}
-	if string(data[:]) != "OK\n" {
-		t.Errorf("Expected health to return OK, got: %q", string(data[:]))
-	}
+	helperCheckResponse(t, "OK\n")
 }
 
 func TestHandlerInitErr(t *testing.T) {
@@ -78,14 +70,7 @@ func TestHandlerInitErr(t *testing.T) {
 	if resp.StatusCode != 503 {
 		t.Errorf("Expected /health to respond with 503, got: %d", resp.StatusCode)
 	}
-
-	data, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
-		log.Fatal(err)
-	}
-	if string(data[:]) != "ERR" {
-		t.Errorf("Expected health to return ERR, got: %q", string(data[:]))
-	}
+	helperCheckResponse(t, "ERR")
 }
 
 func TestHandlerHealthCheckErr(t *testing.T) {
@@ -93,12 +78,17 @@ func TestHandlerHealthCheckErr(t *testing.T) {
 	if resp.StatusCode != 503 {
 		t.Errorf("Expected /health to respond with 503, got: %d", resp.StatusCode)
 	}
+	helperCheckResponse(t, "ERR")
 
+}
+
+func helperCheckResponse(t *testing.T, expected string) {
 	data, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
 		log.Fatal(err)
 	}
-	if string(data[:]) != "ERR" {
-		t.Errorf("Expected health to return ERR, got: %q", string(data[:]))
+	if string(data[:]) != expected {
+		t.Errorf("Expected health to return %q, got: %q", expected,
+			string(data[:]))
 	}
 }
