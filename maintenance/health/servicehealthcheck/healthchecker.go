@@ -78,7 +78,7 @@ func (h *handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	hcInterface, isIn := checks.Load(name)
 	if !isIn {
-		h.writeError(w, errors.New("Health Check not registered\n"), http.StatusNotFound, name)
+		h.writeError(w, errors.New("Health check not registered"), http.StatusNotFound, name)
 		return
 	}
 	hc := hcInterface.(HealthCheck)
