@@ -4,13 +4,14 @@
 package servicehealthcheck
 
 import (
-	"github.com/gorilla/mux"
-	"github.com/pace/bricks/maintenance/errors"
-	"github.com/pace/bricks/maintenance/log"
 	"net/http"
 	"strings"
 	"sync"
 	"time"
+
+	"github.com/gorilla/mux"
+	"github.com/pace/bricks/maintenance/errors"
+	"github.com/pace/bricks/maintenance/log"
 )
 
 type HealthCheck interface {
@@ -30,12 +31,13 @@ type ConnectionState struct {
 
 type handler struct{}
 
-// checks map with all health checks, key: Name of the check
-var checks = make(map[string]HealthCheck)
-var checksLock = sync.RWMutex{}
+// checks contains all registered Health Checks - key:Name
+var checks sync.Map
 
-// initErrors map with all errors that happened in the initialisation of the health checks
-var initErrors = make(map[string]error)
+// initErrors map with all errors that happened in the initialisation of the health checks - key:Name
+var initErrors sync.Map
+
+// router is needed to dynamically add health checks
 var router *mux.Router
 
 func (cs *ConnectionState) setConnectionState(healthy bool, err error, mom time.Time) {
@@ -59,7 +61,7 @@ func (cs *ConnectionState) GetState() (bool, error) {
 }
 
 func NewConnectionState() *ConnectionState {
-	return &ConnectionState{m: sync.Mutex{}}
+	return &ConnectionState{}
 }
 
 func (h *handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
@@ -72,17 +74,19 @@ func (h *handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	checksLock.RLock()
-	defer checksLock.RUnlock()
 	name := splitRoute[1]
 
-	if checks[name] == nil {
+	hcInterface, isIn := checks.Load(name)
+	if !isIn {
 		h.writeError(w, errors.New("Health Check not registered\n"), http.StatusNotFound, name)
 		return
 	}
-	hc := checks[name]
+	hc := hcInterface.(HealthCheck)
+
 	// If it was not possible to initialise this health check, then show the initialisation error
-	if err := initErrors[name]; err != nil {
+	if val, isIn := initErrors.Load(name); isIn {
+		err := val.(error)
+
 		h.writeError(w, err, http.StatusServiceUnavailable, name)
 		return
 	}
@@ -109,20 +113,18 @@ func (h *handler) writeError(w http.ResponseWriter, err error, errorCode int, na
 // RegisterHealthCheck register a healthCheck that need to be routed
 // names must be uniq
 func RegisterHealthCheck(hc HealthCheck, name string) {
-	if checks[name] != nil {
+	if _, ok := checks.Load(name); ok {
 		log.Debugf("Health checks can only be added once, tried to add another health check with name %v", name)
 		return
 	}
 	if router == nil {
-		log.Warnf("Tried to add HealthCheck ( %T ) without a router", hc)
+		log.Errorf("Tried to add HealthCheck ( %T ) without a router", hc)
 		return
 	}
-	checksLock.Lock()
-	defer checksLock.Unlock()
-	checks[name] = hc
+	checks.Store(name, hc)
 	if err := hc.InitHealthCheck(); err != nil {
 		log.Warnf("Error initialising health check  %T: %v", hc, err)
-		initErrors[name] = err
+		initErrors.Store(name, err)
 	}
 	router.Handle("/health/"+name, Handler())
 }

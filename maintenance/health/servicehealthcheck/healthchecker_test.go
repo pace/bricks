@@ -1,16 +1,17 @@
 // Copyright © 2019 by PACE Telematics GmbH. All rights reserved.
-// Created at 2019/10/18 Charlotte Pröller
+// Created at 2019/10/18 by Charlotte Pröller
 
 package servicehealthcheck
 
 import (
-	"github.com/gorilla/mux"
-	"github.com/pace/bricks/maintenance/errors"
-	"github.com/pace/bricks/maintenance/log"
 	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
 	"testing"
+
+	"github.com/gorilla/mux"
+	"github.com/pace/bricks/maintenance/errors"
+	"github.com/pace/bricks/maintenance/log"
 )
 
 type testHealthChecker struct {
@@ -82,8 +83,8 @@ func TestHandlerInitErr(t *testing.T) {
 	if err != nil {
 		log.Fatal(err)
 	}
-	if string(data[:]) != "Error \n" {
-		t.Errorf("Expected health to return Error \\n, got: %q", string(data[:]))
+	if string(data[:]) != "ERR" {
+		t.Errorf("Expected health to return ERR, got: %q", string(data[:]))
 	}
 }
 
@@ -97,7 +98,7 @@ func TestHandlerHealthCheckErr(t *testing.T) {
 	if err != nil {
 		log.Fatal(err)
 	}
-	if string(data[:]) != "Error \n" {
-		t.Errorf("Expected health to return Error \\n, got: %q", string(data[:]))
+	if string(data[:]) != "ERR" {
+		t.Errorf("Expected health to return ERR, got: %q", string(data[:]))
 	}
 }

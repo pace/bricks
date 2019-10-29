@@ -1,17 +1,17 @@
-// Copyright © 2018 by PACE Telematics GmbH. All rights reserved.
-// Created at 2018/09/12 by Vincent Landgraf
+// Copyright © 2019 by PACE Telematics GmbH. All rights reserved.
+// Created at 2019/10/29 by Charlotte Pröller
 
 package redis
 
 import (
+	"io/ioutil"
+	"net/http"
+	"net/http/httptest"
+	"testing"
+
 	"github.com/gorilla/mux"
 	"github.com/pace/bricks/maintenance/health/servicehealthcheck"
 	"github.com/pace/bricks/maintenance/log"
-	"io/ioutil"
-	"net/http"
-
-	"net/http/httptest"
-	"testing"
 )
 
 var resp *http.Response

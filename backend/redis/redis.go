@@ -7,13 +7,13 @@ package redis
 import (
 	"context"
 	"fmt"
-	"github.com/pace/bricks/maintenance/health/servicehealthcheck"
 	"time"
 
 	"github.com/caarlos0/env"
 	"github.com/go-redis/redis"
 	"github.com/opentracing/opentracing-go"
 	olog "github.com/opentracing/opentracing-go/log"
+	"github.com/pace/bricks/maintenance/health/servicehealthcheck"
 	"github.com/pace/bricks/maintenance/log"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/rs/zerolog"

@@ -1,17 +1,17 @@
 // Copyright © 2019 by PACE Telematics GmbH. All rights reserved.
-// Created at 2019/10/18 Charlotte Pröller
+// Created at 2019/10/18 by Charlotte Pröller
 
 package postgres
 
 import (
+	"io/ioutil"
+	"net/http"
+	"net/http/httptest"
+	"testing"
+
 	"github.com/gorilla/mux"
 	"github.com/pace/bricks/maintenance/health/servicehealthcheck"
 	"github.com/pace/bricks/maintenance/log"
-	"io/ioutil"
-	"net/http"
-
-	"net/http/httptest"
-	"testing"
 )
 
 var resp *http.Response

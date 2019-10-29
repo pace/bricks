@@ -6,7 +6,6 @@ package postgres
 
 import (
 	"fmt"
-	"github.com/pace/bricks/maintenance/health/servicehealthcheck"
 	"math"
 	"time"
 
@@ -14,6 +13,7 @@ import (
 	"github.com/go-pg/pg"
 	"github.com/opentracing/opentracing-go"
 	olog "github.com/opentracing/opentracing-go/log"
+	"github.com/pace/bricks/maintenance/health/servicehealthcheck"
 	"github.com/pace/bricks/maintenance/log"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/rs/zerolog"
