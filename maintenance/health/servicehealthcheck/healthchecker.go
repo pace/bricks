@@ -68,7 +68,7 @@ func (h *handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	//Check the route first
 	if len(splitRoute) < 2 || splitRoute[0] != "" {
-		h.writeError(w, errors.New("Route not Valid\n"), http.StatusBadRequest, route)
+		h.writeError(w, errors.New("Route not valid"), http.StatusBadRequest, route)
 		return
 	}
 
@@ -102,7 +102,7 @@ func (h *handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 func (h *handler) writeError(w http.ResponseWriter, err error, errorCode int, name string) {
 	w.Header().Set("Content-Type", "text/plain")
 	w.WriteHeader(errorCode)
-	w.Write([]byte("Error \n")) // nolint: gosec,errcheck
+	w.Write([]byte("ERR")) // nolint: gosec,errcheck
 	log.Warnf("helthcheck %v was not healthy %v", name, err)
 }
 
@@ -121,7 +121,7 @@ func RegisterHealthCheck(hc HealthCheck, name string) {
 	defer checksLock.Unlock()
 	checks[name] = hc
 	if err := hc.InitHealthCheck(); err != nil {
-		log.Warnf("Error initialising HealthCheck  %T: %v", hc, err)
+		log.Warnf("Error initialising health check  %T: %v", hc, err)
 		initErrors[name] = err
 	}
 	router.Handle("/health/"+name, Handler())
