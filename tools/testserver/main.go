@@ -17,7 +17,6 @@ import (
 	pacehttp "github.com/pace/bricks/http"
 	"github.com/pace/bricks/http/oauth2"
 	"github.com/pace/bricks/maintenance/errors"
-	"github.com/pace/bricks/maintenance/health/servicehealthcheck"
 	"github.com/pace/bricks/maintenance/log"
 	_ "github.com/pace/bricks/maintenance/tracing"
 	"github.com/pace/bricks/test/livetest"
@@ -124,8 +123,6 @@ func main() {
 			}
 		},
 	})
-
-	servicehealthcheck.InitialiseHealthChecker(h)
 
 	log.Fatal(s.ListenAndServe())
 }

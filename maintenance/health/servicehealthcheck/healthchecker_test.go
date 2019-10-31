@@ -9,7 +9,6 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/gorilla/mux"
 	"github.com/pace/bricks/maintenance/errors"
 	"github.com/pace/bricks/maintenance/log"
 )
@@ -47,9 +46,7 @@ func (t *testHealthChecker) CleanUp() error {
 var resp *http.Response
 
 func setup(t *testHealthChecker) {
-	r := mux.NewRouter()
 	rec := httptest.NewRecorder()
-	InitialiseHealthChecker(r)
 	RegisterHealthCheck(t, t.Name())
 	req := httptest.NewRequest("GET", "/health/"+t.Name(), nil)
 	Handler().ServeHTTP(rec, req)

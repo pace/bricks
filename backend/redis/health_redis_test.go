@@ -9,7 +9,7 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/gorilla/mux"
+	http2 "github.com/pace/bricks/http"
 	"github.com/pace/bricks/maintenance/health/servicehealthcheck"
 	"github.com/pace/bricks/maintenance/log"
 )
@@ -17,9 +17,8 @@ import (
 var resp *http.Response
 
 func setup(t *redisHealthCheck, name string) {
-	r := mux.NewRouter()
+	r := http2.Router()
 	rec := httptest.NewRecorder()
-	servicehealthcheck.InitialiseHealthChecker(r)
 	servicehealthcheck.RegisterHealthCheck(t, name)
 	req := httptest.NewRequest("GET", "/health/"+name, nil)
 	r.ServeHTTP(rec, req)
