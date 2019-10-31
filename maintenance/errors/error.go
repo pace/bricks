@@ -10,9 +10,9 @@ import (
 	"net/http"
 	"os"
 
-	raven "github.com/getsentry/raven-go"
+	"github.com/getsentry/raven-go"
 	"github.com/pace/bricks/http/jsonapi/runtime"
-	"github.com/pace/bricks/http/oauth2"
+	"github.com/pace/bricks/http/security/oauth2"
 	"github.com/pace/bricks/maintenance/log"
 )
 

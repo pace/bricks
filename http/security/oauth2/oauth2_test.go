@@ -12,6 +12,7 @@ import (
 	"testing"
 
 	"github.com/gorilla/mux"
+	"github.com/pace/bricks/http/security"
 	"github.com/pace/bricks/maintenance/log"
 )
 
@@ -115,7 +116,7 @@ func TestRequest(t *testing.T) {
 	}
 
 	r := httptest.NewRequest("GET", "http://example.com", nil)
-	ctx := context.WithValue(r.Context(), tokenKey, &to)
+	ctx := context.WithValue(r.Context(), security.TokenKey, &to)
 	r = r.WithContext(ctx)
 
 	r2 := Request(r)
@@ -149,13 +150,13 @@ func TestSuccessfulAccessors(t *testing.T) {
 		scope:    expectedScopes,
 	}
 
-	ctx := context.WithValue(context.TODO(), tokenKey, &to)
+	ctx := context.WithValue(context.TODO(), security.TokenKey, &to)
 	newCtx := context.TODO()
 	ctx = ContextTransfer(ctx, newCtx)
 
 	uid, _ := UserID(ctx)
 	cid, _ := ClientID(ctx)
-	bearerToken, _ := BearerToken(ctx)
+	bearerToken, _ := security.BearerToken(ctx)
 	scopes := Scopes(ctx)
 	hasScope := HasScope(ctx, "scope2")
 
@@ -186,7 +187,7 @@ func TestUnsucessfulAccessors(t *testing.T) {
 
 	uid, uidOK := UserID(ctx)
 	cid, cidOK := ClientID(ctx)
-	bt, btOK := BearerToken(ctx)
+	bt, btOK := security.BearerToken(ctx)
 	scopes := Scopes(ctx)
 	hasScope := HasScope(ctx, "scope2")
 
@@ -213,8 +214,8 @@ func TestUnsucessfulAccessors(t *testing.T) {
 
 func TestWithBearerToken(t *testing.T) {
 	ctx := context.Background()
-	ctx = WithBearerToken(ctx, "some access token")
-	token, ok := BearerToken(ctx)
+	ctx = security.WithBearerToken(ctx, "some access token")
+	token, ok := security.BearerToken(ctx)
 	if !ok || token != "some access token" {
 		t.Error("could not store bearer token in context")
 	}

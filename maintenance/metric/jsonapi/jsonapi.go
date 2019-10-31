@@ -12,7 +12,7 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/pace/bricks/http/oauth2"
+	"github.com/pace/bricks/http/security/oauth2"
 	"github.com/prometheus/client_golang/prometheus"
 )
 

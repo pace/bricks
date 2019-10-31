@@ -7,12 +7,12 @@ import (
 	"fmt"
 	"net/http"
 
-	mux "github.com/gorilla/mux"
-	"github.com/pace/bricks/http/oauth2"
+	"github.com/gorilla/mux"
+	oauth22 "github.com/pace/bricks/http/security/oauth2"
 )
 
 // RequiredScopes defines the scope each endpoint requires
-type RequiredScopes map[string]oauth2.Scope
+type RequiredScopes map[string]oauth22.Scope
 
 // ScopesMiddleware contains required scopes for each endpoint
 type ScopesMiddleware struct {
@@ -29,7 +29,7 @@ func NewScopesMiddleware(scopes RequiredScopes) *ScopesMiddleware {
 func (m *ScopesMiddleware) Handler(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		routeName := mux.CurrentRoute(r).GetName()
-		if oauth2.HasScope(r.Context(), m.RequiredScopes[routeName]) {
+		if oauth22.HasScope(r.Context(), m.RequiredScopes[routeName]) {
 			next.ServeHTTP(w, r)
 			return
 		}
