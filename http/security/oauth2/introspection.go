@@ -8,8 +8,8 @@ import (
 	"errors"
 )
 
-// TokenIntrospecter needs to be implemented for token lookup
-type TokenIntrospecter interface {
+// TokenIntrospector needs to be implemented for token lookup
+type TokenIntrospector interface {
 	IntrospectToken(ctx context.Context, token string) (*IntrospectResponse, error)
 }
 
