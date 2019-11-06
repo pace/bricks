@@ -131,7 +131,7 @@ func init() {
 	}, "postgresdefault")
 }
 
-// ConnectionPool returns a new database connection Pool
+// ConnectionPool returns a new database connection pool
 // that is already configured with the correct credentials and
 // instrumented with tracing and logging
 func ConnectionPool() *pg.DB {
@@ -156,7 +156,7 @@ func ConnectionPool() *pg.DB {
 	})
 }
 
-// CustomConnectionPool returns a new database connection Pool
+// CustomConnectionPool returns a new database connection pool
 // that is already configured with the correct credentials and
 // instrumented with tracing and logging using the passed options
 //
@@ -166,7 +166,7 @@ func ConnectionPool() *pg.DB {
 func CustomConnectionPool(opts *pg.Options) *pg.DB {
 	log.Logger().Info().Str("addr", opts.Addr).
 		Str("user", opts.User).Str("database", opts.Database).
-		Msg("PostgreSQL connection Pool created")
+		Msg("PostgreSQL connection pool created")
 	db := pg.Connect(opts)
 	db.OnQueryProcessed(queryLogger)
 	db.OnQueryProcessed(openTracingAdapter)
