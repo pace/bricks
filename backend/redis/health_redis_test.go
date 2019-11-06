@@ -14,16 +14,15 @@ import (
 	"github.com/pace/bricks/maintenance/log"
 )
 
-var resp *http.Response
-
-func setup(t *HealthCheck, name string) {
+func setup(t *HealthCheck, name string) *http.Response {
 	r := http2.Router()
 	rec := httptest.NewRecorder()
 	servicehealthcheck.RegisterHealthCheck(t, name)
 	req := httptest.NewRequest("GET", "/health/"+name, nil)
 	r.ServeHTTP(rec, req)
-	resp = rec.Result()
+	resp := rec.Result()
 	defer resp.Body.Close()
+	return resp
 }
 
 // TestIntegrationHealthCheck tests if redis health check ist working like expected
@@ -31,7 +30,7 @@ func TestIntegrationHealthCheck(t *testing.T) {
 	if testing.Short() {
 		t.SkipNow()
 	}
-	setup(&HealthCheck{
+	resp := setup(&HealthCheck{
 		Client:     Client(),
 		CheckWrite: true,
 	}, "redis")
@@ -46,5 +45,4 @@ func TestIntegrationHealthCheck(t *testing.T) {
 	if string(data[:]) != "OK\n" {
 		t.Errorf("Expected /health/redis to return OK, got: %q", string(data[:]))
 	}
-
 }

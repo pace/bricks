@@ -37,43 +37,42 @@ func (t *testHealthChecker) HealthCheck() (bool, error) {
 	return true, nil
 }
 
-var resp *http.Response
-
-func setup(t *testHealthChecker) {
+func setup(t *testHealthChecker) *http.Response {
 	rec := httptest.NewRecorder()
 	RegisterHealthCheck(t, t.Name())
 	req := httptest.NewRequest("GET", "/health/"+t.Name(), nil)
 	Handler().ServeHTTP(rec, req)
-	resp = rec.Result()
+	resp := rec.Result()
 	defer resp.Body.Close()
+	return resp
 }
 
 func TestHandlerOK(t *testing.T) {
-	setup(&testHealthChecker{name: "test"})
+	resp := setup(&testHealthChecker{name: "test"})
 	if resp.StatusCode != 200 {
 		t.Errorf("Expected /health to respond with 200, got: %d", resp.StatusCode)
 	}
-	helperCheckResponse(t, "OK\n")
+	helperCheckResponse(t, "OK\n", resp)
 }
 
 func TestHandlerInitErr(t *testing.T) {
-	setup(&testHealthChecker{name: "TestHandlerInitErr", initErr: true})
+	resp := setup(&testHealthChecker{name: "TestHandlerInitErr", initErr: true})
 	if resp.StatusCode != 503 {
 		t.Errorf("Expected /health to respond with 503, got: %d", resp.StatusCode)
 	}
-	helperCheckResponse(t, "ERR")
+	helperCheckResponse(t, "ERR", resp)
 }
 
 func TestHandlerHealthCheckErr(t *testing.T) {
-	setup(&testHealthChecker{name: "TestHandlerHealthCheckErr", healthCheckErr: true})
+	resp := setup(&testHealthChecker{name: "TestHandlerHealthCheckErr", healthCheckErr: true})
 	if resp.StatusCode != 503 {
 		t.Errorf("Expected /health to respond with 503, got: %d", resp.StatusCode)
 	}
-	helperCheckResponse(t, "ERR")
+	helperCheckResponse(t, "ERR", resp)
 
 }
 
-func helperCheckResponse(t *testing.T, expected string) {
+func helperCheckResponse(t *testing.T, expected string, resp *http.Response) {
 	data, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
 		log.Fatal(err)
