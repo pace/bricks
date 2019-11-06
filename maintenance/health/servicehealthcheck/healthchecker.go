@@ -7,25 +7,19 @@ import (
 	"net/http"
 	"strings"
 	"sync"
-	"time"
 
 	"github.com/pace/bricks/maintenance/errors"
 	"github.com/pace/bricks/maintenance/log"
 )
 
+// HealthCheck is a health check that is initialised once and that is performed
+// periodically and/or spontaneously.
 type HealthCheck interface {
-	InitHealthCheck() error
 	HealthCheck() (bool, error)
-	CleanUp() error
 }
 
-// ConnectionState can be used for Health Checks
-// It offers a Mutex and the Date of the last check for caching the result
-type ConnectionState struct {
-	LastCheck time.Time
-	isHealthy bool
-	err       error
-	m         sync.Mutex
+type Initialisable interface {
+	Init() error
 }
 
 type handler struct{}
@@ -36,37 +30,13 @@ var checks sync.Map
 // initErrors map with all errors that happened in the initialisation of the health checks - key:Name
 var initErrors sync.Map
 
-func (cs *ConnectionState) setConnectionState(healthy bool, err error, mom time.Time) {
-	cs.m.Lock()
-	defer cs.m.Unlock()
-	cs.isHealthy = healthy
-	cs.err = err
-	cs.LastCheck = mom
-}
-
-func (cs *ConnectionState) SetErrorState(err error, mom time.Time) {
-	cs.setConnectionState(err == nil, err, mom)
-}
-
-func (cs *ConnectionState) SetHealthy(mom time.Time) {
-	cs.setConnectionState(true, nil, mom)
-}
-
-func (cs *ConnectionState) GetState() (bool, error) {
-	return cs.isHealthy, cs.err
-}
-
-func NewConnectionState() *ConnectionState {
-	return &ConnectionState{}
-}
-
 func (h *handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	route := r.URL.Path
 	splitRoute := strings.Split(route, "/health/")
 
-	//Check the route first
+	// Check the route first
 	if len(splitRoute) != 2 || splitRoute[0] != "" {
-		h.writeError(w, errors.New("Route not valid"), http.StatusBadRequest, route)
+		h.writeError(w, errors.New("route not valid"), http.StatusBadRequest, route)
 		return
 	}
 
@@ -74,7 +44,7 @@ func (h *handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	hcInterface, isIn := checks.Load(name)
 	if !isIn {
-		h.writeError(w, errors.New("Health check not registered"), http.StatusNotFound, name)
+		h.writeError(w, errors.New("health check not registered"), http.StatusNotFound, name)
 		return
 	}
 	hc := hcInterface.(HealthCheck)
@@ -89,11 +59,11 @@ func (h *handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	// this is the actual health check
 	if healthy, err := hc.HealthCheck(); healthy {
-		// to increase performance of the request set
-		// content type and write status code explicitly
 		w.Header().Set("Content-Type", "text/plain")
 		w.WriteHeader(http.StatusOK)
-		w.Write([]byte("OK\n")) // nolint: gosec,errcheck
+		if _, err := w.Write([]byte("OK\n")); err != nil {
+			log.Warnf("could not write output: %s", err)
+		}
 	} else {
 		h.writeError(w, err, http.StatusServiceUnavailable, name)
 	}
@@ -102,22 +72,27 @@ func (h *handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 func (h *handler) writeError(w http.ResponseWriter, err error, errorCode int, name string) {
 	w.Header().Set("Content-Type", "text/plain")
 	w.WriteHeader(errorCode)
-	w.Write([]byte("ERR")) // nolint: gosec,errcheck
-	log.Warnf("helthcheck %v was not healthy %v", name, err)
+	if _, err := w.Write([]byte("ERR")); err != nil {
+		log.Warnf("could not write output: %s", err)
+	}
+	log.Warnf("healthcheck %q was not healthy: %v", name, err)
 }
 
-// RegisterHealthCheck register a healthCheck that need to be routed
-// names must be uniq
+// RegisterHealthCheck registers a HealthCheck that need to be routed. The name
+// must be unique. If the health check satisfies the Initialisable interface, it
+// is initialised before it is added.
 func RegisterHealthCheck(hc HealthCheck, name string) {
 	if _, ok := checks.Load(name); ok {
-		log.Debugf("Health checks can only be added once, tried to add another health check with name %v", name)
+		log.Debugf("tried to register health check with name %v twice", name)
 		return
 	}
-	checks.Store(name, hc)
-	if err := hc.InitHealthCheck(); err != nil {
-		log.Warnf("Error initialising health check  %T: %v", hc, err)
-		initErrors.Store(name, err)
+	if initHC, ok := hc.(Initialisable); ok {
+		if err := initHC.Init(); err != nil {
+			log.Warnf("error initialising health check %q: %s", name, err)
+			initErrors.Store(name, err)
+		}
 	}
+	checks.Store(name, hc)
 }
 
 // Handler returns the health api endpoint

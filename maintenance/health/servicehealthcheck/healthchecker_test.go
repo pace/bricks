@@ -23,24 +23,18 @@ func (t *testHealthChecker) Name() string {
 	return t.name
 }
 
-func (t *testHealthChecker) InitHealthCheck() error {
+func (t *testHealthChecker) Init() error {
 	if t.initErr {
 		return errors.New("initError")
-	} else {
-		return nil
 	}
+	return nil
 }
 
 func (t *testHealthChecker) HealthCheck() (bool, error) {
 	if t.healthCheckErr {
 		return false, errors.New("healtherror")
-	} else {
-		return true, nil
 	}
-}
-
-func (t *testHealthChecker) CleanUp() error {
-	return nil
+	return true, nil
 }
 
 var resp *http.Response

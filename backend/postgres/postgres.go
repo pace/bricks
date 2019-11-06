@@ -67,6 +67,8 @@ type config struct {
 	HealthTableName string `env:"POSTGRES_HEALTHCHECK_TABLE" envDefault:"healthcheck"`
 	// Amount of time to cache the last health check result
 	HealthMaxRequest time.Duration `env:"POSTGRES_HEALTHCHECK_MAX_REQUEST_SEC" envDefault:"10s"`
+	// Whether also to perform a write test
+	HealthWrite bool `env:"POSTGRES_HEALTHCHECK_WRITE" envDefault:"true"`
 }
 
 var (
@@ -122,8 +124,11 @@ func init() {
 	if err != nil {
 		log.Fatalf("Failed to parse postgres environment: %v", err)
 	}
-	servicehealthcheck.RegisterHealthCheck(&PgHealthCheck{}, "postgresdefault")
 
+	servicehealthcheck.RegisterHealthCheck(&HealthCheck{
+		Pool:       ConnectionPool(),
+		CheckWrite: cfg.HealthWrite,
+	}, "postgresdefault")
 }
 
 // ConnectionPool returns a new database connection Pool

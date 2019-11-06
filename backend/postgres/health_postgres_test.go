@@ -16,7 +16,7 @@ import (
 
 var resp *http.Response
 
-func setup(t *PgHealthCheck, name string) {
+func setup(t *HealthCheck, name string) {
 	r := http2.Router()
 	rec := httptest.NewRecorder()
 	servicehealthcheck.RegisterHealthCheck(t, name)
@@ -30,7 +30,10 @@ func TestIntegrationHealthCheck(t *testing.T) {
 	if testing.Short() {
 		t.SkipNow()
 	}
-	setup(&PgHealthCheck{}, "postgres")
+	setup(&HealthCheck{
+		Pool:       ConnectionPool(),
+		CheckWrite: true,
+	}, "postgres")
 	if resp.StatusCode != 200 {
 		t.Errorf("Expected /health/postgres to respond with 200, got: %d", resp.StatusCode)
 	}

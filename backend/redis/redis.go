@@ -39,6 +39,8 @@ type config struct {
 	HealthKey string `env:"REDIS_HEALTH_KEY" envDefault:"healthy"`
 	// Amount of time to cache the last health check result
 	HealthMaxRequest time.Duration `env:"REDIS_HEALTHCHECK_MAX_REQUEST_SEC" envDefault:"10s"`
+	// Whether also to perform a write test
+	HealthWrite bool `env:"REDIS_HEALTHCHECK_WRITE" envDefault:"true"`
 }
 
 var (
@@ -78,7 +80,11 @@ func init() {
 	if err != nil {
 		log.Fatalf("Failed to parse redis environment: %v", err)
 	}
-	servicehealthcheck.RegisterHealthCheck(&redisHealthCheck{}, "redis")
+
+	servicehealthcheck.RegisterHealthCheck(&HealthCheck{
+		Client:     Client(),
+		CheckWrite: cfg.HealthWrite,
+	}, "redis")
 }
 
 // Client with environment based configuration

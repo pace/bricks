@@ -43,4 +43,6 @@
 * `REDIS_HEALTH_KEY` default: `healthy`
     * Name of the key that is written to check, if redis is healthy
 * `REDIS_HEALTHCHECK_MAX_REQUEST_SEC` default: `10s`
-    * Amount of time to cache the last health check result 
+    * Amount of time to cache the last health check result
+* `REDIS_HEALTHCHECK_WRITE` default: `true`
+	* Whether also to perform a write test

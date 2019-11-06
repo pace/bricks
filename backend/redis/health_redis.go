@@ -10,46 +10,36 @@ import (
 	"github.com/pace/bricks/maintenance/health/servicehealthcheck"
 )
 
-type redisHealthCheck struct {
-	State  *servicehealthcheck.ConnectionState
-	client *redis.Client
-}
-
-func (h *redisHealthCheck) InitHealthCheck() error {
-	h.client = Client()
-	h.State = servicehealthcheck.NewConnectionState()
-	return nil
+// HealthCheck checks the state of a redis connection. It must not be changed
+// after it was registered as a health check.
+type HealthCheck struct {
+	state      servicehealthcheck.ConnectionState
+	Client     *redis.Client
+	CheckWrite bool
 }
 
 // HealthCheck checks if the redis is healthy. If the last result is outdated,
 // redis is checked for writeability and readability,
 // otherwise return the old result
-func (h *redisHealthCheck) HealthCheck() (bool, error) {
-	currTime := time.Now()
-
-	if currTime.Sub(h.State.LastCheck) <= cfg.HealthMaxRequest {
+func (h *HealthCheck) HealthCheck() (bool, error) {
+	if time.Since(h.state.LastChecked()) <= cfg.HealthMaxRequest {
 		// the last health check is not outdated, an can be reused.
-		return h.State.GetState()
+		return h.state.GetState()
 	}
 	// Try writing
-	errWrite := h.client.Append(cfg.HealthKey, "true").Err()
-	if errWrite != nil {
-		h.State.SetErrorState(errWrite, currTime)
-		return h.State.GetState()
+	if err := h.Client.Append(cfg.HealthKey, "true").Err(); err != nil {
+		h.state.SetErrorState(err)
+		return h.state.GetState()
 	}
 	// If writing worked try reading
-	errRead := h.client.Get(cfg.HealthKey).Err()
-	if errRead != nil {
-		h.State.SetErrorState(errRead, currTime)
-		return h.State.GetState()
+	if h.CheckWrite {
+		err := h.Client.Get(cfg.HealthKey).Err()
+		if err != nil {
+			h.state.SetErrorState(err)
+			return h.state.GetState()
+		}
 	}
 	// If reading an writing worked set the Health Check to healthy
-	h.State.SetHealthy(currTime)
-	return h.State.GetState()
-}
-
-func (h *redisHealthCheck) CleanUp() error {
-	//Nop, nothing to cleanup
-	return nil
-
+	h.state.SetHealthy()
+	return h.state.GetState()
 }
