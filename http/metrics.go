@@ -52,16 +52,11 @@ var (
 		},
 		[]string{"code", "method", "source"},
 	)
-
-	paceHTTPPanicCounter = prometheus.NewGauge(prometheus.GaugeOpts{
-		Name: "pace_http_panic_total",
-		Help: "A counter for panics intercepted while handling a request",
-	})
 )
 
 func init() {
 	// Register all of the metrics in the standard registry.
-	prometheus.MustRegister(paceHTTPInFlightGauge, paceHTTPCounter, paceHTTPDuration, paceHTTPResponseSize, paceHTTPPanicCounter)
+	prometheus.MustRegister(paceHTTPInFlightGauge, paceHTTPCounter, paceHTTPDuration, paceHTTPResponseSize)
 }
 
 func metricsMiddleware(next http.Handler) http.Handler {

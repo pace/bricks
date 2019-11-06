@@ -23,7 +23,7 @@ func Router() *mux.Router {
 	r.Use(metricsMiddleware)
 
 	// last resort error handler
-	r.Use(errors.HandlerWithCounter(paceHTTPPanicCounter))
+	r.Use(errors.Handler())
 
 	// for logging
 	r.Use(log.Handler())
