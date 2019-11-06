@@ -51,6 +51,7 @@ func Handler() func(http.Handler) http.Handler {
 // HandleRequest should be called with defer to recover panics in request handlers
 func HandleRequest(handlerName string, w http.ResponseWriter, r *http.Request) {
 	if rp := recover(); rp != nil {
+		paceHTTPPanicCounter.Inc()
 		HandleError(&PanicWrap{rp}, handlerName, w, r)
 	}
 }
