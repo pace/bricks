@@ -13,24 +13,21 @@ import (
 // HealthCheck checks the state of a postgres connection. It must not be changed
 // after it was registered as a health check.
 type HealthCheck struct {
-	state      servicehealthcheck.ConnectionState
-	Pool       *pg.DB
-	CheckWrite bool
+	state servicehealthcheck.ConnectionState
+	Pool  *pg.DB
 }
 
-// Init initialises the test table if the write check is enabled.
+// Init initialises the test table
 func (h *HealthCheck) Init() error {
-	if h.CheckWrite {
-		_, errWrite := h.Pool.Exec(`CREATE TABLE IF NOT EXISTS ` + cfg.HealthTableName + `(ok boolean);`)
-		return errWrite
-	}
+	_, errWrite := h.Pool.Exec(`CREATE TABLE IF NOT EXISTS ` + cfg.HealthCheckTableName + `(ok boolean);`)
+	return errWrite
 	return nil
 }
 
 // HealthCheck performs the read test on the database. If enabled, it performs a
 // write test as well.
 func (h *HealthCheck) HealthCheck() (bool, error) {
-	if time.Since(h.state.LastChecked()) <= cfg.HealthMaxRequest {
+	if time.Since(h.state.LastChecked()) <= cfg.HealthCheckResultTTL {
 		// the last result of the Health Check is still not outdated
 		return h.state.GetState()
 	}
@@ -41,12 +38,10 @@ func (h *HealthCheck) HealthCheck() (bool, error) {
 		return h.state.GetState()
 	}
 	// writecheck - add Data to configured Table
-	if h.CheckWrite {
-		_, err := h.Pool.Exec("INSERT INTO " + cfg.HealthTableName + "(ok) VALUES (true);")
-		if err != nil {
-			h.state.SetErrorState(err)
-			return h.state.GetState()
-		}
+	_, err := h.Pool.Exec("INSERT INTO " + cfg.HealthCheckTableName + "(ok) VALUES (true) ON CONFLICT (ok) DO UPDATE SET c = true;")
+	if err != nil {
+		h.state.SetErrorState(err)
+		return h.state.GetState()
 	}
 	// If no error occurred set the State of this Health Check to healthy
 	h.state.SetHealthy()
@@ -56,9 +51,7 @@ func (h *HealthCheck) HealthCheck() (bool, error) {
 
 // CleanUp drops the test table.
 func (h *HealthCheck) CleanUp() error {
-	if h.CheckWrite {
-		_, err := h.Pool.Exec("DROP TABLE IF EXISTS " + cfg.HealthTableName)
-		return err
-	}
+	_, err := h.Pool.Exec("DROP TABLE IF EXISTS " + cfg.HealthCheckTableName)
+	return err
 	return nil
 }

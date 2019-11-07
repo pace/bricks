@@ -64,11 +64,9 @@ type config struct {
 	// if IdleTimeout is set.
 	IdleCheckFrequency time.Duration `env:"POSTGRES_IDLE_CHECK_FREQUENCY" envDefault:"1m"`
 	// Name of the Table that is created to try if database is writeable
-	HealthTableName string `env:"POSTGRES_HEALTHCHECK_TABLE" envDefault:"healthcheck"`
+	HealthCheckTableName string `env:"POSTGRES_HEALTH_CHECK_TABLE_NAME" envDefault:"healthcheck"`
 	// Amount of time to cache the last health check result
-	HealthMaxRequest time.Duration `env:"POSTGRES_HEALTHCHECK_MAX_REQUEST_SEC" envDefault:"10s"`
-	// Whether also to perform a write test
-	HealthWrite bool `env:"POSTGRES_HEALTHCHECK_WRITE" envDefault:"true"`
+	HealthCheckResultTTL time.Duration `env:"POSTGRES_HEALTH_CHECK_RESULT_TTL" envDefault:"10s"`
 }
 
 var (
@@ -126,8 +124,7 @@ func init() {
 	}
 
 	servicehealthcheck.RegisterHealthCheck(&HealthCheck{
-		Pool:       ConnectionPool(),
-		CheckWrite: cfg.HealthWrite,
+		Pool: ConnectionPool(),
 	}, "postgresdefault")
 }
 

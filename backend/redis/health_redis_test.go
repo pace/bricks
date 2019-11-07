@@ -31,8 +31,7 @@ func TestIntegrationHealthCheck(t *testing.T) {
 		t.SkipNow()
 	}
 	resp := setup(&HealthCheck{
-		Client:     Client(),
-		CheckWrite: true,
+		Client: Client(),
 	}, "redis")
 	if resp.StatusCode != 200 {
 		t.Errorf("Expected /health/redis to respond with 200, got: %d", resp.StatusCode)

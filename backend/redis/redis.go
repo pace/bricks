@@ -36,11 +36,9 @@ type config struct {
 	IdleTimeout        time.Duration `env:"REDIS_IDLE_TIMEOUT"`
 	IdleCheckFrequency time.Duration `env:"REDIS_IDLE_CHECK_FREQUENCY"`
 	// Name of the key that is written to check, if redis is healthy
-	HealthKey string `env:"REDIS_HEALTH_KEY" envDefault:"healthy"`
+	HealthCheckKey string `env:"REDIS_HEALTH_CHECK_KEY" envDefault:"healthy"`
 	// Amount of time to cache the last health check result
-	HealthMaxRequest time.Duration `env:"REDIS_HEALTHCHECK_MAX_REQUEST_SEC" envDefault:"10s"`
-	// Whether also to perform a write test
-	HealthWrite bool `env:"REDIS_HEALTHCHECK_WRITE" envDefault:"true"`
+	HealthCheckResultTTL time.Duration `env:"REDIS_HEALTH_CHECK_RESULT_TTL" envDefault:"10s"`
 }
 
 var (
@@ -82,8 +80,7 @@ func init() {
 	}
 
 	servicehealthcheck.RegisterHealthCheck(&HealthCheck{
-		Client:     Client(),
-		CheckWrite: cfg.HealthWrite,
+		Client: Client(),
 	}, "redis")
 }
 
