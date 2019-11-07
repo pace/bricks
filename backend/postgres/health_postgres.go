@@ -21,7 +21,6 @@ type HealthCheck struct {
 func (h *HealthCheck) Init() error {
 	_, errWrite := h.Pool.Exec(`CREATE TABLE IF NOT EXISTS ` + cfg.HealthCheckTableName + `(ok boolean);`)
 	return errWrite
-	return nil
 }
 
 // HealthCheck performs the read test on the database. If enabled, it performs a
@@ -38,7 +37,14 @@ func (h *HealthCheck) HealthCheck() (bool, error) {
 		return h.state.GetState()
 	}
 	// writecheck - add Data to configured Table
-	_, err := h.Pool.Exec("INSERT INTO " + cfg.HealthCheckTableName + "(ok) VALUES (true) ON CONFLICT (ok) DO UPDATE SET c = true;")
+	_, err := h.Pool.Exec("INSERT INTO " + cfg.HealthCheckTableName + "(ok) VALUES (true);")
+	if err != nil {
+		h.state.SetErrorState(err)
+		return h.state.GetState()
+	}
+	// and while we're at it, check delete as well (so as not to clutter the database
+	// because UPSERT is impractical here
+	_, err = h.Pool.Exec("DELETE FROM " + cfg.HealthCheckTableName + ";")
 	if err != nil {
 		h.state.SetErrorState(err)
 		return h.state.GetState()
