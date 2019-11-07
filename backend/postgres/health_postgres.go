@@ -53,5 +53,4 @@ func (h *HealthCheck) HealthCheck() (bool, error) {
 func (h *HealthCheck) CleanUp() error {
 	_, err := h.Pool.Exec("DROP TABLE IF EXISTS " + cfg.HealthCheckTableName)
 	return err
-	return nil
 }
