@@ -20,6 +20,13 @@
           "Payment"
         ],
         "operationId": "CreatePaymentMethodSEPA",
+        "security": [
+          {
+            "OAuth2": [
+              "pay:payment-methods:create"
+            ]
+          }
+        ],
         "summary": "Register SEPA direct debit as a payment method",
         "description": "By registering you allow the user to use SEPA direct debit as a payment method.\nThe payment method ID is optional when posting data.\n",
         "requestBody": {
@@ -1159,6 +1166,30 @@
           }
         }
       }
+    },
+    "securitySchemes": {
+      "OAuth2": {
+        "type": "oauth2",
+        "flows": {
+          "authorizationCode": {
+            "authorizationUrl": "https://id.pace.cloud/oauth2/authorize",
+            "tokenUrl": "https://id.pace.cloud/oauth2/token",
+            "refreshUrl": "https://id.pace.cloud/oauth2/token",
+            "scopes": {
+              "id:sessions:create": "Create a new browser session"
+            }
+          }
+        }
+      },
+      "ProfileKey": {
+        "type": "apiKey",
+        "in": "header",
+        "name": "Authorization",
+        "description": "prefix with Bearer "
+      }
     }
   }
 }
+
+
+

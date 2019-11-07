@@ -6,6 +6,7 @@ import (
 	mux "github.com/gorilla/mux"
 	opentracing "github.com/opentracing/opentracing-go"
 	runtime "github.com/pace/bricks/http/jsonapi/runtime"
+	security "github.com/pace/bricks/http/security"
 	errors "github.com/pace/bricks/maintenance/errors"
 	metrics "github.com/pace/bricks/maintenance/metric/jsonapi"
 	"net/http"
@@ -50,7 +51,7 @@ type MapTypeString map[string]string
 UpdateArticleCommentsHandler handles request/response marshaling and validation for
  Patch /api/articles/{uuid}/relationships/comments
 */
-func UpdateArticleCommentsHandler(service Service) http.Handler {
+func UpdateArticleCommentsHandler(service Service, authenticators map[string]security.Authorizer) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		defer errors.HandleRequest("UpdateArticleCommentsHandler", w, r)
 
@@ -100,7 +101,7 @@ func UpdateArticleCommentsHandler(service Service) http.Handler {
 UpdateArticleInlineTypeHandler handles request/response marshaling and validation for
  Patch /api/articles/{uuid}/relationships/inline
 */
-func UpdateArticleInlineTypeHandler(service Service) http.Handler {
+func UpdateArticleInlineTypeHandler(service Service, authenticators map[string]security.Authorizer) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		defer errors.HandleRequest("UpdateArticleInlineTypeHandler", w, r)
 
@@ -145,7 +146,7 @@ func UpdateArticleInlineTypeHandler(service Service) http.Handler {
 UpdateArticleInlineRefHandler handles request/response marshaling and validation for
  Patch /api/articles/{uuid}/relationships/inlineref
 */
-func UpdateArticleInlineRefHandler(service Service) http.Handler {
+func UpdateArticleInlineRefHandler(service Service, authenticators map[string]security.Authorizer) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		defer errors.HandleRequest("UpdateArticleInlineRefHandler", w, r)
 
@@ -308,16 +309,21 @@ type Service interface {
 }
 
 /*
-Router implements: Articles Test Service
+RouterWithAuthentication implements: Articles Test Service
 
 Articles Test Service
 */
-func Router(service Service) *mux.Router {
+func RouterWithAuthentication(service Service, authenticators map[string]security.Authorizer) *mux.Router {
 	router := mux.NewRouter()
 	// Subrouter s1 - Path:
 	s1 := router.PathPrefix("").Subrouter()
-	s1.Methods("PATCH").Path("/api/articles/{uuid}/relationships/comments").Handler(UpdateArticleCommentsHandler(service)).Name("UpdateArticleComments")
-	s1.Methods("PATCH").Path("/api/articles/{uuid}/relationships/inline").Handler(UpdateArticleInlineTypeHandler(service)).Name("UpdateArticleInlineType")
-	s1.Methods("PATCH").Path("/api/articles/{uuid}/relationships/inlineref").Handler(UpdateArticleInlineRefHandler(service)).Name("UpdateArticleInlineRef")
+	s1.Methods("PATCH").Path("/api/articles/{uuid}/relationships/comments").Handler(UpdateArticleCommentsHandler(service, authenticators)).Name("UpdateArticleComments")
+	s1.Methods("PATCH").Path("/api/articles/{uuid}/relationships/inline").Handler(UpdateArticleInlineTypeHandler(service, authenticators)).Name("UpdateArticleInlineType")
+	s1.Methods("PATCH").Path("/api/articles/{uuid}/relationships/inlineref").Handler(UpdateArticleInlineRefHandler(service, authenticators)).Name("UpdateArticleInlineRef")
 	return router
+}
+
+// Router kept for backward compatibility. Please use RouteWithAuthentication
+func Router(service Service) *mux.Router {
+	return RouterWithAuthentication(service, map[string]security.Authorizer{})
 }

@@ -24,6 +24,7 @@ const (
 	pkgMaintErrors    = "github.com/pace/bricks/maintenance/errors"
 	pkgOpentracing    = "github.com/opentracing/opentracing-go"
 	pkgSecurity       = "github.com/pace/bricks/http/security"
+	pkgOAuth2         = "github.com/pace/bricks/http/security/ouath2"
 )
 
 const serviceInterface = "Service"
@@ -332,11 +333,11 @@ func (g *Generator) buildRouter(routes []*route, schema *openapi3.Swagger) error
 	// Note: we don't restrict host, scheme and port to ease development
 	paths := make(map[string]struct{})
 	for _, server := range schema.Servers {
-		url, err := url.Parse(server.URL)
+		serverUrl, err := url.Parse(server.URL)
 		if err != nil {
 			return err
 		}
-		paths[url.Path] = struct{}{}
+		paths[serverUrl.Path] = struct{}{}
 	}
 
 	// but generate subrouters for each server
@@ -387,7 +388,7 @@ func (g *Generator) buildRouter(routes []*route, schema *openapi3.Swagger) error
 	g.goSource.Func().Id("RouterWithAuthentication").Params(
 		serviceInterfaceVariable, jen.Id("authenticators").Map(jen.String()).Qual(pkgSecurity, "Authorizer")).Op("*").Qual(pkgGorillaMux, "Router").Block(routeStmts...)
 
-	block := jen.Id("RouterWithAuthentication").Call(jen.Id("service"), jen.Map(jen.String()).Qual(pkgSecurity, "Authorizer").Values())
+	block := jen.Return(jen.Id("RouterWithAuthentication").Call(jen.Id("service"), jen.Map(jen.String()).Qual(pkgSecurity, "Authorizer").Values()))
 
 	g.addGoDoc("Router", "kept for backward compatibility. Please use RouteWithAuthentication")
 
@@ -588,25 +589,27 @@ func generateAuthentication(op *openapi3.Operation) (*jen.Group, error) {
 	for _, sl := range *op.Security {
 		value, ok := sl["OAuth2"]
 		if ok {
+			r.Line().Add(jen.Comment("OAuth2 Authentication"))
 			if len(value) < 1 {
 				return nil, fmt.Errorf("security config for ProfileKey needs %d values but had: %d", 1, len(value))
 			}
-			context := value[0]
-
-			r.Line().Add(jen.Id("auth").Op(":=").Id("authenticators").Index(jen.Lit("OAuth2")))
-			r.Line().List(jen.Id("auth"), jen.Id("ok")).Op(":=").Id("auth").Dot("(*oauth2.Authorizer)")
-			r.Line().If(jen.Op("!").Id("ok")).Block(jen.Return(jen.Empty()))
-			r.Line().List(jen.Id("ctx"), jen.Id("isOk")).Op(":=").Id("oauth2").Dot("WithScope").Params(jen.Lit(context)).Dot("Authorize").Params(jen.Id("oauth2cfg"), jen.Id("r"), jen.Id("w"))
+			scope := value[0]
+			//authorizer security.Authorizer, r *http.Request, w http.ResponseWriter, authConfig interface{}, scope string
+			r.Line().List(jen.Id("r"), jen.Id("ok")).Op(":=").Qual(pkgOAuth2, "Authenticate").Call(
+				jen.Id("authenticators").Index(jen.Lit("OAuth2")),
+				jen.Id("r"),
+				jen.Id("w"),
+				jen.Id("cfgOAuth2"),
+				jen.Lit(scope))
 			r.Line().Comment("Check if authorisation was successful")
-			r.Line().If(jen.Op("!").Id("isOk")).Block(jen.Return())
-			r.Line().Id("r").Op("=").Id("r").Dot("WithContext").Call(jen.Id("ctx"))
+			r.Line().If(jen.Op("!").Id("isOk")).Block(jen.Comment("No Error Handling needed,  this is already done"), jen.Return())
 		}
 		value, ok = sl["ProfileKey"]
 		if ok {
 			if len(value) > 0 {
 				return nil, fmt.Errorf("security config for ProfileKey needs %d values but had: %d", 0, len(value))
 			}
-			r.Line().List(jen.Id("ctx"), jen.Id("isOk")).Op(":=").Id("authenticators").Index(jen.Lit("ProfileKey")).Dot("Authorize").Params(jen.Id("pKconfig"), jen.Id("r"), jen.Id("w"))
+			r.Line().List(jen.Id("ctx"), jen.Id("isOk")).Op(":=").Id("authenticators").Index(jen.Lit("ProfileKey")).Dot("Authorize").Params(jen.Id("cfgProfilKey"), jen.Id("r"), jen.Id("w"))
 			r.Line().Comment("Check if authorisation was successful")
 			r.Line().If(jen.Op("!").Id("isOk")).Block(jen.Return())
 			r.Line().Id("r").Op("=").Qual("r", "WithContext").Call(jen.Id("ctx"))

@@ -6,6 +6,8 @@ import (
 	mux "github.com/gorilla/mux"
 	opentracing "github.com/opentracing/opentracing-go"
 	runtime "github.com/pace/bricks/http/jsonapi/runtime"
+	security "github.com/pace/bricks/http/security"
+	ouath2 "github.com/pace/bricks/http/security/ouath2"
 	errors "github.com/pace/bricks/maintenance/errors"
 	metrics "github.com/pace/bricks/maintenance/metric/jsonapi"
 	"net/http"
@@ -75,12 +77,44 @@ type TransactionRequest struct {
 
 // Currency ...
 type Currency string
+type OAuth2Flow struct {
+	AuthorizationURL string            `json:"authorizationUrl,omitempty"`
+	TokenURL         string            `json:"tokenUrl,omitempty"`
+	RefreshURL       string            `json:"refreshUrl,omitempty"`
+	Scopes           map[string]string `json:"scopes"`
+}
+type OAuth2Config struct {
+	Type                  string `json:"type,omitempty"`
+	FlowAuthorizationCode *OAuth2Flow
+}
+
+var cfgOAuth2 = &OAuth2Config{
+	FlowAuthorizationCode: &OAuth2Flow{
+		AuthorizationURL: "https://id.pace.cloud/oauth2/authorize",
+		RefreshURL:       "https://id.pace.cloud/oauth2/token",
+		Scopes:           map[string]string{"id:sessions:create": "Create a new browser session"},
+		TokenURL:         "https://id.pace.cloud/oauth2/token",
+	},
+	Type: "oauth2",
+}
+
+type ProfileKeyConfig struct {
+	Type        string `json:"type,omitempty"`
+	Description string `json:"description,omitempty"`
+	In          string `json:"in,omitempty"`
+}
+
+var cfgProfileKey = &ProfileKeyConfig{
+	Description: "prefix with Bearer ",
+	In:          "header",
+	Type:        "apiKey",
+}
 
 /*
 GetPaymentMethodsHandler handles request/response marshaling and validation for
  Get /beta/payment-methods
 */
-func GetPaymentMethodsHandler(service Service) http.Handler {
+func GetPaymentMethodsHandler(service Service, authenticators map[string]security.Authorizer) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		defer errors.HandleRequest("GetPaymentMethodsHandler", w, r)
 
@@ -110,9 +144,17 @@ func GetPaymentMethodsHandler(service Service) http.Handler {
 CreatePaymentMethodSEPAHandler handles request/response marshaling and validation for
  Post /beta/payment-methods/sepa-direct-debit
 */
-func CreatePaymentMethodSEPAHandler(service Service) http.Handler {
+func CreatePaymentMethodSEPAHandler(service Service, authenticators map[string]security.Authorizer) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		defer errors.HandleRequest("CreatePaymentMethodSEPAHandler", w, r)
+		// Authentication Handling
+		// OAuth2 Authentication
+		r, ok := ouath2.Authenticate(authenticators["OAuth2"], r, w, cfgOAuth2, "pay:payment-methods:create")
+		// Check if authorisation was successful
+		if !isOk {
+			// No Error Handling needed,  this is already done
+			return
+		}
 
 		// Trace the service function handler execution
 		handlerSpan, ctx := opentracing.StartSpanFromContext(r.Context(), "CreatePaymentMethodSEPAHandler")
@@ -146,7 +188,7 @@ func CreatePaymentMethodSEPAHandler(service Service) http.Handler {
 DeletePaymentMethodHandler handles request/response marshaling and validation for
  Delete /beta/payment-methods/{paymentMethodId}
 */
-func DeletePaymentMethodHandler(service Service) http.Handler {
+func DeletePaymentMethodHandler(service Service, authenticators map[string]security.Authorizer) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		defer errors.HandleRequest("DeletePaymentMethodHandler", w, r)
 
@@ -188,7 +230,7 @@ func DeletePaymentMethodHandler(service Service) http.Handler {
 AuthorizePaymentMethodHandler handles request/response marshaling and validation for
  Post /beta/payment-methods/{paymentMethodId}/authorize
 */
-func AuthorizePaymentMethodHandler(service Service) http.Handler {
+func AuthorizePaymentMethodHandler(service Service, authenticators map[string]security.Authorizer) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		defer errors.HandleRequest("AuthorizePaymentMethodHandler", w, r)
 
@@ -233,7 +275,7 @@ func AuthorizePaymentMethodHandler(service Service) http.Handler {
 DeletePaymentTokenHandler handles request/response marshaling and validation for
  Delete /beta/payment-methods/{paymentMethodId}/paymentTokens/{paymentTokenId}
 */
-func DeletePaymentTokenHandler(service Service) http.Handler {
+func DeletePaymentTokenHandler(service Service, authenticators map[string]security.Authorizer) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		defer errors.HandleRequest("DeletePaymentTokenHandler", w, r)
 
@@ -280,7 +322,7 @@ func DeletePaymentTokenHandler(service Service) http.Handler {
 GetPaymentMethodsIncludingCreditCheckHandler handles request/response marshaling and validation for
  Get /beta/payment-methods?include=creditCheck
 */
-func GetPaymentMethodsIncludingCreditCheckHandler(service Service) http.Handler {
+func GetPaymentMethodsIncludingCreditCheckHandler(service Service, authenticators map[string]security.Authorizer) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		defer errors.HandleRequest("GetPaymentMethodsIncludingCreditCheckHandler", w, r)
 
@@ -320,7 +362,7 @@ func GetPaymentMethodsIncludingCreditCheckHandler(service Service) http.Handler 
 GetPaymentMethodsIncludingPaymentTokenHandler handles request/response marshaling and validation for
  Get /beta/payment-methods?include=paymentToken
 */
-func GetPaymentMethodsIncludingPaymentTokenHandler(service Service) http.Handler {
+func GetPaymentMethodsIncludingPaymentTokenHandler(service Service, authenticators map[string]security.Authorizer) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		defer errors.HandleRequest("GetPaymentMethodsIncludingPaymentTokenHandler", w, r)
 
@@ -360,7 +402,7 @@ func GetPaymentMethodsIncludingPaymentTokenHandler(service Service) http.Handler
 ProcessPaymentHandler handles request/response marshaling and validation for
  Post /beta/transaction
 */
-func ProcessPaymentHandler(service Service) http.Handler {
+func ProcessPaymentHandler(service Service, authenticators map[string]security.Authorizer) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		defer errors.HandleRequest("ProcessPaymentHandler", w, r)
 
@@ -742,22 +784,27 @@ type Service interface {
 }
 
 /*
-Router implements: PACE Payment API
+RouterWithAuthentication implements: PACE Payment API
 
 Welcome to the PACE Payment API documentation.
 This API is responsible for managing payment methods for users as well as authorizing payments on behalf of PACE services.
 */
-func Router(service Service) *mux.Router {
+func RouterWithAuthentication(service Service, authenticators map[string]security.Authorizer) *mux.Router {
 	router := mux.NewRouter()
 	// Subrouter s1 - Path: /pay
 	s1 := router.PathPrefix("/pay").Subrouter()
-	s1.Methods("DELETE").Path("/beta/payment-methods/{paymentMethodId}/paymentTokens/{paymentTokenId}").Handler(DeletePaymentTokenHandler(service)).Name("DeletePaymentToken")
-	s1.Methods("POST").Path("/beta/payment-methods/{paymentMethodId}/authorize").Handler(AuthorizePaymentMethodHandler(service)).Name("AuthorizePaymentMethod")
-	s1.Methods("POST").Path("/beta/payment-methods/sepa-direct-debit").Handler(CreatePaymentMethodSEPAHandler(service)).Name("CreatePaymentMethodSEPA")
-	s1.Methods("DELETE").Path("/beta/payment-methods/{paymentMethodId}").Handler(DeletePaymentMethodHandler(service)).Name("DeletePaymentMethod")
-	s1.Methods("GET").Path("/beta/payment-methods").Handler(GetPaymentMethodsIncludingPaymentTokenHandler(service)).Queries("include", "paymentToken").Name("GetPaymentMethodsIncludingPaymentToken")
-	s1.Methods("GET").Path("/beta/payment-methods").Handler(GetPaymentMethodsIncludingCreditCheckHandler(service)).Queries("include", "creditCheck").Name("GetPaymentMethodsIncludingCreditCheck")
-	s1.Methods("GET").Path("/beta/payment-methods").Handler(GetPaymentMethodsHandler(service)).Name("GetPaymentMethods")
-	s1.Methods("POST").Path("/beta/transaction").Handler(ProcessPaymentHandler(service)).Name("ProcessPayment")
+	s1.Methods("DELETE").Path("/beta/payment-methods/{paymentMethodId}/paymentTokens/{paymentTokenId}").Handler(DeletePaymentTokenHandler(service, authenticators)).Name("DeletePaymentToken")
+	s1.Methods("POST").Path("/beta/payment-methods/{paymentMethodId}/authorize").Handler(AuthorizePaymentMethodHandler(service, authenticators)).Name("AuthorizePaymentMethod")
+	s1.Methods("POST").Path("/beta/payment-methods/sepa-direct-debit").Handler(CreatePaymentMethodSEPAHandler(service, authenticators)).Name("CreatePaymentMethodSEPA")
+	s1.Methods("DELETE").Path("/beta/payment-methods/{paymentMethodId}").Handler(DeletePaymentMethodHandler(service, authenticators)).Name("DeletePaymentMethod")
+	s1.Methods("GET").Path("/beta/payment-methods").Handler(GetPaymentMethodsIncludingPaymentTokenHandler(service, authenticators)).Queries("include", "paymentToken").Name("GetPaymentMethodsIncludingPaymentToken")
+	s1.Methods("GET").Path("/beta/payment-methods").Handler(GetPaymentMethodsIncludingCreditCheckHandler(service, authenticators)).Queries("include", "creditCheck").Name("GetPaymentMethodsIncludingCreditCheck")
+	s1.Methods("GET").Path("/beta/payment-methods").Handler(GetPaymentMethodsHandler(service, authenticators)).Name("GetPaymentMethods")
+	s1.Methods("POST").Path("/beta/transaction").Handler(ProcessPaymentHandler(service, authenticators)).Name("ProcessPayment")
 	return router
+}
+
+// Router kept for backward compatibility. Please use RouteWithAuthentication
+func Router(service Service) *mux.Router {
+	return RouterWithAuthentication(service, map[string]security.Authorizer{})
 }

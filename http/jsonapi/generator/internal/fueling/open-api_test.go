@@ -6,6 +6,7 @@ import (
 	mux "github.com/gorilla/mux"
 	opentracing "github.com/opentracing/opentracing-go"
 	runtime "github.com/pace/bricks/http/jsonapi/runtime"
+	security "github.com/pace/bricks/http/security"
 	errors "github.com/pace/bricks/maintenance/errors"
 	metrics "github.com/pace/bricks/maintenance/metric/jsonapi"
 	"net/http"
@@ -125,7 +126,7 @@ type Currency string
 ProcessPaymentHandler handles request/response marshaling and validation for
  Post /beta/gas-station/{gasStationId}/payment
 */
-func ProcessPaymentHandler(service Service) http.Handler {
+func ProcessPaymentHandler(service Service, authenticators map[string]security.Authorizer) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		defer errors.HandleRequest("ProcessPaymentHandler", w, r)
 
@@ -170,7 +171,7 @@ func ProcessPaymentHandler(service Service) http.Handler {
 ApproachingAtTheForecourtHandler handles request/response marshaling and validation for
  Post /beta/gas-stations/{gasStationId}/approaching
 */
-func ApproachingAtTheForecourtHandler(service Service) http.Handler {
+func ApproachingAtTheForecourtHandler(service Service, authenticators map[string]security.Authorizer) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		defer errors.HandleRequest("ApproachingAtTheForecourtHandler", w, r)
 
@@ -219,7 +220,7 @@ func ApproachingAtTheForecourtHandler(service Service) http.Handler {
 GetPumpHandler handles request/response marshaling and validation for
  Get /beta/gas-stations/{gasStationId}/pumps/{pumpId}
 */
-func GetPumpHandler(service Service) http.Handler {
+func GetPumpHandler(service Service, authenticators map[string]security.Authorizer) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		defer errors.HandleRequest("GetPumpHandler", w, r)
 
@@ -266,7 +267,7 @@ func GetPumpHandler(service Service) http.Handler {
 WaitOnPumpStatusChangeHandler handles request/response marshaling and validation for
  Get /beta/gas-stations/{gasStationId}/pumps/{pumpId}/wait-for-status-change
 */
-func WaitOnPumpStatusChangeHandler(service Service) http.Handler {
+func WaitOnPumpStatusChangeHandler(service Service, authenticators map[string]security.Authorizer) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		defer errors.HandleRequest("WaitOnPumpStatusChangeHandler", w, r)
 
@@ -536,17 +537,22 @@ type Service interface {
 }
 
 /*
-Router implements: PACE Fueling API
+RouterWithAuthentication implements: PACE Fueling API
 
 Fueling API
 */
-func Router(service Service) *mux.Router {
+func RouterWithAuthentication(service Service, authenticators map[string]security.Authorizer) *mux.Router {
 	router := mux.NewRouter()
 	// Subrouter s1 - Path: /fueling
 	s1 := router.PathPrefix("/fueling").Subrouter()
-	s1.Methods("GET").Path("/beta/gas-stations/{gasStationId}/pumps/{pumpId}/wait-for-status-change").Handler(WaitOnPumpStatusChangeHandler(service)).Name("WaitOnPumpStatusChange")
-	s1.Methods("GET").Path("/beta/gas-stations/{gasStationId}/pumps/{pumpId}").Handler(GetPumpHandler(service)).Name("GetPump")
-	s1.Methods("POST").Path("/beta/gas-station/{gasStationId}/payment").Handler(ProcessPaymentHandler(service)).Name("ProcessPayment")
-	s1.Methods("POST").Path("/beta/gas-stations/{gasStationId}/approaching").Handler(ApproachingAtTheForecourtHandler(service)).Name("ApproachingAtTheForecourt")
+	s1.Methods("GET").Path("/beta/gas-stations/{gasStationId}/pumps/{pumpId}/wait-for-status-change").Handler(WaitOnPumpStatusChangeHandler(service, authenticators)).Name("WaitOnPumpStatusChange")
+	s1.Methods("GET").Path("/beta/gas-stations/{gasStationId}/pumps/{pumpId}").Handler(GetPumpHandler(service, authenticators)).Name("GetPump")
+	s1.Methods("POST").Path("/beta/gas-station/{gasStationId}/payment").Handler(ProcessPaymentHandler(service, authenticators)).Name("ProcessPayment")
+	s1.Methods("POST").Path("/beta/gas-stations/{gasStationId}/approaching").Handler(ApproachingAtTheForecourtHandler(service, authenticators)).Name("ApproachingAtTheForecourt")
 	return router
+}
+
+// Router kept for backward compatibility. Please use RouteWithAuthentication
+func Router(service Service) *mux.Router {
+	return RouterWithAuthentication(service, map[string]security.Authorizer{})
 }

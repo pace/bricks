@@ -36,7 +36,7 @@ func loadSwaggerFromURI(loader *openapi3.SwaggerLoader, url *url.URL) (*openapi3
 	if err != nil {
 		return nil, err
 	}
-	defer resp.Body.Close() // nolint: errcheck
+	defer resp.Body.Close()
 
 	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
@@ -99,6 +99,7 @@ func (g *Generator) BuildSchema(schema *openapi3.Swagger, packagePath, packageNa
 
 	buildFuncs := []buildFunc{
 		g.BuildTypes,
+		g.BuildSecurityConfigs,
 		g.BuildHandler,
 	}
 

@@ -14,6 +14,7 @@ import (
 	"github.com/opentracing/opentracing-go"
 	olog "github.com/opentracing/opentracing-go/log"
 	"github.com/pace/bricks/http/security"
+	"github.com/pace/bricks/maintenance/errors"
 	"github.com/pace/bricks/maintenance/log"
 )
 
@@ -50,6 +51,30 @@ func (m *Middleware) Handler(next http.Handler) http.Handler {
 	})
 }
 
+// Authenticate authenticates a request based on the given authenticator the config and the scope value
+// Used when no middleware is used and the authentication is generated
+// This methods does all required checking of the Authorization, to make the generated code as short as possible
+// Input:
+// authorizer: Should be a oauth2.Authorizer, is nil-checked and converted in this method.
+// Success: returns the request with a context and true
+// Error: returns the request without any changes and adds the error to the response
+// false if the Authorizer was no OAuth2 Authorizer or any other error occures. The error is directly added
+// to the response
+func Authenticate(authorizer security.Authorizer, r *http.Request, w http.ResponseWriter, authConfig interface{}, scope string) (*http.Request, bool) {
+	auth, ok := authorizer.(*Authorizer)
+	if !ok {
+		http.Error(w, errors.New("authentication configuration missing").Error(), http.StatusUnauthorized)
+		return r, false
+	}
+	ctx, isOk := auth.WithScope(scope).Authorize(authConfig, r, w)
+
+	// Check if authorisation was successful
+	if !isOk {
+		return r, false
+	}
+	return r.WithContext(ctx), true
+}
+
 // IntrospectRequest introspects the requests and handles all errors:
 // Success: it returns a context containing the introspection result and true
 // if the introspection was successful
@@ -64,19 +89,21 @@ func introspectRequest(r *http.Request, w http.ResponseWriter, tokenIntro TokenI
 		return nil, false
 	}
 	s, err := tokenIntro.IntrospectToken(ctx, tokenValue)
-	switch err {
-	case ErrBadUpstreamResponse:
-		log.Req(r).Info().Msg(err.Error())
-		http.Error(w, err.Error(), http.StatusBadGateway)
-		return nil, false
-	case ErrUpstreamConnection:
-		log.Req(r).Info().Msg(err.Error())
-		http.Error(w, err.Error(), http.StatusBadGateway)
-		return nil, false
-	case ErrInvalidToken:
-		log.Req(r).Info().Msg(err.Error())
-		http.Error(w, err.Error(), http.StatusUnauthorized)
-		return nil, false
+	if err != nil {
+		switch err {
+		case ErrBadUpstreamResponse:
+			log.Req(r).Info().Msg(err.Error())
+			http.Error(w, err.Error(), http.StatusBadGateway)
+			return nil, false
+		case ErrUpstreamConnection:
+			log.Req(r).Info().Msg(err.Error())
+			http.Error(w, err.Error(), http.StatusBadGateway)
+			return nil, false
+		case ErrInvalidToken:
+			log.Req(r).Info().Msg(err.Error())
+			http.Error(w, err.Error(), http.StatusUnauthorized)
+			return nil, false
+		}
 	}
 	t := fromIntrospectResponse(s, tokenValue)
 	ctx = context.WithValue(ctx, security.TokenKey, &t)
