@@ -340,7 +340,7 @@ func (g *Generator) buildRouter(routes []*route, schema *openapi3.Swagger) error
 
 	// but generate subrouters for each server
 	i := 0
-	for path, _ := range paths {
+	for path := range paths {
 		subrouterID := fmt.Sprintf("s%d", i+1)
 
 		// init and return the router

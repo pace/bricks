@@ -10,7 +10,7 @@ import (
 	"net/http"
 	"time"
 
-	opentracing "github.com/opentracing/opentracing-go"
+	"github.com/opentracing/opentracing-go"
 	olog "github.com/opentracing/opentracing-go/log"
 	"github.com/pace/bricks/backend/postgres"
 	"github.com/pace/bricks/backend/redis"
