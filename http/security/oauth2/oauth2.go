@@ -14,7 +14,6 @@ import (
 	"github.com/opentracing/opentracing-go"
 	olog "github.com/opentracing/opentracing-go/log"
 	"github.com/pace/bricks/http/security"
-	"github.com/pace/bricks/maintenance/errors"
 	"github.com/pace/bricks/maintenance/log"
 )
 
@@ -27,7 +26,7 @@ type token struct {
 
 // Middleware holds data necessary for Oauth processing
 type Middleware struct {
-	Backend TokenIntrospector
+	backend TokenIntrospector
 }
 
 func (t *token) GetValue() string {
@@ -36,43 +35,19 @@ func (t *token) GetValue() string {
 
 // NewMiddleware creates a new Oauth middleware
 func NewMiddleware(backend TokenIntrospector) *Middleware {
-	return &Middleware{Backend: backend}
+	return &Middleware{backend: backend}
 }
 
 // Handler will parse the bearer token, introspect it, and put the token and other
 // relevant information back in the context.
 func (m *Middleware) Handler(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		ctx, isOk := introspectRequest(r, w, m.Backend)
+		ctx, isOk := introspectRequest(r, w, m.backend)
 		if !isOk {
 			return
 		}
 		next.ServeHTTP(w, r.WithContext(ctx))
 	})
-}
-
-// Authenticate authenticates a request based on the given authenticator the config and the scope value
-// Used when no middleware is used and the authentication is generated
-// This methods does all required checking of the Authorization, to make the generated code as short as possible
-// Input:
-// authorizer: Should be a oauth2.Authorizer, is nil-checked and converted in this method.
-// Success: returns the request with a context and true
-// Error: returns the request without any changes and adds the error to the response
-// false if the Authorizer was no OAuth2 Authorizer or any other error occures. The error is directly added
-// to the response
-func Authenticate(authorizer security.Authorizer, r *http.Request, w http.ResponseWriter, authConfig interface{}, scope string) (*http.Request, bool) {
-	auth, ok := authorizer.(*Authorizer)
-	if !ok {
-		http.Error(w, errors.New("authentication configuration missing").Error(), http.StatusUnauthorized)
-		return r, false
-	}
-	ctx, isOk := auth.WithScope(scope).Authorize(authConfig, r, w)
-
-	// Check if authorisation was successful
-	if !isOk {
-		return r, false
-	}
-	return r.WithContext(ctx), true
 }
 
 // IntrospectRequest introspects the requests and handles all errors:
@@ -112,15 +87,15 @@ func introspectRequest(r *http.Request, w http.ResponseWriter, tokenIntro TokenI
 		Str("user_id", t.userID).
 		Msg("Oauth2")
 	span.LogFields(olog.String("client_id", t.clientID), olog.String("user_id", t.userID))
-	return ctx, false
+	return ctx, true
 }
 
 // ValidateScope  Validates based on the context if the scope is matching the required scope for this request
 // Success: return true
 // Error: error is written in the Response and the function returns false
-func validateScope(ctx context.Context, w http.ResponseWriter, requiredScope string) bool {
-	if !HasScope(ctx, Scope(requiredScope)) {
-		http.Error(w, fmt.Sprintf("Forbidden - requires scope %q", requiredScope), http.StatusForbidden)
+func validateScope(ctx context.Context, w http.ResponseWriter, req Scope) bool {
+	if !HasScope(ctx, req) {
+		http.Error(w, fmt.Sprintf("Forbidden - requires scope %q", req), http.StatusForbidden)
 		return false
 	}
 	return true

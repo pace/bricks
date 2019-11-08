@@ -99,7 +99,8 @@ func (g *Generator) BuildSchema(schema *openapi3.Swagger, packagePath, packageNa
 
 	buildFuncs := []buildFunc{
 		g.BuildTypes,
-		g.BuildSecurityConfigs,
+		g.buildSecurityBackendInterface,
+		g.buildSecurityConfigs,
 		g.BuildHandler,
 	}
 

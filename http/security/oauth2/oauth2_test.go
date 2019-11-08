@@ -16,15 +16,15 @@ import (
 	"github.com/pace/bricks/maintenance/log"
 )
 
-type tokenIntrospecterWithError struct {
+type tokenInspectorWithError struct {
 	returnedErr error
 }
 
-func (t *tokenIntrospecterWithError) IntrospectToken(ctx context.Context, token string) (*IntrospectResponse, error) {
+func (t *tokenInspectorWithError) IntrospectToken(ctx context.Context, token string) (*IntrospectResponse, error) {
 	return nil, t.returnedErr
 }
 
-func TestHandlerIntrospectError(t *testing.T) {
+func TestHandlerIntrospectErrorAsMiddleware(t *testing.T) {
 	testCases := []struct {
 		desc         string
 		returnedErr  error
@@ -52,7 +52,7 @@ func TestHandlerIntrospectError(t *testing.T) {
 	}
 	for _, tC := range testCases {
 		t.Run(tC.desc, func(t *testing.T) {
-			m := NewMiddleware(&tokenIntrospecterWithError{returnedErr: tC.returnedErr})
+			m := NewMiddleware(&tokenInspectorWithError{returnedErr: tC.returnedErr})
 			r := mux.NewRouter()
 			r.Use(m.Handler)
 			r.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {})
@@ -76,6 +76,143 @@ func TestHandlerIntrospectError(t *testing.T) {
 
 			if got, ex := string(body), tC.expectedBody; got != ex {
 				t.Errorf("Expected body %q, got %q", ex, got)
+			}
+		})
+	}
+}
+
+type tokenIntrospectedSuccessful struct {
+	response *IntrospectResponse
+}
+
+func (t *tokenIntrospectedSuccessful) IntrospectToken(ctx context.Context, token string) (*IntrospectResponse, error) {
+	return t.response, nil
+}
+
+func TestAuthenticatorWithSuccess(t *testing.T) {
+	testCases := []struct {
+		desc string
+		auth *Authenticator
+	}{
+		{desc: "Tests a valid Request with OAuth2 Authentication without Scope checking",
+			auth: NewAuthenticator(&tokenIntrospectedSuccessful{&IntrospectResponse{
+				Active:   true,
+				Scope:    "ABC DHHG kjdk",
+				ClientID: "ClientId",
+				UserID:   "UserId",
+			}}, &Config{}),
+		},
+		{desc: "Tests a valid Request with OAuth2 Authentication with Scope checking",
+			auth: NewAuthenticator(&tokenIntrospectedSuccessful{&IntrospectResponse{
+				Active:   true,
+				Scope:    "ABC DHHG kjdk",
+				ClientID: "ClientId",
+				UserID:   "UserId",
+			}}, &Config{}).WithScope("ABC"),
+		},
+	}
+	for _, tC := range testCases {
+		t.Run(tC.desc, func(t *testing.T) {
+			w := httptest.NewRecorder()
+			r := httptest.NewRequest("GET", "/", nil)
+			r.Header.Add("Authorization", "Bearer bearer")
+			authorize, b := tC.auth.Authorize(r, w)
+
+			if !b || w.Code != http.StatusOK || authorize == nil {
+				t.Errorf("Expected succesfull Authentication, but was not succesfull with code %d and body %v", w.Code, w.Body)
+				return
+			}
+			to := authorize.Value(security.Ctxkey("Token"))
+			tok, ok := to.(*token)
+
+			if !ok || tok.value != "bearer" || tok.scope != Scope("ABC DHHG kjdk") || tok.clientID != "ClientId" || tok.userID != "UserId" {
+				t.Errorf("Expected %v but got %v", tC.auth.introspection.(*tokenIntrospectedSuccessful).response, tok)
+			}
+		})
+	}
+}
+
+func TestAuthenticationSuccessScopeError(t *testing.T) {
+	auth := NewAuthenticator(&tokenIntrospectedSuccessful{&IntrospectResponse{
+		Active:   true,
+		Scope:    "ABC DEF DFE",
+		ClientID: "ClientId",
+		UserID:   "UserId",
+	}}, &Config{}).WithScope("DE")
+
+	w := httptest.NewRecorder()
+	r := httptest.NewRequest("GET", "/", nil)
+	r.Header.Add("Authorization", "Bearer bearer")
+
+	_, b := auth.Authorize(r, w)
+
+	resp := w.Result()
+	body, err := ioutil.ReadAll(resp.Body)
+	defer resp.Body.Close()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if b {
+		t.Errorf("Expected error in Authentication, but was succesfull with code %d and body %v", resp.StatusCode, string(body))
+	}
+	if got, ex := w.Code, http.StatusForbidden; got != ex {
+		t.Errorf("Expected status code %d, got %d", ex, got)
+	}
+	if got, ex := string(body), "Forbidden - requires scope \"DE\"\n"; got != ex {
+		t.Errorf("Expected status code %q, got %q", ex, got)
+	}
+}
+
+func TestAuthenticationWithErrors(t *testing.T) {
+	testCases := []struct {
+		desc         string
+		returnedErr  error
+		expectedCode int
+		expectedBody string
+	}{
+		{
+			desc:         "token introspecter returns ErrBadUpstreamResponse",
+			returnedErr:  ErrBadUpstreamResponse,
+			expectedCode: 502,
+			expectedBody: "bad upstream response when introspecting token\n",
+		},
+		{
+			desc:         "token introspecter returns ErrUpstreamConnection",
+			returnedErr:  ErrUpstreamConnection,
+			expectedCode: 502,
+			expectedBody: "problem connecting to the introspection endpoint\n",
+		},
+		{
+			desc:         "token introspecter returns ErrInvalidToken",
+			returnedErr:  ErrInvalidToken,
+			expectedCode: 401,
+			expectedBody: "user token is invalid\n",
+		},
+	}
+	for _, tC := range testCases {
+		t.Run(tC.desc, func(t *testing.T) {
+			auth := NewAuthenticator(&tokenInspectorWithError{returnedErr: tC.returnedErr}, &Config{})
+			w := httptest.NewRecorder()
+			r := httptest.NewRequest("GET", "/", nil)
+			r.Header.Add("Authorization", "Bearer bearer")
+			_, b := auth.Authorize(r, w)
+
+			resp := w.Result()
+			body, err := ioutil.ReadAll(resp.Body)
+			defer resp.Body.Close()
+			if err != nil {
+				t.Fatal(err)
+			}
+			if b {
+				t.Errorf("Expected error in Authentication, but was succesfull with code %d and body %v", resp.StatusCode, string(body))
+			}
+
+			if got, ex := w.Code, tC.expectedCode; got != ex {
+				t.Errorf("Expected status code %d, got %d", ex, got)
+			}
+
+			if string(body) != tC.expectedBody {
+				t.Errorf("Expected body %q, got %q", string(body), tC.expectedBody)
 			}
 		})
 	}
@@ -182,7 +319,7 @@ func TestSuccessfulAccessors(t *testing.T) {
 }
 
 // Ensure we return sensible results when no data is present, and not panic.
-func TestUnsucessfulAccessors(t *testing.T) {
+func TestUnsuccessfulAccessors(t *testing.T) {
 	ctx := context.TODO()
 
 	uid, uidOK := UserID(ctx)

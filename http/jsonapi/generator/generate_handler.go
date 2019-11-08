@@ -23,8 +23,8 @@ const (
 	pkgJSONAPIMetrics = "github.com/pace/bricks/maintenance/metric/jsonapi"
 	pkgMaintErrors    = "github.com/pace/bricks/maintenance/errors"
 	pkgOpentracing    = "github.com/opentracing/opentracing-go"
-	pkgSecurity       = "github.com/pace/bricks/http/security"
-	pkgOAuth2         = "github.com/pace/bricks/http/security/ouath2"
+	pkgOAuth2         = "github.com/pace/bricks/http/security/oauth2"
+	pkgApiKey         = "github.com/pace/bricks/http/security/apikey"
 )
 
 const serviceInterface = "Service"
@@ -62,7 +62,7 @@ func (g *Generator) BuildHandler(schema *openapi3.Swagger) error {
 
 	for _, pattern := range keys {
 		path := paths[pattern]
-		err := g.buildPath(pattern, path, &routes)
+		err := g.buildPath(pattern, path, &routes, schema.Components.SecuritySchemes)
 		if err != nil {
 			return err
 		}
@@ -83,7 +83,7 @@ func (g *Generator) BuildHandler(schema *openapi3.Swagger) error {
 	return nil
 }
 
-func (g *Generator) buildPath(pattern string, pathItem *openapi3.PathItem, routes *[]*route) error {
+func (g *Generator) buildPath(pattern string, pathItem *openapi3.PathItem, routes *[]*route, secSchemes map[string]*openapi3.SecuritySchemeRef) error {
 	operations := []struct {
 		method    string
 		operation *openapi3.Operation
@@ -105,7 +105,7 @@ func (g *Generator) buildPath(pattern string, pathItem *openapi3.PathItem, route
 			continue
 		}
 
-		route, err := g.buildHandler(op.method, op.operation, pattern, pathItem)
+		route, err := g.buildHandler(op.method, op.operation, pattern, pathItem, secSchemes)
 		if err != nil {
 			return err
 		}
@@ -325,10 +325,15 @@ func (g *Generator) buildServiceInterface(routes []*route, schema *openapi3.Swag
 }
 
 func (g *Generator) buildRouter(routes []*route, schema *openapi3.Swagger) error {
-	routeStmts := make([]jen.Code, 1, (len(routes)+2)*len(schema.Servers)+1)
-
+	routeStmts := make([]jen.Code, 2, (len(routes)+2)*len(schema.Servers)+2)
+	// Init Authentication
+	var configs []jen.Code
+	for name := range schema.Components.SecuritySchemes {
+		configs = append(configs, jen.Id("cfg"+strings.Title(name)))
+	}
+	routeStmts[0] = jen.If(jen.Id("authBackend").Op("!=").Nil()).Block(jen.Id("authBackend").Dot("Init").Call(configs...))
 	// create new router
-	routeStmts[0] = jen.Id("router").Op(":=").Qual(pkgGorillaMux, "NewRouter").Call()
+	routeStmts[1] = jen.Id("router").Op(":=").Qual(pkgGorillaMux, "NewRouter").Call()
 
 	// Note: we don't restrict host, scheme and port to ease development
 	paths := make(map[string]struct{})
@@ -361,7 +366,7 @@ func (g *Generator) buildRouter(routes []*route, schema *openapi3.Swagger) error
 			// generic route
 			routeStmt := jen.Id(subrouterID).Dot("Methods").Call(jen.Lit(route.method)).
 				Dot("Path").Call(jen.Lit(route.url.Path)).
-				Dot("Handler").Call(jen.Id(route.handler).Call(jen.List(jen.Id("service"), jen.Id("authenticators"))))
+				Dot("Handler").Call(jen.Id(route.handler).Call(jen.List(jen.Id("service"), jen.Id("authBackend"))))
 
 			// add query parameters for route matching
 			if len(route.queryValues) > 0 {
@@ -386,9 +391,9 @@ func (g *Generator) buildRouter(routes []*route, schema *openapi3.Swagger) error
 	g.addGoDoc("RouterWithAuthentication", "implements: "+schema.Info.Title+"\n\n"+schema.Info.Description)
 	serviceInterfaceVariable := jen.Id("service").Id(serviceInterface)
 	g.goSource.Func().Id("RouterWithAuthentication").Params(
-		serviceInterfaceVariable, jen.Id("authenticators").Map(jen.String()).Qual(pkgSecurity, "Authorizer")).Op("*").Qual(pkgGorillaMux, "Router").Block(routeStmts...)
+		serviceInterfaceVariable, jen.Id("authBackend").Id(authBackendInterface)).Op("*").Qual(pkgGorillaMux, "Router").Block(routeStmts...)
 
-	block := jen.Return(jen.Id("RouterWithAuthentication").Call(jen.Id("service"), jen.Map(jen.String()).Qual(pkgSecurity, "Authorizer").Values()))
+	block := jen.Return(jen.Id("RouterWithAuthentication").Call(jen.Id("service"), jen.Nil()))
 
 	g.addGoDoc("Router", "kept for backward compatibility. Please use RouteWithAuthentication")
 
@@ -398,7 +403,7 @@ func (g *Generator) buildRouter(routes []*route, schema *openapi3.Swagger) error
 	return nil
 }
 
-func (g *Generator) buildHandler(method string, op *openapi3.Operation, pattern string, pathItem *openapi3.PathItem) (*route, error) {
+func (g *Generator) buildHandler(method string, op *openapi3.Operation, pattern string, pathItem *openapi3.PathItem, secSchemes map[string]*openapi3.SecuritySchemeRef) (*route, error) {
 	route := &route{
 		method:    strings.ToUpper(method),
 		pattern:   pattern,
@@ -436,7 +441,7 @@ func (g *Generator) buildHandler(method string, op *openapi3.Operation, pattern 
 	var auth *jen.Group
 	if op.Security != nil {
 		var err error
-		auth, err = generateAuthentication(op)
+		auth, err = generateAuthentication(op, secSchemes)
 		if err != nil {
 			return nil, err
 		}
@@ -444,7 +449,7 @@ func (g *Generator) buildHandler(method string, op *openapi3.Operation, pattern 
 	g.addGoDoc(handler, fmt.Sprintf("handles request/response marshaling and validation for \n %s %s",
 		method, pattern))
 	g.goSource.Func().Id(handler).Params(
-		jen.Id("service").Id(serviceInterface), jen.Id("authenticators").Map(jen.String()).Qual(pkgSecurity, "Authorizer")).Qual("net/http", "Handler").Block(
+		jen.Id("service").Id(serviceInterface), jen.Id("authBackend").Id(authBackendInterface)).Qual("net/http", "Handler").Block(
 		jen.Return().Qual("net/http", "HandlerFunc").Call(
 			jen.Func().Params(
 				jen.Id("w").Qual("net/http", "ResponseWriter"),
@@ -583,39 +588,36 @@ func (g *Generator) buildHandler(method string, op *openapi3.Operation, pattern 
 	return route, nil
 }
 
-func generateAuthentication(op *openapi3.Operation) (*jen.Group, error) {
+func generateAuthentication(op *openapi3.Operation, secSchemes map[string]*openapi3.SecuritySchemeRef) (*jen.Group, error) {
 	r := &jen.Group{}
 	r.Add(jen.Comment("Authentication Handling "))
 	for _, sl := range *op.Security {
-		value, ok := sl["OAuth2"]
-		if ok {
-			r.Line().Add(jen.Comment("OAuth2 Authentication"))
-			if len(value) < 1 {
-				return nil, fmt.Errorf("security config for ProfileKey needs %d values but had: %d", 1, len(value))
+		for name, val := range sl {
+			securityScheme := secSchemes[name]
+			switch securityScheme.Value.Type {
+			case "oauth2":
+				r.Line().Add(jen.Comment("OAuth2 Authentication"))
+				if len(val) < 1 {
+					return nil, fmt.Errorf("security config for ProfileKey needs %d values but had: %d", 1, len(val))
+				}
+				scope := val[0]
+				r.Line().List(jen.Id("ctx"), jen.Id("ok")).Op(":=").Id("authBackend."+authFuncPrefix+strings.Title(name)).Call(jen.Id("r"), jen.Id("w"), jen.Lit(scope))
+				r.Line().If(jen.Op("!").Id("ok")).Block(jen.Comment("No Error Handling needed,  this is already done"), jen.Return())
+				r.Line().Id("r").Op("=").Id("r.WithContext").Call(jen.Id("ctx"))
+			case "apiKey":
+				if len(val) > 0 {
+					return nil, fmt.Errorf("security config for ProfileKey needs %d values but had: %d", 0, len(val))
+				}
+				r.Line().List(jen.Id("ctx"), jen.Id("ok")).Op(":=").Id("authBackend."+authFuncPrefix+strings.Title(name)).Call(jen.Id("r"), jen.Id("w"))
+				r.Line().If(jen.Op("!").Id("ok")).Block(jen.Comment("No Error Handling needed,  this is already done"), jen.Return())
+				r.Line().Id("r").Op("=").Id("r.WithContext").Call(jen.Id("ctx"))
 			}
-			scope := value[0]
-			//authorizer security.Authorizer, r *http.Request, w http.ResponseWriter, authConfig interface{}, scope string
-			r.Line().List(jen.Id("r"), jen.Id("ok")).Op(":=").Qual(pkgOAuth2, "Authenticate").Call(
-				jen.Id("authenticators").Index(jen.Lit("OAuth2")),
-				jen.Id("r"),
-				jen.Id("w"),
-				jen.Id("cfgOAuth2"),
-				jen.Lit(scope))
-			r.Line().Comment("Check if authorisation was successful")
-			r.Line().If(jen.Op("!").Id("isOk")).Block(jen.Comment("No Error Handling needed,  this is already done"), jen.Return())
-		}
-		value, ok = sl["ProfileKey"]
-		if ok {
-			if len(value) > 0 {
-				return nil, fmt.Errorf("security config for ProfileKey needs %d values but had: %d", 0, len(value))
-			}
-			r.Line().List(jen.Id("ctx"), jen.Id("isOk")).Op(":=").Id("authenticators").Index(jen.Lit("ProfileKey")).Dot("Authorize").Params(jen.Id("cfgProfilKey"), jen.Id("r"), jen.Id("w"))
-			r.Line().Comment("Check if authorisation was successful")
-			r.Line().If(jen.Op("!").Id("isOk")).Block(jen.Return())
-			r.Line().Id("r").Op("=").Qual("r", "WithContext").Call(jen.Id("ctx"))
 		}
 	}
-	return r, nil
+	result := &jen.Group{}
+	result.Comment("Only do Authentication if a authentication Backend is available. Otherwise this is handled somewhere else")
+	result.Line().If(jen.Id("authBackend").Op("!=").Nil()).Block(r)
+	return result, nil
 }
 
 var asciiName = regexp.MustCompile("([^a-zA-Z]+)")

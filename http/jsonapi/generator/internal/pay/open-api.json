@@ -111,6 +111,11 @@
           "Payment"
         ],
         "operationId": "DeletePaymentMethod",
+        "security": [
+          {
+            "ProfileKey": []
+          }
+        ],
         "summary": "Delete a payment method",
         "parameters": [
           {

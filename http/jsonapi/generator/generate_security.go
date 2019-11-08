@@ -8,60 +8,84 @@ import (
 
 	"github.com/dave/jennifer/jen"
 	"github.com/getkin/kin-openapi/openapi3"
+	"github.com/pace/bricks/maintenance/errors"
 )
 
-// BuildSecurityConfigs builds structs for the securitySchemes. Builds variables of the security Schemes
-// with the given values from the scheme. These Config variables are used for the authorization in each
-// method.
-func (g *Generator) BuildSecurityConfigs(schema *openapi3.Swagger) error {
+const (
+	authBackendInterface = "AuthenticationBackend"
+	authFuncPrefix       = "Authenticate"
+)
+
+// buildSecurityBackendInterface builds the interface that is used to do the authentication.
+// It creates one method for each security type and a Init-Method for handling the securityConfigs
+// the Methods are named AutenticateNAME and Init
+func (g *Generator) buildSecurityBackendInterface(schema *openapi3.Swagger) error {
 	securitySchemes := schema.Components.SecuritySchemes
-	_ = securitySchemes
-	flowCreated := false
+	//r contains the methods for the security interface
+	r := &jen.Group{}
+	//configs contains the names and types of the needed configs for the init method
+	// (that initializes the Backend with the security configs)
+	var configs []jen.Code
+
+	for name, value := range securitySchemes {
+		r.Line().Id(authFuncPrefix + strings.Title(name))
+		switch value.Value.Type {
+		case "oauth2":
+			configs = append(configs, jen.Id("cfg"+strings.Title(name)).Op("*").Qual(pkgOAuth2, "Config"))
+			r.Params(jen.Id("r").Id("*http.Request"), jen.Id("w").Id("http.ResponseWriter"), jen.Id("scope").String())
+		case "apiKey":
+			configs = append(configs, jen.Id("cfg"+strings.Title(name)).Op("*").Qual(pkgApiKey, "Config"))
+			r.Params(jen.Id("r").Id("*http.Request"), jen.Id("w").Id("http.ResponseWriter"))
+		default:
+			return errors.New("security schema type not supported: " + value.Value.Type)
+		}
+		r.Params(jen.Id("context.Context"), jen.Id("bool"))
+	}
+
+	r.Line().Id("Init").Params(configs...)
+	g.goSource.Type().Id(authBackendInterface).Interface(r)
+	return nil
+}
+
+// BuildSecurityConfigs creates structs with the config of each security schema
+func (g *Generator) buildSecurityConfigs(schema *openapi3.Swagger) error {
+	securitySchemes := schema.Components.SecuritySchemes
 	for name, value := range securitySchemes {
 		instanceVal := jen.Dict{}
-		typeVal := &jen.Group{}
-
-		t := value.Value.Type
-		instanceVal[jen.Id("Type")] = jen.Lit(t)
-		typeVal.Line().Id("Type").String().Tag(map[string]string{"json": "type,omitempty"})
-		t = value.Value.BearerFormat
-		addValue(t, "bearerFormat", typeVal, instanceVal)
-		t = value.Value.Description
-		addValue(t, "description", typeVal, instanceVal)
-		t = value.Value.In
-		addValue(t, "in", typeVal, instanceVal)
-		t = value.Value.Scheme
-		addValue(t, "scheme", typeVal, instanceVal)
-
-		// If any flow is present create the flow struct
-		if value.Value.Flows != nil {
-			if !flowCreated {
-				g.addStructForFlow()
-				flowCreated = true
-			}
-			// create the variable for each flow that is present.
-			aC := value.Value.Flows.AuthorizationCode
-			cC := value.Value.Flows.ClientCredentials
-			imp := value.Value.Flows.Implicit
-			pass := value.Value.Flows.Password
-			flows := []*openapi3.OAuthFlow{aC, cC, imp, pass}
-			for _, flow := range flows {
-				if flow != nil {
-					typeVal.Line().Id("FlowAuthorizationCode").Id("*OAuth2Flow")
-					instanceVal[jen.Id("FlowAuthorizationCode")] = jen.Op("&").Id("OAuth2Flow").Values(getValuesFromFlow(flow))
+		var pkgName string
+		switch value.Value.Type {
+		case "oauth2":
+			pkgName = pkgOAuth2
+			t := value.Value.Description
+			instanceVal[jen.Id("Description")] = jen.Lit(t)
+			// If any flow is present create the flow struct
+			if value.Value.Flows != nil {
+				flows := map[string]*openapi3.OAuthFlow{
+					"AuthorizationCode": value.Value.Flows.AuthorizationCode,
+					"ClientCredentials": value.Value.Flows.ClientCredentials,
+					"Implicit":          value.Value.Flows.Implicit,
+					"Password":          value.Value.Flows.Password}
+				for flowname, flow := range flows {
+					if flow != nil {
+						instanceVal[jen.Id(flowname)] = jen.Op("&").Qual(pkgOAuth2, "Flow").Values(getValuesFromFlow(flow))
+					}
 				}
 			}
+
+		case "apiKey":
+			pkgName = pkgApiKey
+			instanceVal[jen.Id("Description")] = jen.Lit(value.Value.Description)
+			instanceVal[jen.Id("In")] = jen.Lit(value.Value.In)
+			instanceVal[jen.Id("Name")] = jen.Lit(value.Value.Name)
+		default:
+			return errors.New("security schema type not supported: " + value.Value.Type)
 		}
-		//add struct for the authentication scheme
-		schemaStructName := strings.Title(name) + "Config"
-		g.goSource.Type().Id(schemaStructName).Struct(typeVal)
-		//add Variable with given values
-		g.goSource.Var().Id("cfg" + name).Op("=").Op("&").Id(schemaStructName).Values(instanceVal)
+		g.goSource.Var().Id("cfg"+strings.Title(name)).Op("=").Op("&").Qual(pkgName, "Config").Values(instanceVal)
 	}
 	return nil
 }
 
-//
+// getValuesFromFlow puts the values from the OAuth Flow in a jen.Dict to generate it
 func getValuesFromFlow(flow *openapi3.OAuthFlow) jen.Dict {
 	r := jen.Dict{}
 	r[jen.Id("AuthorizationURL")] = jen.Lit(flow.AuthorizationURL)
@@ -73,26 +97,4 @@ func getValuesFromFlow(flow *openapi3.OAuthFlow) jen.Dict {
 	}
 	r[jen.Id("Scopes")] = jen.Map(jen.String()).String().Values(scopes)
 	return r
-}
-
-// addValue if a value from the scheme is present the variable is added to the jen.Group of the struct and the
-// value to the dictionary of values for the config variable of the security type
-func addValue(val string, name string, structGroup *jen.Group, values jen.Dict) {
-	if val != "" {
-		//Use Title to make the Variable accessible
-		varName := strings.Title(name)
-		structGroup.Line().Id(varName).String().Tag(map[string]string{"json": name + ",omitempty"})
-		values[jen.Id(varName)] = jen.Lit(val)
-	}
-}
-
-// addStructForFlows creates a struct for flow information.
-// Only supports the standard values, not any extensions,  only created once and only if needed
-func (g *Generator) addStructForFlow() {
-	val := &jen.Group{}
-	val.Line().Id("AuthorizationURL").String().Tag(map[string]string{"json": "authorizationUrl,omitempty"})
-	val.Line().Id("TokenURL").String().Tag(map[string]string{"json": "tokenUrl,omitempty"})
-	val.Line().Id("RefreshURL").String().Tag(map[string]string{"json": "refreshUrl,omitempty"})
-	val.Line().Id("Scopes").Map(jen.String()).String().Tag(map[string]string{"json": "scopes"})
-	g.goSource.Type().Id("OAuth2Flow").Struct(val)
 }
