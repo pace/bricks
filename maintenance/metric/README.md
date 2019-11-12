@@ -139,3 +139,6 @@ The defined metrics should follow the best practices defined [here](https://prom
         * **Path** ("/beta/cars", "/beta/cars/{id}", ...) - Path to the endpoint as defined in the OpenAPIv3 spec
         * **Service** (car, dtc, ...) - name of the microservice
         * **Type** (req, resp) - HTTP request or response
+
+* `pace_http_panic_total` (Gauge)
+    * Count the number of panics intercepted while handling a request

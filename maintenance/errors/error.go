@@ -14,7 +14,19 @@ import (
 	"github.com/pace/bricks/http/jsonapi/runtime"
 	"github.com/pace/bricks/http/security/oauth2"
 	"github.com/pace/bricks/maintenance/log"
+	"github.com/prometheus/client_golang/prometheus"
 )
+
+var (
+	paceHTTPPanicCounter = prometheus.NewGauge(prometheus.GaugeOpts{
+		Name: "pace_http_panic_total",
+		Help: "A counter for panics intercepted while handling a request",
+	})
+)
+
+func init() {
+	prometheus.MustRegister(paceHTTPPanicCounter)
+}
 
 // PanicWrap wraps a panic for HandleRequest
 type PanicWrap struct {
@@ -22,7 +34,8 @@ type PanicWrap struct {
 }
 
 type recoveryHandler struct {
-	next http.Handler
+	counter prometheus.Gauge
+	next    http.Handler
 }
 
 func (h *recoveryHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
@@ -32,12 +45,13 @@ func (h *recoveryHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 // Handler implements a panic recovering middleware
 func Handler() func(http.Handler) http.Handler {
-	return func(next http.Handler) http.Handler { return &recoveryHandler{next} }
+	return func(next http.Handler) http.Handler { return &recoveryHandler{next: next} }
 }
 
 // HandleRequest should be called with defer to recover panics in request handlers
 func HandleRequest(handlerName string, w http.ResponseWriter, r *http.Request) {
 	if rp := recover(); rp != nil {
+		paceHTTPPanicCounter.Inc()
 		HandleError(&PanicWrap{rp}, handlerName, w, r)
 	}
 }

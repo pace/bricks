@@ -11,8 +11,9 @@ import (
 
 	"github.com/caarlos0/env"
 	"github.com/go-pg/pg"
-	opentracing "github.com/opentracing/opentracing-go"
+	"github.com/opentracing/opentracing-go"
 	olog "github.com/opentracing/opentracing-go/log"
+	"github.com/pace/bricks/maintenance/health/servicehealthcheck"
 	"github.com/pace/bricks/maintenance/log"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/rs/zerolog"
@@ -62,6 +63,10 @@ type config struct {
 	// but idle connections are still discarded by the client
 	// if IdleTimeout is set.
 	IdleCheckFrequency time.Duration `env:"POSTGRES_IDLE_CHECK_FREQUENCY" envDefault:"1m"`
+	// Name of the Table that is created to try if database is writeable
+	HealthCheckTableName string `env:"POSTGRES_HEALTH_CHECK_TABLE_NAME" envDefault:"healthcheck"`
+	// Amount of time to cache the last health check result
+	HealthCheckResultTTL time.Duration `env:"POSTGRES_HEALTH_CHECK_RESULT_TTL" envDefault:"10s"`
 }
 
 var (
@@ -117,6 +122,10 @@ func init() {
 	if err != nil {
 		log.Fatalf("Failed to parse postgres environment: %v", err)
 	}
+
+	servicehealthcheck.RegisterHealthCheck(&HealthCheck{
+		Pool: ConnectionPool(),
+	}, "postgresdefault")
 }
 
 // ConnectionPool returns a new database connection pool
@@ -147,6 +156,10 @@ func ConnectionPool() *pg.DB {
 // CustomConnectionPool returns a new database connection pool
 // that is already configured with the correct credentials and
 // instrumented with tracing and logging using the passed options
+//
+// Fot a health check for this connection a PgHealthCheck needs to
+// be registered:
+//  servicehealthcheck.RegisterHealthCheck(...)
 func CustomConnectionPool(opts *pg.Options) *pg.DB {
 	log.Logger().Info().Str("addr", opts.Addr).
 		Str("user", opts.User).Str("database", opts.Database).
@@ -244,6 +257,5 @@ func metricsAdapter(event *pg.QueryProcessedEvent, opts *pg.Options) {
 		pacePostgresQueryRowsTotal.With(labels).Add(float64(r.RowsReturned()))
 		pacePostgresQueryAffectedTotal.With(labels).Add(math.Max(0, float64(r.RowsAffected())))
 	}
-
 	pacePostgresQueryDurationSeconds.With(labels).Observe(dur)
 }

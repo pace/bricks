@@ -10,6 +10,7 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/pace/bricks/maintenance/errors"
 	"github.com/pace/bricks/maintenance/health"
+	"github.com/pace/bricks/maintenance/health/servicehealthcheck"
 	"github.com/pace/bricks/maintenance/log"
 	"github.com/pace/bricks/maintenance/metric"
 	"github.com/pace/bricks/maintenance/tracing"
@@ -40,6 +41,8 @@ func Router() *mux.Router {
 
 	// for the API gateway
 	r.Handle("/health", health.Handler())
+
+	r.PathPrefix("/health/").Handler(servicehealthcheck.Handler())
 
 	// for debugging purposes (e.g. deadlock, ...)
 	p := r.PathPrefix("/debug/pprof").Subrouter()

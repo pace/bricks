@@ -112,7 +112,7 @@ func main() {
 		func(t *livetest.T) {
 			t.Log("Test /test query")
 
-			resp, err := http.Get("http://localhost:5000/test")
+			resp, err := http.Get("http://localhost:3000/test")
 			if err != nil {
 				t.Error(err)
 				t.Fail()
