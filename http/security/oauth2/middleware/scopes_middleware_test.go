@@ -85,7 +85,7 @@ func setupRequest() *http.Request {
 	return req
 }
 
-type TokenIntrospecter struct {
+type TokenIntrospector struct {
 	returnedScope string
 }
 
