@@ -602,7 +602,7 @@ func generateAuthentication(op *openapi3.Operation, secSchemes map[string]*opena
 				}
 				scope := val[0]
 				r.Line().List(jen.Id("ctx"), jen.Id("ok")).Op(":=").Id("authBackend."+authFuncPrefix+strings.Title(name)).Call(jen.Id("r"), jen.Id("w"), jen.Lit(scope))
-				r.Line().If(jen.Op("!").Id("ok")).Block(jen.Comment("No Error Handling needed,  this is already done"), jen.Return())
+				r.Line().If(jen.Op("!").Id("ok")).Block(jen.Comment("No Error Handling needed, this is already done"), jen.Return())
 				r.Line().Id("r").Op("=").Id("r.WithContext").Call(jen.Id("ctx"))
 			case "apiKey":
 				if len(val) > 0 {
