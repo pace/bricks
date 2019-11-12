@@ -12,7 +12,7 @@ import (
 	"testing"
 
 	"github.com/gorilla/mux"
-	oauth22 "github.com/pace/bricks/http/security/oauth2"
+	"github.com/pace/bricks/http/oauth2"
 )
 
 func TestScopesMiddleware(t *testing.T) {
@@ -63,10 +63,10 @@ func TestScopesMiddleware(t *testing.T) {
 
 func setupRouter(requiredScope string, tokenScope string) *mux.Router {
 	rs := RequiredScopes{
-		"GetFoo": oauth22.Scope(requiredScope),
+		"GetFoo": oauth2.Scope(requiredScope),
 	}
 	m := NewScopesMiddleware(rs)
-	om := oauth22.NewMiddleware(&TokenIntrospecter{returnedScope: tokenScope})
+	om := oauth2.NewMiddleware(&TokenIntrospector{returnedScope: tokenScope})
 
 	r := mux.NewRouter()
 	r.Use(om.Handler)
@@ -89,7 +89,7 @@ type TokenIntrospector struct {
 	returnedScope string
 }
 
-func (t *TokenIntrospecter) IntrospectToken(ctx context.Context, token string) (*oauth22.IntrospectResponse, error) {
-	resp := &oauth22.IntrospectResponse{Active: true, Scope: t.returnedScope}
+func (t *TokenIntrospector) IntrospectToken(ctx context.Context, token string) (*oauth2.IntrospectResponse, error) {
+	resp := &oauth2.IntrospectResponse{Active: true, Scope: t.returnedScope}
 	return resp, nil
 }

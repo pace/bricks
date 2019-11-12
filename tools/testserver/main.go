@@ -15,7 +15,7 @@ import (
 	"github.com/pace/bricks/backend/postgres"
 	"github.com/pace/bricks/backend/redis"
 	pacehttp "github.com/pace/bricks/http"
-	"github.com/pace/bricks/http/security/oauth2"
+	"github.com/pace/bricks/http/oauth2"
 	"github.com/pace/bricks/maintenance/errors"
 	"github.com/pace/bricks/maintenance/log"
 	_ "github.com/pace/bricks/maintenance/tracing"

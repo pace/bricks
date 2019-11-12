@@ -12,7 +12,7 @@ import (
 
 	"github.com/getsentry/raven-go"
 	"github.com/pace/bricks/http/jsonapi/runtime"
-	"github.com/pace/bricks/http/security/oauth2"
+	"github.com/pace/bricks/http/oauth2"
 	"github.com/pace/bricks/maintenance/log"
 	"github.com/prometheus/client_golang/prometheus"
 )

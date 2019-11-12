@@ -7,7 +7,6 @@ import (
 	opentracing "github.com/opentracing/opentracing-go"
 	runtime "github.com/pace/bricks/http/jsonapi/runtime"
 	apikey "github.com/pace/bricks/http/security/apikey"
-	oauth2 "github.com/pace/bricks/http/security/oauth2"
 	errors "github.com/pace/bricks/maintenance/errors"
 	metrics "github.com/pace/bricks/maintenance/metric/jsonapi"
 	"net/http"

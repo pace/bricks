@@ -23,7 +23,7 @@ const (
 	pkgJSONAPIMetrics = "github.com/pace/bricks/maintenance/metric/jsonapi"
 	pkgMaintErrors    = "github.com/pace/bricks/maintenance/errors"
 	pkgOpentracing    = "github.com/opentracing/opentracing-go"
-	pkgOAuth2         = "github.com/pace/bricks/http/security/oauth2"
+	pkgOAuth2         = "github.com/pace/bricks/http/oauth2"
 	pkgApiKey         = "github.com/pace/bricks/http/security/apikey"
 )
 

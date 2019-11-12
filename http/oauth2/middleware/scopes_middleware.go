@@ -8,7 +8,7 @@ import (
 	"net/http"
 
 	"github.com/gorilla/mux"
-	"github.com/pace/bricks/http/security/oauth2"
+	"github.com/pace/bricks/http/oauth2"
 )
 
 // RequiredScopes defines the scope each endpoint requires
