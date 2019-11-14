@@ -609,7 +609,7 @@ func generateAuthentication(op *openapi3.Operation, secSchemes map[string]*opena
 					return nil, fmt.Errorf("security config for ProfileKey needs %d values but had: %d", 0, len(val))
 				}
 				r.Line().List(jen.Id("ctx"), jen.Id("ok")).Op(":=").Id("authBackend."+authFuncPrefix+strings.Title(name)).Call(jen.Id("r"), jen.Id("w"))
-				r.Line().If(jen.Op("!").Id("ok")).Block(jen.Comment("No Error Handling needed,  this is already done"), jen.Return())
+				r.Line().If(jen.Op("!").Id("ok")).Block(jen.Comment("No Error Handling needed, this is already done"), jen.Return())
 				r.Line().Id("r").Op("=").Id("r.WithContext").Call(jen.Id("ctx"))
 			}
 		}
