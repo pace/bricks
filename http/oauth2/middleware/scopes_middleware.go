@@ -15,7 +15,7 @@ import (
 type RequiredScopes map[string]oauth2.Scope
 
 // Deprecated: ScopesMiddleware contains required scopes for each endpoint -  For generated APIs use the generated
-//// AuthenticationBackend with oauth2.Authenticator and set a Scope
+// AuthenticationBackend with oauth2.Authenticator and set a Scope
 type ScopesMiddleware struct {
 	RequiredScopes RequiredScopes
 }
