@@ -557,7 +557,7 @@ func RouterWithAuthentication(service Service, authBackend AuthenticationBackend
 	return router
 }
 
-// Router kept for backward compatibility. Please use RouteWithAuthentication
+// Deprecated: Router kept for backward compatibility. Please use RouteWithAuthentication, Remove the Middleware and implement the AuthenticationBackend
 func Router(service Service) *mux.Router {
 	return RouterWithAuthentication(service, nil)
 }

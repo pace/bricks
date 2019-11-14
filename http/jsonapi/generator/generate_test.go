@@ -11,6 +11,8 @@ import (
 	"github.com/pmezard/go-difflib/difflib"
 )
 
+const updatedExpectedFiles = false
+
 func TestGenerator(t *testing.T) {
 	cases := []struct {
 		title, path, source, pkg string
@@ -34,7 +36,15 @@ func TestGenerator(t *testing.T) {
 				t.Fatal(err)
 			}
 
+			if updatedExpectedFiles {
+				err = ioutil.WriteFile(testCase.path, []byte(result), 0644)
+				if err != nil {
+					t.Fatal(err)
+				}
+			}
+
 			if string(expected[:]) != result {
+
 				diff := difflib.UnifiedDiff{
 					A:        difflib.SplitLines(string(expected[:])),
 					B:        difflib.SplitLines(result),

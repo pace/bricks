@@ -4,6 +4,7 @@
 package generator
 
 import (
+	"sort"
 	"strings"
 
 	"github.com/dave/jennifer/jen"
@@ -27,7 +28,15 @@ func (g *Generator) buildSecurityBackendInterface(schema *openapi3.Swagger) erro
 	// (that initializes the Backend with the security configs)
 	var configs []jen.Code
 
-	for name, value := range securitySchemes {
+	// Because the order of the values while iterating over a map is randomized the generated result can only be tested if the keys are sorted
+	var keys []string
+	for k := range securitySchemes {
+		keys = append(keys, k)
+	}
+	sort.Strings(keys)
+
+	for _, name := range keys {
+		value := securitySchemes[name]
 		r.Line().Id(authFuncPrefix + strings.Title(name))
 		switch value.Value.Type {
 		case "oauth2":
@@ -50,7 +59,15 @@ func (g *Generator) buildSecurityBackendInterface(schema *openapi3.Swagger) erro
 // BuildSecurityConfigs creates structs with the config of each security schema
 func (g *Generator) buildSecurityConfigs(schema *openapi3.Swagger) error {
 	securitySchemes := schema.Components.SecuritySchemes
-	for name, value := range securitySchemes {
+	// Because the order of the values while iterating over a map is randomized the generated result can only be tested if the keys are sorted
+	var keys []string
+	for k := range securitySchemes {
+		keys = append(keys, k)
+	}
+	sort.Strings(keys)
+
+	for _, name := range keys {
+		value := securitySchemes[name]
 		instanceVal := jen.Dict{}
 		var pkgName string
 		switch value.Value.Type {

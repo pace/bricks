@@ -288,7 +288,7 @@ func GetAppsHandler(service Service, authBackend AuthenticationBackend) http.Han
 			// OAuth2 Authentication
 			ctx, ok := authBackend.AuthenticateOAuth2(r, w, "poi:apps:read")
 			if !ok {
-				// No Error Handling needed,  this is already done
+				// No Error Handling needed, this is already done
 				return
 			}
 			r = r.WithContext(ctx)
@@ -351,7 +351,7 @@ func CreateAppHandler(service Service, authBackend AuthenticationBackend) http.H
 			// OAuth2 Authentication
 			ctx, ok := authBackend.AuthenticateOAuth2(r, w, "poi:apps:create")
 			if !ok {
-				// No Error Handling needed,  this is already done
+				// No Error Handling needed, this is already done
 				return
 			}
 			r = r.WithContext(ctx)
@@ -398,7 +398,7 @@ func CheckForPaceAppHandler(service Service, authBackend AuthenticationBackend) 
 			// OAuth2 Authentication
 			ctx, ok := authBackend.AuthenticateOAuth2(r, w, "poi:apps:read")
 			if !ok {
-				// No Error Handling needed,  this is already done
+				// No Error Handling needed, this is already done
 				return
 			}
 			r = r.WithContext(ctx)
@@ -477,7 +477,7 @@ func DeleteAppHandler(service Service, authBackend AuthenticationBackend) http.H
 			// OAuth2 Authentication
 			ctx, ok := authBackend.AuthenticateOAuth2(r, w, "poi:apps:delete")
 			if !ok {
-				// No Error Handling needed,  this is already done
+				// No Error Handling needed, this is already done
 				return
 			}
 			r = r.WithContext(ctx)
@@ -530,7 +530,7 @@ func GetAppHandler(service Service, authBackend AuthenticationBackend) http.Hand
 			// OAuth2 Authentication
 			ctx, ok := authBackend.AuthenticateOAuth2(r, w, "poi:apps:read")
 			if !ok {
-				// No Error Handling needed,  this is already done
+				// No Error Handling needed, this is already done
 				return
 			}
 			r = r.WithContext(ctx)
@@ -583,7 +583,7 @@ func UpdateAppHandler(service Service, authBackend AuthenticationBackend) http.H
 			// OAuth2 Authentication
 			ctx, ok := authBackend.AuthenticateOAuth2(r, w, "poi:apps:update")
 			if !ok {
-				// No Error Handling needed,  this is already done
+				// No Error Handling needed, this is already done
 				return
 			}
 			r = r.WithContext(ctx)
@@ -639,7 +639,7 @@ func GetAppPOIsRelationshipsHandler(service Service, authBackend AuthenticationB
 			// OAuth2 Authentication
 			ctx, ok := authBackend.AuthenticateOAuth2(r, w, "poi:apps:read")
 			if !ok {
-				// No Error Handling needed,  this is already done
+				// No Error Handling needed, this is already done
 				return
 			}
 			r = r.WithContext(ctx)
@@ -692,7 +692,7 @@ func UpdateAppPOIsRelationshipsHandler(service Service, authBackend Authenticati
 			// OAuth2 Authentication
 			ctx, ok := authBackend.AuthenticateOAuth2(r, w, "poi:apps:update")
 			if !ok {
-				// No Error Handling needed,  this is already done
+				// No Error Handling needed, this is already done
 				return
 			}
 			r = r.WithContext(ctx)
@@ -748,7 +748,7 @@ func GetEventsHandler(service Service, authBackend AuthenticationBackend) http.H
 			// OAuth2 Authentication
 			ctx, ok := authBackend.AuthenticateOAuth2(r, w, "poi:events:read")
 			if !ok {
-				// No Error Handling needed,  this is already done
+				// No Error Handling needed, this is already done
 				return
 			}
 			r = r.WithContext(ctx)
@@ -811,7 +811,7 @@ func GetGasStationsHandler(service Service, authBackend AuthenticationBackend) h
 			// OAuth2 Authentication
 			ctx, ok := authBackend.AuthenticateOAuth2(r, w, "poi:gas-stations:read")
 			if !ok {
-				// No Error Handling needed,  this is already done
+				// No Error Handling needed, this is already done
 				return
 			}
 			r = r.WithContext(ctx)
@@ -910,7 +910,7 @@ func GetGasStationHandler(service Service, authBackend AuthenticationBackend) ht
 			// OAuth2 Authentication
 			ctx, ok := authBackend.AuthenticateOAuth2(r, w, "poi:gas-stations:read")
 			if !ok {
-				// No Error Handling needed,  this is already done
+				// No Error Handling needed, this is already done
 				return
 			}
 			r = r.WithContext(ctx)
@@ -963,7 +963,7 @@ func GetPoisHandler(service Service, authBackend AuthenticationBackend) http.Han
 			// OAuth2 Authentication
 			ctx, ok := authBackend.AuthenticateOAuth2(r, w, "poi:pois:read")
 			if !ok {
-				// No Error Handling needed,  this is already done
+				// No Error Handling needed, this is already done
 				return
 			}
 			r = r.WithContext(ctx)
@@ -1030,7 +1030,7 @@ func GetPoiHandler(service Service, authBackend AuthenticationBackend) http.Hand
 			// OAuth2 Authentication
 			ctx, ok := authBackend.AuthenticateOAuth2(r, w, "poi:pois:read")
 			if !ok {
-				// No Error Handling needed,  this is already done
+				// No Error Handling needed, this is already done
 				return
 			}
 			r = r.WithContext(ctx)
@@ -1083,7 +1083,7 @@ func ChangePoiHandler(service Service, authBackend AuthenticationBackend) http.H
 			// OAuth2 Authentication
 			ctx, ok := authBackend.AuthenticateOAuth2(r, w, "poi:pois:update")
 			if !ok {
-				// No Error Handling needed,  this is already done
+				// No Error Handling needed, this is already done
 				return
 			}
 			r = r.WithContext(ctx)
@@ -1139,7 +1139,7 @@ func GetPoliciesHandler(service Service, authBackend AuthenticationBackend) http
 			// OAuth2 Authentication
 			ctx, ok := authBackend.AuthenticateOAuth2(r, w, "poi:policies:read")
 			if !ok {
-				// No Error Handling needed,  this is already done
+				// No Error Handling needed, this is already done
 				return
 			}
 			r = r.WithContext(ctx)
@@ -1206,7 +1206,7 @@ func CreatePolicyHandler(service Service, authBackend AuthenticationBackend) htt
 			// OAuth2 Authentication
 			ctx, ok := authBackend.AuthenticateOAuth2(r, w, "poi:policies:create")
 			if !ok {
-				// No Error Handling needed,  this is already done
+				// No Error Handling needed, this is already done
 				return
 			}
 			r = r.WithContext(ctx)
@@ -1253,7 +1253,7 @@ func GetPolicyHandler(service Service, authBackend AuthenticationBackend) http.H
 			// OAuth2 Authentication
 			ctx, ok := authBackend.AuthenticateOAuth2(r, w, "poi:policies:read")
 			if !ok {
-				// No Error Handling needed,  this is already done
+				// No Error Handling needed, this is already done
 				return
 			}
 			r = r.WithContext(ctx)
@@ -1306,7 +1306,7 @@ func GetSourcesHandler(service Service, authBackend AuthenticationBackend) http.
 			// OAuth2 Authentication
 			ctx, ok := authBackend.AuthenticateOAuth2(r, w, "poi:sources:read")
 			if !ok {
-				// No Error Handling needed,  this is already done
+				// No Error Handling needed, this is already done
 				return
 			}
 			r = r.WithContext(ctx)
@@ -1369,7 +1369,7 @@ func CreateSourceHandler(service Service, authBackend AuthenticationBackend) htt
 			// OAuth2 Authentication
 			ctx, ok := authBackend.AuthenticateOAuth2(r, w, "poi:sources:create")
 			if !ok {
-				// No Error Handling needed,  this is already done
+				// No Error Handling needed, this is already done
 				return
 			}
 			r = r.WithContext(ctx)
@@ -1416,7 +1416,7 @@ func DeleteSourceHandler(service Service, authBackend AuthenticationBackend) htt
 			// OAuth2 Authentication
 			ctx, ok := authBackend.AuthenticateOAuth2(r, w, "poi:sources:delete")
 			if !ok {
-				// No Error Handling needed,  this is already done
+				// No Error Handling needed, this is already done
 				return
 			}
 			r = r.WithContext(ctx)
@@ -1469,7 +1469,7 @@ func GetSourceHandler(service Service, authBackend AuthenticationBackend) http.H
 			// OAuth2 Authentication
 			ctx, ok := authBackend.AuthenticateOAuth2(r, w, "poi:sources:read")
 			if !ok {
-				// No Error Handling needed,  this is already done
+				// No Error Handling needed, this is already done
 				return
 			}
 			r = r.WithContext(ctx)
@@ -1522,7 +1522,7 @@ func UpdateSourceHandler(service Service, authBackend AuthenticationBackend) htt
 			// OAuth2 Authentication
 			ctx, ok := authBackend.AuthenticateOAuth2(r, w, "poi:sources:update")
 			if !ok {
-				// No Error Handling needed,  this is already done
+				// No Error Handling needed, this is already done
 				return
 			}
 			r = r.WithContext(ctx)
@@ -1578,7 +1578,7 @@ func CreateSubscriptionHandler(service Service, authBackend AuthenticationBacken
 			// OAuth2 Authentication
 			ctx, ok := authBackend.AuthenticateOAuth2(r, w, "poi:subscriptions:create")
 			if !ok {
-				// No Error Handling needed,  this is already done
+				// No Error Handling needed, this is already done
 				return
 			}
 			r = r.WithContext(ctx)
@@ -1625,7 +1625,7 @@ func GetTilesHandler(service Service, authBackend AuthenticationBackend) http.Ha
 			// OAuth2 Authentication
 			ctx, ok := authBackend.AuthenticateOAuth2(r, w, "poi:tiles:read")
 			if !ok {
-				// No Error Handling needed,  this is already done
+				// No Error Handling needed, this is already done
 				return
 			}
 			r = r.WithContext(ctx)
@@ -2702,7 +2702,7 @@ func RouterWithAuthentication(service Service, authBackend AuthenticationBackend
 	return router
 }
 
-// Router kept for backward compatibility. Please use RouteWithAuthentication
+// Deprecated: Router kept for backward compatibility. Please use RouteWithAuthentication, Remove the Middleware and implement the AuthenticationBackend
 func Router(service Service) *mux.Router {
 	return RouterWithAuthentication(service, nil)
 }

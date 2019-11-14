@@ -24,25 +24,27 @@ type token struct {
 	scope    Scope
 }
 
-// Middleware holds data necessary for Oauth processing
+// Deprecated: Middleware holds data necessary for Oauth processing - Deprecated for generated apis,
+// use the generated Authentication Backend of the API with oauth2.Authenticator
 type Middleware struct {
-	backend TokenIntrospector
+	Backend TokenIntrospector
 }
 
 func (t *token) GetValue() string {
 	return t.value
 }
 
-// NewMiddleware creates a new Oauth middleware
+// Deprecated: NewMiddleware creates a new Oauth middleware - Deprecated for generated apis,
+// use the generated AuthenticationBackend of the API with oauth2.Authenticator
 func NewMiddleware(backend TokenIntrospector) *Middleware {
-	return &Middleware{backend: backend}
+	return &Middleware{Backend: backend}
 }
 
 // Handler will parse the bearer token, introspect it, and put the token and other
 // relevant information back in the context.
 func (m *Middleware) Handler(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		ctx, isOk := introspectRequest(r, w, m.backend)
+		ctx, isOk := introspectRequest(r, w, m.Backend)
 		if !isOk {
 			return
 		}

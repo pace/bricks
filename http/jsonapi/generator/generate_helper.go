@@ -21,6 +21,14 @@ func (g *Generator) addGoDoc(typeName, description string) {
 	}
 }
 
+func (g *Generator) addGoDocDeprecated(typeName, description string) {
+	if description != "" {
+		g.goSource.Comment(fmt.Sprintf("Deprecated: %s %s", typeName, description))
+	} else {
+		g.goSource.Comment(fmt.Sprintf("Deprecated: %s ...", typeName))
+	}
+}
+
 func (g *Generator) goType(stmt *jen.Statement, schema *openapi3.Schema, tags map[string]string) error { // nolint: gocyclo
 	switch schema.Type {
 	case "string":

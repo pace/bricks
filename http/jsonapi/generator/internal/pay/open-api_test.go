@@ -6,6 +6,7 @@ import (
 	mux "github.com/gorilla/mux"
 	opentracing "github.com/opentracing/opentracing-go"
 	runtime "github.com/pace/bricks/http/jsonapi/runtime"
+	oauth2 "github.com/pace/bricks/http/oauth2"
 	apikey "github.com/pace/bricks/http/security/apikey"
 	errors "github.com/pace/bricks/maintenance/errors"
 	metrics "github.com/pace/bricks/maintenance/metric/jsonapi"
@@ -82,11 +83,6 @@ type AuthenticationBackend interface {
 	Init(cfgOAuth2 *oauth2.Config, cfgProfileKey *apikey.Config)
 }
 
-var cfgProfileKey = &apikey.Config{
-	Description: "prefix with Bearer ",
-	In:          "header",
-	Name:        "Authorization",
-}
 var cfgOAuth2 = &oauth2.Config{
 	AuthorizationCode: &oauth2.Flow{
 		AuthorizationURL: "https://id.pace.cloud/oauth2/authorize",
@@ -95,6 +91,11 @@ var cfgOAuth2 = &oauth2.Config{
 		TokenURL:         "https://id.pace.cloud/oauth2/token",
 	},
 	Description: "",
+}
+var cfgProfileKey = &apikey.Config{
+	Description: "prefix with Bearer ",
+	In:          "header",
+	Name:        "Authorization",
 }
 
 /*
@@ -140,7 +141,7 @@ func CreatePaymentMethodSEPAHandler(service Service, authBackend AuthenticationB
 			// OAuth2 Authentication
 			ctx, ok := authBackend.AuthenticateOAuth2(r, w, "pay:payment-methods:create")
 			if !ok {
-				// No Error Handling needed,  this is already done
+				// No Error Handling needed, this is already done
 				return
 			}
 			r = r.WithContext(ctx)
@@ -807,7 +808,7 @@ func RouterWithAuthentication(service Service, authBackend AuthenticationBackend
 	return router
 }
 
-// Router kept for backward compatibility. Please use RouteWithAuthentication
+// Deprecated: Router kept for backward compatibility. Please use RouteWithAuthentication, Remove the Middleware and implement the AuthenticationBackend
 func Router(service Service) *mux.Router {
 	return RouterWithAuthentication(service, nil)
 }

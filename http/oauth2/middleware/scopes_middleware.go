@@ -14,12 +14,14 @@ import (
 // RequiredScopes defines the scope each endpoint requires
 type RequiredScopes map[string]oauth2.Scope
 
-// ScopesMiddleware contains required scopes for each endpoint
+// Deprecated: ScopesMiddleware contains required scopes for each endpoint -  For generated APIs use the generated
+//// AuthenticationBackend with oauth2.Authenticator and set a Scope
 type ScopesMiddleware struct {
 	RequiredScopes RequiredScopes
 }
 
-// NewScopesMiddleware return a new scopes middleware
+// Deprecated: NewScopesMiddleware return a new scopes middleware - For generated APIs use the generated
+// AuthenticationBackend with auth2.Authenticator and set a scope
 func NewScopesMiddleware(scopes RequiredScopes) *ScopesMiddleware {
 	return &ScopesMiddleware{RequiredScopes: scopes}
 }

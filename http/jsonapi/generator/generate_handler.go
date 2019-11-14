@@ -395,7 +395,7 @@ func (g *Generator) buildRouter(routes []*route, schema *openapi3.Swagger) error
 
 	block := jen.Return(jen.Id("RouterWithAuthentication").Call(jen.Id("service"), jen.Nil()))
 
-	g.addGoDoc("Router", "kept for backward compatibility. Please use RouteWithAuthentication")
+	g.addGoDocDeprecated("Router", "kept for backward compatibility. Please use RouteWithAuthentication, Remove the Middleware and implement the AuthenticationBackend")
 
 	g.goSource.Func().Id("Router").Params(
 		serviceInterfaceVariable).Op("*").Qual(pkgGorillaMux, "Router").Block(block)
