@@ -8,7 +8,7 @@ import (
 	"net/http"
 )
 
-// Authenticator is a Implementation of security.Authenticator for oauth2
+// Authenticator is an implementation of security.Authenticator for oauth2
 // it offers introspection and a scope that is used for authentication
 type Authenticator struct {
 	introspection TokenIntrospector
