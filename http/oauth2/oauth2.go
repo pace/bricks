@@ -193,8 +193,18 @@ func ContextTransfer(sourceCtx context.Context, targetCtx context.Context) conte
 	return security.ContextWithTokenKey(targetCtx, token)
 }
 
-// Deprecated: This Function was moved to the security package, because its used by apiKey and oauth2 authentication
+// Deprecated: BearerToken This function was moved to the security package,
+// because its used by apiKey and oauth2 authentication
 // BearerToken returns the bearer token stored in ctx
 func BearerToken(ctx context.Context) (string, bool) {
 	return security.BearerToken(ctx)
+}
+
+// Deprecated: WithBearerToken This function was moved to the security Package,
+// because its used by apiKey and oauth2 authentication
+// returns a new context that has the given bearer token set.
+// Use security.BearerToken() to retrieve the token. Use Request() to obtain a request
+// with the Authorization header set accordingly.
+func WithBearerToken(ctx context.Context, bearerToken string) context.Context {
+	return security.WithBearerToken(ctx, bearerToken)
 }
