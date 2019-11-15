@@ -4,6 +4,7 @@
 package servicehealthcheck
 
 import (
+	"fmt"
 	"net/http"
 	"strings"
 	"sync"
@@ -41,6 +42,11 @@ func (h *handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 
 	name := splitRoute[1]
+	if name == "all" {
+		checkAll(w)
+		return
+	}
+
 	hcInterface, isIn := checks.Load(name)
 	if !isIn {
 		h.writeError(w, errors.New("health check not registered"), http.StatusNotFound, name)
@@ -68,13 +74,55 @@ func (h *handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+// Does all HealthChecks and lists the result in the response body
+func checkAll(w http.ResponseWriter) {
+	results := make(map[string]error)
+	// do all checks and save the results
+	checks.Range(func(key, value interface{}) bool {
+		name, ok := key.(string)
+		if !ok {
+			log.Warnf("healthCheck key is not string but %T", name)
+		}
+		hc, ok := value.(HealthCheck)
+		if !ok {
+			log.Warnf("healthCheck value is not a HealthCheck but %T", hc)
+		}
+		// Check if any init Errors occurred
+		if val, isIn := initErrors.Load(name); isIn {
+			err := val.(error)
+			results[name] = err
+			return true
+		}
+		_, res := hc.HealthCheck()
+		results[name] = res
+		return true
+	})
+	//create the response from the HealthCheck results
+	status := http.StatusOK
+	body := ""
+	for name, err := range results {
+		if err == nil {
+			body += fmt.Sprintf("%s : OK\n ", name)
+		} else {
+			body += fmt.Sprintf("%s : ERR\n ", name)
+			status = http.StatusServiceUnavailable
+			log.Warnf("healthCheck %q was not healthy: %v", name, err)
+		}
+	}
+	w.Header().Set("Content-Type", "text/plain")
+	w.WriteHeader(status)
+	if _, err := w.Write([]byte(body)); err != nil {
+		log.Warnf("could not write output: %s", err)
+	}
+}
+
 func (h *handler) writeError(w http.ResponseWriter, err error, errorCode int, name string) {
 	w.Header().Set("Content-Type", "text/plain")
 	w.WriteHeader(errorCode)
 	if _, err := w.Write([]byte("ERR")); err != nil {
 		log.Warnf("could not write output: %s", err)
 	}
-	log.Warnf("healthcheck %q was not healthy: %v", name, err)
+	log.Warnf("healthCheck %q was not healthy: %v", name, err)
 }
 
 // RegisterHealthCheck registers a HealthCheck that need to be routed. The name
