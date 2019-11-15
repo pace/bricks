@@ -17,12 +17,13 @@ type bearerToken struct {
 	value string
 }
 
-type Ctxkey string
+type ctxkey string
 
 const HeaderPrefix = "Bearer "
 
-var TokenKey = Ctxkey("Token")
+var tokenKey = ctxkey("Token")
 
+// GetValue returns the be
 func (b *bearerToken) GetValue() string {
 	return b.value
 }
@@ -41,11 +42,16 @@ func GetBearerTokenFromHeader(r *http.Request, w http.ResponseWriter, headerName
 	return tokenValue
 }
 
+// ContextWithTokenKey creates a context with a Token
+func ContextWithTokenKey(targetCtx context.Context, token Token) context.Context {
+	return context.WithValue(targetCtx, tokenKey, token)
+}
+
 // WithBearerToken returns a new context that has the given bearer token set.
 // Use BearerToken() to retrieve the token. Use Request() to obtain a request
 // with the Authorization header set accordingly.
 func WithBearerToken(ctx context.Context, token string) context.Context {
-	return context.WithValue(ctx, TokenKey, &bearerToken{value: token})
+	return context.WithValue(ctx, tokenKey, &bearerToken{value: token})
 }
 
 // BearerToken returns the bearer token stored in ctx
@@ -60,7 +66,7 @@ func BearerToken(ctx context.Context) (string, bool) {
 }
 
 func TokenFromContext(ctx context.Context) Token {
-	val := ctx.Value(TokenKey)
+	val := ctx.Value(tokenKey)
 
 	if val == nil {
 		return nil

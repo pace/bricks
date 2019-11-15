@@ -122,7 +122,7 @@ func TestAuthenticatorWithSuccess(t *testing.T) {
 				t.Errorf("Expected succesfull Authentication, but was not succesfull with code %d and body %v", w.Code, w.Body)
 				return
 			}
-			to := authorize.Value(security.Ctxkey("Token"))
+			to := authorize.Value("Token")
 			tok, ok := to.(*token)
 
 			if !ok || tok.value != "bearer" || tok.scope != Scope("ABC DHHG kjdk") || tok.clientID != "ClientId" || tok.userID != "UserId" {
@@ -229,11 +229,16 @@ func Example() {
 		log.Printf("AUDIT: User %s does something", userid)
 
 		if HasScope(r.Context(), "dtc:codes:write") {
-			fmt.Fprintf(w, "User has scope.")
+			_, err := fmt.Fprintf(w, "User has scope.")
+			if err != nil {
+				panic(err)
+			}
 			return
 		}
-
-		fmt.Fprintf(w, "Your client may not have the right scopes to see the secret code")
+		_, err := fmt.Fprintf(w, "Your client may not have the right scopes to see the secret code")
+		if err != nil {
+			panic(err)
+		}
 	})
 
 	srv := &http.Server{
@@ -253,7 +258,7 @@ func TestRequest(t *testing.T) {
 	}
 
 	r := httptest.NewRequest("GET", "http://example.com", nil)
-	ctx := context.WithValue(r.Context(), security.TokenKey, &to)
+	ctx := security.ContextWithTokenKey(r.Context(), &to)
 	r = r.WithContext(ctx)
 
 	r2 := Request(r)
@@ -287,7 +292,7 @@ func TestSuccessfulAccessors(t *testing.T) {
 		scope:    expectedScopes,
 	}
 
-	ctx := context.WithValue(context.TODO(), security.TokenKey, &to)
+	ctx := security.ContextWithTokenKey(context.TODO(), &to)
 	newCtx := context.TODO()
 	ctx = ContextTransfer(ctx, newCtx)
 

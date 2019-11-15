@@ -30,6 +30,7 @@ type Middleware struct {
 	Backend TokenIntrospector
 }
 
+// GetValue returns the oauth2 token for the current user, the value is part of the answer of the introspection
 func (t *token) GetValue() string {
 	return t.value
 }
@@ -83,7 +84,7 @@ func introspectRequest(r *http.Request, w http.ResponseWriter, tokenIntro TokenI
 		}
 	}
 	t := fromIntrospectResponse(s, tokenValue)
-	ctx = context.WithValue(ctx, security.TokenKey, &t)
+	ctx = security.ContextWithTokenKey(ctx, &t)
 	log.Req(r).Info().
 		Str("client_id", t.clientID).
 		Str("user_id", t.userID).
@@ -189,5 +190,11 @@ func ClientID(ctx context.Context) (string, bool) {
 // and returning a new context based on the targetCtx
 func ContextTransfer(sourceCtx context.Context, targetCtx context.Context) context.Context {
 	token := security.TokenFromContext(sourceCtx)
-	return context.WithValue(targetCtx, security.TokenKey, token)
+	return security.ContextWithTokenKey(targetCtx, token)
+}
+
+// Deprecated: This Function was moved to the security package, because its used by apiKey and oauth2 authentication
+// BearerToken returns the bearer token stored in ctx
+func BearerToken(ctx context.Context) (string, bool) {
+	return security.BearerToken(ctx)
 }
