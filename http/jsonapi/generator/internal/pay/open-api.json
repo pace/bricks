@@ -1190,7 +1190,7 @@
         "type": "apiKey",
         "in": "header",
         "name": "Authorization",
-        "description": "prefix with Bearer "
+        "description": "prefix with \"Bearer \""
       }
     }
   }
