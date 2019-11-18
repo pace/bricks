@@ -8,7 +8,7 @@ import (
 	"net/http"
 )
 
-// Authenticator describes the needed functions for a authentication,
+// Authenticator describes the needed functions for authentication,
 // already implemented in oauth2.Authenticator and apikey.Authenticator
 type Authenticator interface {
 	// Authorize should authorize a requests. This method should directly add
