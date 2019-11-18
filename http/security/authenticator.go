@@ -11,7 +11,7 @@ import (
 // Authenticator describes the needed functions for authentication,
 // already implemented in oauth2.Authenticator and apikey.Authenticator
 type Authenticator interface {
-	// Authorize should authorize a requests. This method should directly add
+	// Authorize should authorize a request. This method should directly add
 	// errors to the response and return a context with information of the authorization
 	// and true if the authorization was successful and false if any error occurred
 	Authorize(r *http.Request, w http.ResponseWriter) (context.Context, bool)
