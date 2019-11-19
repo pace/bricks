@@ -92,7 +92,7 @@ func (t *tokenIntrospectedSuccessful) IntrospectToken(ctx context.Context, token
 func TestAuthenticatorWithSuccess(t *testing.T) {
 	testCases := []struct {
 		desc string
-		auth *Authenticator
+		auth *Authorizer
 	}{
 		{desc: "Tests a valid Request with OAuth2 Authentication without Scope checking",
 			auth: NewAuthenticator(&tokenIntrospectedSuccessful{&IntrospectResponse{
@@ -298,7 +298,7 @@ func TestSuccessfulAccessors(t *testing.T) {
 
 	uid, _ := UserID(ctx)
 	cid, _ := ClientID(ctx)
-	bearerToken, _ := security.BearerToken(ctx)
+	bearerToken, ok := security.GetTokenFromContext(ctx)
 	scopes := Scopes(ctx)
 	hasScope := HasScope(ctx, "scope2")
 
@@ -310,7 +310,7 @@ func TestSuccessfulAccessors(t *testing.T) {
 		t.Fatalf("Expected %v, got: %v", expectedClientID, cid)
 	}
 
-	if bearerToken != expectedBearerToken {
+	if !ok || bearerToken.GetValue() != expectedBearerToken {
 		t.Fatalf("Expected %v, got: %v", expectedBearerToken, bearerToken)
 	}
 
@@ -329,7 +329,7 @@ func TestUnsuccessfulAccessors(t *testing.T) {
 
 	uid, uidOK := UserID(ctx)
 	cid, cidOK := ClientID(ctx)
-	bt, btOK := security.BearerToken(ctx)
+	bt, ok := security.GetTokenFromContext(ctx)
 	scopes := Scopes(ctx)
 	hasScope := HasScope(ctx, "scope2")
 
@@ -341,7 +341,7 @@ func TestUnsuccessfulAccessors(t *testing.T) {
 		t.Fatalf("Expected no %v, got: %v", "ClientID", cid)
 	}
 
-	if bt != "" || btOK {
+	if !ok || bt.GetValue() != "" {
 		t.Fatalf("Expected no %v, got: %v", "BearerToken", bt)
 	}
 
@@ -356,9 +356,9 @@ func TestUnsuccessfulAccessors(t *testing.T) {
 
 func TestWithBearerToken(t *testing.T) {
 	ctx := context.Background()
-	ctx = security.WithBearerToken(ctx, "some access token")
-	token, ok := security.BearerToken(ctx)
-	if !ok || token != "some access token" {
+	ctx = WithBearerToken(ctx, "some access token")
+	token, ok := security.GetTokenFromContext(ctx)
+	if !ok || token.GetValue() != "some access token" {
 		t.Error("could not store bearer token in context")
 	}
 }

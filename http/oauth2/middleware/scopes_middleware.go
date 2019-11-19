@@ -15,13 +15,13 @@ import (
 type RequiredScopes map[string]oauth2.Scope
 
 // Deprecated: ScopesMiddleware contains required scopes for each endpoint -  For generated APIs use the generated
-// AuthenticationBackend with oauth2.Authenticator and set a Scope
+// AuthenticationBackend with oauth2.Authorizer and set a Scope
 type ScopesMiddleware struct {
 	RequiredScopes RequiredScopes
 }
 
 // Deprecated: NewScopesMiddleware return a new scopes middleware - For generated APIs use the generated
-// AuthenticationBackend with auth2.Authenticator and set a scope
+// AuthenticationBackend with auth2.Authorizer and set a scope
 func NewScopesMiddleware(scopes RequiredScopes) *ScopesMiddleware {
 	return &ScopesMiddleware{RequiredScopes: scopes}
 }

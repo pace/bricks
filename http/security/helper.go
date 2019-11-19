@@ -5,72 +5,47 @@ package security
 
 import (
 	"context"
+	"fmt"
 	"net/http"
 	"strings"
+
+	"github.com/pace/bricks/maintenance/errors"
 )
 
 type Token interface {
 	GetValue() string
 }
 
-type bearerToken struct {
-	value string
-}
+type ctx string
 
-type ctxkey string
-
+// HeaderPrefix prefix of the Authentication value in the header
 const HeaderPrefix = "Bearer "
 
-var tokenKey = ctxkey("Token")
-
-// GetValue returns the be
-func (b *bearerToken) GetValue() string {
-	return b.value
-}
+var tokenKey = ctx("Token")
 
 // GetBearerTokenFromHeader get the bearer Token from the header of the request
 // success: returns the bearer token without the Prefix
-// error: write the error in the response and return a empty bearer
-func GetBearerTokenFromHeader(r *http.Request, w http.ResponseWriter, headerName string) string {
+// error: return a empty token and a error
+func GetBearerTokenFromHeader(r *http.Request, headerName string) (string, error) {
 	qualifiedToken := r.Header.Get(headerName)
-	items := strings.Split(qualifiedToken, HeaderPrefix)
-	if len(items) < 2 {
-		http.Error(w, "Unauthorized", http.StatusUnauthorized)
-		return ""
+	hasPrefix := strings.HasPrefix(qualifiedToken, HeaderPrefix)
+	if !hasPrefix {
+		return "", errors.New(fmt.Sprintf("requested Header %q has not prefix %q : %q", headerName, HeaderPrefix, qualifiedToken))
 	}
-	tokenValue := items[1]
-	return tokenValue
+	return strings.TrimPrefix(qualifiedToken, HeaderPrefix), nil
 }
 
-// ContextWithTokenKey creates a context with a Token
+// ContextWithTokenKey creates a new Context with the token
 func ContextWithTokenKey(targetCtx context.Context, token Token) context.Context {
 	return context.WithValue(targetCtx, tokenKey, token)
 }
 
-// WithBearerToken returns a new context that has the given bearer token set.
-// Use BearerToken() to retrieve the token. Use Request() to obtain a request
-// with the Authorization header set accordingly.
-func WithBearerToken(ctx context.Context, token string) context.Context {
-	return context.WithValue(ctx, tokenKey, &bearerToken{value: token})
-}
-
-// BearerToken returns the bearer token stored in ctx
-func BearerToken(ctx context.Context) (string, bool) {
-	token := TokenFromContext(ctx)
-
-	if token == nil {
-		return "", false
-	}
-
-	return token.GetValue(), true
-}
-
-func TokenFromContext(ctx context.Context) Token {
+// GetTokenFromContext returns the token, if it is stored in the context, and true if the token is present.
+func GetTokenFromContext(ctx context.Context) (Token, bool) {
 	val := ctx.Value(tokenKey)
-
 	if val == nil {
-		return nil
+		return nil, false
 	}
-
-	return val.(Token)
+	tok, ok := val.(Token)
+	return tok, ok
 }

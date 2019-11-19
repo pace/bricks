@@ -8,9 +8,9 @@ import (
 	"net/http"
 )
 
-// Authenticator is an implementation of security.Authenticator for oauth2
+// Authorizer is an implementation of security.Authorizer for oauth2
 // it offers introspection and a scope that is used for authentication
-type Authenticator struct {
+type Authorizer struct {
 	introspection TokenIntrospector
 	scope         Scope
 	config        *Config
@@ -33,15 +33,15 @@ type Config struct {
 	AuthorizationCode *Flow
 }
 
-// NewAuthenticator creates a Authenticator for a specific TokenIntrospector
-// This Authenticator does not check the scope until a scope is added
-func NewAuthenticator(introspector TokenIntrospector, cfg *Config) *Authenticator {
-	return &Authenticator{introspection: introspector, config: cfg}
+// NewAuthenticator creates a Authorizer for a specific TokenIntrospector
+// This Authorizer does not check the scope until a scope is added
+func NewAuthenticator(introspector TokenIntrospector, cfg *Config) *Authorizer {
+	return &Authorizer{introspection: introspector, config: cfg}
 }
 
-// WithScope returns a new Authenticator with the same TokenIntrospector and the same Config that also checks the scope of a request
-func (a *Authenticator) WithScope(tok string) *Authenticator {
-	return &Authenticator{introspection: a.introspection, config: a.config, scope: Scope(tok)}
+// WithScope returns a new Authorizer with the same TokenIntrospector and the same Config that also checks the scope of a request
+func (a *Authorizer) WithScope(tok string) *Authorizer {
+	return &Authorizer{introspection: a.introspection, config: a.config, scope: Scope(tok)}
 }
 
 // Authorize authorizes a request
@@ -49,13 +49,13 @@ func (a *Authenticator) WithScope(tok string) *Authenticator {
 // checks the config even if we don't use it
 // success: context with introspection information, isOk = true
 // error: writes all errors directly to response, isOk = false
-func (a *Authenticator) Authorize(r *http.Request, w http.ResponseWriter) (context.Context, bool) {
+func (a *Authorizer) Authorize(r *http.Request, w http.ResponseWriter) (context.Context, bool) {
 	ctx, ok := introspectRequest(r, w, a.introspection)
 	// Check if introspection was successful
 	if !ok {
 		return ctx, ok
 	}
-	// if the Authenticator has no scope, the request is valid without looking for the scope.
+	// if the Authorizer has no scope, the request is valid without looking for the scope.
 	if a.scope != "" {
 		// Check if the scope is valid for this user
 		ok = validateScope(ctx, w, a.scope)
