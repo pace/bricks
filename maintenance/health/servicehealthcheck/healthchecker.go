@@ -97,7 +97,7 @@ func checkAll(w http.ResponseWriter) {
 		results[name] = res
 		return true
 	})
-	//create the response from the HealthCheck results
+	// create the response from the HealthCheck results
 	status := http.StatusOK
 	body := ""
 	for name, err := range results {
