@@ -24,7 +24,7 @@ const HeaderPrefix = "Bearer "
 var tokenKey = ctx("Token")
 
 // GetBearerTokenFromHeader get the bearer Token from the header of the request
-// success: returns the bearer token without the Prefix
+// success: returns the bearer token without the prefix
 // error: return a empty token and a error
 func GetBearerTokenFromHeader(r *http.Request, headerName string) (string, error) {
 	qualifiedToken := r.Header.Get(headerName)
