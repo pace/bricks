@@ -27,7 +27,7 @@ type token struct {
 // Deprecated: Middleware holds data necessary for Oauth processing - Deprecated for generated apis,
 // use the generated Authentication Backend of the API with oauth2.Authorizer
 type Middleware struct {
-	Backend TokenIntrospector
+	Backend TokenIntrospecter
 }
 
 // GetValue returns the oauth2 token for the current user, the value is part of the answer of the introspection
@@ -37,7 +37,7 @@ func (t *token) GetValue() string {
 
 // Deprecated: NewMiddleware creates a new Oauth middleware - Deprecated for generated apis,
 // use the generated AuthenticationBackend of the API with oauth2.Authorizer
-func NewMiddleware(backend TokenIntrospector) *Middleware {
+func NewMiddleware(backend TokenIntrospecter) *Middleware {
 	return &Middleware{Backend: backend}
 }
 
@@ -58,7 +58,7 @@ func (m *Middleware) Handler(next http.Handler) http.Handler {
 // if the introspection was successful
 // Error: The function writes the error in the Response and creates a log-message
 // with more details and returns nil and false if any error occurs during the introspection
-func introspectRequest(r *http.Request, w http.ResponseWriter, tokenIntro TokenIntrospector) (context.Context, bool) {
+func introspectRequest(r *http.Request, w http.ResponseWriter, tokenIntro TokenIntrospecter) (context.Context, bool) {
 	// Setup tracing
 	span, ctx := opentracing.StartSpanFromContext(r.Context(), "Oauth2")
 	defer span.Finish()
@@ -120,12 +120,10 @@ func fromIntrospectResponse(s *IntrospectResponse, tokenValue string) token {
 
 // Request adds Authorization token to r
 func Request(r *http.Request) *http.Request {
-	tok, ok := security.GetTokenFromContext(r.Context())
-	if !ok {
-		return r
+	authHeaderVal, ok := security.GetAuthHeader(r.Context())
+	if ok {
+		r.Header.Set("Authorization", authHeaderVal)
 	}
-	authHeaderVal := security.HeaderPrefix + tok.GetValue()
-	r.Header.Set("Authorization", authHeaderVal)
 	return r
 }
 

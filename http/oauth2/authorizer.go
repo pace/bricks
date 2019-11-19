@@ -11,7 +11,7 @@ import (
 // Authorizer is an implementation of security.Authorizer for oauth2
 // it offers introspection and a scope that is used for authentication
 type Authorizer struct {
-	introspection TokenIntrospector
+	introspection TokenIntrospecter
 	scope         Scope
 	config        *Config
 }
@@ -33,13 +33,13 @@ type Config struct {
 	AuthorizationCode *Flow
 }
 
-// NewAuthenticator creates a Authorizer for a specific TokenIntrospector
+// NewAuthenticator creates a Authorizer for a specific TokenIntrospecter
 // This Authorizer does not check the scope until a scope is added
-func NewAuthenticator(introspector TokenIntrospector, cfg *Config) *Authorizer {
+func NewAuthenticator(introspector TokenIntrospecter, cfg *Config) *Authorizer {
 	return &Authorizer{introspection: introspector, config: cfg}
 }
 
-// WithScope returns a new Authorizer with the same TokenIntrospector and the same Config that also checks the scope of a request
+// WithScope returns a new Authorizer with the same TokenIntrospecter and the same Config that also checks the scope of a request
 func (a *Authorizer) WithScope(tok string) *Authorizer {
 	return &Authorizer{introspection: a.introspection, config: a.config, scope: Scope(tok)}
 }
