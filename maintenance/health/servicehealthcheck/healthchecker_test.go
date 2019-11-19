@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"strings"
+	"sync"
 	"testing"
 
 	"github.com/pace/bricks/maintenance/errors"
@@ -39,6 +40,8 @@ func (t *testHealthChecker) HealthCheck() (bool, error) {
 }
 
 func setupOneHealthCheck(t *testHealthChecker) *http.Response {
+	checks = sync.Map{}
+	initErrors = sync.Map{}
 	rec := httptest.NewRecorder()
 	RegisterHealthCheck(t, t.Name())
 	req := httptest.NewRequest("GET", "/health/"+t.Name(), nil)
@@ -74,6 +77,7 @@ func TestHandlerHealthCheckErr(t *testing.T) {
 }
 
 func TestHealthCheckAllWithErrors(t *testing.T) {
+
 	hcs := []*testHealthChecker{
 		{name: "TestHandlerHealthCheckErr", healthCheckErr: true},
 		{name: "TestHandlerInitErr", initErr: true},
@@ -85,6 +89,27 @@ func TestHealthCheckAllWithErrors(t *testing.T) {
 		"test : OK",
 	}
 
+	checkAllTestHcs(hcs, t, expected, 503)
+}
+func TestHealthCheckAllSuccess(t *testing.T) {
+
+	hcs := []*testHealthChecker{
+		{name: "test2"},
+		{name: "test3"},
+		{name: "test"},
+	}
+	expected := []string{
+		"test3 : OK",
+		"test2 : OK",
+		"test : OK",
+	}
+
+	checkAllTestHcs(hcs, t, expected, 200)
+}
+
+func checkAllTestHcs(hcs []*testHealthChecker, t *testing.T, expected []string, statusCode int) {
+	checks = sync.Map{}
+	initErrors = sync.Map{}
 	rec := httptest.NewRecorder()
 	for _, hc := range hcs {
 		RegisterHealthCheck(hc, hc.Name())
@@ -93,22 +118,22 @@ func TestHealthCheckAllWithErrors(t *testing.T) {
 	Handler().ServeHTTP(rec, req)
 	resp := rec.Result()
 	defer resp.Body.Close()
-	if resp.StatusCode != 503 {
-		t.Errorf("Expected /health to respond with 503, got: %d", resp.StatusCode)
+	if resp.StatusCode != statusCode {
+		t.Errorf("Expected /health to respond with %d, got: %d", statusCode, resp.StatusCode)
 	}
 	data, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
 		log.Fatal(err)
 	}
-	checks := strings.Split(string(data), "\n ")
-	if exp := len(checks); exp != 4 {
-		t.Errorf("Expected 3 HealthCheck results, but got %v", len(checks)-1)
+	checkRes := strings.Split(string(data), "\n ")
+	if exp := len(checkRes); exp != 4 {
+		t.Errorf("Expected 3 HealthCheck results, but got %v", len(hcs)-1)
 	}
 	// Check of all healthCheck results are present and correct
 	for exp := range expected {
 		found := false
-		for check := range checks {
-			if check == exp {
+		for res := range checkRes {
+			if res == exp {
 				found = true
 			}
 		}

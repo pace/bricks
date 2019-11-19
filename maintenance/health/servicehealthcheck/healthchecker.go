@@ -13,12 +13,13 @@ import (
 	"github.com/pace/bricks/maintenance/log"
 )
 
-// HealthCheck is a health check that is initialised once and that is performed
+// HealthCheck is a health check that is registered once and that is performed
 // periodically and/or spontaneously.
 type HealthCheck interface {
 	HealthCheck() (bool, error)
 }
 
+// Initialisable is used to mark that a health check needs to be initialised
 type Initialisable interface {
 	Init() error
 }
@@ -52,18 +53,9 @@ func (h *handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		h.writeError(w, errors.New("health check not registered"), http.StatusNotFound, name)
 		return
 	}
+
 	hc := hcInterface.(HealthCheck)
-
-	// If it was not possible to initialise this health check, then show the initialisation error
-	if val, isIn := initErrors.Load(name); isIn {
-		err := val.(error)
-
-		h.writeError(w, err, http.StatusServiceUnavailable, name)
-		return
-	}
-
-	// this is the actual health check
-	if healthy, err := hc.HealthCheck(); healthy {
+	if err, healthy := check(hc, name); healthy {
 		w.Header().Set("Content-Type", "text/plain")
 		w.WriteHeader(http.StatusOK)
 		if _, err := w.Write([]byte("OK\n")); err != nil {
@@ -74,27 +66,27 @@ func (h *handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+// Checks one health check
+func check(hc HealthCheck, name string) (error, bool) {
+	// If it was not possible to initialise this health check, then show the initialisation error
+	if val, isIn := initErrors.Load(name); isIn {
+		err := val.(error)
+		return err, false
+	}
+	// this is the actual health check
+	healthy, err := hc.HealthCheck()
+	return err, healthy
+}
+
 // Does all HealthChecks and lists the result in the response body
 func checkAll(w http.ResponseWriter) {
 	results := make(map[string]error)
 	// do all checks and save the results
 	checks.Range(func(key, value interface{}) bool {
-		name, ok := key.(string)
-		if !ok {
-			log.Warnf("healthCheck key is not string but %T", name)
-		}
-		hc, ok := value.(HealthCheck)
-		if !ok {
-			log.Warnf("healthCheck value is not a HealthCheck but %T", hc)
-		}
-		// Check if any init Errors occurred
-		if val, isIn := initErrors.Load(name); isIn {
-			err := val.(error)
-			results[name] = err
-			return true
-		}
-		_, res := hc.HealthCheck()
-		results[name] = res
+		name := key.(string)
+		hc := value.(HealthCheck)
+		err, _ := check(hc, name)
+		results[name] = err
 		return true
 	})
 	// create the response from the HealthCheck results
