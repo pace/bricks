@@ -14,7 +14,7 @@ import (
 
 // Token represents an authentication token.
 type Token interface {
-	// GetValue returns the Authorization Token
+	// GetValue returns the bearer token
 	GetValue() string
 }
 
