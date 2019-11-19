@@ -18,7 +18,7 @@ type Authenticator struct {
 }
 
 // Config is the Struct for the Information of the Security Schema information from the API definition that we use.
-// Currently we suspect that we have an apikey in the header that is prepended by "Bearer "
+// Currently we assume that we have an apikey in the header that is prepended by "Bearer "
 type Config struct {
 	Description string
 	In          string
