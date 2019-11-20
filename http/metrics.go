@@ -1,6 +1,9 @@
 package http
 
 import (
+	"bufio"
+	"fmt"
+	"net"
 	"net/http"
 	"strconv"
 	"time"
@@ -66,6 +69,13 @@ func metricsMiddleware(next http.Handler) http.Handler {
 		startTime := time.Now()
 		srw := statusWriter{ResponseWriter: w}
 		next.ServeHTTP(&srw, r)
+		if srw.hijacked {
+			// If the connection was hijacked it follows no longer
+			// the classic req/resp scheme and should therefor not
+			// be taken into account in these metrics.
+			return
+		}
+
 		dur := float64(time.Since(startTime)) / float64(time.Millisecond)
 		labels := prometheus.Labels{
 			"code":   strconv.Itoa(srw.status),
@@ -82,6 +92,8 @@ type statusWriter struct {
 	http.ResponseWriter
 	status int
 	length int
+
+	hijacked bool
 }
 
 func (w *statusWriter) WriteHeader(status int) {
@@ -96,6 +108,15 @@ func (w *statusWriter) Write(b []byte) (int, error) {
 	n, err := w.ResponseWriter.Write(b)
 	w.length += n
 	return n, err
+}
+
+func (w *statusWriter) Hijack() (net.Conn, *bufio.ReadWriter, error) {
+	if hijacker, ok := w.ResponseWriter.(http.Hijacker); ok {
+		w.hijacked = true
+		return hijacker.Hijack()
+	}
+
+	return nil, nil, fmt.Errorf("responseWriter does not implement http.Hijacker")
 }
 
 func filterRequestSource(source string) string {
