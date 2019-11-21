@@ -12,7 +12,7 @@ import (
 	"github.com/pace/bricks/maintenance/log"
 )
 
-// Authorizer implements the security.Authorizer Interface for a ApiKey based
+// Authorizer implements the security.Authorizer interface for an ApiKey based authorization.
 type Authorizer struct {
 	authConfig *Config
 	apiKey     string
