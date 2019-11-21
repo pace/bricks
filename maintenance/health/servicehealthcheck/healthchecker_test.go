@@ -127,7 +127,7 @@ func checkAllTestHcs(hcs []*testHealthChecker, t *testing.T, expected []string, 
 	}
 	checkRes := strings.Split(string(data), "\n ")
 	if exp := len(checkRes); exp != 4 {
-		t.Errorf("Expected 3 HealthCheck results, but got %v", len(hcs)-1)
+		t.Errorf("Expected %v HealthCheck results, but got %v", len(expected), len(hcs)-1)
 	}
 	// Check of all healthCheck results are present and correct
 	for exp := range expected {
