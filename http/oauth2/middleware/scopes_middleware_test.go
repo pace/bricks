@@ -66,7 +66,7 @@ func setupRouter(requiredScope string, tokenScope string) *mux.Router {
 		"GetFoo": oauth2.Scope(requiredScope),
 	}
 	m := NewScopesMiddleware(rs)
-	om := oauth2.NewMiddleware(&TokenIntrospector{returnedScope: tokenScope})
+	om := oauth2.NewMiddleware(&TokenIntrospector{returnedScope: tokenScope}) // nolint: staticcheck
 
 	r := mux.NewRouter()
 	r.Use(om.Handler)
