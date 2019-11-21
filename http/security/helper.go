@@ -20,7 +20,7 @@ type Token interface {
 
 type ctx string
 
-// HeaderPrefix prefix of the Authentication value in the header
+// prefix of the Authorization header
 const headerPrefix = "Bearer "
 
 var tokenKey = ctx("Token")
