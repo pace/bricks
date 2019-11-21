@@ -26,7 +26,7 @@ func TestApiKeyAuthenticationSuccessful(t *testing.T) {
 		t.Fatal(err)
 	}
 	if !b {
-		t.Errorf("Expected no error in Authentication, but was not succesfull with code %d and body %v", resp.StatusCode, string(body))
+		t.Errorf("Expected no error in authentication, but failed with code %d and body %v", resp.StatusCode, string(body))
 	}
 	if got, ex := w.Code, http.StatusOK; got != ex {
 		t.Errorf("Expected status code %d, got %d", ex, got)
