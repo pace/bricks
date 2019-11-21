@@ -120,7 +120,7 @@ type TransactionRequest struct {
 
 // Currency ...
 type Currency string
-type AuthenticationBackend interface {
+type AuthorizationBackend interface {
 	Init()
 }
 
@@ -128,7 +128,7 @@ type AuthenticationBackend interface {
 ProcessPaymentHandler handles request/response marshaling and validation for
  Post /beta/gas-station/{gasStationId}/payment
 */
-func ProcessPaymentHandler(service Service, authBackend AuthenticationBackend) http.Handler {
+func ProcessPaymentHandler(service Service, authBackend AuthorizationBackend) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		defer errors.HandleRequest("ProcessPaymentHandler", w, r)
 
@@ -173,7 +173,7 @@ func ProcessPaymentHandler(service Service, authBackend AuthenticationBackend) h
 ApproachingAtTheForecourtHandler handles request/response marshaling and validation for
  Post /beta/gas-stations/{gasStationId}/approaching
 */
-func ApproachingAtTheForecourtHandler(service Service, authBackend AuthenticationBackend) http.Handler {
+func ApproachingAtTheForecourtHandler(service Service, authBackend AuthorizationBackend) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		defer errors.HandleRequest("ApproachingAtTheForecourtHandler", w, r)
 
@@ -222,7 +222,7 @@ func ApproachingAtTheForecourtHandler(service Service, authBackend Authenticatio
 GetPumpHandler handles request/response marshaling and validation for
  Get /beta/gas-stations/{gasStationId}/pumps/{pumpId}
 */
-func GetPumpHandler(service Service, authBackend AuthenticationBackend) http.Handler {
+func GetPumpHandler(service Service, authBackend AuthorizationBackend) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		defer errors.HandleRequest("GetPumpHandler", w, r)
 
@@ -269,7 +269,7 @@ func GetPumpHandler(service Service, authBackend AuthenticationBackend) http.Han
 WaitOnPumpStatusChangeHandler handles request/response marshaling and validation for
  Get /beta/gas-stations/{gasStationId}/pumps/{pumpId}/wait-for-status-change
 */
-func WaitOnPumpStatusChangeHandler(service Service, authBackend AuthenticationBackend) http.Handler {
+func WaitOnPumpStatusChangeHandler(service Service, authBackend AuthorizationBackend) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		defer errors.HandleRequest("WaitOnPumpStatusChangeHandler", w, r)
 
@@ -543,7 +543,7 @@ RouterWithAuthentication implements: PACE Fueling API
 
 Fueling API
 */
-func RouterWithAuthentication(service Service, authBackend AuthenticationBackend) *mux.Router {
+func RouterWithAuthentication(service Service, authBackend AuthorizationBackend) *mux.Router {
 	if authBackend != nil {
 		authBackend.Init()
 	}

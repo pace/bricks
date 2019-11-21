@@ -11,7 +11,7 @@ import (
 )
 
 func TestApiKeyAuthenticationSuccessful(t *testing.T) {
-	auth := NewAuthenticator(&Config{Name: "Authorization"}, "testkey")
+	auth := NewAuthorizer(&Config{Name: "Authorization"}, "testkey")
 
 	w := httptest.NewRecorder()
 	r := httptest.NewRequest("GET", "/", nil)
@@ -37,7 +37,7 @@ func TestApiKeyAuthenticationSuccessful(t *testing.T) {
 }
 
 func TestApiKeyAuthenticationError(t *testing.T) {
-	auth := NewAuthenticator(&Config{Name: "Authorization"}, "testkey")
+	auth := NewAuthorizer(&Config{Name: "Authorization"}, "testkey")
 
 	w := httptest.NewRecorder()
 	r := httptest.NewRequest("GET", "/", nil)
@@ -58,11 +58,11 @@ func TestApiKeyAuthenticationError(t *testing.T) {
 		t.Errorf("Expected status code %d, got %d", ex, got)
 	}
 	if got, ex := string(body), "ApiKey not valid\n"; got != ex {
-		t.Errorf("Expected status code %q, got %q", ex, got)
+		t.Errorf("Expected error massage %q, got %q", ex, got)
 	}
 }
 func TestApiKeyAuthenticationNoKey(t *testing.T) {
-	auth := NewAuthenticator(&Config{Name: "Authorization"}, "testkey")
+	auth := NewAuthorizer(&Config{Name: "Authorization"}, "testkey")
 
 	w := httptest.NewRecorder()
 	r := httptest.NewRequest("GET", "/", nil)

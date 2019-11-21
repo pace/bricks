@@ -63,13 +63,13 @@ func introspectRequest(r *http.Request, w http.ResponseWriter, tokenIntro TokenI
 	span, ctx := opentracing.StartSpanFromContext(r.Context(), "Oauth2")
 	defer span.Finish()
 
-	tokenValue, err := security.GetBearerTokenFromHeader(r, "Authorization")
-	if err != nil {
-		log.Req(r).Info().Msg(err.Error())
+	tok := security.GetBearerTokenFromHeader(r.Header.Get("Authorization"))
+	if tok == "" {
+		log.Req(r).Info().Msg("no bearer token in header \"Authorization\" present")
 		http.Error(w, "Unauthorized", http.StatusUnauthorized)
 		return nil, false
 	}
-	s, err := tokenIntro.IntrospectToken(ctx, tokenValue)
+	s, err := tokenIntro.IntrospectToken(ctx, tok)
 	if err != nil {
 		switch err {
 		case ErrBadUpstreamResponse:
@@ -86,8 +86,8 @@ func introspectRequest(r *http.Request, w http.ResponseWriter, tokenIntro TokenI
 			return nil, false
 		}
 	}
-	t := fromIntrospectResponse(s, tokenValue)
-	ctx = security.ContextWithTokenKey(ctx, &t)
+	t := fromIntrospectResponse(s, tok)
+	ctx = security.ContextWithToken(ctx, &t)
 	log.Req(r).Info().
 		Str("client_id", t.clientID).
 		Str("user_id", t.userID).
@@ -96,9 +96,6 @@ func introspectRequest(r *http.Request, w http.ResponseWriter, tokenIntro TokenI
 	return ctx, true
 }
 
-// ValidateScope  Validates based on the context if the scope is matching the required scope for this request
-// Success: return true
-// Error: error is written in the Response and the function returns false
 func validateScope(ctx context.Context, w http.ResponseWriter, req Scope) bool {
 	if !HasScope(ctx, req) {
 		http.Error(w, fmt.Sprintf("Forbidden - requires scope %q", req), http.StatusForbidden)
@@ -120,15 +117,16 @@ func fromIntrospectResponse(s *IntrospectResponse, tokenValue string) token {
 
 // Request adds Authorization token to r
 func Request(r *http.Request) *http.Request {
-	authHeaderVal, ok := security.GetAuthHeader(r.Context())
+	tok, ok := security.GetTokenFromContext(r.Context())
 	if ok {
-		r.Header.Set("Authorization", authHeaderVal)
+		r.Header.Set("Authorization", security.GetAuthHeader(tok))
 	}
+
 	return r
 }
 
-// HasScope extracts an access token T from context and checks if
-// the permissions represented by the provided scope are included in T.
+// HasScope extracts an access token from context and checks if
+// the permissions represented by the provided scope are included in the valid scope.
 func HasScope(ctx context.Context, scope Scope) bool {
 	tok, ok := security.GetTokenFromContext(ctx)
 	if !ok {
@@ -183,11 +181,11 @@ func ClientID(ctx context.Context) (string, bool) {
 // and returning a new context based on the targetCtx
 func ContextTransfer(sourceCtx context.Context, targetCtx context.Context) context.Context {
 	tok, _ := security.GetTokenFromContext(sourceCtx)
-	return security.ContextWithTokenKey(targetCtx, tok)
+	return security.ContextWithToken(targetCtx, tok)
 }
 
-// Deprecated: BearerToken This function was moved to the security package,
-// because its used by apiKey and oauth2 authentication
+// Deprecated: BearerToken was moved to the security package,
+// because it's used by apiKey and oauth2 authorization.
 // BearerToken returns the bearer token stored in ctx
 func BearerToken(ctx context.Context) (string, bool) {
 	if tok, ok := security.GetTokenFromContext(ctx); !ok {
@@ -196,11 +194,11 @@ func BearerToken(ctx context.Context) (string, bool) {
 	return "", false
 }
 
-// Deprecated: WithBearerToken This function was moved to the security Package,
-// because its used by apiKey and oauth2 authentication
-// returns a new context that has the given bearer token set.
+// Deprecated: WithBearerToken was moved to the security package,
+// because it's used by api key and oauth2 authorization.
+// returns a new context with the given bearer token
 // Use security.BearerToken() to retrieve the token. Use Request() to obtain a request
 // with the Authorization header set accordingly.
 func WithBearerToken(ctx context.Context, bearerToken string) context.Context {
-	return security.ContextWithTokenKey(ctx, &token{value: bearerToken})
+	return security.ContextWithToken(ctx, &token{value: bearerToken})
 }

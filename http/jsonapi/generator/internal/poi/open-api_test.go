@@ -243,8 +243,8 @@ type Currency string
 
 // FuelAmountUnit ...
 type FuelAmountUnit string
-type AuthenticationBackend interface {
-	AuthenticateOAuth2(r *http.Request, w http.ResponseWriter, scope string) (context.Context, bool)
+type AuthorizationBackend interface {
+	AuthorizeOAuth2(r *http.Request, w http.ResponseWriter, scope string) (context.Context, bool)
 	Init(cfgOAuth2 *oauth2.Config)
 }
 
@@ -279,14 +279,14 @@ var cfgOAuth2 = &oauth2.Config{
 GetAppsHandler handles request/response marshaling and validation for
  Get /beta/apps
 */
-func GetAppsHandler(service Service, authBackend AuthenticationBackend) http.Handler {
+func GetAppsHandler(service Service, authBackend AuthorizationBackend) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		defer errors.HandleRequest("GetAppsHandler", w, r)
 		// Only do Authentication if a authentication Backend is available. Otherwise this is handled somewhere else
 		if authBackend != nil {
 			// Authentication Handling
 			// OAuth2 Authentication
-			ctx, ok := authBackend.AuthenticateOAuth2(r, w, "poi:apps:read")
+			ctx, ok := authBackend.AuthorizeOAuth2(r, w, "poi:apps:read")
 			if !ok {
 				// No Error Handling needed, this is already done
 				return
@@ -342,14 +342,14 @@ func GetAppsHandler(service Service, authBackend AuthenticationBackend) http.Han
 CreateAppHandler handles request/response marshaling and validation for
  Post /beta/apps
 */
-func CreateAppHandler(service Service, authBackend AuthenticationBackend) http.Handler {
+func CreateAppHandler(service Service, authBackend AuthorizationBackend) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		defer errors.HandleRequest("CreateAppHandler", w, r)
 		// Only do Authentication if a authentication Backend is available. Otherwise this is handled somewhere else
 		if authBackend != nil {
 			// Authentication Handling
 			// OAuth2 Authentication
-			ctx, ok := authBackend.AuthenticateOAuth2(r, w, "poi:apps:create")
+			ctx, ok := authBackend.AuthorizeOAuth2(r, w, "poi:apps:create")
 			if !ok {
 				// No Error Handling needed, this is already done
 				return
@@ -389,14 +389,14 @@ func CreateAppHandler(service Service, authBackend AuthenticationBackend) http.H
 CheckForPaceAppHandler handles request/response marshaling and validation for
  Get /beta/apps/query
 */
-func CheckForPaceAppHandler(service Service, authBackend AuthenticationBackend) http.Handler {
+func CheckForPaceAppHandler(service Service, authBackend AuthorizationBackend) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		defer errors.HandleRequest("CheckForPaceAppHandler", w, r)
 		// Only do Authentication if a authentication Backend is available. Otherwise this is handled somewhere else
 		if authBackend != nil {
 			// Authentication Handling
 			// OAuth2 Authentication
-			ctx, ok := authBackend.AuthenticateOAuth2(r, w, "poi:apps:read")
+			ctx, ok := authBackend.AuthorizeOAuth2(r, w, "poi:apps:read")
 			if !ok {
 				// No Error Handling needed, this is already done
 				return
@@ -468,14 +468,14 @@ func CheckForPaceAppHandler(service Service, authBackend AuthenticationBackend) 
 DeleteAppHandler handles request/response marshaling and validation for
  Delete /beta/apps/{appID}
 */
-func DeleteAppHandler(service Service, authBackend AuthenticationBackend) http.Handler {
+func DeleteAppHandler(service Service, authBackend AuthorizationBackend) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		defer errors.HandleRequest("DeleteAppHandler", w, r)
 		// Only do Authentication if a authentication Backend is available. Otherwise this is handled somewhere else
 		if authBackend != nil {
 			// Authentication Handling
 			// OAuth2 Authentication
-			ctx, ok := authBackend.AuthenticateOAuth2(r, w, "poi:apps:delete")
+			ctx, ok := authBackend.AuthorizeOAuth2(r, w, "poi:apps:delete")
 			if !ok {
 				// No Error Handling needed, this is already done
 				return
@@ -521,14 +521,14 @@ func DeleteAppHandler(service Service, authBackend AuthenticationBackend) http.H
 GetAppHandler handles request/response marshaling and validation for
  Get /beta/apps/{appID}
 */
-func GetAppHandler(service Service, authBackend AuthenticationBackend) http.Handler {
+func GetAppHandler(service Service, authBackend AuthorizationBackend) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		defer errors.HandleRequest("GetAppHandler", w, r)
 		// Only do Authentication if a authentication Backend is available. Otherwise this is handled somewhere else
 		if authBackend != nil {
 			// Authentication Handling
 			// OAuth2 Authentication
-			ctx, ok := authBackend.AuthenticateOAuth2(r, w, "poi:apps:read")
+			ctx, ok := authBackend.AuthorizeOAuth2(r, w, "poi:apps:read")
 			if !ok {
 				// No Error Handling needed, this is already done
 				return
@@ -574,14 +574,14 @@ func GetAppHandler(service Service, authBackend AuthenticationBackend) http.Hand
 UpdateAppHandler handles request/response marshaling and validation for
  Put /beta/apps/{appID}
 */
-func UpdateAppHandler(service Service, authBackend AuthenticationBackend) http.Handler {
+func UpdateAppHandler(service Service, authBackend AuthorizationBackend) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		defer errors.HandleRequest("UpdateAppHandler", w, r)
 		// Only do Authentication if a authentication Backend is available. Otherwise this is handled somewhere else
 		if authBackend != nil {
 			// Authentication Handling
 			// OAuth2 Authentication
-			ctx, ok := authBackend.AuthenticateOAuth2(r, w, "poi:apps:update")
+			ctx, ok := authBackend.AuthorizeOAuth2(r, w, "poi:apps:update")
 			if !ok {
 				// No Error Handling needed, this is already done
 				return
@@ -630,14 +630,14 @@ func UpdateAppHandler(service Service, authBackend AuthenticationBackend) http.H
 GetAppPOIsRelationshipsHandler handles request/response marshaling and validation for
  Get /beta/apps/{appID}/relationships/pois
 */
-func GetAppPOIsRelationshipsHandler(service Service, authBackend AuthenticationBackend) http.Handler {
+func GetAppPOIsRelationshipsHandler(service Service, authBackend AuthorizationBackend) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		defer errors.HandleRequest("GetAppPOIsRelationshipsHandler", w, r)
 		// Only do Authentication if a authentication Backend is available. Otherwise this is handled somewhere else
 		if authBackend != nil {
 			// Authentication Handling
 			// OAuth2 Authentication
-			ctx, ok := authBackend.AuthenticateOAuth2(r, w, "poi:apps:read")
+			ctx, ok := authBackend.AuthorizeOAuth2(r, w, "poi:apps:read")
 			if !ok {
 				// No Error Handling needed, this is already done
 				return
@@ -683,14 +683,14 @@ func GetAppPOIsRelationshipsHandler(service Service, authBackend AuthenticationB
 UpdateAppPOIsRelationshipsHandler handles request/response marshaling and validation for
  Patch /beta/apps/{appID}/relationships/pois
 */
-func UpdateAppPOIsRelationshipsHandler(service Service, authBackend AuthenticationBackend) http.Handler {
+func UpdateAppPOIsRelationshipsHandler(service Service, authBackend AuthorizationBackend) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		defer errors.HandleRequest("UpdateAppPOIsRelationshipsHandler", w, r)
 		// Only do Authentication if a authentication Backend is available. Otherwise this is handled somewhere else
 		if authBackend != nil {
 			// Authentication Handling
 			// OAuth2 Authentication
-			ctx, ok := authBackend.AuthenticateOAuth2(r, w, "poi:apps:update")
+			ctx, ok := authBackend.AuthorizeOAuth2(r, w, "poi:apps:update")
 			if !ok {
 				// No Error Handling needed, this is already done
 				return
@@ -739,14 +739,14 @@ func UpdateAppPOIsRelationshipsHandler(service Service, authBackend Authenticati
 GetEventsHandler handles request/response marshaling and validation for
  Get /beta/events
 */
-func GetEventsHandler(service Service, authBackend AuthenticationBackend) http.Handler {
+func GetEventsHandler(service Service, authBackend AuthorizationBackend) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		defer errors.HandleRequest("GetEventsHandler", w, r)
 		// Only do Authentication if a authentication Backend is available. Otherwise this is handled somewhere else
 		if authBackend != nil {
 			// Authentication Handling
 			// OAuth2 Authentication
-			ctx, ok := authBackend.AuthenticateOAuth2(r, w, "poi:events:read")
+			ctx, ok := authBackend.AuthorizeOAuth2(r, w, "poi:events:read")
 			if !ok {
 				// No Error Handling needed, this is already done
 				return
@@ -802,14 +802,14 @@ func GetEventsHandler(service Service, authBackend AuthenticationBackend) http.H
 GetGasStationsHandler handles request/response marshaling and validation for
  Get /beta/gas-stations
 */
-func GetGasStationsHandler(service Service, authBackend AuthenticationBackend) http.Handler {
+func GetGasStationsHandler(service Service, authBackend AuthorizationBackend) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		defer errors.HandleRequest("GetGasStationsHandler", w, r)
 		// Only do Authentication if a authentication Backend is available. Otherwise this is handled somewhere else
 		if authBackend != nil {
 			// Authentication Handling
 			// OAuth2 Authentication
-			ctx, ok := authBackend.AuthenticateOAuth2(r, w, "poi:gas-stations:read")
+			ctx, ok := authBackend.AuthorizeOAuth2(r, w, "poi:gas-stations:read")
 			if !ok {
 				// No Error Handling needed, this is already done
 				return
@@ -901,14 +901,14 @@ func GetGasStationsHandler(service Service, authBackend AuthenticationBackend) h
 GetGasStationHandler handles request/response marshaling and validation for
  Get /beta/gas-stations/{id}
 */
-func GetGasStationHandler(service Service, authBackend AuthenticationBackend) http.Handler {
+func GetGasStationHandler(service Service, authBackend AuthorizationBackend) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		defer errors.HandleRequest("GetGasStationHandler", w, r)
 		// Only do Authentication if a authentication Backend is available. Otherwise this is handled somewhere else
 		if authBackend != nil {
 			// Authentication Handling
 			// OAuth2 Authentication
-			ctx, ok := authBackend.AuthenticateOAuth2(r, w, "poi:gas-stations:read")
+			ctx, ok := authBackend.AuthorizeOAuth2(r, w, "poi:gas-stations:read")
 			if !ok {
 				// No Error Handling needed, this is already done
 				return
@@ -954,14 +954,14 @@ func GetGasStationHandler(service Service, authBackend AuthenticationBackend) ht
 GetPoisHandler handles request/response marshaling and validation for
  Get /beta/pois
 */
-func GetPoisHandler(service Service, authBackend AuthenticationBackend) http.Handler {
+func GetPoisHandler(service Service, authBackend AuthorizationBackend) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		defer errors.HandleRequest("GetPoisHandler", w, r)
 		// Only do Authentication if a authentication Backend is available. Otherwise this is handled somewhere else
 		if authBackend != nil {
 			// Authentication Handling
 			// OAuth2 Authentication
-			ctx, ok := authBackend.AuthenticateOAuth2(r, w, "poi:pois:read")
+			ctx, ok := authBackend.AuthorizeOAuth2(r, w, "poi:pois:read")
 			if !ok {
 				// No Error Handling needed, this is already done
 				return
@@ -1021,14 +1021,14 @@ func GetPoisHandler(service Service, authBackend AuthenticationBackend) http.Han
 GetPoiHandler handles request/response marshaling and validation for
  Get /beta/pois/{poiId}
 */
-func GetPoiHandler(service Service, authBackend AuthenticationBackend) http.Handler {
+func GetPoiHandler(service Service, authBackend AuthorizationBackend) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		defer errors.HandleRequest("GetPoiHandler", w, r)
 		// Only do Authentication if a authentication Backend is available. Otherwise this is handled somewhere else
 		if authBackend != nil {
 			// Authentication Handling
 			// OAuth2 Authentication
-			ctx, ok := authBackend.AuthenticateOAuth2(r, w, "poi:pois:read")
+			ctx, ok := authBackend.AuthorizeOAuth2(r, w, "poi:pois:read")
 			if !ok {
 				// No Error Handling needed, this is already done
 				return
@@ -1074,14 +1074,14 @@ func GetPoiHandler(service Service, authBackend AuthenticationBackend) http.Hand
 ChangePoiHandler handles request/response marshaling and validation for
  Patch /beta/pois/{poiId}
 */
-func ChangePoiHandler(service Service, authBackend AuthenticationBackend) http.Handler {
+func ChangePoiHandler(service Service, authBackend AuthorizationBackend) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		defer errors.HandleRequest("ChangePoiHandler", w, r)
 		// Only do Authentication if a authentication Backend is available. Otherwise this is handled somewhere else
 		if authBackend != nil {
 			// Authentication Handling
 			// OAuth2 Authentication
-			ctx, ok := authBackend.AuthenticateOAuth2(r, w, "poi:pois:update")
+			ctx, ok := authBackend.AuthorizeOAuth2(r, w, "poi:pois:update")
 			if !ok {
 				// No Error Handling needed, this is already done
 				return
@@ -1130,14 +1130,14 @@ func ChangePoiHandler(service Service, authBackend AuthenticationBackend) http.H
 GetPoliciesHandler handles request/response marshaling and validation for
  Get /beta/policies
 */
-func GetPoliciesHandler(service Service, authBackend AuthenticationBackend) http.Handler {
+func GetPoliciesHandler(service Service, authBackend AuthorizationBackend) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		defer errors.HandleRequest("GetPoliciesHandler", w, r)
 		// Only do Authentication if a authentication Backend is available. Otherwise this is handled somewhere else
 		if authBackend != nil {
 			// Authentication Handling
 			// OAuth2 Authentication
-			ctx, ok := authBackend.AuthenticateOAuth2(r, w, "poi:policies:read")
+			ctx, ok := authBackend.AuthorizeOAuth2(r, w, "poi:policies:read")
 			if !ok {
 				// No Error Handling needed, this is already done
 				return
@@ -1197,14 +1197,14 @@ func GetPoliciesHandler(service Service, authBackend AuthenticationBackend) http
 CreatePolicyHandler handles request/response marshaling and validation for
  Post /beta/policies
 */
-func CreatePolicyHandler(service Service, authBackend AuthenticationBackend) http.Handler {
+func CreatePolicyHandler(service Service, authBackend AuthorizationBackend) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		defer errors.HandleRequest("CreatePolicyHandler", w, r)
 		// Only do Authentication if a authentication Backend is available. Otherwise this is handled somewhere else
 		if authBackend != nil {
 			// Authentication Handling
 			// OAuth2 Authentication
-			ctx, ok := authBackend.AuthenticateOAuth2(r, w, "poi:policies:create")
+			ctx, ok := authBackend.AuthorizeOAuth2(r, w, "poi:policies:create")
 			if !ok {
 				// No Error Handling needed, this is already done
 				return
@@ -1244,14 +1244,14 @@ func CreatePolicyHandler(service Service, authBackend AuthenticationBackend) htt
 GetPolicyHandler handles request/response marshaling and validation for
  Get /beta/policies/{policyId}
 */
-func GetPolicyHandler(service Service, authBackend AuthenticationBackend) http.Handler {
+func GetPolicyHandler(service Service, authBackend AuthorizationBackend) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		defer errors.HandleRequest("GetPolicyHandler", w, r)
 		// Only do Authentication if a authentication Backend is available. Otherwise this is handled somewhere else
 		if authBackend != nil {
 			// Authentication Handling
 			// OAuth2 Authentication
-			ctx, ok := authBackend.AuthenticateOAuth2(r, w, "poi:policies:read")
+			ctx, ok := authBackend.AuthorizeOAuth2(r, w, "poi:policies:read")
 			if !ok {
 				// No Error Handling needed, this is already done
 				return
@@ -1297,14 +1297,14 @@ func GetPolicyHandler(service Service, authBackend AuthenticationBackend) http.H
 GetSourcesHandler handles request/response marshaling and validation for
  Get /beta/sources
 */
-func GetSourcesHandler(service Service, authBackend AuthenticationBackend) http.Handler {
+func GetSourcesHandler(service Service, authBackend AuthorizationBackend) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		defer errors.HandleRequest("GetSourcesHandler", w, r)
 		// Only do Authentication if a authentication Backend is available. Otherwise this is handled somewhere else
 		if authBackend != nil {
 			// Authentication Handling
 			// OAuth2 Authentication
-			ctx, ok := authBackend.AuthenticateOAuth2(r, w, "poi:sources:read")
+			ctx, ok := authBackend.AuthorizeOAuth2(r, w, "poi:sources:read")
 			if !ok {
 				// No Error Handling needed, this is already done
 				return
@@ -1360,14 +1360,14 @@ func GetSourcesHandler(service Service, authBackend AuthenticationBackend) http.
 CreateSourceHandler handles request/response marshaling and validation for
  Post /beta/sources
 */
-func CreateSourceHandler(service Service, authBackend AuthenticationBackend) http.Handler {
+func CreateSourceHandler(service Service, authBackend AuthorizationBackend) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		defer errors.HandleRequest("CreateSourceHandler", w, r)
 		// Only do Authentication if a authentication Backend is available. Otherwise this is handled somewhere else
 		if authBackend != nil {
 			// Authentication Handling
 			// OAuth2 Authentication
-			ctx, ok := authBackend.AuthenticateOAuth2(r, w, "poi:sources:create")
+			ctx, ok := authBackend.AuthorizeOAuth2(r, w, "poi:sources:create")
 			if !ok {
 				// No Error Handling needed, this is already done
 				return
@@ -1407,14 +1407,14 @@ func CreateSourceHandler(service Service, authBackend AuthenticationBackend) htt
 DeleteSourceHandler handles request/response marshaling and validation for
  Delete /beta/sources/{sourceId}
 */
-func DeleteSourceHandler(service Service, authBackend AuthenticationBackend) http.Handler {
+func DeleteSourceHandler(service Service, authBackend AuthorizationBackend) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		defer errors.HandleRequest("DeleteSourceHandler", w, r)
 		// Only do Authentication if a authentication Backend is available. Otherwise this is handled somewhere else
 		if authBackend != nil {
 			// Authentication Handling
 			// OAuth2 Authentication
-			ctx, ok := authBackend.AuthenticateOAuth2(r, w, "poi:sources:delete")
+			ctx, ok := authBackend.AuthorizeOAuth2(r, w, "poi:sources:delete")
 			if !ok {
 				// No Error Handling needed, this is already done
 				return
@@ -1460,14 +1460,14 @@ func DeleteSourceHandler(service Service, authBackend AuthenticationBackend) htt
 GetSourceHandler handles request/response marshaling and validation for
  Get /beta/sources/{sourceId}
 */
-func GetSourceHandler(service Service, authBackend AuthenticationBackend) http.Handler {
+func GetSourceHandler(service Service, authBackend AuthorizationBackend) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		defer errors.HandleRequest("GetSourceHandler", w, r)
 		// Only do Authentication if a authentication Backend is available. Otherwise this is handled somewhere else
 		if authBackend != nil {
 			// Authentication Handling
 			// OAuth2 Authentication
-			ctx, ok := authBackend.AuthenticateOAuth2(r, w, "poi:sources:read")
+			ctx, ok := authBackend.AuthorizeOAuth2(r, w, "poi:sources:read")
 			if !ok {
 				// No Error Handling needed, this is already done
 				return
@@ -1513,14 +1513,14 @@ func GetSourceHandler(service Service, authBackend AuthenticationBackend) http.H
 UpdateSourceHandler handles request/response marshaling and validation for
  Put /beta/sources/{sourceId}
 */
-func UpdateSourceHandler(service Service, authBackend AuthenticationBackend) http.Handler {
+func UpdateSourceHandler(service Service, authBackend AuthorizationBackend) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		defer errors.HandleRequest("UpdateSourceHandler", w, r)
 		// Only do Authentication if a authentication Backend is available. Otherwise this is handled somewhere else
 		if authBackend != nil {
 			// Authentication Handling
 			// OAuth2 Authentication
-			ctx, ok := authBackend.AuthenticateOAuth2(r, w, "poi:sources:update")
+			ctx, ok := authBackend.AuthorizeOAuth2(r, w, "poi:sources:update")
 			if !ok {
 				// No Error Handling needed, this is already done
 				return
@@ -1569,14 +1569,14 @@ func UpdateSourceHandler(service Service, authBackend AuthenticationBackend) htt
 CreateSubscriptionHandler handles request/response marshaling and validation for
  Post /beta/subscriptions
 */
-func CreateSubscriptionHandler(service Service, authBackend AuthenticationBackend) http.Handler {
+func CreateSubscriptionHandler(service Service, authBackend AuthorizationBackend) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		defer errors.HandleRequest("CreateSubscriptionHandler", w, r)
 		// Only do Authentication if a authentication Backend is available. Otherwise this is handled somewhere else
 		if authBackend != nil {
 			// Authentication Handling
 			// OAuth2 Authentication
-			ctx, ok := authBackend.AuthenticateOAuth2(r, w, "poi:subscriptions:create")
+			ctx, ok := authBackend.AuthorizeOAuth2(r, w, "poi:subscriptions:create")
 			if !ok {
 				// No Error Handling needed, this is already done
 				return
@@ -1616,14 +1616,14 @@ func CreateSubscriptionHandler(service Service, authBackend AuthenticationBacken
 GetTilesHandler handles request/response marshaling and validation for
  Post /beta/tiles/query
 */
-func GetTilesHandler(service Service, authBackend AuthenticationBackend) http.Handler {
+func GetTilesHandler(service Service, authBackend AuthorizationBackend) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		defer errors.HandleRequest("GetTilesHandler", w, r)
 		// Only do Authentication if a authentication Backend is available. Otherwise this is handled somewhere else
 		if authBackend != nil {
 			// Authentication Handling
 			// OAuth2 Authentication
-			ctx, ok := authBackend.AuthenticateOAuth2(r, w, "poi:tiles:read")
+			ctx, ok := authBackend.AuthorizeOAuth2(r, w, "poi:tiles:read")
 			if !ok {
 				// No Error Handling needed, this is already done
 				return
@@ -2668,7 +2668,7 @@ RouterWithAuthentication implements: PACE POI API
 
 POI API
 */
-func RouterWithAuthentication(service Service, authBackend AuthenticationBackend) *mux.Router {
+func RouterWithAuthentication(service Service, authBackend AuthorizationBackend) *mux.Router {
 	if authBackend != nil {
 		authBackend.Init(cfgOAuth2)
 	}

@@ -5,57 +5,55 @@ package apikey
 
 import (
 	"context"
-	"errors"
 	"net/http"
 
 	"github.com/pace/bricks/http/security"
 	"github.com/pace/bricks/maintenance/log"
 )
 
-// Authorizer implements the security.Authorizer interface for an ApiKey based authorization.
+// Authorizer implements the security.Authorizer interface for an api key based authorization.
 type Authorizer struct {
 	authConfig *Config
 	apiKey     string
 }
 
-// Config is the Struct for the Information of the Security Schema information from the API definition that we use.
-// Currently we suspect that we have an apikey in the header that is prepended by "Bearer "
+// Config contains the configuration of the security schema with type "apiKey".
 type Config struct {
+	// currently not used
 	Description string
-	In          string
-	Name        string
+	// Must be "Header"
+	In string
+	// Header field name, e.g. "Authorization"
+	Name string
 }
 
-type bearerToken struct {
+type token struct {
 	value string
 }
 
-// GetValue returns the be
-func (b *bearerToken) GetValue() string {
+// GetValue returns the api key
+func (b *token) GetValue() string {
 	return b.value
 }
 
-// NewAuthenticator Returns New Authorizer With the Config from the APi definition and a ApiKey, that is matched.
-func NewAuthenticator(authConfig *Config, apiKey string) *Authorizer {
+// NewAuthorizer returns a new Authorizer for api key authorization with a config and a valid api key.
+func NewAuthorizer(authConfig *Config, apiKey string) *Authorizer {
 	return &Authorizer{authConfig: authConfig, apiKey: apiKey}
 }
 
-// Authorize authorizes a request based on the Authorization Configuration of the environment and of the config of the
-// security schema.
-// Success: A Context with the Token and true
-// Error: the unchanged request context and false. All errors are directly written to the response
+// Authorize authorizes a request based on the configured api key the config of the security schema
+// Success: A context with a token containing the api key and true
+// Error: the unchanged request context and false. the response already contains the error message
 func (a *Authorizer) Authorize(r *http.Request, w http.ResponseWriter) (context.Context, bool) {
-	key, err := security.GetBearerTokenFromHeader(r, a.authConfig.Name)
-	if err != nil {
-		log.Req(r).Info().Msg(err.Error())
+	key := security.GetBearerTokenFromHeader(r.Header.Get(a.authConfig.Name))
+	if key == "" {
+		log.Req(r).Info().Msg("No Api Key present in field " + a.authConfig.Name)
 		http.Error(w, "Unauthorized", http.StatusUnauthorized)
 		return r.Context(), false
 	}
 	if key == a.apiKey {
-		return security.ContextWithTokenKey(r.Context(), &bearerToken{key}), true
+		return security.ContextWithToken(r.Context(), &token{key}), true
 	}
-	err = errors.New("ApiKey not valid")
-	log.Req(r).Info().Msg(err.Error())
-	http.Error(w, err.Error(), http.StatusUnauthorized)
+	http.Error(w, "ApiKey not valid", http.StatusUnauthorized)
 	return r.Context(), false
 }

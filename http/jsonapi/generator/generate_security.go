@@ -13,8 +13,8 @@ import (
 )
 
 const (
-	authBackendInterface = "AuthenticationBackend"
-	authFuncPrefix       = "Authenticate"
+	authBackendInterface = "AuthorizationBackend"
+	authFuncPrefix       = "Authorize"
 )
 
 // buildSecurityBackendInterface builds the interface that is used to do the authentication.

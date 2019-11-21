@@ -45,7 +45,7 @@ type MapTypeNumber map[string]float32
 
 // MapTypeString ...
 type MapTypeString map[string]string
-type AuthenticationBackend interface {
+type AuthorizationBackend interface {
 	Init()
 }
 
@@ -53,7 +53,7 @@ type AuthenticationBackend interface {
 UpdateArticleCommentsHandler handles request/response marshaling and validation for
  Patch /api/articles/{uuid}/relationships/comments
 */
-func UpdateArticleCommentsHandler(service Service, authBackend AuthenticationBackend) http.Handler {
+func UpdateArticleCommentsHandler(service Service, authBackend AuthorizationBackend) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		defer errors.HandleRequest("UpdateArticleCommentsHandler", w, r)
 
@@ -103,7 +103,7 @@ func UpdateArticleCommentsHandler(service Service, authBackend AuthenticationBac
 UpdateArticleInlineTypeHandler handles request/response marshaling and validation for
  Patch /api/articles/{uuid}/relationships/inline
 */
-func UpdateArticleInlineTypeHandler(service Service, authBackend AuthenticationBackend) http.Handler {
+func UpdateArticleInlineTypeHandler(service Service, authBackend AuthorizationBackend) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		defer errors.HandleRequest("UpdateArticleInlineTypeHandler", w, r)
 
@@ -148,7 +148,7 @@ func UpdateArticleInlineTypeHandler(service Service, authBackend AuthenticationB
 UpdateArticleInlineRefHandler handles request/response marshaling and validation for
  Patch /api/articles/{uuid}/relationships/inlineref
 */
-func UpdateArticleInlineRefHandler(service Service, authBackend AuthenticationBackend) http.Handler {
+func UpdateArticleInlineRefHandler(service Service, authBackend AuthorizationBackend) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		defer errors.HandleRequest("UpdateArticleInlineRefHandler", w, r)
 
@@ -315,7 +315,7 @@ RouterWithAuthentication implements: Articles Test Service
 
 Articles Test Service
 */
-func RouterWithAuthentication(service Service, authBackend AuthenticationBackend) *mux.Router {
+func RouterWithAuthentication(service Service, authBackend AuthorizationBackend) *mux.Router {
 	if authBackend != nil {
 		authBackend.Init()
 	}

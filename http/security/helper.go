@@ -5,11 +5,7 @@ package security
 
 import (
 	"context"
-	"fmt"
-	"net/http"
 	"strings"
-
-	"github.com/pace/bricks/maintenance/errors"
 )
 
 // Token represents an authentication token.
@@ -17,7 +13,6 @@ type Token interface {
 	// GetValue returns the bearer token
 	GetValue() string
 }
-
 type ctx string
 
 // prefix of the Authorization header
@@ -25,20 +20,20 @@ const headerPrefix = "Bearer "
 
 var tokenKey = ctx("Token")
 
-// GetBearerTokenFromHeader get the bearer Token from the header of the request
+// GetBearerTokenFromHeader removes the prefix of authHeader
+// authHeader should be the value of the authorization header field.
 // success: returns the bearer token without the prefix
-// error: return an empty token and an error
-func GetBearerTokenFromHeader(r *http.Request, headerName string) (string, error) {
-	qualifiedToken := r.Header.Get(headerName)
-	hasPrefix := strings.HasPrefix(qualifiedToken, headerPrefix)
+// error: return an empty token
+func GetBearerTokenFromHeader(authHeader string) string {
+	hasPrefix := strings.HasPrefix(authHeader, headerPrefix)
 	if !hasPrefix {
-		return "", errors.New(fmt.Sprintf("requested Header %q has not prefix %q : %q", headerName, headerPrefix, qualifiedToken))
+		return ""
 	}
-	return strings.TrimPrefix(qualifiedToken, headerPrefix), nil
+	return strings.TrimPrefix(authHeader, headerPrefix)
 }
 
-// ContextWithTokenKey creates a new Context with the token
-func ContextWithTokenKey(targetCtx context.Context, token Token) context.Context {
+// ContextWithToken creates a new Context with the token
+func ContextWithToken(targetCtx context.Context, token Token) context.Context {
 	return context.WithValue(targetCtx, tokenKey, token)
 }
 
@@ -52,12 +47,7 @@ func GetTokenFromContext(ctx context.Context) (Token, bool) {
 	return tok, ok
 }
 
-// GetAuthHeader Creates the valid value for the authentication header
-// based on a context that already contains a  authorization token
-func GetAuthHeader(ctx context.Context) (string, bool) {
-	tok, ok := GetTokenFromContext(ctx)
-	if !ok {
-		return "", false
-	}
-	return headerPrefix + tok.GetValue(), true
+// GetAuthHeader creates the valid value for the authentication header
+func GetAuthHeader(tok Token) string {
+	return headerPrefix + tok.GetValue()
 }

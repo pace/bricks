@@ -122,7 +122,7 @@ func TestAuthenticatorWithSuccess(t *testing.T) {
 				t.Errorf("Expected succesfull Authentication, but was not succesfull with code %d and body %v", w.Code, w.Body)
 				return
 			}
-			to := authorize.Value("Token")
+			to, _ := security.GetTokenFromContext(authorize)
 			tok, ok := to.(*token)
 
 			if !ok || tok.value != "bearer" || tok.scope != Scope("ABC DHHG kjdk") || tok.clientID != "ClientId" || tok.userID != "UserId" {
@@ -258,7 +258,7 @@ func TestRequest(t *testing.T) {
 	}
 
 	r := httptest.NewRequest("GET", "http://example.com", nil)
-	ctx := security.ContextWithTokenKey(r.Context(), &to)
+	ctx := security.ContextWithToken(r.Context(), &to)
 	r = r.WithContext(ctx)
 
 	r2 := Request(r)
@@ -292,7 +292,7 @@ func TestSuccessfulAccessors(t *testing.T) {
 		scope:    expectedScopes,
 	}
 
-	ctx := security.ContextWithTokenKey(context.TODO(), &to)
+	ctx := security.ContextWithToken(context.TODO(), &to)
 	newCtx := context.TODO()
 	ctx = ContextTransfer(ctx, newCtx)
 
@@ -341,7 +341,7 @@ func TestUnsuccessfulAccessors(t *testing.T) {
 		t.Fatalf("Expected no %v, got: %v", "ClientID", cid)
 	}
 
-	if !ok || bt.GetValue() != "" {
+	if ok || bt != nil {
 		t.Fatalf("Expected no %v, got: %v", "BearerToken", bt)
 	}
 

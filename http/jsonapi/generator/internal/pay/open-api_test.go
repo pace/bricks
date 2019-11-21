@@ -77,9 +77,9 @@ type TransactionRequest struct {
 
 // Currency ...
 type Currency string
-type AuthenticationBackend interface {
-	AuthenticateOAuth2(r *http.Request, w http.ResponseWriter, scope string) (context.Context, bool)
-	AuthenticateProfileKey(r *http.Request, w http.ResponseWriter) (context.Context, bool)
+type AuthorizationBackend interface {
+	AuthorizeOAuth2(r *http.Request, w http.ResponseWriter, scope string) (context.Context, bool)
+	AuthorizeProfileKey(r *http.Request, w http.ResponseWriter) (context.Context, bool)
 	Init(cfgOAuth2 *oauth2.Config, cfgProfileKey *apikey.Config)
 }
 
@@ -93,7 +93,7 @@ var cfgOAuth2 = &oauth2.Config{
 	Description: "",
 }
 var cfgProfileKey = &apikey.Config{
-	Description: "prefix with Bearer ",
+	Description: "prefix with \"Bearer \"",
 	In:          "header",
 	Name:        "Authorization",
 }
@@ -102,7 +102,7 @@ var cfgProfileKey = &apikey.Config{
 GetPaymentMethodsHandler handles request/response marshaling and validation for
  Get /beta/payment-methods
 */
-func GetPaymentMethodsHandler(service Service, authBackend AuthenticationBackend) http.Handler {
+func GetPaymentMethodsHandler(service Service, authBackend AuthorizationBackend) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		defer errors.HandleRequest("GetPaymentMethodsHandler", w, r)
 
@@ -132,14 +132,14 @@ func GetPaymentMethodsHandler(service Service, authBackend AuthenticationBackend
 CreatePaymentMethodSEPAHandler handles request/response marshaling and validation for
  Post /beta/payment-methods/sepa-direct-debit
 */
-func CreatePaymentMethodSEPAHandler(service Service, authBackend AuthenticationBackend) http.Handler {
+func CreatePaymentMethodSEPAHandler(service Service, authBackend AuthorizationBackend) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		defer errors.HandleRequest("CreatePaymentMethodSEPAHandler", w, r)
 		// Only do Authentication if a authentication Backend is available. Otherwise this is handled somewhere else
 		if authBackend != nil {
 			// Authentication Handling
 			// OAuth2 Authentication
-			ctx, ok := authBackend.AuthenticateOAuth2(r, w, "pay:payment-methods:create")
+			ctx, ok := authBackend.AuthorizeOAuth2(r, w, "pay:payment-methods:create")
 			if !ok {
 				// No Error Handling needed, this is already done
 				return
@@ -179,15 +179,15 @@ func CreatePaymentMethodSEPAHandler(service Service, authBackend AuthenticationB
 DeletePaymentMethodHandler handles request/response marshaling and validation for
  Delete /beta/payment-methods/{paymentMethodId}
 */
-func DeletePaymentMethodHandler(service Service, authBackend AuthenticationBackend) http.Handler {
+func DeletePaymentMethodHandler(service Service, authBackend AuthorizationBackend) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		defer errors.HandleRequest("DeletePaymentMethodHandler", w, r)
 		// Only do Authentication if a authentication Backend is available. Otherwise this is handled somewhere else
 		if authBackend != nil {
 			// Authentication Handling
-			ctx, ok := authBackend.AuthenticateProfileKey(r, w)
+			ctx, ok := authBackend.AuthorizeProfileKey(r, w)
 			if !ok {
-				// No Error Handling needed,  this is already done
+				// No Error Handling needed, this is already done
 				return
 			}
 			r = r.WithContext(ctx)
@@ -231,7 +231,7 @@ func DeletePaymentMethodHandler(service Service, authBackend AuthenticationBacke
 AuthorizePaymentMethodHandler handles request/response marshaling and validation for
  Post /beta/payment-methods/{paymentMethodId}/authorize
 */
-func AuthorizePaymentMethodHandler(service Service, authBackend AuthenticationBackend) http.Handler {
+func AuthorizePaymentMethodHandler(service Service, authBackend AuthorizationBackend) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		defer errors.HandleRequest("AuthorizePaymentMethodHandler", w, r)
 
@@ -276,7 +276,7 @@ func AuthorizePaymentMethodHandler(service Service, authBackend AuthenticationBa
 DeletePaymentTokenHandler handles request/response marshaling and validation for
  Delete /beta/payment-methods/{paymentMethodId}/paymentTokens/{paymentTokenId}
 */
-func DeletePaymentTokenHandler(service Service, authBackend AuthenticationBackend) http.Handler {
+func DeletePaymentTokenHandler(service Service, authBackend AuthorizationBackend) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		defer errors.HandleRequest("DeletePaymentTokenHandler", w, r)
 
@@ -323,7 +323,7 @@ func DeletePaymentTokenHandler(service Service, authBackend AuthenticationBacken
 GetPaymentMethodsIncludingCreditCheckHandler handles request/response marshaling and validation for
  Get /beta/payment-methods?include=creditCheck
 */
-func GetPaymentMethodsIncludingCreditCheckHandler(service Service, authBackend AuthenticationBackend) http.Handler {
+func GetPaymentMethodsIncludingCreditCheckHandler(service Service, authBackend AuthorizationBackend) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		defer errors.HandleRequest("GetPaymentMethodsIncludingCreditCheckHandler", w, r)
 
@@ -363,7 +363,7 @@ func GetPaymentMethodsIncludingCreditCheckHandler(service Service, authBackend A
 GetPaymentMethodsIncludingPaymentTokenHandler handles request/response marshaling and validation for
  Get /beta/payment-methods?include=paymentToken
 */
-func GetPaymentMethodsIncludingPaymentTokenHandler(service Service, authBackend AuthenticationBackend) http.Handler {
+func GetPaymentMethodsIncludingPaymentTokenHandler(service Service, authBackend AuthorizationBackend) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		defer errors.HandleRequest("GetPaymentMethodsIncludingPaymentTokenHandler", w, r)
 
@@ -403,7 +403,7 @@ func GetPaymentMethodsIncludingPaymentTokenHandler(service Service, authBackend 
 ProcessPaymentHandler handles request/response marshaling and validation for
  Post /beta/transaction
 */
-func ProcessPaymentHandler(service Service, authBackend AuthenticationBackend) http.Handler {
+func ProcessPaymentHandler(service Service, authBackend AuthorizationBackend) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		defer errors.HandleRequest("ProcessPaymentHandler", w, r)
 
@@ -790,7 +790,7 @@ RouterWithAuthentication implements: PACE Payment API
 Welcome to the PACE Payment API documentation.
 This API is responsible for managing payment methods for users as well as authorizing payments on behalf of PACE services.
 */
-func RouterWithAuthentication(service Service, authBackend AuthenticationBackend) *mux.Router {
+func RouterWithAuthentication(service Service, authBackend AuthorizationBackend) *mux.Router {
 	if authBackend != nil {
 		authBackend.Init(cfgOAuth2, cfgProfileKey)
 	}

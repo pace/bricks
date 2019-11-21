@@ -441,7 +441,7 @@ func (g *Generator) buildHandler(method string, op *openapi3.Operation, pattern 
 	var auth *jen.Group
 	if op.Security != nil {
 		var err error
-		auth, err = generateAuthentication(op, secSchemes)
+		auth, err = generateAuthorization(op, secSchemes)
 		if err != nil {
 			return nil, err
 		}
@@ -588,7 +588,7 @@ func (g *Generator) buildHandler(method string, op *openapi3.Operation, pattern 
 	return route, nil
 }
 
-func generateAuthentication(op *openapi3.Operation, secSchemes map[string]*openapi3.SecuritySchemeRef) (*jen.Group, error) {
+func generateAuthorization(op *openapi3.Operation, secSchemes map[string]*openapi3.SecuritySchemeRef) (*jen.Group, error) {
 	r := &jen.Group{}
 	r.Add(jen.Comment("Authentication Handling "))
 	for _, sl := range *op.Security {
@@ -598,7 +598,7 @@ func generateAuthentication(op *openapi3.Operation, secSchemes map[string]*opena
 			case "oauth2":
 				r.Line().Add(jen.Comment("OAuth2 Authentication"))
 				if len(val) < 1 {
-					return nil, fmt.Errorf("security config for ProfileKey needs %d values but had: %d", 1, len(val))
+					return nil, fmt.Errorf("security config for OAuth2 authorization needs %d values but had: %d", 1, len(val))
 				}
 				scope := val[0]
 				r.Line().List(jen.Id("ctx"), jen.Id("ok")).Op(":=").Id("authBackend."+authFuncPrefix+strings.Title(name)).Call(jen.Id("r"), jen.Id("w"), jen.Lit(scope))
@@ -606,11 +606,13 @@ func generateAuthentication(op *openapi3.Operation, secSchemes map[string]*opena
 				r.Line().Id("r").Op("=").Id("r.WithContext").Call(jen.Id("ctx"))
 			case "apiKey":
 				if len(val) > 0 {
-					return nil, fmt.Errorf("security config for ProfileKey needs %d values but had: %d", 0, len(val))
+					return nil, fmt.Errorf("security config for api key authoritzation needs %d values but had: %d", 0, len(val))
 				}
 				r.Line().List(jen.Id("ctx"), jen.Id("ok")).Op(":=").Id("authBackend."+authFuncPrefix+strings.Title(name)).Call(jen.Id("r"), jen.Id("w"))
 				r.Line().If(jen.Op("!").Id("ok")).Block(jen.Comment("No Error Handling needed, this is already done"), jen.Return())
 				r.Line().Id("r").Op("=").Id("r.WithContext").Call(jen.Id("ctx"))
+			default:
+				return nil, fmt.Errorf("security Scheme of type %q is not suppported", securityScheme.Value.Type)
 			}
 		}
 	}
