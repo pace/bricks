@@ -5,6 +5,7 @@
 package postgres
 
 import (
+	"context"
 	"fmt"
 	"math"
 	"sync"
@@ -135,13 +136,19 @@ var (
 )
 
 // DefaultConnectionPool returns a the default database connection pool that is
-// configured using the POSTGRES_* env vars and instrumented with tracing and
-// logging.
+// configured using the POSTGRES_* env vars and instrumented with tracing,
+// logging and metrics.
 func DefaultConnectionPool() *pg.DB {
 	defaultPoolMx.Lock()
 	defer defaultPoolMx.Unlock()
 	if defaultPool == nil {
 		defaultPool = ConnectionPool()
+		// add metrics
+		metrics := NewConnectionPoolMetrics()
+		prometheus.MustRegister(metrics)
+		if err := metrics.ObserveRegularly(context.Background(), defaultPool, "default"); err != nil {
+			panic(err)
+		}
 	}
 	return defaultPool
 }

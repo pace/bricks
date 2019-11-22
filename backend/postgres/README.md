@@ -45,3 +45,19 @@ Configuration for the PostgreSQL connection pool of the microservice.
     * Name of the Table that is created to try if database is writeable
 * `POSTGRES_HEALTH_CHECK_RESULT_TTL` default: `10s`
     * Amount of time to cache the last health check result
+
+## Metrics
+
+Prometheus metrics exposed.
+
+* `pace_postgres_query_total{database}` Collects stats about the number of postgres queries made
+* `pace_postgres_query_failed{database}` Collects stats about the number of postgres queries failed
+* `pace_postgres_query_duration_seconds{database}` Collect performance metrics for each postgres query
+* `pace_postgres_query_rows_total{database}` Collects stats about the number of rows returned by a postgres query
+* `pace_postgres_query_affected_total{database}` Collects stats about the number of rows affected by a postgres query
+* `pace_postgres_connection_pool_hits{database}` Collects number of times free connection was found in the pool
+* `pace_postgres_connection_pool_misses{database}` Collects number of times free connection was NOT found in the pool
+* `pace_postgres_connection_pool_timeouts{database}` Collects number of times a wait timeout occurred
+* `pace_postgres_connection_pool_total_conns{database}` Collects number of total connections in the pool
+* `pace_postgres_connection_pool_idle_conns{database}` Collects number of idle connections in the pool
+* `pace_postgres_connection_pool_stale_conns{database}` Collects number of stale connections removed from the pool
