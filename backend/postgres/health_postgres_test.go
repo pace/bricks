@@ -30,7 +30,7 @@ func TestIntegrationHealthCheck(t *testing.T) {
 		t.SkipNow()
 	}
 	resp := setup(&HealthCheck{
-		Pool: ConnectionPool(),
+		Pool: DefaultConnectionPool(),
 	}, "postgres")
 	if resp.StatusCode != 200 {
 		t.Errorf("Expected /health/postgres to respond with 200, got: %d", resp.StatusCode)

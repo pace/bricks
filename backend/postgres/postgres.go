@@ -7,6 +7,7 @@ package postgres
 import (
 	"fmt"
 	"math"
+	"sync"
 	"time"
 
 	"github.com/caarlos0/env"
@@ -124,8 +125,25 @@ func init() {
 	}
 
 	servicehealthcheck.RegisterHealthCheck(&HealthCheck{
-		Pool: ConnectionPool(),
+		Pool: DefaultConnectionPool(),
 	}, "postgresdefault")
+}
+
+var (
+	defaultPool   *pg.DB
+	defaultPoolMx sync.Mutex
+)
+
+// DefaultConnectionPool returns a the default database connection pool that is
+// configured using the POSTGRES_* env vars and instrumented with tracing and
+// logging.
+func DefaultConnectionPool() *pg.DB {
+	defaultPoolMx.Lock()
+	defer defaultPoolMx.Unlock()
+	if defaultPool == nil {
+		defaultPool = ConnectionPool()
+	}
+	return defaultPool
 }
 
 // ConnectionPool returns a new database connection pool
