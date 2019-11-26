@@ -18,7 +18,7 @@ const (
 )
 
 // buildSecurityBackendInterface builds the interface that is used to do the authentication.
-// It creates one method for each security type and a Init-Method for handling the securityConfigs
+// It creates one method for each security type and an init method for handling the securityConfigs.
 // the Methods are named AutenticateNAME and Init
 func (g *Generator) buildSecurityBackendInterface(schema *openapi3.Swagger) error {
 	securitySchemes := schema.Components.SecuritySchemes
