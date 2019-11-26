@@ -21,7 +21,7 @@ func TestApiKeyAuthenticationSuccessful(t *testing.T) {
 
 	resp := w.Result()
 	body, err := ioutil.ReadAll(resp.Body)
-	defer resp.Body.Close()
+	resp.Body.Close()
 	if err != nil {
 		t.Fatal(err)
 	}
