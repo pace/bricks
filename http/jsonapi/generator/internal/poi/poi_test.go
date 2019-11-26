@@ -7,12 +7,14 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"net/http"
 	"net/http/httptest"
 	"strconv"
 	"strings"
 	"testing"
 
 	"github.com/pace/bricks/http/jsonapi/runtime"
+	"github.com/pace/bricks/http/oauth2"
 )
 
 type testService struct {
@@ -119,8 +121,18 @@ func (s *testService) GetTiles(context.Context, GetTilesResponseWriter, *GetTile
 	return nil
 }
 
+type testAuthBackend struct {
+}
+
+func (s testAuthBackend) AuthorizeOAuth2(r *http.Request, w http.ResponseWriter, scope string) (context.Context, bool) {
+	return r.Context(), true
+}
+
+func (s testAuthBackend) Init(cfgOAuth2 *oauth2.Config) {
+}
+
 func TestHandler(t *testing.T) {
-	r := Router(&testService{t})
+	r := Router(&testService{t}, &testAuthBackend{})
 	rec := httptest.NewRecorder()
 	req := httptest.NewRequest("GET", "/poi/beta/apps/query?"+
 		"filter[latitude]=41.859194&filter[longitude]=-87.646984&filter[appType]=fueling&filter[gpsSource]=raw", nil)
@@ -165,7 +177,7 @@ func TestHandler(t *testing.T) {
 }
 
 func TestCreatePolicyHandler(t *testing.T) {
-	r := Router(&testService{t})
+	r := Router(&testService{t}, &testAuthBackend{})
 	rec := httptest.NewRecorder()
 	req := httptest.NewRequest("POST", "/poi/beta/policies", strings.NewReader(`{
 		"data": {

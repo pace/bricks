@@ -45,15 +45,12 @@ type MapTypeNumber map[string]float32
 
 // MapTypeString ...
 type MapTypeString map[string]string
-type AuthorizationBackend interface {
-	Init()
-}
 
 /*
 UpdateArticleCommentsHandler handles request/response marshaling and validation for
  Patch /api/articles/{uuid}/relationships/comments
 */
-func UpdateArticleCommentsHandler(service Service, authBackend AuthorizationBackend) http.Handler {
+func UpdateArticleCommentsHandler(service Service) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		defer errors.HandleRequest("UpdateArticleCommentsHandler", w, r)
 
@@ -103,7 +100,7 @@ func UpdateArticleCommentsHandler(service Service, authBackend AuthorizationBack
 UpdateArticleInlineTypeHandler handles request/response marshaling and validation for
  Patch /api/articles/{uuid}/relationships/inline
 */
-func UpdateArticleInlineTypeHandler(service Service, authBackend AuthorizationBackend) http.Handler {
+func UpdateArticleInlineTypeHandler(service Service) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		defer errors.HandleRequest("UpdateArticleInlineTypeHandler", w, r)
 
@@ -148,7 +145,7 @@ func UpdateArticleInlineTypeHandler(service Service, authBackend AuthorizationBa
 UpdateArticleInlineRefHandler handles request/response marshaling and validation for
  Patch /api/articles/{uuid}/relationships/inlineref
 */
-func UpdateArticleInlineRefHandler(service Service, authBackend AuthorizationBackend) http.Handler {
+func UpdateArticleInlineRefHandler(service Service) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		defer errors.HandleRequest("UpdateArticleInlineRefHandler", w, r)
 
@@ -311,24 +308,16 @@ type Service interface {
 }
 
 /*
-RouterWithAuthentication implements: Articles Test Service
+Router implements: Articles Test Service
 
 Articles Test Service
 */
-func RouterWithAuthentication(service Service, authBackend AuthorizationBackend) *mux.Router {
-	if authBackend != nil {
-		authBackend.Init()
-	}
+func Router(service Service) *mux.Router {
 	router := mux.NewRouter()
 	// Subrouter s1 - Path:
 	s1 := router.PathPrefix("").Subrouter()
-	s1.Methods("PATCH").Path("/api/articles/{uuid}/relationships/comments").Handler(UpdateArticleCommentsHandler(service, authBackend)).Name("UpdateArticleComments")
-	s1.Methods("PATCH").Path("/api/articles/{uuid}/relationships/inline").Handler(UpdateArticleInlineTypeHandler(service, authBackend)).Name("UpdateArticleInlineType")
-	s1.Methods("PATCH").Path("/api/articles/{uuid}/relationships/inlineref").Handler(UpdateArticleInlineRefHandler(service, authBackend)).Name("UpdateArticleInlineRef")
+	s1.Methods("PATCH").Path("/api/articles/{uuid}/relationships/comments").Handler(UpdateArticleCommentsHandler(service)).Name("UpdateArticleComments")
+	s1.Methods("PATCH").Path("/api/articles/{uuid}/relationships/inline").Handler(UpdateArticleInlineTypeHandler(service)).Name("UpdateArticleInlineType")
+	s1.Methods("PATCH").Path("/api/articles/{uuid}/relationships/inlineref").Handler(UpdateArticleInlineRefHandler(service)).Name("UpdateArticleInlineRef")
 	return router
-}
-
-// Deprecated: Router kept for backward compatibility. Please use RouteWithAuthentication, Remove the Middleware and implement the AuthenticationBackend
-func Router(service Service) *mux.Router {
-	return RouterWithAuthentication(service, nil)
 }

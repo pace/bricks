@@ -120,15 +120,12 @@ type TransactionRequest struct {
 
 // Currency ...
 type Currency string
-type AuthorizationBackend interface {
-	Init()
-}
 
 /*
 ProcessPaymentHandler handles request/response marshaling and validation for
  Post /beta/gas-station/{gasStationId}/payment
 */
-func ProcessPaymentHandler(service Service, authBackend AuthorizationBackend) http.Handler {
+func ProcessPaymentHandler(service Service) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		defer errors.HandleRequest("ProcessPaymentHandler", w, r)
 
@@ -173,7 +170,7 @@ func ProcessPaymentHandler(service Service, authBackend AuthorizationBackend) ht
 ApproachingAtTheForecourtHandler handles request/response marshaling and validation for
  Post /beta/gas-stations/{gasStationId}/approaching
 */
-func ApproachingAtTheForecourtHandler(service Service, authBackend AuthorizationBackend) http.Handler {
+func ApproachingAtTheForecourtHandler(service Service) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		defer errors.HandleRequest("ApproachingAtTheForecourtHandler", w, r)
 
@@ -222,7 +219,7 @@ func ApproachingAtTheForecourtHandler(service Service, authBackend Authorization
 GetPumpHandler handles request/response marshaling and validation for
  Get /beta/gas-stations/{gasStationId}/pumps/{pumpId}
 */
-func GetPumpHandler(service Service, authBackend AuthorizationBackend) http.Handler {
+func GetPumpHandler(service Service) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		defer errors.HandleRequest("GetPumpHandler", w, r)
 
@@ -269,7 +266,7 @@ func GetPumpHandler(service Service, authBackend AuthorizationBackend) http.Hand
 WaitOnPumpStatusChangeHandler handles request/response marshaling and validation for
  Get /beta/gas-stations/{gasStationId}/pumps/{pumpId}/wait-for-status-change
 */
-func WaitOnPumpStatusChangeHandler(service Service, authBackend AuthorizationBackend) http.Handler {
+func WaitOnPumpStatusChangeHandler(service Service) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		defer errors.HandleRequest("WaitOnPumpStatusChangeHandler", w, r)
 
@@ -539,25 +536,17 @@ type Service interface {
 }
 
 /*
-RouterWithAuthentication implements: PACE Fueling API
+Router implements: PACE Fueling API
 
 Fueling API
 */
-func RouterWithAuthentication(service Service, authBackend AuthorizationBackend) *mux.Router {
-	if authBackend != nil {
-		authBackend.Init()
-	}
+func Router(service Service) *mux.Router {
 	router := mux.NewRouter()
 	// Subrouter s1 - Path: /fueling
 	s1 := router.PathPrefix("/fueling").Subrouter()
-	s1.Methods("GET").Path("/beta/gas-stations/{gasStationId}/pumps/{pumpId}/wait-for-status-change").Handler(WaitOnPumpStatusChangeHandler(service, authBackend)).Name("WaitOnPumpStatusChange")
-	s1.Methods("GET").Path("/beta/gas-stations/{gasStationId}/pumps/{pumpId}").Handler(GetPumpHandler(service, authBackend)).Name("GetPump")
-	s1.Methods("POST").Path("/beta/gas-station/{gasStationId}/payment").Handler(ProcessPaymentHandler(service, authBackend)).Name("ProcessPayment")
-	s1.Methods("POST").Path("/beta/gas-stations/{gasStationId}/approaching").Handler(ApproachingAtTheForecourtHandler(service, authBackend)).Name("ApproachingAtTheForecourt")
+	s1.Methods("GET").Path("/beta/gas-stations/{gasStationId}/pumps/{pumpId}/wait-for-status-change").Handler(WaitOnPumpStatusChangeHandler(service)).Name("WaitOnPumpStatusChange")
+	s1.Methods("GET").Path("/beta/gas-stations/{gasStationId}/pumps/{pumpId}").Handler(GetPumpHandler(service)).Name("GetPump")
+	s1.Methods("POST").Path("/beta/gas-station/{gasStationId}/payment").Handler(ProcessPaymentHandler(service)).Name("ProcessPayment")
+	s1.Methods("POST").Path("/beta/gas-stations/{gasStationId}/approaching").Handler(ApproachingAtTheForecourtHandler(service)).Name("ApproachingAtTheForecourt")
 	return router
-}
-
-// Deprecated: Router kept for backward compatibility. Please use RouteWithAuthentication, Remove the Middleware and implement the AuthenticationBackend
-func Router(service Service) *mux.Router {
-	return RouterWithAuthentication(service, nil)
 }

@@ -21,6 +21,9 @@ const (
 // It creates one method for each security type and an init method for handling the securityConfigs.
 // The Methods are named AuthenticateNAME and Init.
 func (g *Generator) buildSecurityBackendInterface(schema *openapi3.Swagger) error {
+	if !hasSecuritySchema(schema) {
+		return nil
+	}
 	securitySchemes := schema.Components.SecuritySchemes
 	// r contains the methods for the security interface
 	r := &jen.Group{}
@@ -58,6 +61,9 @@ func (g *Generator) buildSecurityBackendInterface(schema *openapi3.Swagger) erro
 
 // BuildSecurityConfigs creates structs with the config of each security schema
 func (g *Generator) buildSecurityConfigs(schema *openapi3.Swagger) error {
+	if !hasSecuritySchema(schema) {
+		return nil
+	}
 	securitySchemes := schema.Components.SecuritySchemes
 	// Because the order of the values while iterating over a map is randomized the generated result can only be tested if the keys are sorted
 	var keys []string

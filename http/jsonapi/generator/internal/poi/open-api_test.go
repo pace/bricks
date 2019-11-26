@@ -282,17 +282,14 @@ GetAppsHandler handles request/response marshaling and validation for
 func GetAppsHandler(service Service, authBackend AuthorizationBackend) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		defer errors.HandleRequest("GetAppsHandler", w, r)
-		// Only do Authentication if a authentication Backend is available. Otherwise this is handled somewhere else
-		if authBackend != nil {
-			// Authentication Handling
-			// OAuth2 Authentication
-			ctx, ok := authBackend.AuthorizeOAuth2(r, w, "poi:apps:read")
-			if !ok {
-				// No Error Handling needed, this is already done
-				return
-			}
-			r = r.WithContext(ctx)
+		// Authentication Handling
+		// OAuth2 Authentication
+		ctx, ok := authBackend.AuthorizeOAuth2(r, w, "poi:apps:read")
+		if !ok {
+			// No Error Handling needed, this is already done
+			return
 		}
+		r = r.WithContext(ctx)
 
 		// Trace the service function handler execution
 		handlerSpan, ctx := opentracing.StartSpanFromContext(r.Context(), "GetAppsHandler")
@@ -345,17 +342,14 @@ CreateAppHandler handles request/response marshaling and validation for
 func CreateAppHandler(service Service, authBackend AuthorizationBackend) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		defer errors.HandleRequest("CreateAppHandler", w, r)
-		// Only do Authentication if a authentication Backend is available. Otherwise this is handled somewhere else
-		if authBackend != nil {
-			// Authentication Handling
-			// OAuth2 Authentication
-			ctx, ok := authBackend.AuthorizeOAuth2(r, w, "poi:apps:create")
-			if !ok {
-				// No Error Handling needed, this is already done
-				return
-			}
-			r = r.WithContext(ctx)
+		// Authentication Handling
+		// OAuth2 Authentication
+		ctx, ok := authBackend.AuthorizeOAuth2(r, w, "poi:apps:create")
+		if !ok {
+			// No Error Handling needed, this is already done
+			return
 		}
+		r = r.WithContext(ctx)
 
 		// Trace the service function handler execution
 		handlerSpan, ctx := opentracing.StartSpanFromContext(r.Context(), "CreateAppHandler")
@@ -392,17 +386,14 @@ CheckForPaceAppHandler handles request/response marshaling and validation for
 func CheckForPaceAppHandler(service Service, authBackend AuthorizationBackend) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		defer errors.HandleRequest("CheckForPaceAppHandler", w, r)
-		// Only do Authentication if a authentication Backend is available. Otherwise this is handled somewhere else
-		if authBackend != nil {
-			// Authentication Handling
-			// OAuth2 Authentication
-			ctx, ok := authBackend.AuthorizeOAuth2(r, w, "poi:apps:read")
-			if !ok {
-				// No Error Handling needed, this is already done
-				return
-			}
-			r = r.WithContext(ctx)
+		// Authentication Handling
+		// OAuth2 Authentication
+		ctx, ok := authBackend.AuthorizeOAuth2(r, w, "poi:apps:read")
+		if !ok {
+			// No Error Handling needed, this is already done
+			return
 		}
+		r = r.WithContext(ctx)
 
 		// Trace the service function handler execution
 		handlerSpan, ctx := opentracing.StartSpanFromContext(r.Context(), "CheckForPaceAppHandler")
@@ -471,17 +462,14 @@ DeleteAppHandler handles request/response marshaling and validation for
 func DeleteAppHandler(service Service, authBackend AuthorizationBackend) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		defer errors.HandleRequest("DeleteAppHandler", w, r)
-		// Only do Authentication if a authentication Backend is available. Otherwise this is handled somewhere else
-		if authBackend != nil {
-			// Authentication Handling
-			// OAuth2 Authentication
-			ctx, ok := authBackend.AuthorizeOAuth2(r, w, "poi:apps:delete")
-			if !ok {
-				// No Error Handling needed, this is already done
-				return
-			}
-			r = r.WithContext(ctx)
+		// Authentication Handling
+		// OAuth2 Authentication
+		ctx, ok := authBackend.AuthorizeOAuth2(r, w, "poi:apps:delete")
+		if !ok {
+			// No Error Handling needed, this is already done
+			return
 		}
+		r = r.WithContext(ctx)
 
 		// Trace the service function handler execution
 		handlerSpan, ctx := opentracing.StartSpanFromContext(r.Context(), "DeleteAppHandler")
@@ -524,17 +512,14 @@ GetAppHandler handles request/response marshaling and validation for
 func GetAppHandler(service Service, authBackend AuthorizationBackend) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		defer errors.HandleRequest("GetAppHandler", w, r)
-		// Only do Authentication if a authentication Backend is available. Otherwise this is handled somewhere else
-		if authBackend != nil {
-			// Authentication Handling
-			// OAuth2 Authentication
-			ctx, ok := authBackend.AuthorizeOAuth2(r, w, "poi:apps:read")
-			if !ok {
-				// No Error Handling needed, this is already done
-				return
-			}
-			r = r.WithContext(ctx)
+		// Authentication Handling
+		// OAuth2 Authentication
+		ctx, ok := authBackend.AuthorizeOAuth2(r, w, "poi:apps:read")
+		if !ok {
+			// No Error Handling needed, this is already done
+			return
 		}
+		r = r.WithContext(ctx)
 
 		// Trace the service function handler execution
 		handlerSpan, ctx := opentracing.StartSpanFromContext(r.Context(), "GetAppHandler")
@@ -577,17 +562,14 @@ UpdateAppHandler handles request/response marshaling and validation for
 func UpdateAppHandler(service Service, authBackend AuthorizationBackend) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		defer errors.HandleRequest("UpdateAppHandler", w, r)
-		// Only do Authentication if a authentication Backend is available. Otherwise this is handled somewhere else
-		if authBackend != nil {
-			// Authentication Handling
-			// OAuth2 Authentication
-			ctx, ok := authBackend.AuthorizeOAuth2(r, w, "poi:apps:update")
-			if !ok {
-				// No Error Handling needed, this is already done
-				return
-			}
-			r = r.WithContext(ctx)
+		// Authentication Handling
+		// OAuth2 Authentication
+		ctx, ok := authBackend.AuthorizeOAuth2(r, w, "poi:apps:update")
+		if !ok {
+			// No Error Handling needed, this is already done
+			return
 		}
+		r = r.WithContext(ctx)
 
 		// Trace the service function handler execution
 		handlerSpan, ctx := opentracing.StartSpanFromContext(r.Context(), "UpdateAppHandler")
@@ -633,17 +615,14 @@ GetAppPOIsRelationshipsHandler handles request/response marshaling and validatio
 func GetAppPOIsRelationshipsHandler(service Service, authBackend AuthorizationBackend) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		defer errors.HandleRequest("GetAppPOIsRelationshipsHandler", w, r)
-		// Only do Authentication if a authentication Backend is available. Otherwise this is handled somewhere else
-		if authBackend != nil {
-			// Authentication Handling
-			// OAuth2 Authentication
-			ctx, ok := authBackend.AuthorizeOAuth2(r, w, "poi:apps:read")
-			if !ok {
-				// No Error Handling needed, this is already done
-				return
-			}
-			r = r.WithContext(ctx)
+		// Authentication Handling
+		// OAuth2 Authentication
+		ctx, ok := authBackend.AuthorizeOAuth2(r, w, "poi:apps:read")
+		if !ok {
+			// No Error Handling needed, this is already done
+			return
 		}
+		r = r.WithContext(ctx)
 
 		// Trace the service function handler execution
 		handlerSpan, ctx := opentracing.StartSpanFromContext(r.Context(), "GetAppPOIsRelationshipsHandler")
@@ -686,17 +665,14 @@ UpdateAppPOIsRelationshipsHandler handles request/response marshaling and valida
 func UpdateAppPOIsRelationshipsHandler(service Service, authBackend AuthorizationBackend) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		defer errors.HandleRequest("UpdateAppPOIsRelationshipsHandler", w, r)
-		// Only do Authentication if a authentication Backend is available. Otherwise this is handled somewhere else
-		if authBackend != nil {
-			// Authentication Handling
-			// OAuth2 Authentication
-			ctx, ok := authBackend.AuthorizeOAuth2(r, w, "poi:apps:update")
-			if !ok {
-				// No Error Handling needed, this is already done
-				return
-			}
-			r = r.WithContext(ctx)
+		// Authentication Handling
+		// OAuth2 Authentication
+		ctx, ok := authBackend.AuthorizeOAuth2(r, w, "poi:apps:update")
+		if !ok {
+			// No Error Handling needed, this is already done
+			return
 		}
+		r = r.WithContext(ctx)
 
 		// Trace the service function handler execution
 		handlerSpan, ctx := opentracing.StartSpanFromContext(r.Context(), "UpdateAppPOIsRelationshipsHandler")
@@ -742,17 +718,14 @@ GetEventsHandler handles request/response marshaling and validation for
 func GetEventsHandler(service Service, authBackend AuthorizationBackend) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		defer errors.HandleRequest("GetEventsHandler", w, r)
-		// Only do Authentication if a authentication Backend is available. Otherwise this is handled somewhere else
-		if authBackend != nil {
-			// Authentication Handling
-			// OAuth2 Authentication
-			ctx, ok := authBackend.AuthorizeOAuth2(r, w, "poi:events:read")
-			if !ok {
-				// No Error Handling needed, this is already done
-				return
-			}
-			r = r.WithContext(ctx)
+		// Authentication Handling
+		// OAuth2 Authentication
+		ctx, ok := authBackend.AuthorizeOAuth2(r, w, "poi:events:read")
+		if !ok {
+			// No Error Handling needed, this is already done
+			return
 		}
+		r = r.WithContext(ctx)
 
 		// Trace the service function handler execution
 		handlerSpan, ctx := opentracing.StartSpanFromContext(r.Context(), "GetEventsHandler")
@@ -805,17 +778,14 @@ GetGasStationsHandler handles request/response marshaling and validation for
 func GetGasStationsHandler(service Service, authBackend AuthorizationBackend) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		defer errors.HandleRequest("GetGasStationsHandler", w, r)
-		// Only do Authentication if a authentication Backend is available. Otherwise this is handled somewhere else
-		if authBackend != nil {
-			// Authentication Handling
-			// OAuth2 Authentication
-			ctx, ok := authBackend.AuthorizeOAuth2(r, w, "poi:gas-stations:read")
-			if !ok {
-				// No Error Handling needed, this is already done
-				return
-			}
-			r = r.WithContext(ctx)
+		// Authentication Handling
+		// OAuth2 Authentication
+		ctx, ok := authBackend.AuthorizeOAuth2(r, w, "poi:gas-stations:read")
+		if !ok {
+			// No Error Handling needed, this is already done
+			return
 		}
+		r = r.WithContext(ctx)
 
 		// Trace the service function handler execution
 		handlerSpan, ctx := opentracing.StartSpanFromContext(r.Context(), "GetGasStationsHandler")
@@ -904,17 +874,14 @@ GetGasStationHandler handles request/response marshaling and validation for
 func GetGasStationHandler(service Service, authBackend AuthorizationBackend) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		defer errors.HandleRequest("GetGasStationHandler", w, r)
-		// Only do Authentication if a authentication Backend is available. Otherwise this is handled somewhere else
-		if authBackend != nil {
-			// Authentication Handling
-			// OAuth2 Authentication
-			ctx, ok := authBackend.AuthorizeOAuth2(r, w, "poi:gas-stations:read")
-			if !ok {
-				// No Error Handling needed, this is already done
-				return
-			}
-			r = r.WithContext(ctx)
+		// Authentication Handling
+		// OAuth2 Authentication
+		ctx, ok := authBackend.AuthorizeOAuth2(r, w, "poi:gas-stations:read")
+		if !ok {
+			// No Error Handling needed, this is already done
+			return
 		}
+		r = r.WithContext(ctx)
 
 		// Trace the service function handler execution
 		handlerSpan, ctx := opentracing.StartSpanFromContext(r.Context(), "GetGasStationHandler")
@@ -957,17 +924,14 @@ GetPoisHandler handles request/response marshaling and validation for
 func GetPoisHandler(service Service, authBackend AuthorizationBackend) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		defer errors.HandleRequest("GetPoisHandler", w, r)
-		// Only do Authentication if a authentication Backend is available. Otherwise this is handled somewhere else
-		if authBackend != nil {
-			// Authentication Handling
-			// OAuth2 Authentication
-			ctx, ok := authBackend.AuthorizeOAuth2(r, w, "poi:pois:read")
-			if !ok {
-				// No Error Handling needed, this is already done
-				return
-			}
-			r = r.WithContext(ctx)
+		// Authentication Handling
+		// OAuth2 Authentication
+		ctx, ok := authBackend.AuthorizeOAuth2(r, w, "poi:pois:read")
+		if !ok {
+			// No Error Handling needed, this is already done
+			return
 		}
+		r = r.WithContext(ctx)
 
 		// Trace the service function handler execution
 		handlerSpan, ctx := opentracing.StartSpanFromContext(r.Context(), "GetPoisHandler")
@@ -1024,17 +988,14 @@ GetPoiHandler handles request/response marshaling and validation for
 func GetPoiHandler(service Service, authBackend AuthorizationBackend) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		defer errors.HandleRequest("GetPoiHandler", w, r)
-		// Only do Authentication if a authentication Backend is available. Otherwise this is handled somewhere else
-		if authBackend != nil {
-			// Authentication Handling
-			// OAuth2 Authentication
-			ctx, ok := authBackend.AuthorizeOAuth2(r, w, "poi:pois:read")
-			if !ok {
-				// No Error Handling needed, this is already done
-				return
-			}
-			r = r.WithContext(ctx)
+		// Authentication Handling
+		// OAuth2 Authentication
+		ctx, ok := authBackend.AuthorizeOAuth2(r, w, "poi:pois:read")
+		if !ok {
+			// No Error Handling needed, this is already done
+			return
 		}
+		r = r.WithContext(ctx)
 
 		// Trace the service function handler execution
 		handlerSpan, ctx := opentracing.StartSpanFromContext(r.Context(), "GetPoiHandler")
@@ -1077,17 +1038,14 @@ ChangePoiHandler handles request/response marshaling and validation for
 func ChangePoiHandler(service Service, authBackend AuthorizationBackend) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		defer errors.HandleRequest("ChangePoiHandler", w, r)
-		// Only do Authentication if a authentication Backend is available. Otherwise this is handled somewhere else
-		if authBackend != nil {
-			// Authentication Handling
-			// OAuth2 Authentication
-			ctx, ok := authBackend.AuthorizeOAuth2(r, w, "poi:pois:update")
-			if !ok {
-				// No Error Handling needed, this is already done
-				return
-			}
-			r = r.WithContext(ctx)
+		// Authentication Handling
+		// OAuth2 Authentication
+		ctx, ok := authBackend.AuthorizeOAuth2(r, w, "poi:pois:update")
+		if !ok {
+			// No Error Handling needed, this is already done
+			return
 		}
+		r = r.WithContext(ctx)
 
 		// Trace the service function handler execution
 		handlerSpan, ctx := opentracing.StartSpanFromContext(r.Context(), "ChangePoiHandler")
@@ -1133,17 +1091,14 @@ GetPoliciesHandler handles request/response marshaling and validation for
 func GetPoliciesHandler(service Service, authBackend AuthorizationBackend) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		defer errors.HandleRequest("GetPoliciesHandler", w, r)
-		// Only do Authentication if a authentication Backend is available. Otherwise this is handled somewhere else
-		if authBackend != nil {
-			// Authentication Handling
-			// OAuth2 Authentication
-			ctx, ok := authBackend.AuthorizeOAuth2(r, w, "poi:policies:read")
-			if !ok {
-				// No Error Handling needed, this is already done
-				return
-			}
-			r = r.WithContext(ctx)
+		// Authentication Handling
+		// OAuth2 Authentication
+		ctx, ok := authBackend.AuthorizeOAuth2(r, w, "poi:policies:read")
+		if !ok {
+			// No Error Handling needed, this is already done
+			return
 		}
+		r = r.WithContext(ctx)
 
 		// Trace the service function handler execution
 		handlerSpan, ctx := opentracing.StartSpanFromContext(r.Context(), "GetPoliciesHandler")
@@ -1200,17 +1155,14 @@ CreatePolicyHandler handles request/response marshaling and validation for
 func CreatePolicyHandler(service Service, authBackend AuthorizationBackend) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		defer errors.HandleRequest("CreatePolicyHandler", w, r)
-		// Only do Authentication if a authentication Backend is available. Otherwise this is handled somewhere else
-		if authBackend != nil {
-			// Authentication Handling
-			// OAuth2 Authentication
-			ctx, ok := authBackend.AuthorizeOAuth2(r, w, "poi:policies:create")
-			if !ok {
-				// No Error Handling needed, this is already done
-				return
-			}
-			r = r.WithContext(ctx)
+		// Authentication Handling
+		// OAuth2 Authentication
+		ctx, ok := authBackend.AuthorizeOAuth2(r, w, "poi:policies:create")
+		if !ok {
+			// No Error Handling needed, this is already done
+			return
 		}
+		r = r.WithContext(ctx)
 
 		// Trace the service function handler execution
 		handlerSpan, ctx := opentracing.StartSpanFromContext(r.Context(), "CreatePolicyHandler")
@@ -1247,17 +1199,14 @@ GetPolicyHandler handles request/response marshaling and validation for
 func GetPolicyHandler(service Service, authBackend AuthorizationBackend) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		defer errors.HandleRequest("GetPolicyHandler", w, r)
-		// Only do Authentication if a authentication Backend is available. Otherwise this is handled somewhere else
-		if authBackend != nil {
-			// Authentication Handling
-			// OAuth2 Authentication
-			ctx, ok := authBackend.AuthorizeOAuth2(r, w, "poi:policies:read")
-			if !ok {
-				// No Error Handling needed, this is already done
-				return
-			}
-			r = r.WithContext(ctx)
+		// Authentication Handling
+		// OAuth2 Authentication
+		ctx, ok := authBackend.AuthorizeOAuth2(r, w, "poi:policies:read")
+		if !ok {
+			// No Error Handling needed, this is already done
+			return
 		}
+		r = r.WithContext(ctx)
 
 		// Trace the service function handler execution
 		handlerSpan, ctx := opentracing.StartSpanFromContext(r.Context(), "GetPolicyHandler")
@@ -1300,17 +1249,14 @@ GetSourcesHandler handles request/response marshaling and validation for
 func GetSourcesHandler(service Service, authBackend AuthorizationBackend) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		defer errors.HandleRequest("GetSourcesHandler", w, r)
-		// Only do Authentication if a authentication Backend is available. Otherwise this is handled somewhere else
-		if authBackend != nil {
-			// Authentication Handling
-			// OAuth2 Authentication
-			ctx, ok := authBackend.AuthorizeOAuth2(r, w, "poi:sources:read")
-			if !ok {
-				// No Error Handling needed, this is already done
-				return
-			}
-			r = r.WithContext(ctx)
+		// Authentication Handling
+		// OAuth2 Authentication
+		ctx, ok := authBackend.AuthorizeOAuth2(r, w, "poi:sources:read")
+		if !ok {
+			// No Error Handling needed, this is already done
+			return
 		}
+		r = r.WithContext(ctx)
 
 		// Trace the service function handler execution
 		handlerSpan, ctx := opentracing.StartSpanFromContext(r.Context(), "GetSourcesHandler")
@@ -1363,17 +1309,14 @@ CreateSourceHandler handles request/response marshaling and validation for
 func CreateSourceHandler(service Service, authBackend AuthorizationBackend) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		defer errors.HandleRequest("CreateSourceHandler", w, r)
-		// Only do Authentication if a authentication Backend is available. Otherwise this is handled somewhere else
-		if authBackend != nil {
-			// Authentication Handling
-			// OAuth2 Authentication
-			ctx, ok := authBackend.AuthorizeOAuth2(r, w, "poi:sources:create")
-			if !ok {
-				// No Error Handling needed, this is already done
-				return
-			}
-			r = r.WithContext(ctx)
+		// Authentication Handling
+		// OAuth2 Authentication
+		ctx, ok := authBackend.AuthorizeOAuth2(r, w, "poi:sources:create")
+		if !ok {
+			// No Error Handling needed, this is already done
+			return
 		}
+		r = r.WithContext(ctx)
 
 		// Trace the service function handler execution
 		handlerSpan, ctx := opentracing.StartSpanFromContext(r.Context(), "CreateSourceHandler")
@@ -1410,17 +1353,14 @@ DeleteSourceHandler handles request/response marshaling and validation for
 func DeleteSourceHandler(service Service, authBackend AuthorizationBackend) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		defer errors.HandleRequest("DeleteSourceHandler", w, r)
-		// Only do Authentication if a authentication Backend is available. Otherwise this is handled somewhere else
-		if authBackend != nil {
-			// Authentication Handling
-			// OAuth2 Authentication
-			ctx, ok := authBackend.AuthorizeOAuth2(r, w, "poi:sources:delete")
-			if !ok {
-				// No Error Handling needed, this is already done
-				return
-			}
-			r = r.WithContext(ctx)
+		// Authentication Handling
+		// OAuth2 Authentication
+		ctx, ok := authBackend.AuthorizeOAuth2(r, w, "poi:sources:delete")
+		if !ok {
+			// No Error Handling needed, this is already done
+			return
 		}
+		r = r.WithContext(ctx)
 
 		// Trace the service function handler execution
 		handlerSpan, ctx := opentracing.StartSpanFromContext(r.Context(), "DeleteSourceHandler")
@@ -1463,17 +1403,14 @@ GetSourceHandler handles request/response marshaling and validation for
 func GetSourceHandler(service Service, authBackend AuthorizationBackend) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		defer errors.HandleRequest("GetSourceHandler", w, r)
-		// Only do Authentication if a authentication Backend is available. Otherwise this is handled somewhere else
-		if authBackend != nil {
-			// Authentication Handling
-			// OAuth2 Authentication
-			ctx, ok := authBackend.AuthorizeOAuth2(r, w, "poi:sources:read")
-			if !ok {
-				// No Error Handling needed, this is already done
-				return
-			}
-			r = r.WithContext(ctx)
+		// Authentication Handling
+		// OAuth2 Authentication
+		ctx, ok := authBackend.AuthorizeOAuth2(r, w, "poi:sources:read")
+		if !ok {
+			// No Error Handling needed, this is already done
+			return
 		}
+		r = r.WithContext(ctx)
 
 		// Trace the service function handler execution
 		handlerSpan, ctx := opentracing.StartSpanFromContext(r.Context(), "GetSourceHandler")
@@ -1516,17 +1453,14 @@ UpdateSourceHandler handles request/response marshaling and validation for
 func UpdateSourceHandler(service Service, authBackend AuthorizationBackend) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		defer errors.HandleRequest("UpdateSourceHandler", w, r)
-		// Only do Authentication if a authentication Backend is available. Otherwise this is handled somewhere else
-		if authBackend != nil {
-			// Authentication Handling
-			// OAuth2 Authentication
-			ctx, ok := authBackend.AuthorizeOAuth2(r, w, "poi:sources:update")
-			if !ok {
-				// No Error Handling needed, this is already done
-				return
-			}
-			r = r.WithContext(ctx)
+		// Authentication Handling
+		// OAuth2 Authentication
+		ctx, ok := authBackend.AuthorizeOAuth2(r, w, "poi:sources:update")
+		if !ok {
+			// No Error Handling needed, this is already done
+			return
 		}
+		r = r.WithContext(ctx)
 
 		// Trace the service function handler execution
 		handlerSpan, ctx := opentracing.StartSpanFromContext(r.Context(), "UpdateSourceHandler")
@@ -1572,17 +1506,14 @@ CreateSubscriptionHandler handles request/response marshaling and validation for
 func CreateSubscriptionHandler(service Service, authBackend AuthorizationBackend) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		defer errors.HandleRequest("CreateSubscriptionHandler", w, r)
-		// Only do Authentication if a authentication Backend is available. Otherwise this is handled somewhere else
-		if authBackend != nil {
-			// Authentication Handling
-			// OAuth2 Authentication
-			ctx, ok := authBackend.AuthorizeOAuth2(r, w, "poi:subscriptions:create")
-			if !ok {
-				// No Error Handling needed, this is already done
-				return
-			}
-			r = r.WithContext(ctx)
+		// Authentication Handling
+		// OAuth2 Authentication
+		ctx, ok := authBackend.AuthorizeOAuth2(r, w, "poi:subscriptions:create")
+		if !ok {
+			// No Error Handling needed, this is already done
+			return
 		}
+		r = r.WithContext(ctx)
 
 		// Trace the service function handler execution
 		handlerSpan, ctx := opentracing.StartSpanFromContext(r.Context(), "CreateSubscriptionHandler")
@@ -1619,17 +1550,14 @@ GetTilesHandler handles request/response marshaling and validation for
 func GetTilesHandler(service Service, authBackend AuthorizationBackend) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		defer errors.HandleRequest("GetTilesHandler", w, r)
-		// Only do Authentication if a authentication Backend is available. Otherwise this is handled somewhere else
-		if authBackend != nil {
-			// Authentication Handling
-			// OAuth2 Authentication
-			ctx, ok := authBackend.AuthorizeOAuth2(r, w, "poi:tiles:read")
-			if !ok {
-				// No Error Handling needed, this is already done
-				return
-			}
-			r = r.WithContext(ctx)
+		// Authentication Handling
+		// OAuth2 Authentication
+		ctx, ok := authBackend.AuthorizeOAuth2(r, w, "poi:tiles:read")
+		if !ok {
+			// No Error Handling needed, this is already done
+			return
 		}
+		r = r.WithContext(ctx)
 
 		// Trace the service function handler execution
 		handlerSpan, ctx := opentracing.StartSpanFromContext(r.Context(), "GetTilesHandler")
@@ -2664,14 +2592,12 @@ type Service interface {
 }
 
 /*
-RouterWithAuthentication implements: PACE POI API
+Router implements: PACE POI API
 
 POI API
 */
-func RouterWithAuthentication(service Service, authBackend AuthorizationBackend) *mux.Router {
-	if authBackend != nil {
-		authBackend.Init(cfgOAuth2)
-	}
+func Router(service Service, authBackend AuthorizationBackend) *mux.Router {
+	authBackend.Init(cfgOAuth2)
 	router := mux.NewRouter()
 	// Subrouter s1 - Path: /poi
 	s1 := router.PathPrefix("/poi").Subrouter()
@@ -2700,9 +2626,4 @@ func RouterWithAuthentication(service Service, authBackend AuthorizationBackend)
 	s1.Methods("DELETE").Path("/beta/apps/{appID}").Handler(DeleteAppHandler(service, authBackend)).Name("DeleteApp")
 	s1.Methods("GET").Path("/beta/pois/{poiId}").Handler(GetPoiHandler(service, authBackend)).Name("GetPoi")
 	return router
-}
-
-// Deprecated: Router kept for backward compatibility. Please use RouteWithAuthentication, Remove the Middleware and implement the AuthenticationBackend
-func Router(service Service) *mux.Router {
-	return RouterWithAuthentication(service, nil)
 }

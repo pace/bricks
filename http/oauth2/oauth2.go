@@ -17,6 +17,18 @@ import (
 	"github.com/pace/bricks/maintenance/log"
 )
 
+// Deprecated: Middleware holds data necessary for Oauth processing - Deprecated for generated apis,
+// use the generated Authentication Backend of the API with oauth2.Authorizer
+type Middleware struct {
+	Backend TokenIntrospecter
+}
+
+// Deprecated: NewMiddleware creates a new Oauth middleware - Deprecated for generated apis,
+// use the generated AuthenticationBackend of the API with oauth2.Authorizer
+func NewMiddleware(backend TokenIntrospecter) *Middleware {
+	return &Middleware{Backend: backend}
+}
+
 type token struct {
 	value    string
 	userID   string
@@ -24,21 +36,9 @@ type token struct {
 	scope    Scope
 }
 
-// Deprecated: Middleware holds data necessary for Oauth processing - Deprecated for generated apis,
-// use the generated Authentication Backend of the API with oauth2.Authorizer
-type Middleware struct {
-	Backend TokenIntrospecter
-}
-
-// GetValue returns the oauth2 token for the current user, the value is part of the answer of the introspection
+// GetValue returns the oauth2 token of the current user
 func (t *token) GetValue() string {
 	return t.value
-}
-
-// Deprecated: NewMiddleware creates a new Oauth middleware - Deprecated for generated apis,
-// use the generated AuthenticationBackend of the API with oauth2.Authorizer
-func NewMiddleware(backend TokenIntrospecter) *Middleware {
-	return &Middleware{Backend: backend}
 }
 
 // Handler will parse the bearer token, introspect it, and put the token and other
@@ -128,10 +128,7 @@ func Request(r *http.Request) *http.Request {
 // HasScope extracts an access token from context and checks if
 // the permissions represented by the provided scope are included in the valid scope.
 func HasScope(ctx context.Context, scope Scope) bool {
-	tok, ok := security.GetTokenFromContext(ctx)
-	if !ok {
-		return false
-	}
+	tok, _ := security.GetTokenFromContext(ctx)
 	oauth2token, ok := tok.(*token)
 	if !ok {
 		return false
@@ -141,10 +138,7 @@ func HasScope(ctx context.Context, scope Scope) bool {
 
 // UserID returns the userID stored in ctx
 func UserID(ctx context.Context) (string, bool) {
-	tok, ok := security.GetTokenFromContext(ctx)
-	if !ok {
-		return "", false
-	}
+	tok, _ := security.GetTokenFromContext(ctx)
 	oauth2token, ok := tok.(*token)
 	if !ok {
 		return "", false
@@ -154,11 +148,7 @@ func UserID(ctx context.Context) (string, bool) {
 
 // Scopes returns the scopes stored in ctx
 func Scopes(ctx context.Context) []string {
-	tok, ok := security.GetTokenFromContext(ctx)
-
-	if !ok {
-		return []string{}
-	}
+	tok, _ := security.GetTokenFromContext(ctx)
 	oauth2token, ok := tok.(*token)
 	if !ok {
 		return []string{}

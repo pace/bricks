@@ -325,15 +325,24 @@ func (g *Generator) buildServiceInterface(routes []*route, schema *openapi3.Swag
 }
 
 func (g *Generator) buildRouter(routes []*route, schema *openapi3.Swagger) error {
-	routeStmts := make([]jen.Code, 2, (len(routes)+2)*len(schema.Servers)+2)
-	// Init Authentication
-	var configs []jen.Code
-	for name := range schema.Components.SecuritySchemes {
-		configs = append(configs, jen.Id("cfg"+strings.Title(name)))
+	needsSecurity := hasSecuritySchema(schema)
+	startInd := 0
+	var routeStmts []jen.Code
+	if needsSecurity {
+		startInd++
+		routeStmts = make([]jen.Code, 2, (len(routes)+2)*len(schema.Servers)+2)
+		// Init Authentication
+		var configs []jen.Code
+		for name := range schema.Components.SecuritySchemes {
+			configs = append(configs, jen.Id("cfg"+strings.Title(name)))
+		}
+		routeStmts[0] = jen.Id("authBackend").Dot("Init").Call(configs...)
+	} else {
+		routeStmts = make([]jen.Code, 1, (len(routes)+2)*len(schema.Servers)+1)
+
 	}
-	routeStmts[0] = jen.If(jen.Id("authBackend").Op("!=").Nil()).Block(jen.Id("authBackend").Dot("Init").Call(configs...))
 	// create new router
-	routeStmts[1] = jen.Id("router").Op(":=").Qual(pkgGorillaMux, "NewRouter").Call()
+	routeStmts[startInd] = jen.Id("router").Op(":=").Qual(pkgGorillaMux, "NewRouter").Call()
 
 	// Note: we don't restrict host, scheme and port to ease development
 	paths := make(map[string]struct{})
@@ -363,10 +372,16 @@ func (g *Generator) buildRouter(routes []*route, schema *openapi3.Swagger) error
 		for i := 0; i < len(sortableRoutes); i++ {
 			route := sortableRoutes[i]
 
+			var routeCallParams *jen.Statement
 			// generic route
+			if needsSecurity {
+				routeCallParams = jen.List(jen.Id("service"), jen.Id("authBackend"))
+			} else {
+				routeCallParams = jen.List(jen.Id("service"))
+			}
 			routeStmt := jen.Id(subrouterID).Dot("Methods").Call(jen.Lit(route.method)).
 				Dot("Path").Call(jen.Lit(route.url.Path)).
-				Dot("Handler").Call(jen.Id(route.handler).Call(jen.List(jen.Id("service"), jen.Id("authBackend"))))
+				Dot("Handler").Call(jen.Id(route.handler).Call(routeCallParams))
 
 			// add query parameters for route matching
 			if len(route.queryValues) > 0 {
@@ -387,23 +402,22 @@ func (g *Generator) buildRouter(routes []*route, schema *openapi3.Swagger) error
 
 	// return
 	routeStmts = append(routeStmts, jen.Return(jen.Id("router")))
-
-	g.addGoDoc("RouterWithAuthentication", "implements: "+schema.Info.Title+"\n\n"+schema.Info.Description)
+	g.addGoDoc("Router", "implements: "+schema.Info.Title+"\n\n"+schema.Info.Description)
 	serviceInterfaceVariable := jen.Id("service").Id(serviceInterface)
-	g.goSource.Func().Id("RouterWithAuthentication").Params(
-		serviceInterfaceVariable, jen.Id("authBackend").Id(authBackendInterface)).Op("*").Qual(pkgGorillaMux, "Router").Block(routeStmts...)
+	if hasSecuritySchema(schema) {
+		g.goSource.Func().Id("Router").Params(
+			serviceInterfaceVariable, jen.Id("authBackend").Id(authBackendInterface)).Op("*").Qual(pkgGorillaMux, "Router").Block(routeStmts...)
 
-	block := jen.Return(jen.Id("RouterWithAuthentication").Call(jen.Id("service"), jen.Nil()))
-
-	g.addGoDocDeprecated("Router", "kept for backward compatibility. Please use RouteWithAuthentication, Remove the Middleware and implement the AuthenticationBackend")
-
-	g.goSource.Func().Id("Router").Params(
-		serviceInterfaceVariable).Op("*").Qual(pkgGorillaMux, "Router").Block(block)
+	} else {
+		g.goSource.Func().Id("Router").Params(
+			serviceInterfaceVariable).Op("*").Qual(pkgGorillaMux, "Router").Block(routeStmts...)
+	}
 
 	return nil
 }
 
 func (g *Generator) buildHandler(method string, op *openapi3.Operation, pattern string, pathItem *openapi3.PathItem, secSchemes map[string]*openapi3.SecuritySchemeRef) (*route, error) {
+	needsSecurity := len(secSchemes) > 0
 	route := &route{
 		method:    strings.ToUpper(method),
 		pattern:   pattern,
@@ -439,17 +453,24 @@ func (g *Generator) buildHandler(method string, op *openapi3.Operation, pattern 
 	// generate handler function
 	gen := g // generator is used less frequent then the jen group, make available with longer name
 	var auth *jen.Group
-	if op.Security != nil {
-		var err error
-		auth, err = generateAuthorization(op, secSchemes)
-		if err != nil {
-			return nil, err
+	if needsSecurity {
+		if op.Security != nil {
+			var err error
+			auth, err = generateAuthorization(op, secSchemes)
+			if err != nil {
+				return nil, err
+			}
 		}
 	}
 	g.addGoDoc(handler, fmt.Sprintf("handles request/response marshaling and validation for \n %s %s",
 		method, pattern))
-	g.goSource.Func().Id(handler).Params(
-		jen.Id("service").Id(serviceInterface), jen.Id("authBackend").Id(authBackendInterface)).Qual("net/http", "Handler").Block(
+	var params *jen.Statement
+	if needsSecurity {
+		params = jen.List(jen.Id("service").Id(serviceInterface), jen.Id("authBackend").Id(authBackendInterface))
+	} else {
+		params = jen.List(jen.Id("service").Id(serviceInterface))
+	}
+	g.goSource.Func().Id(handler).Params(params).Qual("net/http", "Handler").Block(
 		jen.Return().Qual("net/http", "HandlerFunc").Call(
 			jen.Func().Params(
 				jen.Id("w").Qual("net/http", "ResponseWriter"),
@@ -459,7 +480,6 @@ func (g *Generator) buildHandler(method string, op *openapi3.Operation, pattern 
 				g.Defer().Qual(pkgMaintErrors, "HandleRequest").Call(jen.Lit(handler), jen.Id("w"), jen.Id("r"))
 
 				g.Add(auth)
-
 				// set tracing context
 				g.Line().Comment("Trace the service function handler execution")
 				g.List(jen.Id("handlerSpan"), jen.Id("ctx")).Op(":=").Qual(pkgOpentracing, "StartSpanFromContext").Call(
@@ -616,10 +636,7 @@ func generateAuthorization(op *openapi3.Operation, secSchemes map[string]*openap
 			}
 		}
 	}
-	result := &jen.Group{}
-	result.Comment("Only do Authentication if a authentication Backend is available. Otherwise this is handled somewhere else")
-	result.Line().If(jen.Id("authBackend").Op("!=").Nil()).Block(r)
-	return result, nil
+	return r, nil
 }
 
 var asciiName = regexp.MustCompile("([^a-zA-Z]+)")

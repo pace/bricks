@@ -3,8 +3,6 @@ module github.com/pace/bricks
 go 1.12
 
 require (
-	github.com/GoAdminGroup/go-admin v1.0.8
-	github.com/GoAdminGroup/themes v0.0.8
 	github.com/asaskevich/govalidator v0.0.0-20180720115003-f9ffefc3facf
 	github.com/beorn7/perks v0.0.0-20180321164747-3a771d992973 // indirect
 	github.com/caarlos0/env v3.3.0+incompatible

@@ -21,14 +21,6 @@ func (g *Generator) addGoDoc(typeName, description string) {
 	}
 }
 
-func (g *Generator) addGoDocDeprecated(typeName, description string) {
-	if description != "" {
-		g.goSource.Comment(fmt.Sprintf("Deprecated: %s %s", typeName, description))
-	} else {
-		g.goSource.Comment(fmt.Sprintf("Deprecated: %s ...", typeName))
-	}
-}
-
 func (g *Generator) goType(stmt *jen.Statement, schema *openapi3.Schema, tags map[string]string) error { // nolint: gocyclo
 	switch schema.Type {
 	case "string":
@@ -98,6 +90,10 @@ func (g *Generator) commentOrExample(stmt *jen.Statement, schema *openapi3.Schem
 	} else if schema.Example != nil {
 		stmt.Comment(fmt.Sprintf("Example: \"%v\"", schema.Example))
 	}
+}
+
+func hasSecuritySchema(swagger *openapi3.Swagger) bool {
+	return len(swagger.Components.SecuritySchemes) > 0
 }
 
 func addValidator(tags map[string]string, validator string) {

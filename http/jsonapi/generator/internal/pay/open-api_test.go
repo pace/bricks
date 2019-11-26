@@ -135,17 +135,14 @@ CreatePaymentMethodSEPAHandler handles request/response marshaling and validatio
 func CreatePaymentMethodSEPAHandler(service Service, authBackend AuthorizationBackend) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		defer errors.HandleRequest("CreatePaymentMethodSEPAHandler", w, r)
-		// Only do Authentication if a authentication Backend is available. Otherwise this is handled somewhere else
-		if authBackend != nil {
-			// Authentication Handling
-			// OAuth2 Authentication
-			ctx, ok := authBackend.AuthorizeOAuth2(r, w, "pay:payment-methods:create")
-			if !ok {
-				// No Error Handling needed, this is already done
-				return
-			}
-			r = r.WithContext(ctx)
+		// Authentication Handling
+		// OAuth2 Authentication
+		ctx, ok := authBackend.AuthorizeOAuth2(r, w, "pay:payment-methods:create")
+		if !ok {
+			// No Error Handling needed, this is already done
+			return
 		}
+		r = r.WithContext(ctx)
 
 		// Trace the service function handler execution
 		handlerSpan, ctx := opentracing.StartSpanFromContext(r.Context(), "CreatePaymentMethodSEPAHandler")
@@ -182,16 +179,13 @@ DeletePaymentMethodHandler handles request/response marshaling and validation fo
 func DeletePaymentMethodHandler(service Service, authBackend AuthorizationBackend) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		defer errors.HandleRequest("DeletePaymentMethodHandler", w, r)
-		// Only do Authentication if a authentication Backend is available. Otherwise this is handled somewhere else
-		if authBackend != nil {
-			// Authentication Handling
-			ctx, ok := authBackend.AuthorizeProfileKey(r, w)
-			if !ok {
-				// No Error Handling needed, this is already done
-				return
-			}
-			r = r.WithContext(ctx)
+		// Authentication Handling
+		ctx, ok := authBackend.AuthorizeProfileKey(r, w)
+		if !ok {
+			// No Error Handling needed, this is already done
+			return
 		}
+		r = r.WithContext(ctx)
 
 		// Trace the service function handler execution
 		handlerSpan, ctx := opentracing.StartSpanFromContext(r.Context(), "DeletePaymentMethodHandler")
@@ -785,15 +779,13 @@ type Service interface {
 }
 
 /*
-RouterWithAuthentication implements: PACE Payment API
+Router implements: PACE Payment API
 
 Welcome to the PACE Payment API documentation.
 This API is responsible for managing payment methods for users as well as authorizing payments on behalf of PACE services.
 */
-func RouterWithAuthentication(service Service, authBackend AuthorizationBackend) *mux.Router {
-	if authBackend != nil {
-		authBackend.Init(cfgOAuth2, cfgProfileKey)
-	}
+func Router(service Service, authBackend AuthorizationBackend) *mux.Router {
+	authBackend.Init(cfgOAuth2, cfgProfileKey)
 	router := mux.NewRouter()
 	// Subrouter s1 - Path: /pay
 	s1 := router.PathPrefix("/pay").Subrouter()
@@ -806,9 +798,4 @@ func RouterWithAuthentication(service Service, authBackend AuthorizationBackend)
 	s1.Methods("GET").Path("/beta/payment-methods").Handler(GetPaymentMethodsHandler(service, authBackend)).Name("GetPaymentMethods")
 	s1.Methods("POST").Path("/beta/transaction").Handler(ProcessPaymentHandler(service, authBackend)).Name("ProcessPayment")
 	return router
-}
-
-// Deprecated: Router kept for backward compatibility. Please use RouteWithAuthentication, Remove the Middleware and implement the AuthenticationBackend
-func Router(service Service) *mux.Router {
-	return RouterWithAuthentication(service, nil)
 }

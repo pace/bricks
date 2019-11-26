@@ -65,7 +65,7 @@ func TestHandlerIntrospectErrorAsMiddleware(t *testing.T) {
 
 			resp := w.Result()
 			body, err := ioutil.ReadAll(resp.Body)
-			defer resp.Body.Close()
+			resp.Body.Close()
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -91,24 +91,32 @@ func (t *tokenIntrospectedSuccessful) IntrospectToken(ctx context.Context, token
 
 func TestAuthenticatorWithSuccess(t *testing.T) {
 	testCases := []struct {
-		desc string
-		auth *Authorizer
+		desc           string
+		userScopes     string
+		expectedScopes string
+		active         bool
+		clientId       string
+		userId         string
 	}{
 		{desc: "Tests a valid Request with OAuth2 Authentication without Scope checking",
-			auth: NewAuthenticator(&tokenIntrospectedSuccessful{&IntrospectResponse{
-				Active:   true,
-				Scope:    "ABC DHHG kjdk",
-				ClientID: "ClientId",
-				UserID:   "UserId",
-			}}, &Config{}),
+			active:     true,
+			userScopes: "ABC DHHG kjdk",
+			clientId:   "ClientId",
+			userId:     "UserId",
 		},
-		{desc: "Tests a valid Request with OAuth2 Authentication with Scope checking",
-			auth: NewAuthenticator(&tokenIntrospectedSuccessful{&IntrospectResponse{
-				Active:   true,
-				Scope:    "ABC DHHG kjdk",
-				ClientID: "ClientId",
-				UserID:   "UserId",
-			}}, &Config{}).WithScope("ABC"),
+		{desc: "Tests a valid Request with OAuth2 Authentication and one scope to check",
+			active:         true,
+			userScopes:     "ABC DHHG kjdk",
+			clientId:       "ClientId",
+			userId:         "UserId",
+			expectedScopes: "ABC",
+		},
+		{desc: "Tests a valid Request with OAuth2 Authentication and two scope to check",
+			active:         true,
+			userScopes:     "ABC DHHG kjdk",
+			clientId:       "ClientId",
+			userId:         "UserId",
+			expectedScopes: "ABC kjdk",
 		},
 	}
 	for _, tC := range testCases {
@@ -116,17 +124,32 @@ func TestAuthenticatorWithSuccess(t *testing.T) {
 			w := httptest.NewRecorder()
 			r := httptest.NewRequest("GET", "/", nil)
 			r.Header.Add("Authorization", "Bearer bearer")
-			authorize, b := tC.auth.Authorize(r, w)
 
-			if !b || w.Code != http.StatusOK || authorize == nil {
-				t.Errorf("Expected succesfull Authentication, but was not succesfull with code %d and body %v", w.Code, w.Body)
+			auth := NewAuthenticator(&tokenIntrospectedSuccessful{&IntrospectResponse{
+				Active:   tC.active,
+				Scope:    tC.userScopes,
+				ClientID: tC.clientId,
+				UserID:   tC.userId,
+			}}, &Config{})
+			if tC.expectedScopes != "" {
+				auth = auth.WithScope(tC.expectedScopes)
+			}
+			authorize, b := auth.Authorize(r, w)
+			resp := w.Result()
+			body, err := ioutil.ReadAll(resp.Body)
+			resp.Body.Close()
+			if err != nil {
+				t.Fatal(err)
+			}
+			if !b || authorize == nil {
+				t.Errorf("Expected succesfull Authentication, but was not succesfull with code %d and body %q", resp.StatusCode, string(body))
 				return
 			}
 			to, _ := security.GetTokenFromContext(authorize)
 			tok, ok := to.(*token)
 
-			if !ok || tok.value != "bearer" || tok.scope != Scope("ABC DHHG kjdk") || tok.clientID != "ClientId" || tok.userID != "UserId" {
-				t.Errorf("Expected %v but got %v", tC.auth.introspection.(*tokenIntrospectedSuccessful).response, tok)
+			if !ok || tok.value != "bearer" || tok.scope != Scope(tC.userScopes) || tok.clientID != tC.clientId || tok.userID != tC.userId {
+				t.Errorf("Expected %v but got %v", auth.introspection.(*tokenIntrospectedSuccessful).response, tok)
 			}
 		})
 	}
