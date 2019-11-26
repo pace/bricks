@@ -188,7 +188,7 @@ func ContextTransfer(sourceCtx context.Context, targetCtx context.Context) conte
 // because it's used by apiKey and oauth2 authorization.
 // BearerToken returns the bearer token stored in ctx
 func BearerToken(ctx context.Context) (string, bool) {
-	if tok, ok := security.GetTokenFromContext(ctx); !ok {
+	if tok, ok := security.GetTokenFromContext(ctx); ok {
 		return tok.GetValue(), true
 	}
 	return "", false
