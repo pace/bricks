@@ -204,7 +204,7 @@ func TestAuthenticationWithErrors(t *testing.T) {
 				t.Fatal(err)
 			}
 			if b {
-				t.Errorf("Expected error in Authentication, but was succesfull with code %d and body %v", resp.StatusCode, string(body))
+				t.Errorf("Expected error in authentication, but was succesful with code %d and body %v", resp.StatusCode, string(body))
 			}
 
 			if got, ex := w.Code, tC.expectedCode; got != ex {
