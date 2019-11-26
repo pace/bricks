@@ -21,7 +21,7 @@ type ScopesMiddleware struct {
 }
 
 // Deprecated: NewScopesMiddleware return a new scopes middleware - For generated APIs use the generated
-// AuthenticationBackend with auth2.Authorizer and set a scope
+// AuthenticationBackend with oauth2.Authorizer and set a scope
 func NewScopesMiddleware(scopes RequiredScopes) *ScopesMiddleware {
 	return &ScopesMiddleware{RequiredScopes: scopes}
 }
