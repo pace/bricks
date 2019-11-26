@@ -5,6 +5,7 @@ package oauth2
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"net/http"
@@ -210,6 +211,12 @@ func TestAuthenticationWithErrors(t *testing.T) {
 			returnedErr:  ErrInvalidToken,
 			expectedCode: 401,
 			expectedBody: "user token is invalid\n",
+		},
+		{
+			desc:         "token introspecter returns any other error",
+			returnedErr:  errors.New("any other error"),
+			expectedCode: 401,
+			expectedBody: "any other error\n",
 		},
 	}
 	for _, tC := range testCases {

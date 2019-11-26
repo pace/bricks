@@ -84,7 +84,12 @@ func introspectRequest(r *http.Request, w http.ResponseWriter, tokenIntro TokenI
 			log.Req(r).Info().Msg(err.Error())
 			http.Error(w, err.Error(), http.StatusUnauthorized)
 			return nil, false
+		default:
+			log.Req(r).Info().Msg(err.Error())
+			http.Error(w, err.Error(), http.StatusUnauthorized)
+			return nil, false
 		}
+
 	}
 	t := fromIntrospectResponse(s, tok)
 	ctx = security.ContextWithToken(ctx, &t)
