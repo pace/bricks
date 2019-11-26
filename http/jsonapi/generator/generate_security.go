@@ -25,7 +25,7 @@ func (g *Generator) buildSecurityBackendInterface(schema *openapi3.Swagger) erro
 	//r contains the methods for the security interface
 	r := &jen.Group{}
 	//configs contains the names and types of the needed configs for the init method
-	// (that initializes the Backend with the security configs)
+	// (that initializes the backend with the security configs)
 	var configs []jen.Code
 
 	// Because the order of the values while iterating over a map is randomized the generated result can only be tested if the keys are sorted
