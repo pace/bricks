@@ -114,7 +114,7 @@ func (h *handler) writeError(w http.ResponseWriter, err error, errorCode int, na
 	if _, err := w.Write([]byte("ERR")); err != nil {
 		log.Warnf("could not write output: %s", err)
 	}
-	log.Warnf("healthCheck %q was not healthy: %v", name, err)
+	log.Warnf("health check %q was not healthy: %v", name, err)
 }
 
 // RegisterHealthCheck registers a HealthCheck that need to be routed. The name
