@@ -22,7 +22,7 @@ const (
 // the Methods are named AutenticateNAME and Init
 func (g *Generator) buildSecurityBackendInterface(schema *openapi3.Swagger) error {
 	securitySchemes := schema.Components.SecuritySchemes
-	//r contains the methods for the security interface
+	// r contains the methods for the security interface
 	r := &jen.Group{}
 	// configs contains the names and types of the needed configs for the init method
 	// (that initializes the backend with the security configs)
