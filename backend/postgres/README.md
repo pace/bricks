@@ -52,7 +52,7 @@ Prometheus metrics exposed.
 
 * `pace_postgres_query_total{database}` Collects stats about the number of postgres queries made
 * `pace_postgres_query_failed{database}` Collects stats about the number of postgres queries failed
-* `pace_postgres_query_duration_seconds{database}` Collect performance metrics for each postgres query
+* `pace_postgres_query_duration_seconds{database}` Collects performance metrics for each postgres query
 * `pace_postgres_query_rows_total{database}` Collects stats about the number of rows returned by a postgres query
 * `pace_postgres_query_affected_total{database}` Collects stats about the number of rows affected by a postgres query
 * `pace_postgres_connection_pool_hits{database}` Collects number of times free connection was found in the pool
