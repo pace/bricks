@@ -72,6 +72,20 @@ func HandleError(rp interface{}, handlerName string, w http.ResponseWriter, r *h
 	runtime.WriteError(w, http.StatusInternalServerError, errors.New("Error"))
 }
 
+// Handle logs the given error and reports it to sentry.
+func Handle(ctx context.Context, rp interface{}) {
+	pw, ok := rp.(*PanicWrap)
+	if ok {
+		log.Ctx(ctx).Error().Msgf("Panic: %v", pw.err)
+		rp = pw.err // unwrap error
+	} else {
+		log.Ctx(ctx).Error().Msgf("Error: %v", rp)
+	}
+	log.Stack(ctx)
+
+	sentryEvent{ctx, nil, rp, ""}.Send()
+}
+
 // HandleWithCtx should be called with defer to recover panics in goroutines
 func HandleWithCtx(ctx context.Context, handlerName string) {
 	if rp := recover(); rp != nil {
