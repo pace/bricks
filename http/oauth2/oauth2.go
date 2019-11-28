@@ -8,7 +8,6 @@ package oauth2
 
 import (
 	"context"
-	"fmt"
 	"net/http"
 
 	opentracing "github.com/opentracing/opentracing-go"
@@ -29,18 +28,6 @@ func NewMiddleware(backend TokenIntrospecter) *Middleware {
 	return &Middleware{Backend: backend}
 }
 
-type token struct {
-	value    string
-	userID   string
-	clientID string
-	scope    Scope
-}
-
-// GetValue returns the oauth2 token of the current user
-func (t *token) GetValue() string {
-	return t.value
-}
-
 // Handler will parse the bearer token, introspect it, and put the token and other
 // relevant information back in the context.
 func (m *Middleware) Handler(next http.Handler) http.Handler {
@@ -51,6 +38,18 @@ func (m *Middleware) Handler(next http.Handler) http.Handler {
 		}
 		next.ServeHTTP(w, r.WithContext(ctx))
 	})
+}
+
+type token struct {
+	value    string
+	userID   string
+	clientID string
+	scope    Scope
+}
+
+// GetValue returns the oauth2 token of the current user
+func (t *token) GetValue() string {
+	return t.value
 }
 
 // IntrospectRequest introspects the requests and handles all errors:
@@ -73,21 +72,17 @@ func introspectRequest(r *http.Request, w http.ResponseWriter, tokenIntro TokenI
 	if err != nil {
 		switch err {
 		case ErrBadUpstreamResponse:
-			log.Req(r).Info().Msg(err.Error())
-			http.Error(w, err.Error(), http.StatusBadGateway)
-			return nil, false
-		case ErrUpstreamConnection:
-			log.Req(r).Info().Msg(err.Error())
-			http.Error(w, err.Error(), http.StatusBadGateway)
-			return nil, false
-		case ErrInvalidToken:
 			fallthrough
-		default:
-			log.Req(r).Info().Msg(err.Error())
+		case ErrUpstreamConnection:
+			http.Error(w, err.Error(), http.StatusBadGateway)
+		case ErrInvalidToken:
 			http.Error(w, err.Error(), http.StatusUnauthorized)
-			return nil, false
-		}
+		default:
+			http.Error(w, err.Error(), http.StatusInternalServerError)
 
+		}
+		log.Req(r).Info().Msg(err.Error())
+		return nil, false
 	}
 	t := fromIntrospectResponse(s, tok)
 	ctx = security.ContextWithToken(ctx, &t)
@@ -97,14 +92,6 @@ func introspectRequest(r *http.Request, w http.ResponseWriter, tokenIntro TokenI
 		Msg("Oauth2")
 	span.LogFields(olog.String("client_id", t.clientID), olog.String("user_id", t.userID))
 	return ctx, true
-}
-
-func validateScope(ctx context.Context, w http.ResponseWriter, req Scope) bool {
-	if !HasScope(ctx, req) {
-		http.Error(w, fmt.Sprintf("Forbidden - requires scope %q", req), http.StatusForbidden)
-		return false
-	}
-	return true
 }
 
 func fromIntrospectResponse(s *IntrospectResponse, tokenValue string) token {

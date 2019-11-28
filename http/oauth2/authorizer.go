@@ -5,6 +5,7 @@ package oauth2
 
 import (
 	"context"
+	"fmt"
 	"net/http"
 )
 
@@ -59,4 +60,12 @@ func (a *Authorizer) Authorize(r *http.Request, w http.ResponseWriter) (context.
 		ok = validateScope(ctx, w, a.scope)
 	}
 	return ctx, ok
+}
+
+func validateScope(ctx context.Context, w http.ResponseWriter, req Scope) bool {
+	if !HasScope(ctx, req) {
+		http.Error(w, fmt.Sprintf("Forbidden - requires scope %q", req), http.StatusForbidden)
+		return false
+	}
+	return true
 }
