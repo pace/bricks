@@ -67,20 +67,7 @@ func HandleError(rp interface{}, handlerName string, w http.ResponseWriter, r *h
 	}
 	log.Stack(ctx)
 
-	packet := newPacket(rp)
-
-	// append http info
-	packet.Interfaces = append(packet.Interfaces, raven.NewHttp(r))
-
-	// append additional info
-	userID, ok := oauth2.UserID(ctx)
-	packet.Interfaces = append(packet.Interfaces, &raven.User{ID: userID, IP: log.ProxyAwareRemote(r)})
-	if ok {
-		packet.Tags = append(packet.Tags, raven.Tag{Key: "user_id", Value: userID})
-	}
-	appendInfoFromContext(ctx, packet, handlerName)
-
-	raven.Capture(packet, nil)
+	sentryEvent{ctx, r, rp, handlerName}.Send()
 
 	runtime.WriteError(w, http.StatusInternalServerError, errors.New("Error"))
 }
@@ -91,17 +78,7 @@ func HandleWithCtx(ctx context.Context, handlerName string) {
 		log.Ctx(ctx).Error().Str("handler", handlerName).Msgf("Panic: %v", rp)
 		log.Stack(ctx)
 
-		packet := newPacket(rp)
-
-		// append additional info
-		userID, ok := oauth2.UserID(ctx)
-		packet.Interfaces = append(packet.Interfaces, &raven.User{ID: userID})
-		if ok {
-			packet.Tags = append(packet.Tags, raven.Tag{Key: "user_id", Value: userID})
-		}
-		appendInfoFromContext(ctx, packet, handlerName)
-
-		raven.Capture(packet, nil)
+		sentryEvent{ctx, nil, rp, handlerName}.Send()
 	}
 }
 
@@ -115,7 +92,20 @@ func WrapWithExtra(err error, extraInfo map[string]interface{}) error {
 	return raven.WrapWithExtra(err, extraInfo)
 }
 
-func newPacket(rp interface{}) *raven.Packet {
+type sentryEvent struct {
+	ctx         context.Context
+	req         *http.Request // optional
+	r           interface{}
+	handlerName string
+}
+
+func (e sentryEvent) Send() {
+	raven.Capture(e.build(), nil)
+}
+
+func (e sentryEvent) build() *raven.Packet {
+	ctx, r, rp, handlerName := e.ctx, e.req, e.r, e.handlerName
+
 	rvalStr := fmt.Sprint(rp)
 	var packet *raven.Packet
 
@@ -132,10 +122,18 @@ func newPacket(rp interface{}) *raven.Packet {
 		}
 	}
 
-	return packet
-}
+	// add user
+	userID, ok := oauth2.UserID(ctx)
+	user := raven.User{ID: userID}
+	if r != nil {
+		user.IP = log.ProxyAwareRemote(r)
+	}
+	packet.Interfaces = append(packet.Interfaces, &user)
+	if ok {
+		packet.Tags = append(packet.Tags, raven.Tag{Key: "user_id", Value: userID})
+	}
 
-func appendInfoFromContext(ctx context.Context, packet *raven.Packet, handlerName string) {
+	// from context
 	if reqID := log.RequestIDFromContext(ctx); reqID != "" {
 		packet.Extra["req_id"] = reqID
 		packet.Tags = append(packet.Tags, raven.Tag{Key: "req_id", Value: reqID})
@@ -148,5 +146,13 @@ func appendInfoFromContext(ctx context.Context, packet *raven.Packet, handlerNam
 		packet.Extra["oauth2_scopes"] = scopes
 	}
 
+	// from request
+	if r != nil {
+		packet.Interfaces = append(packet.Interfaces, raven.NewHttp(r))
+	}
+
+	// from env
 	packet.Extra["microservice"] = os.Getenv("JAEGER_SERVICE_NAME")
+
+	return packet
 }
