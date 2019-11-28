@@ -42,9 +42,39 @@ func (h *recoveryHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	h.next.ServeHTTP(w, r)
 }
 
+type ctxKey struct{}
+
+var reqKey = ctxKey{}
+
+func contextWithRequest(ctx context.Context, r *http.Request) context.Context {
+	return context.WithValue(ctx, reqKey, r)
+}
+
+func requestFromContext(ctx context.Context) *http.Request {
+	if v := ctx.Value(reqKey); v != nil {
+		return v.(*http.Request)
+	}
+	return nil
+}
+
+type contextHandler struct {
+	next http.Handler
+}
+
+func (h contextHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	// For error handling we want to log information about the request under
+	// which the error happened. But in some cases we only have a context,
+	// because unlike the context the request is not passed down. To make the
+	// request available for error handling we add it to the context here.
+	h.next.ServeHTTP(w, r.WithContext(contextWithRequest(r.Context(), r)))
+}
+
 // Handler implements a panic recovering middleware
 func Handler() func(http.Handler) http.Handler {
-	return func(next http.Handler) http.Handler { return &recoveryHandler{next: next} }
+	return func(next http.Handler) http.Handler {
+		next = contextHandler{next: next}
+		return &recoveryHandler{next: next}
+	}
 }
 
 // HandleRequest should be called with defer to recover panics in request handlers
@@ -119,6 +149,11 @@ func (e sentryEvent) Send() {
 
 func (e sentryEvent) build() *raven.Packet {
 	ctx, r, rp, handlerName := e.ctx, e.req, e.r, e.handlerName
+
+	// get request from context if available
+	if r == nil {
+		r = requestFromContext(ctx)
+	}
 
 	rvalStr := fmt.Sprint(rp)
 	var packet *raven.Packet
