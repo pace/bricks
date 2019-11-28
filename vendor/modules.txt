@@ -47,7 +47,7 @@ github.com/gorilla/mux
 github.com/inconshreveable/mousetrap
 # github.com/jinzhu/inflection v0.0.0-20180308033659-04140366298a
 github.com/jinzhu/inflection
-# github.com/mattn/go-isatty v0.0.8
+# github.com/mattn/go-isatty v0.0.4
 github.com/mattn/go-isatty
 # github.com/matttproud/golang_protobuf_extensions v1.0.1
 github.com/matttproud/golang_protobuf_extensions/pbutil
@@ -87,8 +87,9 @@ github.com/spf13/cobra
 github.com/spf13/pflag
 # github.com/streadway/handy v0.0.0-20190108123426-d5acb3125c2a => github.com/Teelevision/handy v0.0.0-20190809134549-d074bcaebcac
 github.com/streadway/handy/retry
-# github.com/stretchr/testify v1.4.0
+# github.com/stretchr/testify v1.3.0
 github.com/stretchr/testify/assert
+github.com/stretchr/testify/require
 # github.com/uber/jaeger-client-go v2.14.0+incompatible
 github.com/uber/jaeger-client-go
 github.com/uber/jaeger-client-go/config
@@ -111,9 +112,12 @@ github.com/uber/jaeger-lib/metrics
 github.com/uber/jaeger-lib/metrics/prometheus
 # github.com/zenazn/goji v0.0.0-20160507202103-64eb34159fe5
 github.com/zenazn/goji/web/mutil
-# golang.org/x/net v0.0.0-20180906233101-161cd47e91fd
+# golang.org/x/net v0.0.0-20180911220305-26e67e76b6c3
 golang.org/x/net/context
-# golang.org/x/sys v0.0.0-20190222072716-a9d3bda3a223
+# golang.org/x/sys v0.0.0-20180909124046-d0be0721c37e
 golang.org/x/sys/unix
-# gopkg.in/yaml.v2 v2.2.2
+# golang.org/x/xerrors v0.0.0-20191011141410-1b5146add898
+golang.org/x/xerrors
+golang.org/x/xerrors/internal
+# gopkg.in/yaml.v2 v2.2.1
 gopkg.in/yaml.v2

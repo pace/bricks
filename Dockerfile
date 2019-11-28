@@ -3,8 +3,8 @@ WORKDIR /tmp/pace-bricks
 ADD . .
 
 # Build go files completely statically
-RUN GOPATH=/tmp/go CGO_ENABLED=0 go build -a -ldflags '-extldflags "-static"' -o /usr/local/bin/pb-testserver ./tools/testserver
-RUN GOPATH=/tmp/go CGO_ENABLED=0 go build -a -ldflags '-extldflags "-static"' -o /usr/local/bin/pb ./cmd/pb
+RUN GOPATH=/tmp/go CGO_ENABLED=0 go build -mod=vendor -a -ldflags '-extldflags "-static"' -o /usr/local/bin/pb-testserver ./tools/testserver
+RUN GOPATH=/tmp/go CGO_ENABLED=0 go build -mod=vendor -a -ldflags '-extldflags "-static"' -o /usr/local/bin/pb ./cmd/pb
 
 EXPOSE 5000
 

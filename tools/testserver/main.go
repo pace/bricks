@@ -40,7 +40,7 @@ func (*OauthBackend) IntrospectToken(ctx context.Context, token string) (*oauth2
 }
 
 func main() {
-	db := postgres.ConnectionPool()
+	db := postgres.DefaultConnectionPool()
 	rdb := redis.Client()
 
 	h := pacehttp.Router()

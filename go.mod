@@ -42,6 +42,7 @@ require (
 	github.com/zenazn/goji v0.0.0-20160507202103-64eb34159fe5
 	go.uber.org/atomic v1.3.2 // indirect
 	golang.org/x/sync v0.0.0-20190227155943-e225da77a7e6 // indirect
+	golang.org/x/xerrors v0.0.0-20191011141410-1b5146add898
 )
 
 replace github.com/streadway/handy => github.com/Teelevision/handy v0.0.0-20190809134549-d074bcaebcac
