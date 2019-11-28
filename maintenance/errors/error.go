@@ -34,8 +34,7 @@ type PanicWrap struct {
 }
 
 type recoveryHandler struct {
-	counter prometheus.Gauge
-	next    http.Handler
+	next http.Handler
 }
 
 func (h *recoveryHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
