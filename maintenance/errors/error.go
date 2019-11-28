@@ -57,6 +57,15 @@ func requestFromContext(ctx context.Context) *http.Request {
 	return nil
 }
 
+// ContextTransfer copies error handling related information from one context to
+// another.
+func ContextTransfer(ctx, targetCtx context.Context) context.Context {
+	if r := requestFromContext(ctx); r != nil {
+		return contextWithRequest(targetCtx, r)
+	}
+	return targetCtx
+}
+
 type contextHandler struct {
 	next http.Handler
 }
