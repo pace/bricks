@@ -33,9 +33,9 @@ type Config struct {
 	AuthorizationCode *Flow
 }
 
-// NewAuthenticator creates an Authorizer for a specific TokenIntrospecter
+// NewAuthorizer creates an Authorizer for a specific TokenIntrospecter
 // This Authorizer does not check the scope
-func NewAuthenticator(introspector TokenIntrospecter, cfg *Config) *Authorizer {
+func NewAuthorizer(introspector TokenIntrospecter, cfg *Config) *Authorizer {
 	return &Authorizer{introspection: introspector, config: cfg}
 }
 

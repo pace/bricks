@@ -126,7 +126,7 @@ func TestAuthenticatorWithSuccess(t *testing.T) {
 			r := httptest.NewRequest("GET", "/", nil)
 			r.Header.Add("Authorization", "Bearer bearer")
 
-			auth := NewAuthenticator(&tokenIntrospectedSuccessful{&IntrospectResponse{
+			auth := NewAuthorizer(&tokenIntrospectedSuccessful{&IntrospectResponse{
 				Active:   tC.active,
 				Scope:    tC.userScopes,
 				ClientID: tC.clientId,
@@ -157,7 +157,7 @@ func TestAuthenticatorWithSuccess(t *testing.T) {
 }
 
 func TestAuthenticationSuccessScopeError(t *testing.T) {
-	auth := NewAuthenticator(&tokenIntrospectedSuccessful{&IntrospectResponse{
+	auth := NewAuthorizer(&tokenIntrospectedSuccessful{&IntrospectResponse{
 		Active:   true,
 		Scope:    "ABC DEF DFE",
 		ClientID: "ClientId",
@@ -221,7 +221,7 @@ func TestAuthenticationWithErrors(t *testing.T) {
 	}
 	for _, tC := range testCases {
 		t.Run(tC.desc, func(t *testing.T) {
-			auth := NewAuthenticator(&tokenInspectorWithError{returnedErr: tC.returnedErr}, &Config{})
+			auth := NewAuthorizer(&tokenInspectorWithError{returnedErr: tC.returnedErr}, &Config{})
 			w := httptest.NewRecorder()
 			r := httptest.NewRequest("GET", "/", nil)
 			r.Header.Add("Authorization", "Bearer bearer")

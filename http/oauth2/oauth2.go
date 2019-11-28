@@ -11,7 +11,7 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/opentracing/opentracing-go"
+	opentracing "github.com/opentracing/opentracing-go"
 	olog "github.com/opentracing/opentracing-go/log"
 	"github.com/pace/bricks/http/security"
 	"github.com/pace/bricks/maintenance/log"
@@ -81,9 +81,7 @@ func introspectRequest(r *http.Request, w http.ResponseWriter, tokenIntro TokenI
 			http.Error(w, err.Error(), http.StatusBadGateway)
 			return nil, false
 		case ErrInvalidToken:
-			log.Req(r).Info().Msg(err.Error())
-			http.Error(w, err.Error(), http.StatusUnauthorized)
-			return nil, false
+			fallthrough
 		default:
 			log.Req(r).Info().Msg(err.Error())
 			http.Error(w, err.Error(), http.StatusUnauthorized)
