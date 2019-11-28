@@ -88,11 +88,9 @@ func TestHealthCheckAllWithErrors(t *testing.T) {
 		"TestHandlerInitErr : ERR",
 		"test : OK",
 	}
-
 	checkAllTestHcs(hcs, t, expected, 503)
 }
 func TestHealthCheckAllSuccess(t *testing.T) {
-
 	hcs := []*testHealthChecker{
 		{name: "test2"},
 		{name: "test3"},
@@ -103,7 +101,6 @@ func TestHealthCheckAllSuccess(t *testing.T) {
 		"test2 : OK",
 		"test : OK",
 	}
-
 	checkAllTestHcs(hcs, t, expected, 200)
 }
 

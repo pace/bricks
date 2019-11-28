@@ -24,6 +24,8 @@ type Initialisable interface {
 	Init() error
 }
 
+const nameAllHealthCheck = "all"
+
 type handler struct{}
 
 // checks contains all registered Health Checks - key:Name
@@ -43,69 +45,68 @@ func (h *handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 
 	name := splitRoute[1]
-	if name == "all" {
-		checkAll(w)
-		return
-	}
-
-	hcInterface, isIn := checks.Load(name)
-	if !isIn {
-		h.writeError(w, errors.New("health check not registered"), http.StatusNotFound, name)
-		return
-	}
-
-	hc := hcInterface.(HealthCheck)
-	if err, healthy := check(hc, name); healthy {
-		w.Header().Set("Content-Type", "text/plain")
-		w.WriteHeader(http.StatusOK)
-		if _, err := w.Write([]byte("OK\n")); err != nil {
-			log.Warnf("could not write output: %s", err)
+	hcs := &checks
+	checkAll := name == nameAllHealthCheck
+	if !checkAll {
+		hcInterface, isIn := checks.Load(name)
+		if !isIn {
+			h.writeError(w, errors.New("health check not registered"), http.StatusNotFound, name)
+			return
 		}
-	} else {
-		h.writeError(w, err, http.StatusServiceUnavailable, name)
+		hc := hcInterface.(HealthCheck)
+		hcs = &sync.Map{}
+		hcs.Store(name, hc)
 	}
-}
-
-// Checks one health check
-func check(hc HealthCheck, name string) (error, bool) {
-	// If it was not possible to initialise this health check, then show the initialisation error
-	if val, isIn := initErrors.Load(name); isIn {
-		err := val.(error)
-		return err, false
-	}
-	// this is the actual health check
-	healthy, err := hc.HealthCheck()
-	return err, healthy
-}
-
-// Does all HealthChecks and lists the result in the response body
-func checkAll(w http.ResponseWriter) {
-	results := make(map[string]error)
-	// do all checks and save the results
-	checks.Range(func(key, value interface{}) bool {
-		name := key.(string)
-		hc := value.(HealthCheck)
-		err, _ := check(hc, name)
-		results[name] = err
-		return true
-	})
-	// create the response from the HealthCheck results
+	result := check(hcs)
+	// Write the Result to the body and set the content type
+	w.Header().Set("Content-Type", "text/plain")
 	status := http.StatusOK
 	body := ""
-	for name, err := range results {
-		if err == nil {
-			body += fmt.Sprintf("%s : OK\n ", name)
+	for name, err := range result {
+		if checkAll {
+			if err == nil {
+				body += fmt.Sprintf("%s :OK\n ", name)
+			} else {
+				body += fmt.Sprintf("%s :ERR\n ", name)
+				status = http.StatusServiceUnavailable
+				log.Warnf("healthCheck %q was not healthy: %v", name, err)
+			}
 		} else {
-			body += fmt.Sprintf("%s : ERR\n ", name)
-			status = http.StatusServiceUnavailable
-			log.Warnf("healthCheck %q was not healthy: %v", name, err)
+			if err == nil {
+				body += "OK\n"
+			} else {
+				h.writeError(w, err, http.StatusServiceUnavailable, name)
+				return
+			}
 		}
 	}
-	w.Header().Set("Content-Type", "text/plain")
 	w.WriteHeader(status)
 	if _, err := w.Write([]byte(body)); err != nil {
 		log.Warnf("could not write output: %s", err)
 	}
+}
+
+// Checks one health check
+func check(hcs *sync.Map) map[string]error {
+	result := make(map[string]error)
+	hcs.Range(func(key, value interface{}) bool {
+		name := key.(string)
+		hc := value.(HealthCheck)
+		// If it was not possible to initialise this health check, then show the initialisation error
+		if val, isIn := initErrors.Load(name); isIn {
+			err := val.(error)
+			result[name] = err
+			return true
+		}
+		// this is the actual health check
+		if healthy, err := hc.HealthCheck(); !healthy {
+			result[name] = err
+			return true
+		}
+		result[name] = nil
+		return true
+	})
+	return result
 }
 
 func (h *handler) writeError(w http.ResponseWriter, err error, errorCode int, name string) {
@@ -121,8 +122,12 @@ func (h *handler) writeError(w http.ResponseWriter, err error, errorCode int, na
 // must be unique. If the health check satisfies the Initialisable interface, it
 // is initialised before it is added.
 func RegisterHealthCheck(hc HealthCheck, name string) {
+	if name == nameAllHealthCheck {
+		log.Debugf("tried to register health check with reserved name %q", name)
+		return
+	}
 	if _, ok := checks.Load(name); ok {
-		log.Debugf("tried to register health check with name %v twice", name)
+		log.Debugf("tried to register health check with name %q twice", name)
 		return
 	}
 	if initHC, ok := hc.(Initialisable); ok {
