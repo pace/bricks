@@ -127,7 +127,7 @@ func RegisterHealthCheck(hc HealthCheck, name string) {
 		return
 	}
 	if _, ok := checks.Load(name); ok {
-		log.Debugf("tried to register health check with name %q twice", name)
+		log.Warnf("tried to register health check with name %q twice", name)
 		return
 	}
 	if initHC, ok := hc.(Initialisable); ok {
