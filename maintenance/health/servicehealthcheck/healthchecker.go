@@ -65,7 +65,7 @@ func (h *handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	for name, err := range result {
 		if checkAll {
 			if err == nil {
-				body += fmt.Sprintf("%s :OK\n ", name)
+				body += fmt.Sprintf("%s: OK\n", name)
 			} else {
 				body += fmt.Sprintf("%s: ERR\n", name)
 				status = http.StatusServiceUnavailable
