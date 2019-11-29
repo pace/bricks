@@ -58,7 +58,7 @@ func (h *handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		hcs.Store(name, hc)
 	}
 	result := check(hcs)
-	// Write the Result to the body and set the content type
+	// Write the result to the body and set the content type
 	w.Header().Set("Content-Type", "text/plain")
 	status := http.StatusOK
 	body := ""
