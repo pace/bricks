@@ -11,7 +11,7 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	mux "github.com/gorilla/mux"
+	"github.com/gorilla/mux"
 	"github.com/pace/bricks/http/oauth2"
 )
 
@@ -65,8 +65,8 @@ func setupRouter(requiredScope string, tokenScope string) *mux.Router {
 	rs := RequiredScopes{
 		"GetFoo": oauth2.Scope(requiredScope),
 	}
-	m := NewScopesMiddleware(rs)
-	om := oauth2.NewMiddleware(&tokenIntrospecter{returnedScope: tokenScope})
+	m := NewScopesMiddleware(rs)                                              // nolint: staticcheck
+	om := oauth2.NewMiddleware(&tokenIntrospecter{returnedScope: tokenScope}) // nolint: staticcheck
 
 	r := mux.NewRouter()
 	r.Use(om.Handler)

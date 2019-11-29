@@ -92,6 +92,10 @@ func (g *Generator) commentOrExample(stmt *jen.Statement, schema *openapi3.Schem
 	}
 }
 
+func hasSecuritySchema(swagger *openapi3.Swagger) bool {
+	return len(swagger.Components.SecuritySchemes) > 0
+}
+
 func addValidator(tags map[string]string, validator string) {
 	cur := tags["valid"]
 	if cur != "" {

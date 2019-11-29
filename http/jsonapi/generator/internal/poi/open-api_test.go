@@ -7,6 +7,7 @@ import (
 	mux "github.com/gorilla/mux"
 	opentracing "github.com/opentracing/opentracing-go"
 	runtime "github.com/pace/bricks/http/jsonapi/runtime"
+	oauth2 "github.com/pace/bricks/http/oauth2"
 	errors "github.com/pace/bricks/maintenance/errors"
 	metrics "github.com/pace/bricks/maintenance/metric/jsonapi"
 	"net/http"
@@ -220,7 +221,7 @@ SubscriptionRequestArea Once entered, a notification is sent
 */
 type SubscriptionRequestArea struct {
 	Coordinates [][]float32 `json:"coordinates,omitempty" jsonapi:"attr,coordinates,omitempty" valid:"required"` /*
-	Polygon coordinates with 4 or more positions. The first and last positions are equivalent (they represent equivalent points)
+		Polygon coordinates with 4 or more positions. The first and last positions are equivalent (they represent equivalent points)
 	*/
 	Type string `json:"type,omitempty" jsonapi:"attr,type,omitempty" valid:"required,in(Polygon)"`
 }
@@ -229,11 +230,11 @@ type SubscriptionRequestArea struct {
 type SubscriptionRequest struct {
 	ID   string                  `jsonapi:"primary,subscription,omitempty" valid:"uuid,optional"`       // Example: "0c5b01d8-8dde-4d9f-be20-0865766bae6e"
 	Area SubscriptionRequestArea `json:"area,omitempty" jsonapi:"attr,area,omitempty" valid:"required"` /*
-	Once entered, a notification is sent
+		Once entered, a notification is sent
 	*/
 	PushToken string   `json:"pushToken,omitempty" jsonapi:"attr,pushToken,omitempty" valid:"required"`                                  // Firebase registration token
 	Types     []string `json:"types,omitempty" jsonapi:"attr,types,omitempty" valid:"required,in(gasStation|movableCamera|fixedCamera)"` /*
-	Filter for POI types contained in the push notification. An empty array indicates, that all POI types are allowed
+		Filter for POI types contained in the push notification. An empty array indicates, that all POI types are allowed
 	*/
 }
 
@@ -242,14 +243,53 @@ type Currency string
 
 // FuelAmountUnit ...
 type FuelAmountUnit string
+type AuthorizationBackend interface {
+	AuthorizeOAuth2(r *http.Request, w http.ResponseWriter, scope string) (context.Context, bool)
+	Init(cfgOAuth2 *oauth2.Config)
+}
+
+var cfgOAuth2 = &oauth2.Config{
+	AuthorizationCode: &oauth2.Flow{
+		AuthorizationURL: "https://id.pace.cloud/oauth2/authorize",
+		RefreshURL:       "https://id.pace.cloud/oauth2/token",
+		Scopes: map[string]string{
+			"poi:apps:create":          "Create an app",
+			"poi:apps:delete":          "Delete an app",
+			"poi:apps:read":            "Get/search for an app",
+			"poi:apps:update":          "Change an app",
+			"poi:events:read":          "Get/search for events",
+			"poi:gas-stations:read":    "Get/search for gas stations",
+			"poi:pois:read":            "Get/search for pois",
+			"poi:pois:update":          "Update a poi",
+			"poi:policies:create":      "Create a policy",
+			"poi:policies:read":        "Get/search for policies",
+			"poi:sources:create":       "Create a source",
+			"poi:sources:delete":       "Delete a source",
+			"poi:sources:read":         "Get/search for sources",
+			"poi:sources:update":       "Update a source",
+			"poi:subscriptions:create": "Create a subscription",
+			"poi:tiles:read":           "Get/search for tiles",
+		},
+		TokenURL: "https://id.pace.cloud/oauth2/token",
+	},
+	Description: "",
+}
 
 /*
 GetAppsHandler handles request/response marshaling and validation for
  Get /beta/apps
 */
-func GetAppsHandler(service Service) http.Handler {
+func GetAppsHandler(service Service, authBackend AuthorizationBackend) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		defer errors.HandleRequest("GetAppsHandler", w, r)
+		// Authentication Handling
+		// OAuth2 Authentication
+		ctx, ok := authBackend.AuthorizeOAuth2(r, w, "poi:apps:read")
+		if !ok {
+			// No Error Handling needed, this is already done
+			return
+		}
+		r = r.WithContext(ctx)
 
 		// Trace the service function handler execution
 		handlerSpan, ctx := opentracing.StartSpanFromContext(r.Context(), "GetAppsHandler")
@@ -299,9 +339,17 @@ func GetAppsHandler(service Service) http.Handler {
 CreateAppHandler handles request/response marshaling and validation for
  Post /beta/apps
 */
-func CreateAppHandler(service Service) http.Handler {
+func CreateAppHandler(service Service, authBackend AuthorizationBackend) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		defer errors.HandleRequest("CreateAppHandler", w, r)
+		// Authentication Handling
+		// OAuth2 Authentication
+		ctx, ok := authBackend.AuthorizeOAuth2(r, w, "poi:apps:create")
+		if !ok {
+			// No Error Handling needed, this is already done
+			return
+		}
+		r = r.WithContext(ctx)
 
 		// Trace the service function handler execution
 		handlerSpan, ctx := opentracing.StartSpanFromContext(r.Context(), "CreateAppHandler")
@@ -335,9 +383,17 @@ func CreateAppHandler(service Service) http.Handler {
 CheckForPaceAppHandler handles request/response marshaling and validation for
  Get /beta/apps/query
 */
-func CheckForPaceAppHandler(service Service) http.Handler {
+func CheckForPaceAppHandler(service Service, authBackend AuthorizationBackend) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		defer errors.HandleRequest("CheckForPaceAppHandler", w, r)
+		// Authentication Handling
+		// OAuth2 Authentication
+		ctx, ok := authBackend.AuthorizeOAuth2(r, w, "poi:apps:read")
+		if !ok {
+			// No Error Handling needed, this is already done
+			return
+		}
+		r = r.WithContext(ctx)
 
 		// Trace the service function handler execution
 		handlerSpan, ctx := opentracing.StartSpanFromContext(r.Context(), "CheckForPaceAppHandler")
@@ -403,9 +459,17 @@ func CheckForPaceAppHandler(service Service) http.Handler {
 DeleteAppHandler handles request/response marshaling and validation for
  Delete /beta/apps/{appID}
 */
-func DeleteAppHandler(service Service) http.Handler {
+func DeleteAppHandler(service Service, authBackend AuthorizationBackend) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		defer errors.HandleRequest("DeleteAppHandler", w, r)
+		// Authentication Handling
+		// OAuth2 Authentication
+		ctx, ok := authBackend.AuthorizeOAuth2(r, w, "poi:apps:delete")
+		if !ok {
+			// No Error Handling needed, this is already done
+			return
+		}
+		r = r.WithContext(ctx)
 
 		// Trace the service function handler execution
 		handlerSpan, ctx := opentracing.StartSpanFromContext(r.Context(), "DeleteAppHandler")
@@ -445,9 +509,17 @@ func DeleteAppHandler(service Service) http.Handler {
 GetAppHandler handles request/response marshaling and validation for
  Get /beta/apps/{appID}
 */
-func GetAppHandler(service Service) http.Handler {
+func GetAppHandler(service Service, authBackend AuthorizationBackend) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		defer errors.HandleRequest("GetAppHandler", w, r)
+		// Authentication Handling
+		// OAuth2 Authentication
+		ctx, ok := authBackend.AuthorizeOAuth2(r, w, "poi:apps:read")
+		if !ok {
+			// No Error Handling needed, this is already done
+			return
+		}
+		r = r.WithContext(ctx)
 
 		// Trace the service function handler execution
 		handlerSpan, ctx := opentracing.StartSpanFromContext(r.Context(), "GetAppHandler")
@@ -487,9 +559,17 @@ func GetAppHandler(service Service) http.Handler {
 UpdateAppHandler handles request/response marshaling and validation for
  Put /beta/apps/{appID}
 */
-func UpdateAppHandler(service Service) http.Handler {
+func UpdateAppHandler(service Service, authBackend AuthorizationBackend) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		defer errors.HandleRequest("UpdateAppHandler", w, r)
+		// Authentication Handling
+		// OAuth2 Authentication
+		ctx, ok := authBackend.AuthorizeOAuth2(r, w, "poi:apps:update")
+		if !ok {
+			// No Error Handling needed, this is already done
+			return
+		}
+		r = r.WithContext(ctx)
 
 		// Trace the service function handler execution
 		handlerSpan, ctx := opentracing.StartSpanFromContext(r.Context(), "UpdateAppHandler")
@@ -532,9 +612,17 @@ func UpdateAppHandler(service Service) http.Handler {
 GetAppPOIsRelationshipsHandler handles request/response marshaling and validation for
  Get /beta/apps/{appID}/relationships/pois
 */
-func GetAppPOIsRelationshipsHandler(service Service) http.Handler {
+func GetAppPOIsRelationshipsHandler(service Service, authBackend AuthorizationBackend) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		defer errors.HandleRequest("GetAppPOIsRelationshipsHandler", w, r)
+		// Authentication Handling
+		// OAuth2 Authentication
+		ctx, ok := authBackend.AuthorizeOAuth2(r, w, "poi:apps:read")
+		if !ok {
+			// No Error Handling needed, this is already done
+			return
+		}
+		r = r.WithContext(ctx)
 
 		// Trace the service function handler execution
 		handlerSpan, ctx := opentracing.StartSpanFromContext(r.Context(), "GetAppPOIsRelationshipsHandler")
@@ -574,9 +662,17 @@ func GetAppPOIsRelationshipsHandler(service Service) http.Handler {
 UpdateAppPOIsRelationshipsHandler handles request/response marshaling and validation for
  Patch /beta/apps/{appID}/relationships/pois
 */
-func UpdateAppPOIsRelationshipsHandler(service Service) http.Handler {
+func UpdateAppPOIsRelationshipsHandler(service Service, authBackend AuthorizationBackend) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		defer errors.HandleRequest("UpdateAppPOIsRelationshipsHandler", w, r)
+		// Authentication Handling
+		// OAuth2 Authentication
+		ctx, ok := authBackend.AuthorizeOAuth2(r, w, "poi:apps:update")
+		if !ok {
+			// No Error Handling needed, this is already done
+			return
+		}
+		r = r.WithContext(ctx)
 
 		// Trace the service function handler execution
 		handlerSpan, ctx := opentracing.StartSpanFromContext(r.Context(), "UpdateAppPOIsRelationshipsHandler")
@@ -619,9 +715,17 @@ func UpdateAppPOIsRelationshipsHandler(service Service) http.Handler {
 GetEventsHandler handles request/response marshaling and validation for
  Get /beta/events
 */
-func GetEventsHandler(service Service) http.Handler {
+func GetEventsHandler(service Service, authBackend AuthorizationBackend) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		defer errors.HandleRequest("GetEventsHandler", w, r)
+		// Authentication Handling
+		// OAuth2 Authentication
+		ctx, ok := authBackend.AuthorizeOAuth2(r, w, "poi:events:read")
+		if !ok {
+			// No Error Handling needed, this is already done
+			return
+		}
+		r = r.WithContext(ctx)
 
 		// Trace the service function handler execution
 		handlerSpan, ctx := opentracing.StartSpanFromContext(r.Context(), "GetEventsHandler")
@@ -671,9 +775,17 @@ func GetEventsHandler(service Service) http.Handler {
 GetGasStationsHandler handles request/response marshaling and validation for
  Get /beta/gas-stations
 */
-func GetGasStationsHandler(service Service) http.Handler {
+func GetGasStationsHandler(service Service, authBackend AuthorizationBackend) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		defer errors.HandleRequest("GetGasStationsHandler", w, r)
+		// Authentication Handling
+		// OAuth2 Authentication
+		ctx, ok := authBackend.AuthorizeOAuth2(r, w, "poi:gas-stations:read")
+		if !ok {
+			// No Error Handling needed, this is already done
+			return
+		}
+		r = r.WithContext(ctx)
 
 		// Trace the service function handler execution
 		handlerSpan, ctx := opentracing.StartSpanFromContext(r.Context(), "GetGasStationsHandler")
@@ -759,9 +871,17 @@ func GetGasStationsHandler(service Service) http.Handler {
 GetGasStationHandler handles request/response marshaling and validation for
  Get /beta/gas-stations/{id}
 */
-func GetGasStationHandler(service Service) http.Handler {
+func GetGasStationHandler(service Service, authBackend AuthorizationBackend) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		defer errors.HandleRequest("GetGasStationHandler", w, r)
+		// Authentication Handling
+		// OAuth2 Authentication
+		ctx, ok := authBackend.AuthorizeOAuth2(r, w, "poi:gas-stations:read")
+		if !ok {
+			// No Error Handling needed, this is already done
+			return
+		}
+		r = r.WithContext(ctx)
 
 		// Trace the service function handler execution
 		handlerSpan, ctx := opentracing.StartSpanFromContext(r.Context(), "GetGasStationHandler")
@@ -801,9 +921,17 @@ func GetGasStationHandler(service Service) http.Handler {
 GetPoisHandler handles request/response marshaling and validation for
  Get /beta/pois
 */
-func GetPoisHandler(service Service) http.Handler {
+func GetPoisHandler(service Service, authBackend AuthorizationBackend) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		defer errors.HandleRequest("GetPoisHandler", w, r)
+		// Authentication Handling
+		// OAuth2 Authentication
+		ctx, ok := authBackend.AuthorizeOAuth2(r, w, "poi:pois:read")
+		if !ok {
+			// No Error Handling needed, this is already done
+			return
+		}
+		r = r.WithContext(ctx)
 
 		// Trace the service function handler execution
 		handlerSpan, ctx := opentracing.StartSpanFromContext(r.Context(), "GetPoisHandler")
@@ -857,9 +985,17 @@ func GetPoisHandler(service Service) http.Handler {
 GetPoiHandler handles request/response marshaling and validation for
  Get /beta/pois/{poiId}
 */
-func GetPoiHandler(service Service) http.Handler {
+func GetPoiHandler(service Service, authBackend AuthorizationBackend) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		defer errors.HandleRequest("GetPoiHandler", w, r)
+		// Authentication Handling
+		// OAuth2 Authentication
+		ctx, ok := authBackend.AuthorizeOAuth2(r, w, "poi:pois:read")
+		if !ok {
+			// No Error Handling needed, this is already done
+			return
+		}
+		r = r.WithContext(ctx)
 
 		// Trace the service function handler execution
 		handlerSpan, ctx := opentracing.StartSpanFromContext(r.Context(), "GetPoiHandler")
@@ -899,9 +1035,17 @@ func GetPoiHandler(service Service) http.Handler {
 ChangePoiHandler handles request/response marshaling and validation for
  Patch /beta/pois/{poiId}
 */
-func ChangePoiHandler(service Service) http.Handler {
+func ChangePoiHandler(service Service, authBackend AuthorizationBackend) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		defer errors.HandleRequest("ChangePoiHandler", w, r)
+		// Authentication Handling
+		// OAuth2 Authentication
+		ctx, ok := authBackend.AuthorizeOAuth2(r, w, "poi:pois:update")
+		if !ok {
+			// No Error Handling needed, this is already done
+			return
+		}
+		r = r.WithContext(ctx)
 
 		// Trace the service function handler execution
 		handlerSpan, ctx := opentracing.StartSpanFromContext(r.Context(), "ChangePoiHandler")
@@ -944,9 +1088,17 @@ func ChangePoiHandler(service Service) http.Handler {
 GetPoliciesHandler handles request/response marshaling and validation for
  Get /beta/policies
 */
-func GetPoliciesHandler(service Service) http.Handler {
+func GetPoliciesHandler(service Service, authBackend AuthorizationBackend) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		defer errors.HandleRequest("GetPoliciesHandler", w, r)
+		// Authentication Handling
+		// OAuth2 Authentication
+		ctx, ok := authBackend.AuthorizeOAuth2(r, w, "poi:policies:read")
+		if !ok {
+			// No Error Handling needed, this is already done
+			return
+		}
+		r = r.WithContext(ctx)
 
 		// Trace the service function handler execution
 		handlerSpan, ctx := opentracing.StartSpanFromContext(r.Context(), "GetPoliciesHandler")
@@ -1000,9 +1152,17 @@ func GetPoliciesHandler(service Service) http.Handler {
 CreatePolicyHandler handles request/response marshaling and validation for
  Post /beta/policies
 */
-func CreatePolicyHandler(service Service) http.Handler {
+func CreatePolicyHandler(service Service, authBackend AuthorizationBackend) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		defer errors.HandleRequest("CreatePolicyHandler", w, r)
+		// Authentication Handling
+		// OAuth2 Authentication
+		ctx, ok := authBackend.AuthorizeOAuth2(r, w, "poi:policies:create")
+		if !ok {
+			// No Error Handling needed, this is already done
+			return
+		}
+		r = r.WithContext(ctx)
 
 		// Trace the service function handler execution
 		handlerSpan, ctx := opentracing.StartSpanFromContext(r.Context(), "CreatePolicyHandler")
@@ -1036,9 +1196,17 @@ func CreatePolicyHandler(service Service) http.Handler {
 GetPolicyHandler handles request/response marshaling and validation for
  Get /beta/policies/{policyId}
 */
-func GetPolicyHandler(service Service) http.Handler {
+func GetPolicyHandler(service Service, authBackend AuthorizationBackend) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		defer errors.HandleRequest("GetPolicyHandler", w, r)
+		// Authentication Handling
+		// OAuth2 Authentication
+		ctx, ok := authBackend.AuthorizeOAuth2(r, w, "poi:policies:read")
+		if !ok {
+			// No Error Handling needed, this is already done
+			return
+		}
+		r = r.WithContext(ctx)
 
 		// Trace the service function handler execution
 		handlerSpan, ctx := opentracing.StartSpanFromContext(r.Context(), "GetPolicyHandler")
@@ -1078,9 +1246,17 @@ func GetPolicyHandler(service Service) http.Handler {
 GetSourcesHandler handles request/response marshaling and validation for
  Get /beta/sources
 */
-func GetSourcesHandler(service Service) http.Handler {
+func GetSourcesHandler(service Service, authBackend AuthorizationBackend) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		defer errors.HandleRequest("GetSourcesHandler", w, r)
+		// Authentication Handling
+		// OAuth2 Authentication
+		ctx, ok := authBackend.AuthorizeOAuth2(r, w, "poi:sources:read")
+		if !ok {
+			// No Error Handling needed, this is already done
+			return
+		}
+		r = r.WithContext(ctx)
 
 		// Trace the service function handler execution
 		handlerSpan, ctx := opentracing.StartSpanFromContext(r.Context(), "GetSourcesHandler")
@@ -1130,9 +1306,17 @@ func GetSourcesHandler(service Service) http.Handler {
 CreateSourceHandler handles request/response marshaling and validation for
  Post /beta/sources
 */
-func CreateSourceHandler(service Service) http.Handler {
+func CreateSourceHandler(service Service, authBackend AuthorizationBackend) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		defer errors.HandleRequest("CreateSourceHandler", w, r)
+		// Authentication Handling
+		// OAuth2 Authentication
+		ctx, ok := authBackend.AuthorizeOAuth2(r, w, "poi:sources:create")
+		if !ok {
+			// No Error Handling needed, this is already done
+			return
+		}
+		r = r.WithContext(ctx)
 
 		// Trace the service function handler execution
 		handlerSpan, ctx := opentracing.StartSpanFromContext(r.Context(), "CreateSourceHandler")
@@ -1166,9 +1350,17 @@ func CreateSourceHandler(service Service) http.Handler {
 DeleteSourceHandler handles request/response marshaling and validation for
  Delete /beta/sources/{sourceId}
 */
-func DeleteSourceHandler(service Service) http.Handler {
+func DeleteSourceHandler(service Service, authBackend AuthorizationBackend) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		defer errors.HandleRequest("DeleteSourceHandler", w, r)
+		// Authentication Handling
+		// OAuth2 Authentication
+		ctx, ok := authBackend.AuthorizeOAuth2(r, w, "poi:sources:delete")
+		if !ok {
+			// No Error Handling needed, this is already done
+			return
+		}
+		r = r.WithContext(ctx)
 
 		// Trace the service function handler execution
 		handlerSpan, ctx := opentracing.StartSpanFromContext(r.Context(), "DeleteSourceHandler")
@@ -1208,9 +1400,17 @@ func DeleteSourceHandler(service Service) http.Handler {
 GetSourceHandler handles request/response marshaling and validation for
  Get /beta/sources/{sourceId}
 */
-func GetSourceHandler(service Service) http.Handler {
+func GetSourceHandler(service Service, authBackend AuthorizationBackend) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		defer errors.HandleRequest("GetSourceHandler", w, r)
+		// Authentication Handling
+		// OAuth2 Authentication
+		ctx, ok := authBackend.AuthorizeOAuth2(r, w, "poi:sources:read")
+		if !ok {
+			// No Error Handling needed, this is already done
+			return
+		}
+		r = r.WithContext(ctx)
 
 		// Trace the service function handler execution
 		handlerSpan, ctx := opentracing.StartSpanFromContext(r.Context(), "GetSourceHandler")
@@ -1250,9 +1450,17 @@ func GetSourceHandler(service Service) http.Handler {
 UpdateSourceHandler handles request/response marshaling and validation for
  Put /beta/sources/{sourceId}
 */
-func UpdateSourceHandler(service Service) http.Handler {
+func UpdateSourceHandler(service Service, authBackend AuthorizationBackend) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		defer errors.HandleRequest("UpdateSourceHandler", w, r)
+		// Authentication Handling
+		// OAuth2 Authentication
+		ctx, ok := authBackend.AuthorizeOAuth2(r, w, "poi:sources:update")
+		if !ok {
+			// No Error Handling needed, this is already done
+			return
+		}
+		r = r.WithContext(ctx)
 
 		// Trace the service function handler execution
 		handlerSpan, ctx := opentracing.StartSpanFromContext(r.Context(), "UpdateSourceHandler")
@@ -1295,9 +1503,17 @@ func UpdateSourceHandler(service Service) http.Handler {
 CreateSubscriptionHandler handles request/response marshaling and validation for
  Post /beta/subscriptions
 */
-func CreateSubscriptionHandler(service Service) http.Handler {
+func CreateSubscriptionHandler(service Service, authBackend AuthorizationBackend) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		defer errors.HandleRequest("CreateSubscriptionHandler", w, r)
+		// Authentication Handling
+		// OAuth2 Authentication
+		ctx, ok := authBackend.AuthorizeOAuth2(r, w, "poi:subscriptions:create")
+		if !ok {
+			// No Error Handling needed, this is already done
+			return
+		}
+		r = r.WithContext(ctx)
 
 		// Trace the service function handler execution
 		handlerSpan, ctx := opentracing.StartSpanFromContext(r.Context(), "CreateSubscriptionHandler")
@@ -1331,9 +1547,17 @@ func CreateSubscriptionHandler(service Service) http.Handler {
 GetTilesHandler handles request/response marshaling and validation for
  Post /beta/tiles/query
 */
-func GetTilesHandler(service Service) http.Handler {
+func GetTilesHandler(service Service, authBackend AuthorizationBackend) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		defer errors.HandleRequest("GetTilesHandler", w, r)
+		// Authentication Handling
+		// OAuth2 Authentication
+		ctx, ok := authBackend.AuthorizeOAuth2(r, w, "poi:tiles:read")
+		if !ok {
+			// No Error Handling needed, this is already done
+			return
+		}
+		r = r.WithContext(ctx)
 
 		// Trace the service function handler execution
 		handlerSpan, ctx := opentracing.StartSpanFromContext(r.Context(), "GetTilesHandler")
@@ -2372,33 +2596,34 @@ Router implements: PACE POI API
 
 POI API
 */
-func Router(service Service) *mux.Router {
+func Router(service Service, authBackend AuthorizationBackend) *mux.Router {
+	authBackend.Init(cfgOAuth2)
 	router := mux.NewRouter()
 	// Subrouter s1 - Path: /poi
 	s1 := router.PathPrefix("/poi").Subrouter()
-	s1.Methods("GET").Path("/beta/apps/query").Handler(CheckForPaceAppHandler(service)).Name("CheckForPaceApp")
-	s1.Methods("POST").Path("/beta/tiles/query").Handler(GetTilesHandler(service)).Name("GetTiles")
-	s1.Methods("GET").Path("/beta/pois").Handler(GetPoisHandler(service)).Name("GetPois")
-	s1.Methods("POST").Path("/beta/apps").Handler(CreateAppHandler(service)).Name("CreateApp")
-	s1.Methods("POST").Path("/beta/subscriptions").Handler(CreateSubscriptionHandler(service)).Name("CreateSubscription")
-	s1.Methods("GET").Path("/beta/sources").Handler(GetSourcesHandler(service)).Name("GetSources")
-	s1.Methods("POST").Path("/beta/policies").Handler(CreatePolicyHandler(service)).Name("CreatePolicy")
-	s1.Methods("GET").Path("/beta/policies").Handler(GetPoliciesHandler(service)).Name("GetPolicies")
-	s1.Methods("GET").Path("/beta/events").Handler(GetEventsHandler(service)).Name("GetEvents")
-	s1.Methods("GET").Path("/beta/gas-stations").Handler(GetGasStationsHandler(service)).Name("GetGasStations")
-	s1.Methods("POST").Path("/beta/sources").Handler(CreateSourceHandler(service)).Name("CreateSource")
-	s1.Methods("GET").Path("/beta/apps").Handler(GetAppsHandler(service)).Name("GetApps")
-	s1.Methods("PATCH").Path("/beta/apps/{appID}/relationships/pois").Handler(UpdateAppPOIsRelationshipsHandler(service)).Name("UpdateAppPOIsRelationships")
-	s1.Methods("GET").Path("/beta/apps/{appID}/relationships/pois").Handler(GetAppPOIsRelationshipsHandler(service)).Name("GetAppPOIsRelationships")
-	s1.Methods("GET").Path("/beta/gas-stations/{id}").Handler(GetGasStationHandler(service)).Name("GetGasStation")
-	s1.Methods("PATCH").Path("/beta/pois/{poiId}").Handler(ChangePoiHandler(service)).Name("ChangePoi")
-	s1.Methods("GET").Path("/beta/policies/{policyId}").Handler(GetPolicyHandler(service)).Name("GetPolicy")
-	s1.Methods("PUT").Path("/beta/apps/{appID}").Handler(UpdateAppHandler(service)).Name("UpdateApp")
-	s1.Methods("GET").Path("/beta/apps/{appID}").Handler(GetAppHandler(service)).Name("GetApp")
-	s1.Methods("DELETE").Path("/beta/sources/{sourceId}").Handler(DeleteSourceHandler(service)).Name("DeleteSource")
-	s1.Methods("GET").Path("/beta/sources/{sourceId}").Handler(GetSourceHandler(service)).Name("GetSource")
-	s1.Methods("PUT").Path("/beta/sources/{sourceId}").Handler(UpdateSourceHandler(service)).Name("UpdateSource")
-	s1.Methods("DELETE").Path("/beta/apps/{appID}").Handler(DeleteAppHandler(service)).Name("DeleteApp")
-	s1.Methods("GET").Path("/beta/pois/{poiId}").Handler(GetPoiHandler(service)).Name("GetPoi")
+	s1.Methods("GET").Path("/beta/apps/query").Handler(CheckForPaceAppHandler(service, authBackend)).Name("CheckForPaceApp")
+	s1.Methods("POST").Path("/beta/tiles/query").Handler(GetTilesHandler(service, authBackend)).Name("GetTiles")
+	s1.Methods("GET").Path("/beta/pois").Handler(GetPoisHandler(service, authBackend)).Name("GetPois")
+	s1.Methods("POST").Path("/beta/apps").Handler(CreateAppHandler(service, authBackend)).Name("CreateApp")
+	s1.Methods("POST").Path("/beta/subscriptions").Handler(CreateSubscriptionHandler(service, authBackend)).Name("CreateSubscription")
+	s1.Methods("GET").Path("/beta/sources").Handler(GetSourcesHandler(service, authBackend)).Name("GetSources")
+	s1.Methods("POST").Path("/beta/policies").Handler(CreatePolicyHandler(service, authBackend)).Name("CreatePolicy")
+	s1.Methods("GET").Path("/beta/policies").Handler(GetPoliciesHandler(service, authBackend)).Name("GetPolicies")
+	s1.Methods("GET").Path("/beta/events").Handler(GetEventsHandler(service, authBackend)).Name("GetEvents")
+	s1.Methods("GET").Path("/beta/gas-stations").Handler(GetGasStationsHandler(service, authBackend)).Name("GetGasStations")
+	s1.Methods("POST").Path("/beta/sources").Handler(CreateSourceHandler(service, authBackend)).Name("CreateSource")
+	s1.Methods("GET").Path("/beta/apps").Handler(GetAppsHandler(service, authBackend)).Name("GetApps")
+	s1.Methods("PATCH").Path("/beta/apps/{appID}/relationships/pois").Handler(UpdateAppPOIsRelationshipsHandler(service, authBackend)).Name("UpdateAppPOIsRelationships")
+	s1.Methods("GET").Path("/beta/apps/{appID}/relationships/pois").Handler(GetAppPOIsRelationshipsHandler(service, authBackend)).Name("GetAppPOIsRelationships")
+	s1.Methods("GET").Path("/beta/gas-stations/{id}").Handler(GetGasStationHandler(service, authBackend)).Name("GetGasStation")
+	s1.Methods("PATCH").Path("/beta/pois/{poiId}").Handler(ChangePoiHandler(service, authBackend)).Name("ChangePoi")
+	s1.Methods("GET").Path("/beta/policies/{policyId}").Handler(GetPolicyHandler(service, authBackend)).Name("GetPolicy")
+	s1.Methods("PUT").Path("/beta/apps/{appID}").Handler(UpdateAppHandler(service, authBackend)).Name("UpdateApp")
+	s1.Methods("GET").Path("/beta/apps/{appID}").Handler(GetAppHandler(service, authBackend)).Name("GetApp")
+	s1.Methods("DELETE").Path("/beta/sources/{sourceId}").Handler(DeleteSourceHandler(service, authBackend)).Name("DeleteSource")
+	s1.Methods("GET").Path("/beta/sources/{sourceId}").Handler(GetSourceHandler(service, authBackend)).Name("GetSource")
+	s1.Methods("PUT").Path("/beta/sources/{sourceId}").Handler(UpdateSourceHandler(service, authBackend)).Name("UpdateSource")
+	s1.Methods("DELETE").Path("/beta/apps/{appID}").Handler(DeleteAppHandler(service, authBackend)).Name("DeleteApp")
+	s1.Methods("GET").Path("/beta/pois/{poiId}").Handler(GetPoiHandler(service, authBackend)).Name("GetPoi")
 	return router
 }
