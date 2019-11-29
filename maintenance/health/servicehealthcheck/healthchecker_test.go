@@ -84,9 +84,9 @@ func TestHealthCheckAllWithErrors(t *testing.T) {
 		{name: "test"},
 	}
 	expected := []string{
-		"TestHandlerHealthCheckErr : ERR",
-		"TestHandlerInitErr : ERR",
-		"test : OK",
+		"TestHandlerHealthCheckErr :ERR",
+		"TestHandlerInitErr :ERR",
+		"test :OK",
 	}
 	checkAllTestHcs(hcs, t, expected, 503)
 }
@@ -97,9 +97,9 @@ func TestHealthCheckAllSuccess(t *testing.T) {
 		{name: "test"},
 	}
 	expected := []string{
-		"test3 : OK",
-		"test2 : OK",
-		"test : OK",
+		"test3 :OK",
+		"test2 :OK",
+		"test :OK",
 	}
 	checkAllTestHcs(hcs, t, expected, 200)
 }
@@ -122,7 +122,7 @@ func checkAllTestHcs(hcs []*testHealthChecker, t *testing.T, expected []string, 
 	if err != nil {
 		log.Fatal(err)
 	}
-	checkRes := strings.Split(string(data), "\n ")
+	checkRes := strings.Split(string(data), "\n")
 	if exp := len(checkRes) - 1; exp != len(expected) {
 		t.Errorf("Expected %v HealthCheck results, but got %v", len(expected), len(hcs)-1)
 	}
