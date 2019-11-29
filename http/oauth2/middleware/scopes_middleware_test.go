@@ -65,8 +65,8 @@ func setupRouter(requiredScope string, tokenScope string) *mux.Router {
 	rs := RequiredScopes{
 		"GetFoo": oauth2.Scope(requiredScope),
 	}
-	m := NewScopesMiddleware(rs)
-	om := oauth2.NewMiddleware(&TokenIntrospecter{returnedScope: tokenScope}) // nolint: staticcheck
+	m := NewScopesMiddleware(rs)                                              // nolint: staticcheck
+	om := oauth2.NewMiddleware(&tokenIntrospecter{returnedScope: tokenScope}) // nolint: staticcheck
 
 	r := mux.NewRouter()
 	r.Use(om.Handler)
@@ -85,11 +85,11 @@ func setupRequest() *http.Request {
 	return req
 }
 
-type TokenIntrospecter struct {
+type tokenIntrospecter struct {
 	returnedScope string
 }
 
-func (t *TokenIntrospecter) IntrospectToken(ctx context.Context, token string) (*oauth2.IntrospectResponse, error) {
+func (t *tokenIntrospecter) IntrospectToken(ctx context.Context, token string) (*oauth2.IntrospectResponse, error) {
 	resp := &oauth2.IntrospectResponse{Active: true, Scope: t.returnedScope}
 	return resp, nil
 }
