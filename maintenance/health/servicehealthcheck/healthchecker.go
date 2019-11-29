@@ -123,7 +123,7 @@ func (h *handler) writeError(w http.ResponseWriter, err error, errorCode int, na
 // is initialised before it is added.
 func RegisterHealthCheck(hc HealthCheck, name string) {
 	if name == nameAllHealthCheck {
-		log.Debugf("tried to register health check with reserved name %q", name)
+		log.Warnf("tried to register health check with reserved name %q", name)
 		return
 	}
 	if _, ok := checks.Load(name); ok {
