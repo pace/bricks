@@ -10,6 +10,8 @@ import (
 	"testing"
 
 	"github.com/pace/bricks/http/jsonapi/runtime"
+	"github.com/pace/bricks/http/oauth2"
+	"github.com/pace/bricks/http/security/apikey"
 	"github.com/pace/bricks/maintenance/log"
 )
 
@@ -57,8 +59,22 @@ func (s *testService) ProcessPayment(context.Context, ProcessPaymentResponseWrit
 	return nil
 }
 
+type testAuthBackend struct {
+}
+
+func (s testAuthBackend) AuthorizeOAuth2(r *http.Request, w http.ResponseWriter, scope string) (context.Context, bool) {
+	return r.Context(), true
+}
+
+func (s testAuthBackend) AuthorizeProfileKey(r *http.Request, w http.ResponseWriter) (context.Context, bool) {
+	return r.Context(), true
+}
+
+func (s testAuthBackend) Init(cfgOAuth2 *oauth2.Config, cfgProfileKey *apikey.Config) {
+}
+
 func TestHandler(t *testing.T) {
-	r := Router(&testService{t})
+	r := Router(&testService{t}, &testAuthBackend{})
 	rec := httptest.NewRecorder()
 	req := httptest.NewRequest("POST", "/pay/beta/payment-methods/sepa-direct-debit", strings.NewReader(`{
 	"data": {
@@ -107,7 +123,7 @@ func TestHandler(t *testing.T) {
 }
 
 func TestHandlerPanic(t *testing.T) {
-	r := Router(&testService{t})
+	r := Router(&testService{t}, &testAuthBackend{})
 	rec := httptest.NewRecorder()
 	req := httptest.NewRequest("GET", "/pay/beta/payment-methods?include=paymentToken", nil)
 	req.Header.Set("Accept", runtime.JSONAPIContentType)
@@ -129,7 +145,7 @@ func TestHandlerPanic(t *testing.T) {
 }
 
 func TestHandlerError(t *testing.T) {
-	r := Router(&testService{t})
+	r := Router(&testService{t}, &testAuthBackend{})
 	rec := httptest.NewRecorder()
 	req := httptest.NewRequest("GET", "/pay/beta/payment-methods", nil)
 	req.Header.Set("Accept", runtime.JSONAPIContentType)

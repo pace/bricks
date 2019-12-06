@@ -7,19 +7,21 @@ import (
 	"fmt"
 	"net/http"
 
-	mux "github.com/gorilla/mux"
+	"github.com/gorilla/mux"
 	"github.com/pace/bricks/http/oauth2"
 )
 
 // RequiredScopes defines the scope each endpoint requires
 type RequiredScopes map[string]oauth2.Scope
 
-// ScopesMiddleware contains required scopes for each endpoint
+// Deprecated: ScopesMiddleware contains required scopes for each endpoint -  For generated APIs use the generated
+// AuthenticationBackend with oauth2.Authorizer and set a Scope
 type ScopesMiddleware struct {
 	RequiredScopes RequiredScopes
 }
 
-// NewScopesMiddleware return a new scopes middleware
+// Deprecated: NewScopesMiddleware return a new scopes middleware - For generated APIs use the generated
+// AuthenticationBackend with oauth2.Authorizer and set a scope
 func NewScopesMiddleware(scopes RequiredScopes) *ScopesMiddleware {
 	return &ScopesMiddleware{RequiredScopes: scopes}
 }

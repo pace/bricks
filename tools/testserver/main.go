@@ -92,7 +92,7 @@ func main() {
 	// Test OAuth
 	//
 	// This middleware is configured against an Oauth application dummy
-	m := oauth2.Middleware{Backend: new(OauthBackend)}
+	m := oauth2.NewMiddleware(new(OauthBackend)) // nolint: staticcheck
 
 	sr := h.PathPrefix("/test").Subrouter()
 	sr.Use(m.Handler)

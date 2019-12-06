@@ -35,6 +35,7 @@ func TestGenerator(t *testing.T) {
 			}
 
 			if string(expected[:]) != result {
+
 				diff := difflib.UnifiedDiff{
 					A:        difflib.SplitLines(string(expected[:])),
 					B:        difflib.SplitLines(result),
