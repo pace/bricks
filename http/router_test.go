@@ -18,7 +18,7 @@ import (
 
 func TestHealthHandler(t *testing.T) {
 	rec := httptest.NewRecorder()
-	req := httptest.NewRequest("GET", "/health", nil)
+	req := httptest.NewRequest("GET", "/health/liveness", nil)
 
 	Router().ServeHTTP(rec, req)
 

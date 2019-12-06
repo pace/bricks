@@ -39,10 +39,12 @@ func Router() *mux.Router {
 	// for prometheus
 	r.Handle("/metrics", metric.Handler())
 
-	// for the API gateway
-	r.Handle("/health", health.Handler())
+	// health checks
+	r.Handle("/health/liveness", health.HandlerLiveness())
+	r.Handle("/health/readiness", health.HandlerReadiness())
 
-	r.PathPrefix("/health/").Handler(servicehealthcheck.Handler())
+	r.PathPrefix("/health/").Handler(servicehealthcheck.HealthHandler())
+	r.PathPrefix("/health/").Handler(servicehealthcheck.ReadableHealthHandler())
 
 	// for debugging purposes (e.g. deadlock, ...)
 	p := r.PathPrefix("/debug/pprof").Subrouter()

@@ -40,7 +40,7 @@ func TestIntegrationHealthCheck(t *testing.T) {
 	if err != nil {
 		log.Fatal(err)
 	}
-	if string(data[:]) != "OK\n" {
+	if string(data[:]) != "OK" {
 		t.Errorf("Expected /health/postgres to return OK, got: %q", string(data[:]))
 	}
 }
