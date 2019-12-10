@@ -221,7 +221,7 @@ SubscriptionRequestArea Once entered, a notification is sent
 */
 type SubscriptionRequestArea struct {
 	Coordinates [][]float32 `json:"coordinates,omitempty" jsonapi:"attr,coordinates,omitempty" valid:"required"` /*
-		Polygon coordinates with 4 or more positions. The first and last positions are equivalent (they represent equivalent points)
+	Polygon coordinates with 4 or more positions. The first and last positions are equivalent (they represent equivalent points)
 	*/
 	Type string `json:"type,omitempty" jsonapi:"attr,type,omitempty" valid:"required,in(Polygon)"`
 }
@@ -230,11 +230,11 @@ type SubscriptionRequestArea struct {
 type SubscriptionRequest struct {
 	ID   string                  `jsonapi:"primary,subscription,omitempty" valid:"uuid,optional"`       // Example: "0c5b01d8-8dde-4d9f-be20-0865766bae6e"
 	Area SubscriptionRequestArea `json:"area,omitempty" jsonapi:"attr,area,omitempty" valid:"required"` /*
-		Once entered, a notification is sent
+	Once entered, a notification is sent
 	*/
 	PushToken string   `json:"pushToken,omitempty" jsonapi:"attr,pushToken,omitempty" valid:"required"`                                  // Firebase registration token
 	Types     []string `json:"types,omitempty" jsonapi:"attr,types,omitempty" valid:"required,in(gasStation|movableCamera|fixedCamera)"` /*
-		Filter for POI types contained in the push notification. An empty array indicates, that all POI types are allowed
+	Filter for POI types contained in the push notification. An empty array indicates, that all POI types are allowed
 	*/
 }
 
