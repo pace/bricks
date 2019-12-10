@@ -197,25 +197,25 @@ func TestAuthenticationWithErrors(t *testing.T) {
 		{
 			desc:         "token introspecter returns ErrBadUpstreamResponse",
 			returnedErr:  ErrBadUpstreamResponse,
-			expectedCode: 502,
+			expectedCode: http.StatusBadGateway,
 			expectedBody: "bad upstream response when introspecting token\n",
 		},
 		{
 			desc:         "token introspecter returns ErrUpstreamConnection",
 			returnedErr:  ErrUpstreamConnection,
-			expectedCode: 502,
+			expectedCode: http.StatusBadGateway,
 			expectedBody: "problem connecting to the introspection endpoint\n",
 		},
 		{
 			desc:         "token introspecter returns ErrInvalidToken",
 			returnedErr:  ErrInvalidToken,
-			expectedCode: 401,
+			expectedCode: http.StatusUnauthorized,
 			expectedBody: "user token is invalid\n",
 		},
 		{
 			desc:         "token introspecter returns any other error",
 			returnedErr:  errors.New("any other error"),
-			expectedCode: 401,
+			expectedCode: http.StatusInternalServerError,
 			expectedBody: "any other error\n",
 		},
 	}

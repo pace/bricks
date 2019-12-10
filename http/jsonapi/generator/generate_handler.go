@@ -333,7 +333,12 @@ func (g *Generator) buildRouter(routes []*route, schema *openapi3.Swagger) error
 		routeStmts = make([]jen.Code, 2, (len(routes)+2)*len(schema.Servers)+2)
 		// Init Authentication
 		var configs []jen.Code
+		var names []string
 		for name := range schema.Components.SecuritySchemes {
+			names = append(names, name)
+		}
+		sort.Strings(names)
+		for _, name := range names {
 			configs = append(configs, jen.Id("cfg"+strings.Title(name)))
 		}
 		routeStmts[0] = jen.Id("authBackend").Dot("Init").Call(configs...)
