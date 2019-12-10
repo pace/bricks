@@ -197,7 +197,7 @@ func TestAuthenticationWithErrors(t *testing.T) {
 		{
 			desc:         "token introspecter returns ErrBadUpstreamResponse",
 			returnedErr:  ErrBadUpstreamResponse,
-			expectedCode:  http.StatusBadGateway,
+			expectedCode: http.StatusBadGateway,
 			expectedBody: "bad upstream response when introspecting token\n",
 		},
 		{
@@ -215,7 +215,7 @@ func TestAuthenticationWithErrors(t *testing.T) {
 		{
 			desc:         "token introspecter returns any other error",
 			returnedErr:  errors.New("any other error"),
-			expectedCode: http.StatusInternalServerError ,
+			expectedCode: http.StatusInternalServerError,
 			expectedBody: "any other error\n",
 		},
 	}
