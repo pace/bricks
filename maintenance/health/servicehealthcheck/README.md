@@ -2,10 +2,25 @@
 * Makes it possible to add a health check for a service (e.g. postgres). The list of checks is checked for the routes
 `/health` and `/health/check`
 
-* `/health` returns "OK"  with status code 200 if all registered and required health checks are healthy and "ERR" with 
-status code 503 if any health check is not healthy
+* `/health` all required and registered health checks healthy: Status code 200, Content-Type: text/plain, body: "OK" 
+ 
+    Any required and registered health check is not healthy: 
+ status code 503, Content-Type: text/plain, body: "ERR" 
 
 * `/health/check` returns a table with the results of all registered health checks
+
+Example:
+``` 
+    Required Services: 
+    
+    postgresdefault        ERR   any error message
+    
+    redis                  OK    
+    
+    Optional Services:  
+    anotherTestName        WARN  any warning message
+
+```
 
 * Each check has to implement the `HealthCheck` interface and has to be registered
     * health checks are registered as required or optional 

@@ -10,6 +10,7 @@ import (
 	"testing"
 
 	"github.com/pace/bricks/maintenance/log"
+	"github.com/stretchr/testify/require"
 )
 
 func TestHandlerLiveness(t *testing.T) {
@@ -33,7 +34,7 @@ func TestHandlerReadiness(t *testing.T) {
 	ReadinessCheck(func(w http.ResponseWriter, request *http.Request) {
 		w.Header().Set("Content-Type", "text/plain")
 		w.WriteHeader(http.StatusNotFound)
-		if _, err := w.Write([]byte("Err\n"[:])); err != nil {
+		if _, err := w.Write([]byte("Err\n")); err != nil {
 			log.Warnf("could not write output: %s", err)
 		}
 	})
@@ -48,10 +49,7 @@ func checkResult(rec *httptest.ResponseRecorder, expCode int, expBody string, t 
 		t.Errorf("Expected /health to respond with %d, got: %d", expCode, resp.StatusCode)
 	}
 	data, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
-		log.Fatal(err)
-	}
-	if body := string(data[:]); body != expBody {
-		t.Errorf("Expected health to return %q, got: %q", expBody, body)
-	}
+	require.NoError(t, err)
+	require.Equal(t, expBody, string(data))
+
 }

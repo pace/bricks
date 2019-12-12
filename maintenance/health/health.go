@@ -6,6 +6,7 @@
 package health
 
 import (
+	"fmt"
 	"net/http"
 
 	"github.com/pace/bricks/maintenance/log"
@@ -30,7 +31,7 @@ func SetCustomReadinessCheck(check func(http.ResponseWriter, *http.Request)) {
 func liveness(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "text/plain")
 	w.WriteHeader(http.StatusOK)
-	if _, err := w.Write([]byte("OK\n"[:])); err != nil {
+	if _, err := fmt.Fprint(w, "OK\n"); err != nil {
 		log.Warnf("could not write output: %s", err)
 	}
 }

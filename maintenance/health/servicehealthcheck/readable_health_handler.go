@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"net/http"
 	"strconv"
+	"strings"
 )
 
 // saves length of the longest name for the column width in the table. 20 characters width is the default
@@ -21,20 +22,21 @@ func (h *readableHealthHandler) ServeHTTP(w http.ResponseWriter, r *http.Request
 
 	status := http.StatusOK
 	table := "%-" + strconv.Itoa(longestCheckName) + "s   %-3s   %s\n"
-	body := "Required Services: \n"
+	bodyBuilder := &strings.Builder{}
+	bodyBuilder.WriteString("Required Services: \n")
 	for name, res := range reqChecks {
-		body += fmt.Sprintf(table, name, res.State, res.Msg)
+		bodyBuilder.WriteString(fmt.Sprintf(table, name, res.State, res.Msg))
 		if res.State == Err {
 			status = http.StatusServiceUnavailable
 		}
 	}
-	body += "Optional Services: \n"
+	bodyBuilder.WriteString("Optional Services: \n")
 	for name, res := range optChecks {
-		body += fmt.Sprintf(table, name, res.State, res.Msg)
+		bodyBuilder.WriteString(fmt.Sprintf(table, name, res.State, res.Msg))
 		if res.State == Err {
 			status = http.StatusServiceUnavailable
 		}
 	}
 
-	writeResult(w, status, body)
+	writeResult(w, status, bodyBuilder.String())
 }

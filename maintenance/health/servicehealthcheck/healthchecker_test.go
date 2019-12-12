@@ -4,18 +4,16 @@
 package servicehealthcheck
 
 import (
+	"errors"
 	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
 	"sort"
 	"strings"
-
-	//"strings"
 	"sync"
 	"testing"
 
-	"github.com/pace/bricks/maintenance/errors"
-	"github.com/pace/bricks/maintenance/log"
+	"github.com/stretchr/testify/require"
 )
 
 type testHealthChecker struct {
@@ -40,7 +38,7 @@ func (t *testHealthChecker) HealthCheck() HealthCheckResult {
 }
 
 func TestHandlerHealthCheck(t *testing.T) {
-	testcases := []struct {
+	testCases := []struct {
 		title   string
 		check   *testHealthChecker
 		expCode int
@@ -77,7 +75,7 @@ func TestHandlerHealthCheck(t *testing.T) {
 			expBody: "OK",
 		},
 	}
-	for _, tc := range testcases {
+	for _, tc := range testCases {
 		t.Run(tc.title, func(t *testing.T) {
 			//remove all previous health checks
 			requiredChecks = sync.Map{}
@@ -90,16 +88,10 @@ func TestHandlerHealthCheck(t *testing.T) {
 			resp := rec.Result()
 			defer resp.Body.Close()
 
-			if resp.StatusCode != tc.expCode {
-				t.Errorf("Expected /health to respond with status code %d, got: %d", tc.expCode, resp.StatusCode)
-			}
+			require.Equal(t, tc.expCode, resp.StatusCode)
 			data, err := ioutil.ReadAll(resp.Body)
-			if err != nil {
-				log.Fatal(err)
-			}
-			if string(data) != tc.expBody {
-				t.Errorf("Expected /health to respond with body %q, got: %q", tc.expBody, string(data))
-			}
+			require.NoError(t, err)
+			require.Equal(t, tc.expBody, string(data))
 		})
 	}
 }
@@ -120,16 +112,11 @@ func TestHandlerHealthCheckOptional(t *testing.T) {
 	HealthHandler().ServeHTTP(rec, req)
 	resp := rec.Result()
 
-	if exp, got := http.StatusOK, resp.StatusCode; exp != got {
-		t.Errorf("Expected /health to respond with status code %d, got: %d", exp, got)
-	}
+	require.Equal(t, http.StatusOK, resp.StatusCode)
 	data, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
-		log.Fatal(err)
-	}
-	if exp, got := "OK", string(data); exp != got {
-		t.Errorf("Expected /health to respond with body %q, got: %q", exp, got)
-	}
+	require.NoError(t, err)
+	require.Equal(t, "OK", string(data))
+
 }
 
 func TestHandlerReadableHealthCheck(t *testing.T) {
@@ -138,7 +125,7 @@ func TestHandlerReadableHealthCheck(t *testing.T) {
 	err := &testHealthChecker{name: "WithErr", healthCheckErr: true}
 	initErr := &testHealthChecker{name: "WithInitErr", initErr: true}
 
-	testcases := [] struct {
+	testcases := []struct {
 		title   string
 		req     []*testHealthChecker
 		opt     []*testHealthChecker
@@ -151,7 +138,7 @@ func TestHandlerReadableHealthCheck(t *testing.T) {
 			req:     []*testHealthChecker{longName, warn, err, initErr},
 			opt:     []*testHealthChecker{},
 			expCode: http.StatusServiceUnavailable,
-			expReq: [] string{
+			expReq: []string{
 				"WithWarning                                                OK    ",
 				"WithErr                                                    ERR   healthCheckErr",
 				"WithInitErr                                                ERR   initError",
@@ -162,7 +149,7 @@ func TestHandlerReadableHealthCheck(t *testing.T) {
 			req:     []*testHealthChecker{},
 			opt:     []*testHealthChecker{longName, warn, err, initErr},
 			expCode: http.StatusServiceUnavailable,
-			expOpt: [] string{
+			expOpt: []string{
 				"WithWarning                                                OK    ",
 				"WithErr                                                    ERR   healthCheckErr",
 				"WithInitErr                                                ERR   initError",
@@ -173,8 +160,8 @@ func TestHandlerReadableHealthCheck(t *testing.T) {
 			req:     []*testHealthChecker{longName, longName},
 			opt:     []*testHealthChecker{longName, warn},
 			expCode: http.StatusOK,
-			expReq:  [] string{"veryveryveryveryveryveryveryveryveryveryveryverylongname   OK    "},
-			expOpt:  [] string{"WithWarning                                                OK    "},
+			expReq:  []string{"veryveryveryveryveryveryveryveryveryveryveryverylongname   OK    "},
+			expOpt:  []string{"WithWarning                                                OK    "},
 		},
 	}
 	for _, tc := range testcases {
@@ -195,39 +182,32 @@ func TestHandlerReadableHealthCheck(t *testing.T) {
 			ReadableHealthHandler().ServeHTTP(rec, req)
 			resp := rec.Result()
 
-			if resp.StatusCode != tc.expCode {
-				t.Errorf("Expected /health to respond with status code %d, got: %d", tc.expCode, resp.StatusCode)
-			}
+			require.Equal(t, tc.expCode, resp.StatusCode)
 
 			data, err := ioutil.ReadAll(resp.Body)
-			if err != nil {
-				log.Fatal(err)
-			}
+			require.NoError(t, err)
 
 			// health check results are not ordered because ranging over a map is randomized,
 			// so the result is splitted into slices of health check results
 			results := strings.Split(string(data), "Optional Services: \n")
 			reqRes := strings.Split(strings.Split(results[0], "Required Services: \n")[1], "\n")
 			optRes := strings.Split(results[1], "\n")
-			testListHealthChecks(tc.expReq, reqRes, t, string(data))
-			testListHealthChecks(tc.expOpt, optRes, t, string(data))
+			testListHealthChecks(tc.expReq, reqRes, t)
+			testListHealthChecks(tc.expOpt, optRes, t)
 		})
 	}
 }
 
-func testListHealthChecks(expected []string, checkResult []string, t *testing.T, body string) {
+func testListHealthChecks(expected []string, checkResult []string, t *testing.T) {
 	// checkResult contains a empty string because of the splitting
-	if expLength := len(checkResult) - 1; expLength != len(expected) {
-		t.Errorf("Expected to have %d health check results, got: %d in body %q", expLength, len(checkResult), body)
-	}
+	require.Equal(t, len(expected), len(checkResult)-1, "The amount of health check results in the response body needs to be equal to the amount of expected health check results.")
+
 	// health check results are not ordered because ranging over a map is randomized,
 	// so the rows needs to be sorted for easy comprehension
 	sort.Strings(expected)
 	sort.Strings(checkResult)
 
 	for i := range expected {
-		if expected[i] != checkResult[i+1] {
-			t.Errorf("Expected health/check to return %q, got: %q", expected[i], checkResult[i+1])
-		}
+		require.Equal(t, expected[i], checkResult[i+1], "The entry of the health check table is wrong")
 	}
 }

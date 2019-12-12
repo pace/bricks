@@ -4,6 +4,7 @@
 package servicehealthcheck
 
 import (
+	"fmt"
 	"net/http"
 	"sync"
 
@@ -71,7 +72,7 @@ func check(hcs *sync.Map) map[string]HealthCheckResult {
 func writeResult(w http.ResponseWriter, status int, body string) {
 	w.Header().Set("Content-Type", "text/plain")
 	w.WriteHeader(status)
-	if _, err := w.Write([]byte(body)); err != nil {
+	if _, err := fmt.Fprint(w, body); err != nil {
 		log.Warnf("could not write output: %s", err)
 	}
 }
