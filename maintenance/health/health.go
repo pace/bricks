@@ -23,7 +23,7 @@ func (h *handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 // ReadinessCheck allows to set a different function for the readiness check. The default readiness check
 // is the same as the liveness check and does always return OK
-func ReadinessCheck(check func(http.ResponseWriter, *http.Request)) {
+func SetCustomReadinessCheck(check func(http.ResponseWriter, *http.Request)) {
 	readinessCheck.check = check
 }
 
