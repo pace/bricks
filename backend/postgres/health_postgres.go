@@ -25,7 +25,7 @@ func (h *HealthCheck) Init() error {
 
 // HealthCheck performs the read test on the database. If enabled, it performs a
 // write test as well.
-func (h *HealthCheck) HealthCheck() (bool, error) {
+func (h *HealthCheck) HealthCheck() servicehealthcheck.HealthCheckResult {
 	if time.Since(h.state.LastChecked()) <= cfg.HealthCheckResultTTL {
 		// the last result of the Health Check is still not outdated
 		return h.state.GetState()

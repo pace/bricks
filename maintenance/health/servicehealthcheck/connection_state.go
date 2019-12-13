@@ -11,35 +11,33 @@ import (
 // ConnectionState caches the result of health checks. It is concurrency-safe.
 type ConnectionState struct {
 	lastCheck time.Time
-	isHealthy bool
-	err       error
+	result    HealthCheckResult
 	m         sync.Mutex
 }
 
-func (cs *ConnectionState) setConnectionState(healthy bool, err error) {
+func (cs *ConnectionState) setConnectionState(result HealthCheckResult) {
 	cs.m.Lock()
 	defer cs.m.Unlock()
-	cs.isHealthy = healthy
-	cs.err = err
+	cs.result = result
 	cs.lastCheck = time.Now()
 }
 
 // SetErrorState sets the state to not healthy.
 func (cs *ConnectionState) SetErrorState(err error) {
-	cs.setConnectionState(err == nil, err)
+	cs.setConnectionState(HealthCheckResult{State: Err, Msg: err.Error()})
 }
 
 // SetHealthy sets the state to healthy.
 func (cs *ConnectionState) SetHealthy() {
-	cs.setConnectionState(true, nil)
+	cs.setConnectionState(HealthCheckResult{State: Ok, Msg: ""})
 }
 
 // GetState returns the current state. That is whether the check is healthy or
-// the error occured.
-func (cs *ConnectionState) GetState() (bool, error) {
+// the error occurred.
+func (cs *ConnectionState) GetState() HealthCheckResult {
 	cs.m.Lock()
 	defer cs.m.Unlock()
-	return cs.isHealthy, cs.err
+	return cs.result
 }
 
 // LastChecked returns the time that the state was last updated or confirmed.
