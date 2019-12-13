@@ -35,7 +35,7 @@ var initErrors sync.Map
 type HealthState string
 
 const (
-	// Err State of a service, if a error occurred during the health check of the service
+	// Err State of a service, if an error occurred during the health check of the service
 	Err HealthState = "ERR"
 	// Warn State of a service, if a warning occurred during the health check of the service
 	Warn HealthState = "WARN"
