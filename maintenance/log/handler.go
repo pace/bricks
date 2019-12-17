@@ -9,23 +9,27 @@ import (
 	"strings"
 	"time"
 
+	"github.com/pace/bricks/maintenance/util"
 	"github.com/rs/zerolog/hlog"
 	"github.com/rs/zerolog/log"
 )
 
 // Handler is a middleware that handles all of the logging aspects of
 // any incoming http request
-func Handler() func(http.Handler) http.Handler {
+func Handler(ignoredPrefixes ...string) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
-		return hlog.NewHandler(log.Logger)(
-			hlog.AccessHandler(requestCompleted)(
-				hlog.RequestIDHandler("req_id", "Request-Id")(next)))
+		return util.NewIgnorePrefixMiddleware(next,
+			hlog.NewHandler(log.Logger)(
+				hlog.AccessHandler(requestCompleted)(
+					hlog.RequestIDHandler("req_id", "Request-Id")(next))), ignoredPrefixes...)
+
 	}
 }
 
 // requestCompleted logs all request related information once
 // at the end of the request
 var requestCompleted = func(r *http.Request, status, size int, duration time.Duration) {
+
 	hlog.FromRequest(r).Info().
 		Str("method", r.Method).
 		Str("url", r.URL.String()).

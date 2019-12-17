@@ -27,7 +27,7 @@ func Router() *mux.Router {
 	r.Use(errors.Handler())
 
 	// for logging
-	r.Use(log.Handler())
+	r.Use(log.Handler("/health"))
 
 	r.Use(tracing.Handler(
 		// no tracing for these prefixes

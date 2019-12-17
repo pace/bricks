@@ -10,30 +10,25 @@ import (
 	"testing"
 
 	"github.com/opentracing/opentracing-go"
+	"github.com/stretchr/testify/require"
 
 	"github.com/gorilla/mux"
 )
 
-func TestHandlerIgnore(t *testing.T) {
-	r := mux.NewRouter()
-	r.Use(Handler("/test"))
-	r.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {})
-
-	rec := httptest.NewRecorder()
-	req := httptest.NewRequest("GET", "/test", nil)
-
-	r.ServeHTTP(rec, req)
-}
-
 func TestHandler(t *testing.T) {
 	r := mux.NewRouter()
 	r.Use(Handler())
-	r.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {})
+	r.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(200)
+	})
 
 	rec := httptest.NewRecorder()
 	req := httptest.NewRequest("GET", "/foo", nil)
 
 	r.ServeHTTP(rec, req)
+
+	// This test does not tests the tracing
+	require.Equal(t, 200, rec.Result().StatusCode)
 }
 
 func TestRequest(t *testing.T) {
