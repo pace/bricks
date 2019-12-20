@@ -125,7 +125,7 @@ func Stack(ctx context.Context) {
 // This overwrites a logger that is set on the context already
 // use this if you are not inside a request context.
 func WithContext(ctx context.Context) context.Context {
-	return log.With().Logger().WithContext(ctx)
+	return log.Logger.WithContext(ctx)
 }
 
 // Output duplicates the current logger and sets w as its output.

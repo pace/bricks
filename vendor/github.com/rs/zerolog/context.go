@@ -2,6 +2,7 @@ package zerolog
 
 import (
 	"io/ioutil"
+	"math"
 	"net"
 	"time"
 )
@@ -26,7 +27,7 @@ func (c Context) Fields(fields map[string]interface{}) Context {
 func (c Context) Dict(key string, dict *Event) Context {
 	dict.buf = enc.AppendEndMarker(dict.buf)
 	c.l.context = append(enc.AppendKey(c.l.context, key), dict.buf...)
-	eventPool.Put(dict)
+	putEvent(dict)
 	return c
 }
 
@@ -55,7 +56,7 @@ func (c Context) Object(key string, obj LogObjectMarshaler) Context {
 	e := newEvent(levelWriterAdapter{ioutil.Discard}, 0)
 	e.Object(key, obj)
 	c.l.context = enc.AppendObjectData(c.l.context, e.buf)
-	eventPool.Put(e)
+	putEvent(e)
 	return c
 }
 
@@ -64,7 +65,7 @@ func (c Context) EmbedObject(obj LogObjectMarshaler) Context {
 	e := newEvent(levelWriterAdapter{ioutil.Discard}, 0)
 	e.EmbedObject(obj)
 	c.l.context = enc.AppendObjectData(c.l.context, e.buf)
-	eventPool.Put(e)
+	putEvent(e)
 	return c
 }
 
@@ -101,27 +102,47 @@ func (c Context) RawJSON(key string, b []byte) Context {
 	return c
 }
 
-// AnErr adds the field key with err as a string to the logger context.
+// AnErr adds the field key with serialized err to the logger context.
 func (c Context) AnErr(key string, err error) Context {
-	if err != nil {
-		c.l.context = enc.AppendError(enc.AppendKey(c.l.context, key), err)
+	marshaled := ErrorMarshalFunc(err)
+	switch m := marshaled.(type) {
+	case nil:
+		return c
+	case LogObjectMarshaler:
+		return c.Object(key, m)
+	case error:
+		return c.Str(key, m.Error())
+	case string:
+		return c.Str(key, m)
+	default:
+		return c.Interface(key, m)
 	}
-	return c
 }
 
-// Errs adds the field key with errs as an array of strings to the logger context.
+// Errs adds the field key with errs as an array of serialized errors to the
+// logger context.
 func (c Context) Errs(key string, errs []error) Context {
-	c.l.context = enc.AppendErrors(enc.AppendKey(c.l.context, key), errs)
-	return c
+	arr := Arr()
+	for _, err := range errs {
+		marshaled := ErrorMarshalFunc(err)
+		switch m := marshaled.(type) {
+		case LogObjectMarshaler:
+			arr = arr.Object(m)
+		case error:
+			arr = arr.Str(m.Error())
+		case string:
+			arr = arr.Str(m)
+		default:
+			arr = arr.Interface(m)
+		}
+	}
+
+	return c.Array(key, arr)
 }
 
-// Err adds the field "error" with err as a string to the logger context.
-// To customize the key name, change zerolog.ErrorFieldName.
+// Err adds the field "error" with serialized err to the logger context.
 func (c Context) Err(err error) Context {
-	if err != nil {
-		c.l.context = enc.AppendError(enc.AppendKey(c.l.context, ErrorFieldName), err)
-	}
-	return c
+	return c.AnErr(ErrorFieldName, err)
 }
 
 // Bool adds the field key with val as a bool to the logger context.
@@ -327,18 +348,57 @@ func (c Context) Interface(key string, i interface{}) Context {
 	return c
 }
 
-type callerHook struct{}
-
-func (ch callerHook) Run(e *Event, level Level, msg string) {
-        //Two extra frames to skip (added by hook infra).
-	e.caller(CallerSkipFrameCount+2)
+type callerHook struct {
+	callerSkipFrameCount int
 }
 
-var ch = callerHook{}
+func newCallerHook(skipFrameCount int) callerHook {
+	return callerHook{callerSkipFrameCount: skipFrameCount}
+}
+
+func (ch callerHook) Run(e *Event, level Level, msg string) {
+	switch ch.callerSkipFrameCount {
+	case useGlobalSkipFrameCount:
+		// Extra frames to skip (added by hook infra).
+		e.caller(CallerSkipFrameCount + contextCallerSkipFrameCount)
+	default:
+		// Extra frames to skip (added by hook infra).
+		e.caller(ch.callerSkipFrameCount + contextCallerSkipFrameCount)
+	}
+}
+
+// useGlobalSkipFrameCount acts as a flag to informat callerHook.Run
+// to use the global CallerSkipFrameCount.
+const useGlobalSkipFrameCount = math.MinInt32
+
+// ch is the default caller hook using the global CallerSkipFrameCount.
+var ch = newCallerHook(useGlobalSkipFrameCount)
 
 // Caller adds the file:line of the caller with the zerolog.CallerFieldName key.
 func (c Context) Caller() Context {
 	c.l = c.l.Hook(ch)
+	return c
+}
+
+// CallerWithSkipFrameCount adds the file:line of the caller with the zerolog.CallerFieldName key.
+// The specified skipFrameCount int will override the global CallerSkipFrameCount for this context's respective logger.
+// If set to -1 the global CallerSkipFrameCount will be used.
+func (c Context) CallerWithSkipFrameCount(skipFrameCount int) Context {
+	c.l = c.l.Hook(newCallerHook(skipFrameCount))
+	return c
+}
+
+type stackTraceHook struct{}
+
+func (sh stackTraceHook) Run(e *Event, level Level, msg string) {
+	e.Stack()
+}
+
+var sh = stackTraceHook{}
+
+// Stack enables stack trace printing for the error passed to Err().
+func (c Context) Stack() Context {
+	c.l = c.l.Hook(sh)
 	return c
 }
 

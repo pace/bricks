@@ -20,6 +20,20 @@ type Array struct {
 	buf []byte
 }
 
+func putArray(a *Array) {
+	// Proper usage of a sync.Pool requires each entry to have approximately
+	// the same memory cost. To obtain this property when the stored type
+	// contains a variably-sized buffer, we add a hard limit on the maximum buffer
+	// to place back in the pool.
+	//
+	// See https://golang.org/issue/23199
+	const maxSize = 1 << 16 // 64KiB
+	if cap(a.buf) > maxSize {
+		return
+	}
+	arrayPool.Put(a)
+}
+
 // Arr creates an array to be added to an Event or Context.
 func Arr() *Array {
 	a := arrayPool.Get().(*Array)
@@ -38,7 +52,7 @@ func (a *Array) write(dst []byte) []byte {
 		dst = append(append(dst, a.buf...))
 	}
 	dst = enc.AppendArrayEnd(dst)
-	arrayPool.Put(a)
+	putArray(a)
 	return dst
 }
 
@@ -49,7 +63,7 @@ func (a *Array) Object(obj LogObjectMarshaler) *Array {
 	obj.MarshalZerologObject(e)
 	e.buf = enc.AppendEndMarker(e.buf)
 	a.buf = append(enc.AppendArrayDelim(a.buf), e.buf...)
-	eventPool.Put(e)
+	putEvent(e)
 	return a
 }
 
@@ -71,9 +85,30 @@ func (a *Array) Hex(val []byte) *Array {
 	return a
 }
 
-// Err append append the err as a string to the array.
+// RawJSON adds already encoded JSON to the array.
+func (a *Array) RawJSON(val []byte) *Array {
+	a.buf = appendJSON(enc.AppendArrayDelim(a.buf), val)
+	return a
+}
+
+// Err serializes and appends the err to the array.
 func (a *Array) Err(err error) *Array {
-	a.buf = enc.AppendError(enc.AppendArrayDelim(a.buf), err)
+	marshaled := ErrorMarshalFunc(err)
+	switch m := marshaled.(type) {
+	case LogObjectMarshaler:
+		e := newEvent(nil, 0)
+		e.buf = e.buf[:0]
+		e.appendObject(m)
+		a.buf = append(enc.AppendArrayDelim(a.buf), e.buf...)
+		putEvent(e)
+	case error:
+		a.buf = enc.AppendString(enc.AppendArrayDelim(a.buf), m.Error())
+	case string:
+		a.buf = enc.AppendString(enc.AppendArrayDelim(a.buf), m)
+	default:
+		a.buf = enc.AppendInterface(enc.AppendArrayDelim(a.buf), m)
+	}
+
 	return a
 }
 
