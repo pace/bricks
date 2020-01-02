@@ -14,6 +14,7 @@ import (
 	"github.com/pace/bricks/maintenance/log"
 	"github.com/pace/bricks/maintenance/metric"
 	"github.com/pace/bricks/maintenance/tracing"
+	"github.com/pace/bricks/maintenance/util"
 )
 
 // Router returns the default microservice endpoints for
@@ -31,10 +32,10 @@ func Router() *mux.Router {
 
 	r.Use(tracing.Handler(
 		// no tracing for these prefixes
-		"/metrics",
-		"/health",
-		"/debug",
-	))
+		util.WithoutPrefixes("/metrics",
+			"/health",
+			"/debug",
+		)))
 
 	// for prometheus
 	r.Handle("/metrics", metric.Handler())

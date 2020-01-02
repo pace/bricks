@@ -10,10 +10,23 @@ import (
 	"testing"
 
 	"github.com/opentracing/opentracing-go"
+	"github.com/pace/bricks/maintenance/util"
 	"github.com/stretchr/testify/require"
 
 	"github.com/gorilla/mux"
 )
+
+func TestHandlerIgnore(t *testing.T) {
+	r := mux.NewRouter()
+	r.Use(Handler(util.WithoutPrefixes("/test")))
+	r.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {})
+
+	rec := httptest.NewRecorder()
+	req := httptest.NewRequest("GET", "/test", nil)
+
+	// This test does not tests if any prefix is ignored
+	r.ServeHTTP(rec, req)
+}
 
 func TestHandler(t *testing.T) {
 	r := mux.NewRouter()

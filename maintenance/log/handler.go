@@ -21,7 +21,7 @@ func Handler(ignoredPrefixes ...string) func(http.Handler) http.Handler {
 		return util.NewIgnorePrefixMiddleware(next,
 			hlog.NewHandler(log.Logger)(
 				hlog.AccessHandler(requestCompleted)(
-					hlog.RequestIDHandler("req_id", "Request-Id")(next))), ignoredPrefixes...)
+					hlog.RequestIDHandler("req_id", "Request-Id")(next))), util.WithoutPrefixes(ignoredPrefixes...))
 
 	}
 }
