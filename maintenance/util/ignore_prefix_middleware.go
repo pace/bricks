@@ -9,7 +9,7 @@ import (
 )
 
 // IgnorePrefixMiddleware is a wrapper for another middleware.
-// It only calls the actual middleware if non of the ignoredPrefixes is prefix of the request path
+// It only calls the actual middleware if none of the ignoredPrefixes is prefix of the request path
 type IgnorePrefixMiddleware struct {
 	ignoredPrefixes  []string
 	next             http.Handler
