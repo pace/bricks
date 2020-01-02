@@ -31,7 +31,7 @@ func TestHandlerReadiness(t *testing.T) {
 	// check another readiness check
 	checkResult(rec, 200, "OK\n", t)
 	rec = httptest.NewRecorder()
-	ReadinessCheck(func(w http.ResponseWriter, request *http.Request) {
+	SetCustomReadinessCheck(func(w http.ResponseWriter, request *http.Request) {
 		w.Header().Set("Content-Type", "text/plain")
 		w.WriteHeader(http.StatusNotFound)
 		if _, err := w.Write([]byte("Err\n")); err != nil {
