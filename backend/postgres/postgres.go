@@ -8,6 +8,8 @@ import (
 	"context"
 	"fmt"
 	"math"
+	"os"
+	"path/filepath"
 	"sync"
 	"time"
 
@@ -27,6 +29,10 @@ type config struct {
 	Password string `env:"POSTGRES_PASSWORD" envDefault:"mysecretpassword"`
 	User     string `env:"POSTGRES_USER" envDefault:"postgres"`
 	Database string `env:"POSTGRES_DB" envDefault:"postgres"`
+
+	// ApplicationName is the application name. Used in logs on Pg side.
+	// Only availaible from pg-9.0.
+	ApplicationName string `env:"POSTGRES_APPLICATION_NAME" envDefault:"-"`
 	// Maximum number of retries before giving up.
 	MaxRetries int `env:"POSTGRES_MAX_RETRIES" envDefault:"5"`
 	// Whether to retry queries cancelled because of statement_timeout.
@@ -125,6 +131,22 @@ func init() {
 		log.Fatalf("Failed to parse postgres environment: %v", err)
 	}
 
+	// if the application name is unset infer it from the:
+	// jaeger service name , service name or executable name
+	if cfg.ApplicationName == "-" {
+		names := []string{
+			os.Getenv("JAEGER_SERVICE_NAME"),
+			os.Getenv("SERVICE_NAME"),
+			filepath.Base(os.Args[0]),
+		}
+		for _, name := range names {
+			if name != "" {
+				cfg.ApplicationName = name
+				break
+			}
+		}
+	}
+
 	servicehealthcheck.RegisterHealthCheck(&HealthCheck{
 		Pool: DefaultConnectionPool(),
 	}, "postgresdefault")
@@ -162,6 +184,7 @@ func ConnectionPool() *pg.DB {
 		User:                  cfg.User,
 		Password:              cfg.Password,
 		Database:              cfg.Database,
+		ApplicationName:       cfg.ApplicationName,
 		MaxRetries:            cfg.MaxRetries,
 		RetryStatementTimeout: cfg.RetryStatementTimeout,
 		MinRetryBackoff:       cfg.MinRetryBackoff,
@@ -187,7 +210,9 @@ func ConnectionPool() *pg.DB {
 //  servicehealthcheck.RegisterHealthCheck(...)
 func CustomConnectionPool(opts *pg.Options) *pg.DB {
 	log.Logger().Info().Str("addr", opts.Addr).
-		Str("user", opts.User).Str("database", opts.Database).
+		Str("user", opts.User).
+		Str("database", opts.Database).
+		Str("as", opts.ApplicationName).
 		Msg("PostgreSQL connection pool created")
 	db := pg.Connect(opts)
 	db.OnQueryProcessed(queryLogger)
