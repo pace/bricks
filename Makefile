@@ -28,9 +28,6 @@ jsonapi:
 		-path $(JSONAPITEST)/articles/open-api_test.go \
 		-source $(JSONAPITEST)/articles/open-api.json
 
-build:
-	docker build .
-
 lint: $(GOPATH)/bin/golangci-lint
 	$(GOPATH)/bin/golangci-lint run
 
@@ -44,5 +41,4 @@ integration:
 	go test -mod=vendor -count=1 -v -cover -race -run TestIntegration ./...
 
 testserver:
-	docker build .
 	docker-compose up

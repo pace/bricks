@@ -48,7 +48,8 @@ Read our [contributors guide](CONTRIBUTING.md).
 ## Testing
 
 * Use `make test` to test without dependencies
-* Use `docker-compose run bricks make integration` to test with dependencies
+* Use `docker-compose run testserver make integration` to test with dependencies
+* Use `make testserver` to start a testserver that will be started with dependencies. In order to update the server one need to `docker-compose restart testserver`
 
 ## Environment variables for the pb command
 
