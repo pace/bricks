@@ -9,6 +9,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/pace/bricks/maintenance/tracing/wire"
 	"github.com/rs/zerolog/hlog"
 	"github.com/rs/zerolog/log"
 )
@@ -26,6 +27,15 @@ func Handler() func(http.Handler) http.Handler {
 // requestCompleted logs all request related information once
 // at the end of the request
 var requestCompleted = func(r *http.Request, status, size int, duration time.Duration) {
+	// log if the tracing id came from the wire
+	_, err := wire.FromWire(r)
+	var val string
+	if err != nil {
+		val = "new"
+	} else {
+		val = "wire"
+	}
+
 	hlog.FromRequest(r).Info().
 		Str("method", r.Method).
 		Str("url", r.URL.String()).
@@ -36,6 +46,7 @@ var requestCompleted = func(r *http.Request, status, size int, duration time.Dur
 		Str("ip", ProxyAwareRemote(r)).
 		Str("referer", r.Header.Get("Referer")).
 		Str("user_agent", r.Header.Get("User-Agent")).
+		Str("span", val).
 		Msg("Request Completed")
 }
 
