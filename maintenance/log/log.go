@@ -55,7 +55,8 @@ func init() {
 	log.Logger = log.Logger.Level(v)
 
 	// use ico8601 (and UTC for json) as defined in https://lab.jamit.de/pace/web/meta/issues/11
-	zerolog.TimeFieldFormat = "2006-01-02 15:04:05"
+	timeFormat := "2006-01-02 15:04:05"
+	zerolog.TimeFieldFormat = timeFormat
 
 	// auto detect log format
 	if cfg.Format == "auto" {
@@ -69,7 +70,7 @@ func init() {
 
 	switch cfg.Format {
 	case "console":
-		log.Logger = log.Output(zerolog.ConsoleWriter{Out: os.Stdout})
+		log.Logger = log.Output(zerolog.ConsoleWriter{Out: os.Stdout, TimeFormat: timeFormat})
 	case "json":
 		// configure json output log
 		log.Logger = log.Logger.Output(os.Stdout)
