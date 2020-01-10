@@ -1,4 +1,4 @@
-# PACE Bricks
+# PACE Bricks [![Build Status](https://travis-ci.org/pace/bricks.svg?branch=master)](https://travis-ci.org/pace/bricks)  [![Coverage Status](https://coveralls.io/repos/github/pace/bricks/badge.svg?branch=master)](https://coveralls.io/github/pace/bricks?branch=master)
 
 ![](artwork/PACE-Bricks_Header_LightBackground.png)
 
@@ -8,7 +8,7 @@ Opinionated microservice kit to help developers to build microservices with go.
 
 A pace/bricks microservice is:
 
-* build as a **docker container**
+* built as a **docker container**
 * deployed into a **kubernetes cluster**
 * configured using **environment variables** ([TWELVE-FACTOR APP](https://12factor.net/))
 * monitored using **prometheus**
@@ -48,7 +48,8 @@ Read our [contributors guide](CONTRIBUTING.md).
 ## Testing
 
 * Use `make test` to test without dependencies
-* Use `docker-compose run bricks make integration` to test with dependencies
+* Use `docker-compose run testserver make integration` to test with dependencies
+* Use `make testserver` to start a testserver that will be started with dependencies. In order to update the server one need to `docker-compose restart testserver`
 
 ## Environment variables for the pb command
 

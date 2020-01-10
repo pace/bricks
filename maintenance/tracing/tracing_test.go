@@ -36,7 +36,7 @@ func TestHandler(t *testing.T) {
 	})
 
 	rec := httptest.NewRecorder()
-	req := httptest.NewRequest("GET", "/foo", nil)
+	req := httptest.NewRequest("GET", "/", nil)
 
 	r.ServeHTTP(rec, req)
 

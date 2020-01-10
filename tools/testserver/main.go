@@ -116,6 +116,7 @@ func main() {
 			if err != nil {
 				t.Error(err)
 				t.Fail()
+				return
 			}
 			if resp.StatusCode != 200 {
 				t.Logf("Received status code: %d", resp.StatusCode)
