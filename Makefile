@@ -35,12 +35,16 @@ $(GOPATH)/bin/golangci-lint:
 	curl -sfL https://install.goreleaser.com/github.com/golangci/golangci-lint.sh | sh -s -- -b $(GOPATH)/bin v1.21.0
 
 test:
-	go test -mod=vendor -count=1 -v -cover -race -short -covermode=count -coverprofile=profile.cov ./...
+	go test -mod=vendor -count=1 -v -cover -race -short ./...
 
 integration:
-	go test -mod=vendor -count=1 -v -cover -race -run TestIntegration -covermode=count -coverprofile=profile.cov ./...
+	go test -mod=vendor -count=1 -v -cover -race -run TestIntegration ./...
 
 testserver:
 	docker-compose up
+
+coveralls-test:
+	go test -mod=vendor -count=1 -v -cover -covermode=count -coverprofile=coverage.out -short ./...
+
 
 ci: test integration
