@@ -1,6 +1,7 @@
 language: go
 
-
+before_install:
+  - go get github.com/mattn/goveralls
 
 services:
 - postgresql
@@ -14,6 +15,7 @@ go:
 
 after_success:
 - GO111MODULE=off go get github.com/mattn/goveralls
-- $GOPATH/bin/goveralls -coverprofile=coverage.out -service=travis-ci -repotoken $COVERALLS_TOKEN
 
-script: make ci
+script:
+  - make ci
+  - $GOPATH/bin/goveralls -service=travis-ci
