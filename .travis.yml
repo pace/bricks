@@ -1,11 +1,13 @@
 language: go
 
-service:
-- postgres
-- redis
+
+
+services:
+- postgresql
+- redis-server
 
 env:
-- GO111MODULE=on
+- GO111MODULE=on REDIS_HOSTS=localhost:6379 POSTGRES_HOST=localhost POSTGRES_PASSWORD=
 
 go:
 - 1.13.x
