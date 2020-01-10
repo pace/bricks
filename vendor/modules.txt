@@ -55,7 +55,7 @@ github.com/matttproud/golang_protobuf_extensions/pbutil
 github.com/opentracing/opentracing-go
 github.com/opentracing/opentracing-go/ext
 github.com/opentracing/opentracing-go/log
-# github.com/pkg/errors v0.8.0
+# github.com/pkg/errors v0.8.1
 github.com/pkg/errors
 # github.com/pmezard/go-difflib v1.0.0
 github.com/pmezard/go-difflib/difflib
@@ -75,7 +75,7 @@ github.com/prometheus/procfs/nfs
 github.com/prometheus/procfs/xfs
 # github.com/rs/xid v1.2.1
 github.com/rs/xid
-# github.com/rs/zerolog v1.8.0
+# github.com/rs/zerolog v1.17.2
 github.com/rs/zerolog
 github.com/rs/zerolog/hlog
 github.com/rs/zerolog/internal/cbor
@@ -110,9 +110,9 @@ github.com/uber/jaeger-client-go/utils
 # github.com/uber/jaeger-lib v1.5.0
 github.com/uber/jaeger-lib/metrics
 github.com/uber/jaeger-lib/metrics/prometheus
-# github.com/zenazn/goji v0.0.0-20160507202103-64eb34159fe5
+# github.com/zenazn/goji v0.9.0
 github.com/zenazn/goji/web/mutil
-# golang.org/x/net v0.0.0-20180906233101-161cd47e91fd
+# golang.org/x/net v0.0.0-20190620200207-3b0461eec859
 golang.org/x/net/context
 # golang.org/x/sys v0.0.0-20190222072716-a9d3bda3a223
 golang.org/x/sys/unix

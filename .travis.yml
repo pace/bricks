@@ -1,0 +1,19 @@
+language: go
+
+
+
+services:
+- postgresql
+- redis-server
+
+env:
+- GO111MODULE=on REDIS_HOSTS=localhost:6379 POSTGRES_HOST=localhost POSTGRES_PASSWORD=
+
+go:
+- 1.13.x
+
+after_success:
+- GO111MODULE=off go get github.com/mattn/goveralls
+- $GOPATH/bin/goveralls -coverprofile=coverage.out -service=travis-ci -repotoken $COVERALLS_TOKEN
+
+script: make ci

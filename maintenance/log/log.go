@@ -54,9 +54,6 @@ func init() {
 	zerolog.SetGlobalLevel(v)
 	log.Logger = log.Logger.Level(v)
 
-	// use ico8601 (and UTC for json) as defined in https://lab.jamit.de/pace/web/meta/issues/11
-	zerolog.TimeFieldFormat = "2006-01-02 15:04:05"
-
 	// auto detect log format
 	if cfg.Format == "auto" {
 		// if it is a terminal use the console writer
@@ -69,9 +66,10 @@ func init() {
 
 	switch cfg.Format {
 	case "console":
-		log.Logger = log.Output(zerolog.ConsoleWriter{Out: os.Stdout})
+		log.Logger = log.Output(zerolog.ConsoleWriter{Out: os.Stdout, TimeFormat: "2006-01-02 15:04:05"})
 	case "json":
 		// configure json output log
+		// use default timestamp format (RFC3339, subset of iso8601) and UTC for json as defined in https://lab.jamit.de/pace/web/meta/issues/11
 		log.Logger = log.Logger.Output(os.Stdout)
 		zerolog.TimestampFunc = func() time.Time { return time.Now().UTC() }
 	}
@@ -114,7 +112,7 @@ func Logger() *zerolog.Logger {
 
 // Stack prints the stack of the calling goroutine
 func Stack(ctx context.Context) {
-	for _, line := range strings.Split(string(debug.Stack()[:]), "\n") {
+	for _, line := range strings.Split(string(debug.Stack()), "\n") {
 		if line != "" {
 			Ctx(ctx).Error().Msg(line)
 		}
@@ -125,7 +123,7 @@ func Stack(ctx context.Context) {
 // This overwrites a logger that is set on the context already
 // use this if you are not inside a request context.
 func WithContext(ctx context.Context) context.Context {
-	return log.With().Logger().WithContext(ctx)
+	return log.Logger.WithContext(ctx)
 }
 
 // Output duplicates the current logger and sets w as its output.

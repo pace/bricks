@@ -10,10 +10,11 @@ import (
 
 	opentracing "github.com/opentracing/opentracing-go"
 	olog "github.com/opentracing/opentracing-go/log"
+	"github.com/pace/bricks/maintenance/log"
+	"github.com/pace/bricks/maintenance/tracing/wire"
 	"github.com/uber/jaeger-client-go/config"
 	"github.com/uber/jaeger-lib/metrics/prometheus"
 	"github.com/zenazn/goji/web/mutil"
-	"github.com/pace/bricks/maintenance/log"
 )
 
 // Closer can be used in shutdown hooks to ensure that the internal queue of
@@ -62,14 +63,16 @@ func (h *traceHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	// no ignored prefix, try decoding the tracing from the http request
 	ctx := r.Context()
 	var handlerSpan opentracing.Span
-	wireContext, err := opentracing.GlobalTracer().Extract(opentracing.HTTPHeaders, opentracing.HTTPHeadersCarrier(r.Header))
-	if err != nil {
-		log.Ctx(ctx).Debug().Err(err).Msg("Couldn't get span from request header")
-	}
+	wireContext, err := wire.FromWire(r)
 	handlerSpan, ctx = opentracing.StartSpanFromContext(ctx, "ServeHTTP", opentracing.ChildOf(wireContext))
 	handlerSpan.LogFields(olog.String("req_id", log.RequestID(r)),
 		olog.String("path", r.URL.Path),
 		olog.String("method", r.Method))
+	if err != nil {
+		handlerSpan.LogFields(olog.String("span", "new"), olog.String("spanerr", err.Error()))
+	} else {
+		handlerSpan.LogFields(olog.String("span", "wire"))
+	}
 	ww := mutil.WrapWriter(w)
 	h.next.ServeHTTP(ww, r.WithContext(ctx))
 	handlerSpan.LogFields(olog.Int("bytes", ww.BytesWritten()), olog.Int("status", ww.Status()))
