@@ -8,7 +8,7 @@ Opinionated microservice kit to help developers to build microservices with go.
 
 A pace/bricks microservice is:
 
-* build as a **docker container**
+* built as a **docker container**
 * deployed into a **kubernetes cluster**
 * configured using **environment variables** ([TWELVE-FACTOR APP](https://12factor.net/))
 * monitored using **prometheus**
