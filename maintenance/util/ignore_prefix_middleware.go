@@ -18,7 +18,7 @@ type ConfigurableMiddleware struct {
 	actualMiddleware http.Handler
 }
 
-// ConfigurableMiddlewareOption is ap functional Option to configure the middleware
+// ConfigurableMiddlewareOption is a functional option to configure the middleware
 type ConfigurableMiddlewareOption func(*ConfigurableMiddleware) error
 
 // WithoutPrefixes allows to configure the ignoredPrefix slice
