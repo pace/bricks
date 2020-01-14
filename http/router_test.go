@@ -13,7 +13,8 @@ import (
 
 	"github.com/gorilla/mux"
 	"github.com/pace/bricks/http/jsonapi/runtime"
-	"github.com/pace/bricks/maintenance/log"
+	"github.com/pace/bricks/maintenance/health"
+	"github.com/stretchr/testify/require"
 )
 
 func TestHealthHandler(t *testing.T) {
@@ -23,18 +24,53 @@ func TestHealthHandler(t *testing.T) {
 	Router().ServeHTTP(rec, req)
 
 	resp := rec.Result()
-	defer resp.Body.Close()
-
-	if resp.StatusCode != 200 {
-		t.Errorf("Expected /health to respond with 200, got: %d", resp.StatusCode)
-	}
+	require.Equal(t, 200, resp.StatusCode)
 
 	data, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
-		log.Fatal(err)
-	}
-	if string(data[:]) != "OK\n" {
-		t.Errorf("Expected health to return OK, got: %q", string(data[:]))
+	require.NoError(t, err)
+	require.Equal(t, "OK\n", string(data))
+	require.NotEmpty(t, resp.Header.Get("Request-Id"), "Expected response to contain Request-Id, got: %#v", resp.Header)
+
+}
+
+func TestHealthRoutes(t *testing.T) {
+	tCs := []struct {
+		route          string
+		expectedResult string
+		title          string
+	}{{
+		route:          "/health",
+		expectedResult: "OK",
+		title:          "Route Health",
+	}, {
+		route:          "/health/check",
+		expectedResult: "Required Services: \nOptional Services: \n",
+		title:          "Route Health detailed",
+	}, {
+		route:          "/health/readiness",
+		expectedResult: "Ready",
+		title:          "Route readiness",
+	}, {
+		route:          "/health/liveness",
+		expectedResult: "OK\n",
+		title:          "route liveness",
+	}}
+	health.SetCustomReadinessCheck(func(w http.ResponseWriter, r *http.Request) {
+		_, err := fmt.Fprint(w, "Ready")
+		require.NoError(t, err)
+	})
+	for _, tC := range tCs {
+		t.Run(tC.title, func(t *testing.T) {
+			rec := httptest.NewRecorder()
+			req := httptest.NewRequest("GET", tC.route, nil)
+
+			Router().ServeHTTP(rec, req)
+
+			resp := rec.Result()
+			data, err := ioutil.ReadAll(resp.Body)
+			require.NoError(t, err)
+			require.Equal(t, tC.expectedResult, string(data))
+		})
 	}
 }
 
@@ -55,21 +91,15 @@ func TestCustomRoutes(t *testing.T) {
 	r.ServeHTTP(rec, req)
 
 	resp := rec.Result()
-	defer resp.Body.Close()
 
-	if resp.StatusCode != 501 {
-		t.Errorf("Expected /foo/bar to respond with 501, got: %d", resp.StatusCode)
-	}
+	require.Equal(t, 501, resp.StatusCode, "Expected /foo/bar to respond with 501")
 
 	var e struct {
 		List runtime.Errors `json:"errors"`
 	}
 
 	err := json.NewDecoder(resp.Body).Decode(&e)
-	if err != nil {
-		t.Fatal(err)
-	}
-	if e.List[0].ID == "" {
-		t.Errorf("Expected first error to contain request ID, got: %#v", e.List[0])
-	}
+	require.NoError(t, err)
+	require.NotEmptyf(t, e.List[0].ID, "Expected first error to contain request ID, got: %#v", e.List[0])
+
 }
