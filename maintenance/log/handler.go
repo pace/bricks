@@ -9,20 +9,20 @@ import (
 	"strings"
 	"time"
 
-	"github.com/pace/bricks/maintenance/util"
 	"github.com/pace/bricks/maintenance/tracing/wire"
+	"github.com/pace/bricks/maintenance/util"
 	"github.com/rs/zerolog/hlog"
 	"github.com/rs/zerolog/log"
 )
 
-// Handler is a middleware that handles all of the logging aspects of
+// Handler returns a middleware that handles all of the logging aspects of
 // any incoming http request
-func Handler(ignoredPrefixes ...string) func(http.Handler) http.Handler {
+func Handler(cfgs ...util.ConfigurableMiddlewareOption) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
-		return util.NewIgnorePrefixMiddleware(next,
+		return util.NewIgnorePrefixHandler(next,
 			hlog.NewHandler(log.Logger)(
 				hlog.AccessHandler(requestCompleted)(
-					hlog.RequestIDHandler("req_id", "Request-Id")(next))), util.WithoutPrefixes(ignoredPrefixes...))
+					hlog.RequestIDHandler("req_id", "Request-Id")(next))), cfgs...)
 
 	}
 }

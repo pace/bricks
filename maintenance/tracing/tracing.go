@@ -73,7 +73,7 @@ func (h *traceHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 func Handler(options ...util.ConfigurableMiddlewareOption) func(http.Handler) http.Handler {
 
 	return func(next http.Handler) http.Handler {
-		return util.NewIgnorePrefixMiddleware(next, &traceHandler{
+		return util.NewIgnorePrefixHandler(next, &traceHandler{
 			next: next,
 		}, options...)
 	}
