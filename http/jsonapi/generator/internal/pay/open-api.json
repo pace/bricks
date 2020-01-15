@@ -452,7 +452,7 @@
         }
       }
     },
-    "/beta/transaction": {
+    "/beta/transaction/{pathDecimal}": {
       "post": {
         "tags": [
           "Payment"
@@ -460,6 +460,28 @@
         "operationId": "ProcessPayment",
         "summary": "Process payment",
         "description": "Process payment and notify user if transaction is finished successfully. You can optionally provide `priceIncludingVAT`and `currency` in the request body to check if the price the user has seen is still correct.\n",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "pathDecimal",
+            "schema": {
+              "type": "string",
+              "format": "decimal"
+            },
+            "required": true,
+            "example": "34.56"
+          },
+          {
+            "in": "query",
+            "name": "queryDecimal",
+            "schema": {
+              "type": "string",
+              "format": "decimal"
+            },
+            "required": true,
+            "example": "12.34"
+          }
+        ],
         "requestBody": {
           "required": true,
           "content": {
@@ -533,26 +555,26 @@
                               "type": "object",
                               "properties": {
                                 "amount": {
-                                  "type": "number",
-                                  "format": "float",
-                                  "example": 11.07
+                                  "type": "string",
+                                  "format": "decimal",
+                                  "example": "11.07"
                                 },
                                 "rate": {
-                                  "type": "number",
-                                  "format": "float",
-                                  "example": 0.19
+                                  "type": "string",
+                                  "format": "decimal",
+                                  "example": "0.19"
                                 }
                               }
                             },
                             "priceWithoutVAT": {
-                              "type": "number",
-                              "format": "float",
-                              "example": 58.27
+                              "type": "string",
+                              "format": "decimal",
+                              "example": "58.27"
                             },
                             "priceIncludingVAT": {
-                              "type": "number",
-                              "format": "float",
-                              "example": 69.34
+                              "type": "string",
+                              "format": "decimal",
+                              "example": "69.34"
                             },
                             "currency": {
                               "$ref": "#/components/schemas/currency"
@@ -717,9 +739,9 @@
                     }
                   },
                   "priceIncludingVAT": {
-                    "type": "number",
-                    "format": "float",
-                    "example": 69.34
+                    "type": "string",
+                    "format": "decimal",
+                    "example": "69.34"
                   },
                   "currency": {
                     "$ref": "#/components/schemas/currency"
