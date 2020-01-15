@@ -9,10 +9,12 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/google/jsonapi"
 	"github.com/pace/bricks/http/jsonapi/runtime"
 	"github.com/pace/bricks/http/oauth2"
 	"github.com/pace/bricks/http/security/apikey"
 	"github.com/pace/bricks/maintenance/log"
+	"github.com/shopspring/decimal"
 )
 
 type testService struct {
@@ -55,7 +57,33 @@ func (s *testService) GetPaymentMethodsIncludingPaymentToken(context.Context, Ge
 	return fmt.Errorf("Some other error")
 }
 
-func (s *testService) ProcessPayment(context.Context, ProcessPaymentResponseWriter, *ProcessPaymentRequest) error {
+func (s *testService) ProcessPayment(ctx context.Context, w ProcessPaymentResponseWriter, r *ProcessPaymentRequest) error {
+	if !r.ParamPathDecimal.Decode().Equals(decimal.RequireFromString("1337.42")) {
+		s.t.Errorf(`expected pathDecimal "1337.42", got %q`, r.ParamPathDecimal.Decode())
+	}
+
+	if !r.ParamQueryDecimal.Decode().Equals(decimal.RequireFromString("123.456")) {
+		s.t.Errorf(`expected queryDecimal "123.456", got %q`, r.ParamPathDecimal.Decode())
+	}
+
+	w.Created(&ProcessPaymentCreated{
+		ID: "42",
+		VAT: ProcessPaymentCreatedVAT{
+			Amount: runtime.DecimalFrom(decimal.RequireFromString("11.07")),
+			Rate:   runtime.DecimalFrom(decimal.RequireFromString("19.0")),
+		},
+		Currency: "EUR",
+		Fueling: ProcessPaymentCreatedFueling{
+			AppID:   "c30bce97-b732-4390-af38-1ac6b017aa4c",
+			PumpID:  "460ffaad-a3c1-4199-b69e-63949ccda82f",
+			Vin:     "1B3EL46R36N102271",
+			Mileage: 66435,
+		},
+		PaymentToken:      "f106ac99-213c-4cf7-8c1b-1e841516026b",
+		PriceIncludingVAT: runtime.DecimalFrom(decimal.RequireFromString("69.34")),
+		PriceWithoutVAT:   runtime.DecimalFrom(decimal.RequireFromString("58.27")),
+	})
+
 	return nil
 }
 
@@ -77,20 +105,20 @@ func TestHandler(t *testing.T) {
 	r := Router(&testService{t}, &testAuthBackend{})
 	rec := httptest.NewRecorder()
 	req := httptest.NewRequest("POST", "/pay/beta/payment-methods/sepa-direct-debit", strings.NewReader(`{
-	"data": {
-		"id": "2a1319c3-c136-495d-b59a-47b3246d08af",
-		"type": "paymentMethod",
-		"attributes": {
-			"kind": "sepa",
-			"iban": "DE89370400440532013000",
-			"firstName": "Jon",
-			"lastName": "Smith",
-			"address": {
-				"street": "Haid-und-Neu-Str.",
-				"houseNo": "18",
-				"postalCode": "76131",
-				"city": "Karlsruhe",
-				"countryCode": "DE"
+		"data": {
+			"id": "2a1319c3-c136-495d-b59a-47b3246d08af",
+			"type": "paymentMethod",
+			"attributes": {
+				"kind": "sepa",
+				"iban": "DE89370400440532013000",
+				"firstName": "Jon",
+				"lastName": "Smith",
+				"address": {
+					"street": "Haid-und-Neu-Str.",
+					"houseNo": "18",
+					"postalCode": "76131",
+					"city": "Karlsruhe",
+					"countryCode": "DE"
 				}
 			}
 		}
@@ -119,6 +147,60 @@ func TestHandler(t *testing.T) {
 
 	if !strings.Contains(string(b[:]), "d7101f72-a672-453c-9d36-d5809ef0ded6") {
 		t.Error("expected response to contain the generated payment method id")
+	}
+}
+
+func TestHandlerDecimal(t *testing.T) {
+	r := Router(&testService{t}, &testAuthBackend{})
+	rec := httptest.NewRecorder()
+	req := httptest.NewRequest("POST", "/pay/beta/transaction/1337.42?queryDecimal=123.456", strings.NewReader(`{
+		"data": {
+			"id": "5d3607f4-7855-4bfc-b926-1e662c225f06",
+			"type": "transaction",
+			"attributes": {
+				"paymentToken": "f106ac99-213c-4cf7-8c1b-1e841516026b",
+				"fueling": {
+	 				"appId": "c30bce97-b732-4390-af38-1ac6b017aa4c",
+	 				"pumpId": "460ffaad-a3c1-4199-b69e-63949ccda82f",
+	 				"vin": "1B3EL46R36N102271",
+	 				"mileage": 66435
+				},
+				"currency": "EUR",
+				"priceIncludingVAT": "69.34"
+			}
+		}
+	}`))
+	req.Header.Set("Accept", runtime.JSONAPIContentType)
+	req.Header.Set("Content-Type", runtime.JSONAPIContentType)
+
+	r.ServeHTTP(rec, req)
+
+	resp := rec.Result()
+	defer resp.Body.Close()
+
+	if resp.StatusCode != 201 {
+		t.Errorf("expected OK got: %d", resp.StatusCode)
+		b, err := ioutil.ReadAll(resp.Body)
+		if err != nil {
+			t.Fatal(err)
+		}
+		t.Error(string(b[:]))
+	}
+
+	var pc ProcessPaymentCreated
+	if err := jsonapi.UnmarshalPayload(resp.Body, &pc); err != nil {
+		t.Fatal(err)
+	}
+
+	assertDecimal(t, pc.VAT.Amount.Decode(), decimal.RequireFromString("11.07"))
+	assertDecimal(t, pc.VAT.Rate.Decode(), decimal.RequireFromString("19.0"))
+	assertDecimal(t, pc.PriceIncludingVAT.Decode(), decimal.RequireFromString("69.34"))
+	assertDecimal(t, pc.PriceWithoutVAT.Decode(), decimal.RequireFromString("58.27"))
+}
+
+func assertDecimal(t *testing.T, got, want decimal.Decimal) {
+	if !got.Equals(want) {
+		t.Errorf(`expected decimal.Decimal %q, got %q`, want, got)
 	}
 }
 

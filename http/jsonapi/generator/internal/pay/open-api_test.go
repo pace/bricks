@@ -71,8 +71,8 @@ type TransactionRequest struct {
 	ID                string                    `jsonapi:"primary,transaction,omitempty" valid:"uuid,optional"` // Transaction ID
 	Currency          Currency                  `json:"currency,omitempty" jsonapi:"attr,currency,omitempty" valid:"optional"`
 	Fueling           TransactionRequestFueling `json:"fueling,omitempty" jsonapi:"attr,fueling,omitempty" valid:"optional"`
-	PaymentToken      string                    `json:"paymentToken,omitempty" jsonapi:"attr,paymentToken,omitempty" valid:"required"`           // Example: "f106ac99-213c-4cf7-8c1b-1e841516026b"
-	PriceIncludingVAT float32                   `json:"priceIncludingVAT,omitempty" jsonapi:"attr,priceIncludingVAT,omitempty" valid:"optional"` // Example: "69.34"
+	PaymentToken      string                    `json:"paymentToken,omitempty" jsonapi:"attr,paymentToken,omitempty" valid:"required"`                                  // Example: "f106ac99-213c-4cf7-8c1b-1e841516026b"
+	PriceIncludingVAT runtime.Decimal           `json:"priceIncludingVAT,omitempty" jsonapi:"attr,priceIncludingVAT,omitempty" valid:"optional,matches(^(\d*\.)?\d+$)"` // Example: "69.34"
 }
 
 // Currency ...
@@ -395,7 +395,7 @@ func GetPaymentMethodsIncludingPaymentTokenHandler(service Service, authBackend 
 
 /*
 ProcessPaymentHandler handles request/response marshaling and validation for
- Post /beta/transaction
+ Post /beta/transaction/{pathDecimal}
 */
 func ProcessPaymentHandler(service Service, authBackend AuthorizationBackend) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -407,13 +407,26 @@ func ProcessPaymentHandler(service Service, authBackend AuthorizationBackend) ht
 
 		// Setup context, response writer and request type
 		writer := processPaymentResponseWriter{
-			ResponseWriter: metrics.NewMetric("pay", "/beta/transaction", w, r),
+			ResponseWriter: metrics.NewMetric("pay", "/beta/transaction/{pathDecimal}", w, r),
 		}
 		request := ProcessPaymentRequest{
 			Request: r.WithContext(ctx),
 		}
 
 		// Scan and validate incoming request parameters
+		vars := mux.Vars(r)
+		if !runtime.ScanParameters(w, r, &runtime.ScanParameter{
+			Data:     &request.ParamPathDecimal,
+			Location: runtime.ScanInPath,
+			Input:    vars["pathDecimal"],
+			Name:     "pathDecimal",
+		}, &runtime.ScanParameter{
+			Data:     &request.ParamQueryDecimal,
+			Location: runtime.ScanInQuery,
+			Name:     "queryDecimal",
+		}) {
+			return
+		}
 		if !runtime.ValidateParameters(w, r, &request) {
 			return // invalid request stop further processing
 		}
@@ -672,15 +685,15 @@ type ProcessPaymentCreated struct {
 	VAT               ProcessPaymentCreatedVAT     `json:"VAT,omitempty" jsonapi:"attr,VAT,omitempty" valid:"optional"`
 	Currency          Currency                     `json:"currency,omitempty" jsonapi:"attr,currency,omitempty" valid:"optional"`
 	Fueling           ProcessPaymentCreatedFueling `json:"fueling,omitempty" jsonapi:"attr,fueling,omitempty" valid:"optional"`
-	PaymentToken      string                       `json:"paymentToken,omitempty" jsonapi:"attr,paymentToken,omitempty" valid:"optional"`           // Example: "f106ac99-213c-4cf7-8c1b-1e841516026b"
-	PriceIncludingVAT float32                      `json:"priceIncludingVAT,omitempty" jsonapi:"attr,priceIncludingVAT,omitempty" valid:"optional"` // Example: "69.34"
-	PriceWithoutVAT   float32                      `json:"priceWithoutVAT,omitempty" jsonapi:"attr,priceWithoutVAT,omitempty" valid:"optional"`     // Example: "58.27"
+	PaymentToken      string                       `json:"paymentToken,omitempty" jsonapi:"attr,paymentToken,omitempty" valid:"optional"`                                  // Example: "f106ac99-213c-4cf7-8c1b-1e841516026b"
+	PriceIncludingVAT runtime.Decimal              `json:"priceIncludingVAT,omitempty" jsonapi:"attr,priceIncludingVAT,omitempty" valid:"optional,matches(^(\d*\.)?\d+$)"` // Example: "69.34"
+	PriceWithoutVAT   runtime.Decimal              `json:"priceWithoutVAT,omitempty" jsonapi:"attr,priceWithoutVAT,omitempty" valid:"optional,matches(^(\d*\.)?\d+$)"`     // Example: "58.27"
 }
 
 // ProcessPaymentCreatedVAT ...
 type ProcessPaymentCreatedVAT struct {
-	Amount float32 `json:"amount,omitempty" jsonapi:"attr,amount,omitempty" valid:"optional"` // Example: "11.07"
-	Rate   float32 `json:"rate,omitempty" jsonapi:"attr,rate,omitempty" valid:"optional"`     // Example: "0.19"
+	Amount runtime.Decimal `json:"amount,omitempty" jsonapi:"attr,amount,omitempty" valid:"optional,matches(^(\d*\.)?\d+$)"` // Example: "11.07"
+	Rate   runtime.Decimal `json:"rate,omitempty" jsonapi:"attr,rate,omitempty" valid:"optional,matches(^(\d*\.)?\d+$)"`     // Example: "0.19"
 }
 
 // ProcessPaymentCreatedFueling ...
@@ -728,8 +741,10 @@ func (w *processPaymentResponseWriter) Created(data *ProcessPaymentCreated) {
 
 // ProcessPaymentRequest ...
 type ProcessPaymentRequest struct {
-	Request *http.Request      `valid:"-"`
-	Content TransactionRequest `valid:"-"`
+	Request           *http.Request      `valid:"-"`
+	Content           TransactionRequest `valid:"-"`
+	ParamPathDecimal  runtime.Decimal    `valid:"required,matches(^(\d*\.)?\d+$)"`
+	ParamQueryDecimal runtime.Decimal    `valid:"required,matches(^(\d*\.)?\d+$)"`
 }
 
 // Service interface for all handlers
@@ -793,9 +808,9 @@ func Router(service Service, authBackend AuthorizationBackend) *mux.Router {
 	s1.Methods("POST").Path("/beta/payment-methods/{paymentMethodId}/authorize").Handler(AuthorizePaymentMethodHandler(service, authBackend)).Name("AuthorizePaymentMethod")
 	s1.Methods("POST").Path("/beta/payment-methods/sepa-direct-debit").Handler(CreatePaymentMethodSEPAHandler(service, authBackend)).Name("CreatePaymentMethodSEPA")
 	s1.Methods("DELETE").Path("/beta/payment-methods/{paymentMethodId}").Handler(DeletePaymentMethodHandler(service, authBackend)).Name("DeletePaymentMethod")
+	s1.Methods("POST").Path("/beta/transaction/{pathDecimal}").Handler(ProcessPaymentHandler(service, authBackend)).Name("ProcessPayment")
 	s1.Methods("GET").Path("/beta/payment-methods").Handler(GetPaymentMethodsIncludingPaymentTokenHandler(service, authBackend)).Queries("include", "paymentToken").Name("GetPaymentMethodsIncludingPaymentToken")
 	s1.Methods("GET").Path("/beta/payment-methods").Handler(GetPaymentMethodsIncludingCreditCheckHandler(service, authBackend)).Queries("include", "creditCheck").Name("GetPaymentMethodsIncludingCreditCheck")
 	s1.Methods("GET").Path("/beta/payment-methods").Handler(GetPaymentMethodsHandler(service, authBackend)).Name("GetPaymentMethods")
-	s1.Methods("POST").Path("/beta/transaction").Handler(ProcessPaymentHandler(service, authBackend)).Name("ProcessPayment")
 	return router
 }

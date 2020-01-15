@@ -13,6 +13,8 @@ import (
 	"github.com/getkin/kin-openapi/openapi3"
 )
 
+const pkgRuntime = "github.com/pace/bricks/http/jsonapi/runtime"
+
 func (g *Generator) addGoDoc(typeName, description string) {
 	if description != "" {
 		g.goSource.Comment(fmt.Sprintf("%s %s", typeName, description))
@@ -42,6 +44,9 @@ func (g *Generator) goType(stmt *jen.Statement, schema *openapi3.Schema, tags ma
 		case "uuid":
 			addValidator(tags, "uuid")
 			stmt.String()
+		case "decimal":
+			addValidator(tags, "matches(^(\\d*\\.)?\\d+$)")
+			stmt.Qual(pkgRuntime, "Decimal")
 		default:
 			stmt.String()
 		}
