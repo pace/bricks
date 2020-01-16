@@ -10,19 +10,17 @@ import (
 	"time"
 
 	"github.com/pace/bricks/maintenance/tracing/wire"
-	"github.com/pace/bricks/maintenance/util"
 	"github.com/rs/zerolog/hlog"
 	"github.com/rs/zerolog/log"
 )
 
 // Handler returns a middleware that handles all of the logging aspects of
 // any incoming http request
-func Handler(cfgs ...util.ConfigurableMiddlewareOption) func(http.Handler) http.Handler {
+func Handler() func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
-		return util.NewIgnorePrefixHandler(next,
-			hlog.NewHandler(log.Logger)(
-				hlog.AccessHandler(requestCompleted)(
-					hlog.RequestIDHandler("req_id", "Request-Id")(next))), cfgs...)
+		return hlog.NewHandler(log.Logger)(
+			hlog.AccessHandler(requestCompleted)(
+				hlog.RequestIDHandler("req_id", "Request-Id")(next)))
 
 	}
 }

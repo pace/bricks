@@ -28,6 +28,12 @@ func WithoutPrefixes(prefix ...string) ConfigurableMiddlewareOption {
 	}
 }
 
+func NewIgnorePrefixMiddleware(actualHandler func(http.Handler) http.Handler, cfgs ...ConfigurableMiddlewareOption) func(http.Handler) http.Handler {
+	return func(next http.Handler) http.Handler {
+		return NewIgnorePrefixHandler(next, actualHandler(next), cfgs...)
+	}
+}
+
 // NewIgnorePrefixHandler creates a configurableHandler
 // actualHandler is the actual handler, that is called if the request is not ignored
 func NewIgnorePrefixHandler(next, actualHandler http.Handler, cfgs ...ConfigurableMiddlewareOption) *configurableHandler {

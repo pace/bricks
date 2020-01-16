@@ -19,9 +19,9 @@ func TestMiddlewareWithBlacklist(t *testing.T) {
 	thisHandler := handlerWithStatusCode(http.StatusInternalServerError)
 	prefix := "/test"
 	r := mux.NewRouter()
-	r.Use(func(next http.Handler) http.Handler {
-		return NewIgnorePrefixHandler(next, thisHandler, WithoutPrefixes(prefix))
-	})
+	r.Use(NewIgnorePrefixMiddleware(func(http.Handler) http.Handler {
+		return thisHandler
+	}, WithoutPrefixes(prefix)))
 	r.HandleFunc(prefix+"/anything", handler.ServeHTTP)
 	r.HandleFunc("/anything", handler.ServeHTTP)
 

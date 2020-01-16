@@ -18,7 +18,7 @@ import (
 
 func TestHandlerIgnore(t *testing.T) {
 	r := mux.NewRouter()
-	r.Use(Handler(util.WithoutPrefixes("/test")))
+	r.Use(util.NewIgnorePrefixMiddleware(Handler(), util.WithoutPrefixes("/test")))
 	r.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {})
 
 	rec := httptest.NewRecorder()
