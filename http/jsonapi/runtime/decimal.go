@@ -9,5 +9,9 @@ func DecimalFrom(d decimal.Decimal) Decimal {
 }
 
 func (d Decimal) Decode() decimal.Decimal {
+	if d == "" {
+		return decimal.Zero
+	}
+
 	return decimal.RequireFromString(string(d))
 }
