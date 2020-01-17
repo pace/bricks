@@ -21,7 +21,7 @@ func setup() *http.Response {
 	return resp
 }
 
-// TestIntegrationHealthCheck tests if redis health check ist working like expected
+// TestIntegrationHealthCheck tests if object storage health check ist working like expected
 func TestIntegrationHealthCheck(t *testing.T) {
 	if testing.Short() {
 		t.SkipNow()
@@ -35,7 +35,7 @@ func TestIntegrationHealthCheck(t *testing.T) {
 	if err != nil {
 		log.Fatal(err)
 	}
-	if !strings.Contains(string(data), "redis                  OK") {
+	if !strings.Contains(string(data), "objstore                  OK") {
 		t.Errorf("Expected /health/check to return OK, got: %q", string(data[:]))
 	}
 }
