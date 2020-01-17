@@ -5,6 +5,7 @@
 package objstore
 
 import (
+	"net/http"
 	"time"
 
 	"github.com/caarlos0/env"
@@ -22,41 +23,41 @@ type config struct {
 	UseSSL          bool   `env:"S3_USE_SSL"`
 
 	HealthCheckBucketName string        `env:"S3_HEALTH_CHECK_BUCKET_NAME" envDefault:"health-check"`
-	HealthCheckObjectName string        `env:"S3_HEALTH_CHECK_OBJECT_NAME" envDefault:"health-check.log"`
+	HealthCheckObjectName string        `env:"S3_HEALTH_CHECK_OBJECT_NAME" envDefault:"latest.log"`
 	HealthCheckResultTTL  time.Duration `env:"S3_HEALTH_CHECK_RESULT_TTL" envDefault:"2m"`
 }
 
 var (
-	paceRedisCmdTotal = prometheus.NewCounterVec(
+	paceObjStoreTotal = prometheus.NewCounterVec(
 		prometheus.CounterOpts{
-			Name: "pace_redis_cmd_total",
-			Help: "Collects stats about the number of redis requests made",
+			Name: "pace_objstore_req_total",
+			Help: "Collects stats about the number of object storage requests made",
 		},
-		[]string{"method"},
+		[]string{"method", "bucket"},
 	)
-	paceRedisCmdFailed = prometheus.NewCounterVec(
+	paceObjStoreFailed = prometheus.NewCounterVec(
 		prometheus.CounterOpts{
-			Name: "pace_redis_cmd_failed",
-			Help: "Collects stats about the number of redis requests failed",
+			Name: "pace_objstore_req_failed",
+			Help: "Collects stats about the number of object storage requests counterFailed",
 		},
-		[]string{"method"},
+		[]string{"method", "bucket"},
 	)
-	paceRedisCmdDurationSeconds = prometheus.NewHistogramVec(
+	paceObjStoreDurationSeconds = prometheus.NewHistogramVec(
 		prometheus.HistogramOpts{
-			Name:    "pace_redis_cmd_duration_seconds",
-			Help:    "Collect performance metrics for each method",
+			Name:    "pace_objstore_req_duration_seconds",
+			Help:    "Collect performance metrics for each method & bucket",
 			Buckets: []float64{.1, .25, .5, 1, 2.5, 5, 10, 60},
 		},
-		[]string{"method"},
+		[]string{"method", "bucket"},
 	)
 )
 
 var cfg config
 
 func init() {
-	prometheus.MustRegister(paceRedisCmdTotal)
-	prometheus.MustRegister(paceRedisCmdFailed)
-	prometheus.MustRegister(paceRedisCmdDurationSeconds)
+	prometheus.MustRegister(paceObjStoreTotal)
+	prometheus.MustRegister(paceObjStoreFailed)
+	prometheus.MustRegister(paceObjStoreDurationSeconds)
 
 	// parse log config
 	err := env.Parse(&cfg)
@@ -79,15 +80,32 @@ func Client() (*minio.Client, error) {
 	if err != nil {
 		return nil, err
 	}
-	client.SetCustomTransport(transport.NewDefaultTransportChain())
+	client.SetCustomTransport(newCustomTransport(cfg.Endpoint))
 	return client, nil
 }
 
 // CustomClient with customized client
-func CustomClient(client *minio.Client) (*minio.Client, error) {
-	log.Logger().Info().Str("endpoint", client.EndpointURL().String()).
-		Msg("Object storage custom client created")
-	client.SetCustomTransport(transport.NewDefaultTransportChain())
-	// keep same return signature as `Client()`
+func CustomClient(endpoint string, opts *minio.Options) (*minio.Client, error) {
+	client, err := minio.NewWithOptions(endpoint, opts)
+	if err != nil {
+		return nil, err
+	}
+	client.SetCustomTransport(newCustomTransport(cfg.Endpoint))
 	return client, nil
+}
+
+func newCustomTransport(endpoint string) http.RoundTripper {
+	rt := make([]transport.ChainableRoundTripper, 0)
+	rt = append(rt, transport.NewDefaultTransportRoundTrippers()...)
+	rt = append(rt, newMetricRoundTripper(endpoint))
+	return transport.Chain(rt...)
+}
+
+func newMetricRoundTripper(endpoint string) *metricRoundTripper {
+	return &metricRoundTripper{
+		endpoint:      endpoint,
+		counterTotal:  paceObjStoreTotal,
+		counterFailed: paceObjStoreFailed,
+		histogramDur:  paceObjStoreDurationSeconds,
+	}
 }
