@@ -16,7 +16,7 @@ func TestClient(t *testing.T) {
 }
 
 func TestCustomClient(t *testing.T) {
-	client, err := CustomClient("http://example.org", &minio.Options{
+	client, err := CustomClient("example.org", &minio.Options{
 		Region: "eu-central-1",
 	})
 
