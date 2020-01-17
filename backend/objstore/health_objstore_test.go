@@ -27,15 +27,15 @@ func TestIntegrationHealthCheck(t *testing.T) {
 		t.SkipNow()
 	}
 	resp := setup()
-	if resp.StatusCode != 200 {
-		t.Errorf("Expected /health/check to respond with 200, got: %d", resp.StatusCode)
+	if resp.StatusCode != 503 {
+		t.Errorf("Expected /health/check to respond with 503, got: %d", resp.StatusCode)
 	}
 
 	data, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
 		log.Fatal(err)
 	}
-	if !strings.Contains(string(data), "objstore                  OK") {
+	if !strings.Contains(string(data), "objstore               ERR") {
 		t.Errorf("Expected /health/check to return OK, got: %q", string(data[:]))
 	}
 }

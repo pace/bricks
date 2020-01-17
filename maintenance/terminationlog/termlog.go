@@ -9,27 +9,11 @@ package terminationlog
 
 import (
 	"fmt"
-	"os"
-	"syscall"
-
 	"github.com/rs/zerolog/log"
+	"os"
 )
 
-// termLog default location of kubernetes termination log
-const termLog = "/dev/termination-log"
-
 var logFile *os.File
-
-func init() {
-	file, err := os.Create(termLog)
-
-	if err == nil {
-		logFile = file
-
-		// redirect stderr to the termLog
-		syscall.Dup2(int(logFile.Fd()), 2) // nolint: errcheck
-	}
-}
 
 // Fatalf implements log Fatalf interface
 func Fatalf(format string, v ...interface{}) {
