@@ -21,7 +21,7 @@ require (
 	github.com/jinzhu/inflection v0.0.0-20180308033659-04140366298a // indirect
 	github.com/mattn/go-isatty v0.0.8
 	github.com/matttproud/golang_protobuf_extensions v1.0.1 // indirect
-	github.com/minio/minio-go/v6 v6.0.44 // indirect
+	github.com/minio/minio-go/v6 v6.0.44
 	github.com/onsi/ginkgo v1.8.0 // indirect
 	github.com/onsi/gomega v1.4.3 // indirect
 	github.com/opentracing/opentracing-go v1.0.2
