@@ -1,6 +1,3 @@
-// Copyright © 2019 by PACE Telematics GmbH. All rights reserved.
-// Created at 2019/10/18 by Charlotte Pröller
-
 package objstore
 
 import (

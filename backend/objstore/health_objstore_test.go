@@ -1,7 +1,4 @@
-// Copyright © 2019 by PACE Telematics GmbH. All rights reserved.
-// Created at 2019/10/29 by Charlotte Pröller
-
-package objstore_test
+package objstore
 
 import (
 	http2 "github.com/pace/bricks/http"

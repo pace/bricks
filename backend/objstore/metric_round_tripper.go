@@ -1,5 +1,3 @@
-// Copyright © 2019 by PACE Telematics GmbH. All rights reserved.
-// Created at 2019/04/29 by Marius Neugebauer
 package objstore
 
 import (
@@ -8,13 +6,34 @@ import (
 	"time"
 )
 
+var (
+	paceObjStoreTotal = prometheus.NewCounterVec(
+		prometheus.CounterOpts{
+			Name: "pace_objstore_req_total",
+			Help: "Collects stats about the number of object storage requests made",
+		},
+		[]string{"method", "bucket"},
+	)
+	paceObjStoreFailed = prometheus.NewCounterVec(
+		prometheus.CounterOpts{
+			Name: "pace_objstore_req_failed",
+			Help: "Collects stats about the number of object storage requests counterFailed",
+		},
+		[]string{"method", "bucket"},
+	)
+	paceObjStoreDurationSeconds = prometheus.NewHistogramVec(
+		prometheus.HistogramOpts{
+			Name:    "pace_objstore_req_duration_seconds",
+			Help:    "Collect performance metrics for each method & bucket",
+			Buckets: []float64{.1, .25, .5, 1, 2.5, 5, 10, 60},
+		},
+		[]string{"method", "bucket"},
+	)
+)
+
 type metricRoundTripper struct {
 	transport http.RoundTripper
 	endpoint  string
-
-	counterTotal  *prometheus.CounterVec
-	counterFailed *prometheus.CounterVec
-	histogramDur  *prometheus.HistogramVec
 }
 
 func (m *metricRoundTripper) Transport() http.RoundTripper {
@@ -36,20 +55,20 @@ func (m *metricRoundTripper) RoundTrip(req *http.Request) (*http.Response, error
 	dur := time.Since(start)
 
 	// total
-	m.counterTotal.With(labels).Inc()
+	paceObjStoreTotal.With(labels).Inc()
 
 	// duration
 	measurable := err != nil
 	if measurable {
 		// no need to measure timeouts or transport issues
-		m.histogramDur.With(labels).Observe(dur.Seconds())
+		paceObjStoreDurationSeconds.With(labels).Observe(dur.Seconds())
 	}
 
 	// failure
 	failed := err != nil || m.determineFailure(resp.StatusCode)
 	if failed {
 		// count transport issues and by status code
-		m.counterFailed.With(labels).Inc()
+		paceObjStoreFailed.With(labels).Inc()
 	}
 
 	return resp, err

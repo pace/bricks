@@ -1,7 +1,3 @@
-// Copyright © 2018 by PACE Telematics GmbH. All rights reserved.
-// Created at 2018/09/12 by Vincent Landgraf
-
-// Package objstorage helps creating object storage connection pools
 package objstore
 
 import (
@@ -26,31 +22,6 @@ type config struct {
 	HealthCheckObjectName string        `env:"S3_HEALTH_CHECK_OBJECT_NAME" envDefault:"latest.log"`
 	HealthCheckResultTTL  time.Duration `env:"S3_HEALTH_CHECK_RESULT_TTL" envDefault:"2m"`
 }
-
-var (
-	paceObjStoreTotal = prometheus.NewCounterVec(
-		prometheus.CounterOpts{
-			Name: "pace_objstore_req_total",
-			Help: "Collects stats about the number of object storage requests made",
-		},
-		[]string{"method", "bucket"},
-	)
-	paceObjStoreFailed = prometheus.NewCounterVec(
-		prometheus.CounterOpts{
-			Name: "pace_objstore_req_failed",
-			Help: "Collects stats about the number of object storage requests counterFailed",
-		},
-		[]string{"method", "bucket"},
-	)
-	paceObjStoreDurationSeconds = prometheus.NewHistogramVec(
-		prometheus.HistogramOpts{
-			Name:    "pace_objstore_req_duration_seconds",
-			Help:    "Collect performance metrics for each method & bucket",
-			Buckets: []float64{.1, .25, .5, 1, 2.5, 5, 10, 60},
-		},
-		[]string{"method", "bucket"},
-	)
-)
 
 var cfg config
 
@@ -90,22 +61,16 @@ func CustomClient(endpoint string, opts *minio.Options) (*minio.Client, error) {
 	if err != nil {
 		return nil, err
 	}
-	client.SetCustomTransport(newCustomTransport(cfg.Endpoint))
+	client.SetCustomTransport(newCustomTransport(endpoint))
 	return client, nil
 }
 
 func newCustomTransport(endpoint string) http.RoundTripper {
-	rt := make([]transport.ChainableRoundTripper, 0)
-	rt = append(rt, transport.NewDefaultTransportRoundTrippers()...)
-	rt = append(rt, newMetricRoundTripper(endpoint))
-	return transport.Chain(rt...)
+	return transport.NewDefaultTransportChain().Use(newMetricRoundTripper(endpoint))
 }
 
 func newMetricRoundTripper(endpoint string) *metricRoundTripper {
 	return &metricRoundTripper{
-		endpoint:      endpoint,
-		counterTotal:  paceObjStoreTotal,
-		counterFailed: paceObjStoreFailed,
-		histogramDur:  paceObjStoreDurationSeconds,
+		endpoint: endpoint,
 	}
 }
