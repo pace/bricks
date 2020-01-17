@@ -17,3 +17,19 @@ type Authorizer interface {
 	// 		  returns the unchanged context of the request and false
 	Authorize(r *http.Request, w http.ResponseWriter) (context.Context, bool)
 }
+
+type NoOpWriter struct {
+}
+
+func (n NoOpWriter) Header() http.Header {
+	//Noop
+	return nil
+}
+
+func (n NoOpWriter) Write([]byte) (int, error) {
+	return 0, nil
+}
+
+func (n NoOpWriter) WriteHeader(statusCode int) {
+	//noop
+}

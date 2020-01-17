@@ -25,6 +25,7 @@ const (
 	pkgOpentracing    = "github.com/opentracing/opentracing-go"
 	pkgOAuth2         = "github.com/pace/bricks/http/oauth2"
 	pkgApiKey         = "github.com/pace/bricks/http/security/apikey"
+	pkgSecurity       = "github.com/pace/bricks/http/security"
 )
 
 const serviceInterface = "Service"
@@ -614,34 +615,67 @@ func (g *Generator) buildHandler(method string, op *openapi3.Operation, pattern 
 }
 
 func generateAuthorization(op *openapi3.Operation, secSchemes map[string]*openapi3.SecuritySchemeRef) (*jen.Group, error) {
+	req := *op.Security
 	r := &jen.Group{}
-	r.Add(jen.Comment("Authentication Handling "))
-	for _, sl := range *op.Security {
-		for name, val := range sl {
-			securityScheme := secSchemes[name]
-			switch securityScheme.Value.Type {
-			case "oauth2":
-				r.Line().Add(jen.Comment("OAuth2 Authentication"))
-				if len(val) < 1 {
-					return nil, fmt.Errorf("security config for OAuth2 authorization needs %d values but had: %d", 1, len(val))
-				}
-				scope := val[0]
-				r.Line().List(jen.Id("ctx"), jen.Id("ok")).Op(":=").Id("authBackend."+authFuncPrefix+strings.Title(name)).Call(jen.Id("r"), jen.Id("w"), jen.Lit(scope))
-				r.Line().If(jen.Op("!").Id("ok")).Block(jen.Comment("No Error Handling needed, this is already done"), jen.Return())
-				r.Line().Id("r").Op("=").Id("r.WithContext").Call(jen.Id("ctx"))
-			case "apiKey":
-				if len(val) > 0 {
-					return nil, fmt.Errorf("security config for api key authoritzation needs %d values but had: %d", 0, len(val))
-				}
-				r.Line().List(jen.Id("ctx"), jen.Id("ok")).Op(":=").Id("authBackend."+authFuncPrefix+strings.Title(name)).Call(jen.Id("r"), jen.Id("w"))
-				r.Line().If(jen.Op("!").Id("ok")).Block(jen.Comment("No Error Handling needed, this is already done"), jen.Return())
-				r.Line().Id("r").Op("=").Id("r.WithContext").Call(jen.Id("ctx"))
-			default:
-				return nil, fmt.Errorf("security Scheme of type %q is not suppported", securityScheme.Value.Type)
-			}
-		}
+	if len(req[0]) == 0 {
+		return r, nil
 	}
-	return r, nil
+
+	last := &jen.Group{}
+	var writer jen.Code
+
+	multipleSecSchemes := len(req[0]) > 1
+
+	if multipleSecSchemes {
+		writer = jen.Op("&").Qual(pkgSecurity, "NoOpWriter").Values()
+		last.Qual("net/http", "Error").Call(jen.Id("w"), jen.Lit("Authorization Error"), jen.Qual("net/http", "StatusUnauthorized"))
+		last.Line().Return()
+	} else {
+		last.Comment("No Error Handling needed, this is already done").Line().Return()
+		writer = jen.Id("w")
+	}
+
+	var orderedSec [][]string
+	for name, val := range req[0] {
+		vals := []string{name}
+		orderedSec = append(orderedSec, append(vals, val...))
+	}
+	sort.Slice(orderedSec, func(i, j int) bool {
+		return orderedSec[i][0] < orderedSec[j][0]
+	})
+	for _, val := range orderedSec {
+		name := val[0]
+		securityScheme := secSchemes[name]
+		switch securityScheme.Value.Type {
+		case "oauth2":
+			r.Add(jen.Comment("OAuth2 Authentication"))
+			if len(val) < 2 {
+				return nil, fmt.Errorf("security config for OAuth2 authorization needs %d values but had: %d", 1, len(val))
+			}
+			scope := val[1]
+			r.Line().List(jen.Id("ctx"), jen.Id("ok")).Op("=").Id("authBackend."+authFuncPrefix+strings.Title(name)).Call(jen.Id("r"), writer, jen.Lit(scope))
+		case "apiKey":
+			r.Add(jen.Comment("Profile Key Authentication"))
+			if len(val) > 1 {
+				return nil, fmt.Errorf("security config for api key authoritzation needs %d values but had: %d", 0, len(val))
+			}
+			r.Line().List(jen.Id("ctx"), jen.Id("ok")).Op("=").Id("authBackend."+authFuncPrefix+strings.Title(name)).Call(jen.Id("r"), writer)
+
+		default:
+			return nil, fmt.Errorf("security Scheme of type %q is not suppported", securityScheme.Value.Type)
+		}
+		r.Line().If(jen.Op("!").Id("ok")).Block(last)
+		last = r
+		r = &jen.Group{}
+	}
+
+	last.Line().Id("r").Op("=").Id("r.WithContext").Call(jen.Id("ctx"))
+	bevor := &jen.Group{}
+
+	bevor.Var().Id("ok").Bool()
+	bevor.Line().Var().Id("ctx").Qual("context", "Context")
+	bevor.Add(last)
+	return bevor, nil
 }
 
 var asciiName = regexp.MustCompile("([^a-zA-Z]+)")
@@ -652,7 +686,6 @@ func generateName(method string, op *openapi3.Operation, pattern string) string 
 	for _, part := range parts {
 		name += goNameHelper(part)
 	}
-
 	return goNameHelper(name)
 }
 

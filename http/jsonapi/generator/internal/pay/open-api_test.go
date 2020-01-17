@@ -7,6 +7,7 @@ import (
 	opentracing "github.com/opentracing/opentracing-go"
 	runtime "github.com/pace/bricks/http/jsonapi/runtime"
 	oauth2 "github.com/pace/bricks/http/oauth2"
+	security "github.com/pace/bricks/http/security"
 	apikey "github.com/pace/bricks/http/security/apikey"
 	errors "github.com/pace/bricks/maintenance/errors"
 	metrics "github.com/pace/bricks/maintenance/metric/jsonapi"
@@ -135,12 +136,16 @@ CreatePaymentMethodSEPAHandler handles request/response marshaling and validatio
 func CreatePaymentMethodSEPAHandler(service Service, authBackend AuthorizationBackend) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		defer errors.HandleRequest("CreatePaymentMethodSEPAHandler", w, r)
-		// Authentication Handling
-		// OAuth2 Authentication
-		ctx, ok := authBackend.AuthorizeOAuth2(r, w, "pay:payment-methods:create")
+		var ok bool
+		var ctx context.Context // Profile Key Authentication
+		ctx, ok = authBackend.AuthorizeProfileKey(r, &security.NoOpWriter{})
 		if !ok {
-			// No Error Handling needed, this is already done
-			return
+			// OAuth2 Authentication
+			ctx, ok = authBackend.AuthorizeOAuth2(r, &security.NoOpWriter{}, "pay:payment-methods:create")
+			if !ok {
+				http.Error(w, "Authorization Error", http.StatusUnauthorized)
+				return
+			}
 		}
 		r = r.WithContext(ctx)
 
@@ -179,8 +184,9 @@ DeletePaymentMethodHandler handles request/response marshaling and validation fo
 func DeletePaymentMethodHandler(service Service, authBackend AuthorizationBackend) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		defer errors.HandleRequest("DeletePaymentMethodHandler", w, r)
-		// Authentication Handling
-		ctx, ok := authBackend.AuthorizeProfileKey(r, w)
+		var ok bool
+		var ctx context.Context // Profile Key Authentication
+		ctx, ok = authBackend.AuthorizeProfileKey(r, w)
 		if !ok {
 			// No Error Handling needed, this is already done
 			return
