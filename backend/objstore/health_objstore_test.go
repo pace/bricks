@@ -1,16 +1,14 @@
 package objstore
 
 import (
-	http2 "github.com/pace/bricks/http"
 	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
-	"testing"
-)
-
-import (
-	"github.com/pace/bricks/maintenance/log"
 	"strings"
+	"testing"
+
+	http2 "github.com/pace/bricks/http"
+	"github.com/pace/bricks/maintenance/log"
 )
 
 func setup() *http.Response {

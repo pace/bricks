@@ -1,9 +1,10 @@
 package objstore
 
 import (
-	"github.com/prometheus/client_golang/prometheus"
 	"net/http"
 	"time"
+
+	"github.com/prometheus/client_golang/prometheus"
 )
 
 var (
