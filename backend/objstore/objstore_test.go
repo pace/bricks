@@ -16,7 +16,7 @@ func TestClient(t *testing.T) {
 }
 
 func TestCustomClient(t *testing.T) {
-	client, err := CustomClient("example.org", &minio.Options{
+	client, err := CustomClient("s3.amazonaws.com", &minio.Options{
 		Region: "eu-central-1",
 	})
 

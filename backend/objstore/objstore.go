@@ -13,7 +13,7 @@ import (
 )
 
 type config struct {
-	Endpoint        string `env:"S3_ENDPOINT" envDefault:"https://s3.amazonaws.com"`
+	Endpoint        string `env:"S3_ENDPOINT" envDefault:"s3.amazonaws.com"`
 	AccessKeyID     string `env:"S3_ACCESS_KEY_ID"`
 	SecretAccessKey string `env:"S3_SECRET_ACCESS_KEY"`
 	UseSSL          bool   `env:"S3_USE_SSL"`
