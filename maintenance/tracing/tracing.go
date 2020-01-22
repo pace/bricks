@@ -11,6 +11,7 @@ import (
 	olog "github.com/opentracing/opentracing-go/log"
 	"github.com/pace/bricks/maintenance/log"
 	"github.com/pace/bricks/maintenance/tracing/wire"
+	"github.com/pace/bricks/maintenance/util"
 	"github.com/uber/jaeger-client-go/config"
 	"github.com/uber/jaeger-lib/metrics/prometheus"
 	"github.com/zenazn/goji/web/mutil"
@@ -69,13 +70,12 @@ func (h *traceHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 // Handler generates a tracing handler that decodes the current trace from the wire.
 // The tracing handler will not start traces for the list of ignoredPrefixes.
-func Handler() func(http.Handler) http.Handler {
-
-	return func(next http.Handler) http.Handler {
+func Handler(ignoredPrefixes ...string) func(http.Handler) http.Handler {
+	return util.NewIgnorePrefixMiddleware(func(next http.Handler) http.Handler {
 		return &traceHandler{
 			next: next,
 		}
-	}
+	}, ignoredPrefixes...)
 }
 
 // Request augments an outgoing request for further tracing

@@ -17,7 +17,7 @@ type configurableHandler struct {
 	actualHandler   http.Handler
 }
 
-// ConfigurableMiddlewareOption is a functional option to configure the middleware
+// ConfigurableMiddlewareOption is a functional option to configure the handler
 type ConfigurableMiddlewareOption func(*configurableHandler) error
 
 // WithoutPrefixes allows to configure the ignoredPrefix slice
@@ -28,15 +28,17 @@ func WithoutPrefixes(prefix ...string) ConfigurableMiddlewareOption {
 	}
 }
 
-func NewIgnorePrefixMiddleware(actualHandler func(http.Handler) http.Handler, cfgs ...ConfigurableMiddlewareOption) func(http.Handler) http.Handler {
+// NewIgnorePrefixMiddleware creates a middleware that wraps the actualMiddleware. The handler of this middleware skips
+// the actual middleware if the path has a prefix of the prefixes slice.
+func NewIgnorePrefixMiddleware(actualMiddleware func(http.Handler) http.Handler, prefixes ...string) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
-		return NewIgnorePrefixHandler(next, actualHandler(next), cfgs...)
+		return NewConfigurableHandler(next, actualMiddleware(next), WithoutPrefixes(prefixes...))
 	}
 }
 
-// NewIgnorePrefixHandler creates a configurableHandler
-// actualHandler is the actual handler, that is called if the request is not ignored
-func NewIgnorePrefixHandler(next, actualHandler http.Handler, cfgs ...ConfigurableMiddlewareOption) *configurableHandler {
+// NewConfigurableHandler creates a configurableHandler,  that wraps anther handler.
+// actualHandler is the handler, that is called if the request is not ignored
+func NewConfigurableHandler(next, actualHandler http.Handler, cfgs ...ConfigurableMiddlewareOption) *configurableHandler {
 	middleware := &configurableHandler{next: next, actualHandler: actualHandler}
 	for _, cfg := range cfgs {
 		if err := cfg(middleware); err != nil {

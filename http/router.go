@@ -28,14 +28,14 @@ func Router() *mux.Router {
 	r.Use(errors.Handler())
 
 	// for logging
-	r.Use(util.NewIgnorePrefixMiddleware(log.Handler(), util.WithoutPrefixes("/health")))
+	r.Use(util.NewIgnorePrefixMiddleware(log.Handler(), "/health"))
 
-	r.Use(util.NewIgnorePrefixMiddleware(tracing.Handler(),
+	r.Use(tracing.Handler(
 		// no tracing for these prefixes
-		util.WithoutPrefixes("/metrics",
-			"/health",
-			"/debug",
-		)))
+		"/metrics",
+		"/health",
+		"/debug",
+	))
 
 	// for prometheus
 	r.Handle("/metrics", metric.Handler())
