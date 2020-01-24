@@ -58,7 +58,12 @@ func NewCircuitBreakerTripper(settings gobreaker.Settings) *circuitBreakerTrippe
 		panic(err)
 	}
 
-	settings.OnStateChange = func(_ string, from, to gobreaker.State) {
+	handler := settings.OnStateChange
+	settings.OnStateChange = func(s string, from, to gobreaker.State) {
+		if handler != nil {
+			handler(s, from, to)
+		}
+
 		labels := prometheus.Labels{"from": from.String(), "to": to.String()}
 		stateSwitchCounterVec.With(labels).Inc()
 	}

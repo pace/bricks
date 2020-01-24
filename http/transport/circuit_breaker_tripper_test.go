@@ -9,6 +9,7 @@ import (
 
 	"github.com/sony/gobreaker"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestCircuitBreakerTripper(t *testing.T) {
@@ -46,10 +47,10 @@ func TestCircuitBreakerTripper(t *testing.T) {
 		chain := Chain(breaker).Final(&transportWithBody{body: wantBodyStr})
 
 		resp, err := chain.RoundTrip(req)
-		assert.NoError(t, err, "expected no err, got err=%q", err)
+		require.NoError(t, err, "expected no err, got err=%q", err)
 
 		gotBodyStr, err := ioutil.ReadAll(resp.Body)
-		assert.NoError(t, err, "failed reading response body no err, got err=%q", err)
+		require.NoError(t, err, "failed reading response body no err, got err=%q", err)
 
 		if string(gotBodyStr) != wantBodyStr {
 			t.Errorf("request and response body do not match, wanted=%q, got=%q", wantBodyStr, string(gotBodyStr))
