@@ -7,6 +7,8 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+
+	"github.com/pace/bricks/http/security"
 )
 
 // Authorizer is an implementation of security.Authorizer for OAuth2
@@ -68,4 +70,9 @@ func validateScope(ctx context.Context, w http.ResponseWriter, req Scope) bool {
 		return false
 	}
 	return true
+}
+
+// CanAuthorizeRequest returns true, if the request contains a token in the configured header, otherwise false
+func (a *Authorizer) CanAuthorizeRequest(r http.Request) bool {
+	return security.GetBearerTokenFromHeader(r.Header.Get(oAuth2Header)) != ""
 }

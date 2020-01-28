@@ -18,6 +18,10 @@ type Authorizer interface {
 	Authorize(r *http.Request, w http.ResponseWriter) (context.Context, bool)
 }
 
+type CanAuthorize interface {
+	CanAuthorizeRequest(r http.Request) bool
+}
+
 type NoOpWriter struct {
 }
 
