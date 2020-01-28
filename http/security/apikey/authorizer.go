@@ -38,9 +38,6 @@ func (b *token) GetValue() string {
 
 // NewAuthorizer returns a new Authorizer for api key authorization with a config and a valid api key.
 func NewAuthorizer(authConfig *Config, apiKey string) *Authorizer {
-	if authConfig.Name == "Authorization" {
-		log.Warnf("The ProfileKey Authorization Config contains 'Authorization' as Header, this can can cause problems: %v ", authConfig)
-	}
 	return &Authorizer{authConfig: authConfig, apiKey: apiKey}
 }
 
