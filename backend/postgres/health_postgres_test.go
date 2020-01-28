@@ -56,18 +56,18 @@ func (t *testPool) Exec(query interface{}, params ...interface{}) (res orm.Resul
 }
 
 func TestHealthCheckCaching(t *testing.T) {
-	//set the TTL to a minute because this is long enough to test that the result is cached
+	// set the TTL to a minute because this is long enough to test that the result is cached
 	cfg.HealthCheckResultTTL = time.Minute
 	requiredErr := errors.New("TestHealthCheckCaching")
 	pool := &testPool{err: requiredErr}
 	h := &HealthCheck{Pool: pool}
 	res := h.HealthCheck()
-	//get the error for the first time
+	// get the error for the first time
 	require.Equal(t, servicehealthcheck.Err, res.State)
 	require.Equal(t, "TestHealthCheckCaching", res.Msg)
 	res = h.HealthCheck()
 	pool.err = nil
-	//getting the cached error
+	// getting the cached error
 	require.Equal(t, servicehealthcheck.Err, res.State)
 	require.Equal(t, "TestHealthCheckCaching", res.Msg)
 	// Resting the TTL to get a uncached result

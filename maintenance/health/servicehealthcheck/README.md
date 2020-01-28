@@ -1,4 +1,5 @@
 # Health Checks
+
 * Makes it possible to add a health check for a service (e.g. postgres). The list of checks is checked for the routes
 `/health` and `/health/check`
 
@@ -42,3 +43,5 @@ for caching
     * `/health` => OK and WARN means the service is healthy. 
     * `/health/check` => the complete result of the check is added to the response 
     
+## Environment Variables
+`HEALTH_CHECK_INIT_RESULT_ERROR_TTL` : Amount of time to cache the errors that occur in the initialisation of the HealthCheck
