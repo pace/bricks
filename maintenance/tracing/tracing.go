@@ -6,12 +6,12 @@ package tracing
 import (
 	"io"
 	"net/http"
-	"strings"
 
 	opentracing "github.com/opentracing/opentracing-go"
 	olog "github.com/opentracing/opentracing-go/log"
 	"github.com/pace/bricks/maintenance/log"
 	"github.com/pace/bricks/maintenance/tracing/wire"
+	"github.com/pace/bricks/maintenance/util"
 	"github.com/uber/jaeger-client-go/config"
 	"github.com/uber/jaeger-lib/metrics/prometheus"
 	"github.com/zenazn/goji/web/mutil"
@@ -26,13 +26,12 @@ var Tracer opentracing.Tracer
 
 func init() {
 	cfg, err := config.FromEnv()
-	if cfg.ServiceName == "" {
-		log.Warn("Using Jaeger noop tracer since no JAEGER_SERVICE_NAME is present")
-		return
-	}
-
 	if err != nil {
 		log.Warnf("Unable to load Jaeger config from ENV: %v", err)
+		return
+	}
+	if cfg.ServiceName == "" {
+		log.Warn("Using Jaeger noop tracer since no JAEGER_SERVICE_NAME is present")
 		return
 	}
 
@@ -46,21 +45,11 @@ func init() {
 }
 
 type traceHandler struct {
-	ignoredPrefixes []string
-	next            http.Handler
+	next http.Handler
 }
 
 // Trace the service function handler execution
 func (h *traceHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	// check if path needs to be ignored
-	for _, prefix := range h.ignoredPrefixes {
-		if strings.HasPrefix(r.URL.Path, prefix) {
-			h.next.ServeHTTP(w, r)
-			return
-		}
-	}
-
-	// no ignored prefix, try decoding the tracing from the http request
 	ctx := r.Context()
 	var handlerSpan opentracing.Span
 	wireContext, err := wire.FromWire(r)
@@ -82,12 +71,11 @@ func (h *traceHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 // Handler generates a tracing handler that decodes the current trace from the wire.
 // The tracing handler will not start traces for the list of ignoredPrefixes.
 func Handler(ignoredPrefixes ...string) func(http.Handler) http.Handler {
-	return func(next http.Handler) http.Handler {
+	return util.NewIgnorePrefixMiddleware(func(next http.Handler) http.Handler {
 		return &traceHandler{
-			ignoredPrefixes: ignoredPrefixes,
-			next:            next,
+			next: next,
 		}
-	}
+	}, ignoredPrefixes...)
 }
 
 // Request augments an outgoing request for further tracing

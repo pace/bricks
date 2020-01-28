@@ -7,12 +7,12 @@ import "net/http"
 
 // ChainableRoundTripper models a chainable round tripper
 type ChainableRoundTripper interface {
+	http.RoundTripper
+
 	// Transport returns the RoundTripper to make HTTP requests
 	Transport() http.RoundTripper
 	// SetTransport sets the RoundTripper to make HTTP requests
 	SetTransport(http.RoundTripper)
-	// RoundTrip executes a single HTTP transaction via Transport()
-	RoundTrip(*http.Request) (*http.Response, error)
 }
 
 type finalRoundTripper struct {

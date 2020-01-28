@@ -29,8 +29,6 @@ func TestHealthHandler(t *testing.T) {
 	data, err := ioutil.ReadAll(resp.Body)
 	require.NoError(t, err)
 	require.Equal(t, "OK\n", string(data))
-	require.NotEmpty(t, resp.Header.Get("Request-Id"), "Expected response to contain Request-Id, got: %#v", resp.Header)
-
 }
 
 func TestHealthRoutes(t *testing.T) {
