@@ -6,7 +6,6 @@ import (
 	mux "github.com/gorilla/mux"
 	opentracing "github.com/opentracing/opentracing-go"
 	oauth2 "github.com/pace/bricks/http/oauth2"
-	security "github.com/pace/bricks/http/security"
 	apikey "github.com/pace/bricks/http/security/apikey"
 	errors "github.com/pace/bricks/maintenance/errors"
 	metrics "github.com/pace/bricks/maintenance/metric/jsonapi"
@@ -15,7 +14,9 @@ import (
 
 type AuthorizationBackend interface {
 	AuthorizeOAuth2(r *http.Request, w http.ResponseWriter, scope string) (context.Context, bool)
+	CanAuthorizeOAuth2(r *http.Request) bool
 	AuthorizeProfileKey(r *http.Request, w http.ResponseWriter) (context.Context, bool)
+	CanAuthorizeProfileKey(r *http.Request) bool
 	Init(cfgOAuth2 *oauth2.Config, cfgProfileKey *apikey.Config)
 }
 
@@ -41,16 +42,24 @@ GetTestHandler handles request/response marshaling and validation for
 func GetTestHandler(service Service, authBackend AuthorizationBackend) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		defer errors.HandleRequest("GetTestHandler", w, r)
+
+		var ctx context.Context
 		var ok bool
-		var ctx context.Context // Profile Key Authentication
-		ctx, ok = authBackend.AuthorizeProfileKey(r, &security.NoOpWriter{})
-		if !ok {
-			// OAuth2 Authentication
-			ctx, ok = authBackend.AuthorizeOAuth2(r, &security.NoOpWriter{}, "anything")
+		if authBackend.CanAuthorizeOAuth2(r) {
+
+			ctx, ok = authBackend.AuthorizeOAuth2(r, w, "anything")
 			if !ok {
-				http.Error(w, "Authorization Error", http.StatusUnauthorized)
 				return
 			}
+		} else if authBackend.CanAuthorizeProfileKey(r) {
+
+			ctx, ok = authBackend.AuthorizeProfileKey(r, w)
+			if !ok {
+				return
+			}
+		} else {
+			http.Error(w, "Authorization Error", http.StatusUnauthorized)
+			return
 		}
 		r = r.WithContext(ctx)
 
