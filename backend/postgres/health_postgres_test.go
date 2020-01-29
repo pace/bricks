@@ -9,9 +9,14 @@ import (
 	"net/http/httptest"
 	"strings"
 	"testing"
+	"time"
 
+	"github.com/go-pg/pg/orm"
 	http2 "github.com/pace/bricks/http"
+	"github.com/pace/bricks/maintenance/errors"
+	"github.com/pace/bricks/maintenance/health/servicehealthcheck"
 	"github.com/pace/bricks/maintenance/log"
+	"github.com/stretchr/testify/require"
 )
 
 func setup() *http.Response {
@@ -40,4 +45,34 @@ func TestIntegrationHealthCheck(t *testing.T) {
 	if !strings.Contains(string(data[:]), "postgresdefault        OK") {
 		t.Errorf("Expected /health/check to return OK, got: %q", string(data[:]))
 	}
+}
+
+type testPool struct {
+	err error
+}
+
+func (t *testPool) Exec(query interface{}, params ...interface{}) (res orm.Result, err error) {
+	return nil, t.err
+}
+
+func TestHealthCheckCaching(t *testing.T) {
+	// set the TTL to a minute because this is long enough to test that the result is cached
+	cfg.HealthCheckResultTTL = time.Minute
+	requiredErr := errors.New("TestHealthCheckCaching")
+	pool := &testPool{err: requiredErr}
+	h := &HealthCheck{Pool: pool}
+	res := h.HealthCheck()
+	// get the error for the first time
+	require.Equal(t, servicehealthcheck.Err, res.State)
+	require.Equal(t, "TestHealthCheckCaching", res.Msg)
+	res = h.HealthCheck()
+	pool.err = nil
+	// getting the cached error
+	require.Equal(t, servicehealthcheck.Err, res.State)
+	require.Equal(t, "TestHealthCheckCaching", res.Msg)
+	// Resetting the TTL to get a uncached result
+	cfg.HealthCheckResultTTL = 0
+	res = h.HealthCheck()
+	require.Equal(t, servicehealthcheck.Ok, res.State)
+	require.Equal(t, "", res.Msg)
 }
