@@ -89,16 +89,14 @@ func reInitHealthCheck(conState *ConnectionState, result map[string]HealthCheckR
 	if time.Since(conState.LastChecked()) < cfg.HealthCheckInitResultErrorTTL {
 		result[name] = conState.GetState()
 		return true
-	} else {
-		err := initHc.Init()
-		if err != nil {
-			conState.SetErrorState(err)
-			result[name] = conState.GetState()
-			return true
-		} else {
-			initErrors.Delete(conState)
-		}
 	}
+	err := initHc.Init()
+	if err != nil {
+		conState.SetErrorState(err)
+		result[name] = conState.GetState()
+		return true
+	}
+	initErrors.Delete(name)
 	return false
 }
 
