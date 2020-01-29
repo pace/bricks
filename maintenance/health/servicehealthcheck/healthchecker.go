@@ -63,7 +63,7 @@ type HealthCheckResult struct {
 func init() {
 	err := env.Parse(&cfg)
 	if err != nil {
-		log.Fatalf("Failed to parse postgres environment: %v", err)
+		log.Fatalf("Failed to parse health check environment: %v", err)
 	}
 }
 
