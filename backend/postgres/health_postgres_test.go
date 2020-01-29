@@ -70,7 +70,7 @@ func TestHealthCheckCaching(t *testing.T) {
 	// getting the cached error
 	require.Equal(t, servicehealthcheck.Err, res.State)
 	require.Equal(t, "TestHealthCheckCaching", res.Msg)
-	// Resting the TTL to get a uncached result
+	// Resetting the TTL to get a uncached result
 	cfg.HealthCheckResultTTL = 0
 	res = h.HealthCheck()
 	require.Equal(t, servicehealthcheck.Ok, res.State)
