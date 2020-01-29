@@ -24,7 +24,8 @@
           {
             "OAuth2": [
               "pay:payment-methods:create"
-            ]
+            ],
+            "ProfileKey": []
           }
         ],
         "summary": "Register SEPA direct debit as a payment method",

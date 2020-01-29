@@ -19,6 +19,7 @@ func TestGenerator(t *testing.T) {
 		{"PACE Payment API", "./internal/pay/open-api_test.go", "./internal/pay/open-api.json", "pay"},
 		{"PACE POI API", "./internal/poi/open-api_test.go", "./internal/poi/open-api.json", "poi"},
 		{"Articles Test Service API", "./internal/articles/open-api_test.go", "./internal/articles/open-api.json", "articles"},
+		{"Security Test API", "./internal/securitytest/open-api_test.go", "./internal/securitytest/open-api.json", "securitytest"},
 	}
 
 	for _, testCase := range cases {
@@ -35,7 +36,6 @@ func TestGenerator(t *testing.T) {
 			}
 
 			if string(expected[:]) != result {
-
 				diff := difflib.UnifiedDiff{
 					A:        difflib.SplitLines(string(expected[:])),
 					B:        difflib.SplitLines(result),
