@@ -302,7 +302,13 @@ func (g *Generator) generateStructFields(prefix string, schema *openapi3.Schema,
 		attrSchema := schema.Properties[attrName]
 		tags := make(map[string]string)
 		addJSONAPITags(tags, "attr", attrName)
-		addRequiredOptionalTag(tags, attrName, schema)
+		if attrSchema.Value.AdditionalPropertiesAllowed != nil &&
+			*attrSchema.Value.AdditionalPropertiesAllowed ||
+			attrSchema.Value.AdditionalProperties != nil {
+			addValidator(tags, "-")
+		} else {
+			addRequiredOptionalTag(tags, attrName, schema)
+		}
 
 		// generate attribute field
 		field, err := g.generateAttrField(prefix, attrName, attrSchema, tags)
