@@ -74,28 +74,32 @@ func check(hcs *sync.Map) map[string]HealthCheckResult {
 		hc := value.(HealthCheck)
 		// If it was not possible to initialise this health check, then show the initialisation error message
 		if val, isIn := initErrors.Load(name); isIn {
-			conState := val.(*ConnectionState)
-			if time.Since(conState.LastChecked()) < cfg.HealthCheckInitResultErrorTTL {
-				result[name] = conState.GetState()
+			if done := reInitHealthCheck(val.(*ConnectionState), result, name, hc.(Initialisable)); done {
 				return true
-			} else {
-				initHC := hc.(Initialisable)
-				err := initHC.Init()
-				if err != nil {
-					conState.SetErrorState(err)
-					result[name] = conState.GetState()
-					return true
-				} else {
-					initErrors.Delete(conState)
-				}
 			}
-
 		}
 		// this is the actual health check
 		result[name] = hc.HealthCheck()
 		return true
 	})
 	return result
+}
+
+func reInitHealthCheck(conState *ConnectionState, result map[string]HealthCheckResult, name string, initHc Initialisable) bool {
+	if time.Since(conState.LastChecked()) < cfg.HealthCheckInitResultErrorTTL {
+		result[name] = conState.GetState()
+		return true
+	} else {
+		err := initHc.Init()
+		if err != nil {
+			conState.SetErrorState(err)
+			result[name] = conState.GetState()
+			return true
+		} else {
+			initErrors.Delete(conState)
+		}
+	}
+	return false
 }
 
 func writeResult(w http.ResponseWriter, status int, body string) {
