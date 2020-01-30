@@ -55,8 +55,8 @@ type CommonOpeningHours []struct {
 // Event ...
 type Event struct {
 	ID        string      `jsonapi:"primary,events,omitempty" valid:"uuid,optional"` // Event ID
-	CreatedAt time.Time   `json:"createdAt,omitempty" jsonapi:"attr,createdAt,omitempty,iso8601" valid:"optional"`
-	EventAt   time.Time   `json:"eventAt,omitempty" jsonapi:"attr,eventAt,omitempty,iso8601" valid:"optional"`
+	CreatedAt *time.Time  `json:"createdAt,omitempty" jsonapi:"attr,createdAt,omitempty,iso8601" valid:"optional"`
+	EventAt   *time.Time  `json:"eventAt,omitempty" jsonapi:"attr,eventAt,omitempty,iso8601" valid:"optional"`
 	Fields    []FieldData `json:"fields,omitempty" jsonapi:"attr,fields,omitempty" valid:"optional"`
 	UserID    string      `json:"userId,omitempty" jsonapi:"attr,userId,omitempty" valid:"optional,uuid"` // Tracks who did last change
 }
@@ -72,9 +72,9 @@ type FieldData struct {
 
 // FieldMetaData ...
 type FieldMetaData struct {
-	SourceID  string    `json:"SourceId,omitempty" jsonapi:"attr,SourceId,omitempty" valid:"optional,uuid"` // Source ID
-	UpdatedAt time.Time `json:"UpdatedAt,omitempty" jsonapi:"attr,UpdatedAt,omitempty,iso8601" valid:"optional"`
-	Field     FieldName `json:"field,omitempty" jsonapi:"attr,field,omitempty" valid:"optional"`
+	SourceID  string     `json:"SourceId,omitempty" jsonapi:"attr,SourceId,omitempty" valid:"optional,uuid"` // Source ID
+	UpdatedAt *time.Time `json:"UpdatedAt,omitempty" jsonapi:"attr,UpdatedAt,omitempty,iso8601" valid:"optional"`
+	Field     FieldName  `json:"field,omitempty" jsonapi:"attr,field,omitempty" valid:"optional"`
 }
 
 // FieldName ...
@@ -156,12 +156,12 @@ type POI struct {
 	Active     bool                 `json:"active,omitempty" jsonapi:"attr,active,omitempty" valid:"optional"`
 	Boundary   CommonGeoJSONPolygon `json:"boundary,omitempty" jsonapi:"attr,boundary,omitempty" valid:"optional"`
 	CountryID  CommonCountryID      `json:"countryId,omitempty" jsonapi:"attr,countryId,omitempty" valid:"optional"`
-	CreatedAt  time.Time            `json:"createdAt,omitempty" jsonapi:"attr,createdAt,omitempty,iso8601" valid:"optional"`
+	CreatedAt  *time.Time           `json:"createdAt,omitempty" jsonapi:"attr,createdAt,omitempty,iso8601" valid:"optional"`
 	Data       []FieldData          `json:"data,omitempty" jsonapi:"attr,data,omitempty" valid:"optional"` // a JSON field containing POI specific data
-	LastSeenAt time.Time            `json:"lastSeenAt,omitempty" jsonapi:"attr,lastSeenAt,omitempty,iso8601" valid:"optional"`
+	LastSeenAt *time.Time           `json:"lastSeenAt,omitempty" jsonapi:"attr,lastSeenAt,omitempty,iso8601" valid:"optional"`
 	Metadata   []FieldMetaData      `json:"metadata,omitempty" jsonapi:"attr,metadata,omitempty" valid:"optional"` // a JSON field containing information about data field origin and update time
 	Position   CommonGeoJSONPoint   `json:"position,omitempty" jsonapi:"attr,position,omitempty" valid:"optional"`
-	UpdatedAt  time.Time            `json:"updatedAt,omitempty" jsonapi:"attr,updatedAt,omitempty,iso8601" valid:"optional"`
+	UpdatedAt  *time.Time           `json:"updatedAt,omitempty" jsonapi:"attr,updatedAt,omitempty,iso8601" valid:"optional"`
 }
 
 // POIType POI type this applies to
@@ -177,7 +177,7 @@ type Policies []*Policy
 type Policy struct {
 	ID        string          `jsonapi:"primary,policies,omitempty" valid:"uuid,optional"` // Policy ID
 	CountryID CommonCountryID `json:"countryId,omitempty" jsonapi:"attr,countryId,omitempty" valid:"optional"`
-	CreatedAt time.Time       `json:"createdAt,omitempty" jsonapi:"attr,createdAt,omitempty,iso8601" valid:"optional"` // Time of POI creation in (iso8601 without zone - expects UTC)
+	CreatedAt *time.Time      `json:"createdAt,omitempty" jsonapi:"attr,createdAt,omitempty,iso8601" valid:"optional"` // Time of POI creation in (iso8601 without zone - expects UTC)
 	PoiType   POIType         `json:"poiType,omitempty" jsonapi:"attr,poiType,omitempty" valid:"optional"`
 	Rules     []PolicyRule    `json:"rules,omitempty" jsonapi:"attr,rules,omitempty" valid:"optional"`
 	UserID    string          `json:"userId,omitempty" jsonapi:"attr,userId,omitempty" valid:"optional,uuid"` // Tracks who did last change
@@ -198,12 +198,12 @@ type PolicyRulePriority struct {
 // Source ...
 type Source struct {
 	ID         string      `jsonapi:"primary,sources,omitempty" valid:"uuid,optional"` // Source ID
-	CreatedAt  time.Time   `json:"createdAt,omitempty" jsonapi:"attr,createdAt,omitempty,iso8601" valid:"optional"`
-	LastDataAt time.Time   `json:"lastDataAt,omitempty" jsonapi:"attr,lastDataAt,omitempty,iso8601" valid:"optional"` // timestamp of last import from source
+	CreatedAt  *time.Time  `json:"createdAt,omitempty" jsonapi:"attr,createdAt,omitempty,iso8601" valid:"optional"`
+	LastDataAt *time.Time  `json:"lastDataAt,omitempty" jsonapi:"attr,lastDataAt,omitempty,iso8601" valid:"optional"` // timestamp of last import from source
 	Name       string      `json:"name,omitempty" jsonapi:"attr,name,omitempty" valid:"optional"`                     // source name, unique
 	PoiType    POIType     `json:"poiType,omitempty" jsonapi:"attr,poiType,omitempty" valid:"optional"`
 	Schema     []FieldName `json:"schema,omitempty" jsonapi:"attr,schema,omitempty" valid:"optional"` // JSON field describing the structure of the updates sent by the data source
-	UpdatedAt  time.Time   `json:"updatedAt,omitempty" jsonapi:"attr,updatedAt,omitempty,iso8601" valid:"optional"`
+	UpdatedAt  *time.Time  `json:"updatedAt,omitempty" jsonapi:"attr,updatedAt,omitempty,iso8601" valid:"optional"`
 }
 
 // Sources ...
@@ -282,11 +282,9 @@ GetAppsHandler handles request/response marshaling and validation for
 func GetAppsHandler(service Service, authBackend AuthorizationBackend) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		defer errors.HandleRequest("GetAppsHandler", w, r)
-		// Authentication Handling
-		// OAuth2 Authentication
+
 		ctx, ok := authBackend.AuthorizeOAuth2(r, w, "poi:apps:read")
 		if !ok {
-			// No Error Handling needed, this is already done
 			return
 		}
 		r = r.WithContext(ctx)
@@ -342,11 +340,9 @@ CreateAppHandler handles request/response marshaling and validation for
 func CreateAppHandler(service Service, authBackend AuthorizationBackend) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		defer errors.HandleRequest("CreateAppHandler", w, r)
-		// Authentication Handling
-		// OAuth2 Authentication
+
 		ctx, ok := authBackend.AuthorizeOAuth2(r, w, "poi:apps:create")
 		if !ok {
-			// No Error Handling needed, this is already done
 			return
 		}
 		r = r.WithContext(ctx)
@@ -386,11 +382,9 @@ CheckForPaceAppHandler handles request/response marshaling and validation for
 func CheckForPaceAppHandler(service Service, authBackend AuthorizationBackend) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		defer errors.HandleRequest("CheckForPaceAppHandler", w, r)
-		// Authentication Handling
-		// OAuth2 Authentication
+
 		ctx, ok := authBackend.AuthorizeOAuth2(r, w, "poi:apps:read")
 		if !ok {
-			// No Error Handling needed, this is already done
 			return
 		}
 		r = r.WithContext(ctx)
@@ -462,11 +456,9 @@ DeleteAppHandler handles request/response marshaling and validation for
 func DeleteAppHandler(service Service, authBackend AuthorizationBackend) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		defer errors.HandleRequest("DeleteAppHandler", w, r)
-		// Authentication Handling
-		// OAuth2 Authentication
+
 		ctx, ok := authBackend.AuthorizeOAuth2(r, w, "poi:apps:delete")
 		if !ok {
-			// No Error Handling needed, this is already done
 			return
 		}
 		r = r.WithContext(ctx)
@@ -512,11 +504,9 @@ GetAppHandler handles request/response marshaling and validation for
 func GetAppHandler(service Service, authBackend AuthorizationBackend) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		defer errors.HandleRequest("GetAppHandler", w, r)
-		// Authentication Handling
-		// OAuth2 Authentication
+
 		ctx, ok := authBackend.AuthorizeOAuth2(r, w, "poi:apps:read")
 		if !ok {
-			// No Error Handling needed, this is already done
 			return
 		}
 		r = r.WithContext(ctx)
@@ -562,11 +552,9 @@ UpdateAppHandler handles request/response marshaling and validation for
 func UpdateAppHandler(service Service, authBackend AuthorizationBackend) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		defer errors.HandleRequest("UpdateAppHandler", w, r)
-		// Authentication Handling
-		// OAuth2 Authentication
+
 		ctx, ok := authBackend.AuthorizeOAuth2(r, w, "poi:apps:update")
 		if !ok {
-			// No Error Handling needed, this is already done
 			return
 		}
 		r = r.WithContext(ctx)
@@ -615,11 +603,9 @@ GetAppPOIsRelationshipsHandler handles request/response marshaling and validatio
 func GetAppPOIsRelationshipsHandler(service Service, authBackend AuthorizationBackend) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		defer errors.HandleRequest("GetAppPOIsRelationshipsHandler", w, r)
-		// Authentication Handling
-		// OAuth2 Authentication
+
 		ctx, ok := authBackend.AuthorizeOAuth2(r, w, "poi:apps:read")
 		if !ok {
-			// No Error Handling needed, this is already done
 			return
 		}
 		r = r.WithContext(ctx)
@@ -665,11 +651,9 @@ UpdateAppPOIsRelationshipsHandler handles request/response marshaling and valida
 func UpdateAppPOIsRelationshipsHandler(service Service, authBackend AuthorizationBackend) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		defer errors.HandleRequest("UpdateAppPOIsRelationshipsHandler", w, r)
-		// Authentication Handling
-		// OAuth2 Authentication
+
 		ctx, ok := authBackend.AuthorizeOAuth2(r, w, "poi:apps:update")
 		if !ok {
-			// No Error Handling needed, this is already done
 			return
 		}
 		r = r.WithContext(ctx)
@@ -718,11 +702,9 @@ GetEventsHandler handles request/response marshaling and validation for
 func GetEventsHandler(service Service, authBackend AuthorizationBackend) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		defer errors.HandleRequest("GetEventsHandler", w, r)
-		// Authentication Handling
-		// OAuth2 Authentication
+
 		ctx, ok := authBackend.AuthorizeOAuth2(r, w, "poi:events:read")
 		if !ok {
-			// No Error Handling needed, this is already done
 			return
 		}
 		r = r.WithContext(ctx)
@@ -778,11 +760,9 @@ GetGasStationsHandler handles request/response marshaling and validation for
 func GetGasStationsHandler(service Service, authBackend AuthorizationBackend) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		defer errors.HandleRequest("GetGasStationsHandler", w, r)
-		// Authentication Handling
-		// OAuth2 Authentication
+
 		ctx, ok := authBackend.AuthorizeOAuth2(r, w, "poi:gas-stations:read")
 		if !ok {
-			// No Error Handling needed, this is already done
 			return
 		}
 		r = r.WithContext(ctx)
@@ -874,11 +854,9 @@ GetGasStationHandler handles request/response marshaling and validation for
 func GetGasStationHandler(service Service, authBackend AuthorizationBackend) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		defer errors.HandleRequest("GetGasStationHandler", w, r)
-		// Authentication Handling
-		// OAuth2 Authentication
+
 		ctx, ok := authBackend.AuthorizeOAuth2(r, w, "poi:gas-stations:read")
 		if !ok {
-			// No Error Handling needed, this is already done
 			return
 		}
 		r = r.WithContext(ctx)
@@ -924,11 +902,9 @@ GetPoisHandler handles request/response marshaling and validation for
 func GetPoisHandler(service Service, authBackend AuthorizationBackend) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		defer errors.HandleRequest("GetPoisHandler", w, r)
-		// Authentication Handling
-		// OAuth2 Authentication
+
 		ctx, ok := authBackend.AuthorizeOAuth2(r, w, "poi:pois:read")
 		if !ok {
-			// No Error Handling needed, this is already done
 			return
 		}
 		r = r.WithContext(ctx)
@@ -988,11 +964,9 @@ GetPoiHandler handles request/response marshaling and validation for
 func GetPoiHandler(service Service, authBackend AuthorizationBackend) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		defer errors.HandleRequest("GetPoiHandler", w, r)
-		// Authentication Handling
-		// OAuth2 Authentication
+
 		ctx, ok := authBackend.AuthorizeOAuth2(r, w, "poi:pois:read")
 		if !ok {
-			// No Error Handling needed, this is already done
 			return
 		}
 		r = r.WithContext(ctx)
@@ -1038,11 +1012,9 @@ ChangePoiHandler handles request/response marshaling and validation for
 func ChangePoiHandler(service Service, authBackend AuthorizationBackend) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		defer errors.HandleRequest("ChangePoiHandler", w, r)
-		// Authentication Handling
-		// OAuth2 Authentication
+
 		ctx, ok := authBackend.AuthorizeOAuth2(r, w, "poi:pois:update")
 		if !ok {
-			// No Error Handling needed, this is already done
 			return
 		}
 		r = r.WithContext(ctx)
@@ -1091,11 +1063,9 @@ GetPoliciesHandler handles request/response marshaling and validation for
 func GetPoliciesHandler(service Service, authBackend AuthorizationBackend) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		defer errors.HandleRequest("GetPoliciesHandler", w, r)
-		// Authentication Handling
-		// OAuth2 Authentication
+
 		ctx, ok := authBackend.AuthorizeOAuth2(r, w, "poi:policies:read")
 		if !ok {
-			// No Error Handling needed, this is already done
 			return
 		}
 		r = r.WithContext(ctx)
@@ -1155,11 +1125,9 @@ CreatePolicyHandler handles request/response marshaling and validation for
 func CreatePolicyHandler(service Service, authBackend AuthorizationBackend) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		defer errors.HandleRequest("CreatePolicyHandler", w, r)
-		// Authentication Handling
-		// OAuth2 Authentication
+
 		ctx, ok := authBackend.AuthorizeOAuth2(r, w, "poi:policies:create")
 		if !ok {
-			// No Error Handling needed, this is already done
 			return
 		}
 		r = r.WithContext(ctx)
@@ -1199,11 +1167,9 @@ GetPolicyHandler handles request/response marshaling and validation for
 func GetPolicyHandler(service Service, authBackend AuthorizationBackend) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		defer errors.HandleRequest("GetPolicyHandler", w, r)
-		// Authentication Handling
-		// OAuth2 Authentication
+
 		ctx, ok := authBackend.AuthorizeOAuth2(r, w, "poi:policies:read")
 		if !ok {
-			// No Error Handling needed, this is already done
 			return
 		}
 		r = r.WithContext(ctx)
@@ -1249,11 +1215,9 @@ GetSourcesHandler handles request/response marshaling and validation for
 func GetSourcesHandler(service Service, authBackend AuthorizationBackend) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		defer errors.HandleRequest("GetSourcesHandler", w, r)
-		// Authentication Handling
-		// OAuth2 Authentication
+
 		ctx, ok := authBackend.AuthorizeOAuth2(r, w, "poi:sources:read")
 		if !ok {
-			// No Error Handling needed, this is already done
 			return
 		}
 		r = r.WithContext(ctx)
@@ -1309,11 +1273,9 @@ CreateSourceHandler handles request/response marshaling and validation for
 func CreateSourceHandler(service Service, authBackend AuthorizationBackend) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		defer errors.HandleRequest("CreateSourceHandler", w, r)
-		// Authentication Handling
-		// OAuth2 Authentication
+
 		ctx, ok := authBackend.AuthorizeOAuth2(r, w, "poi:sources:create")
 		if !ok {
-			// No Error Handling needed, this is already done
 			return
 		}
 		r = r.WithContext(ctx)
@@ -1353,11 +1315,9 @@ DeleteSourceHandler handles request/response marshaling and validation for
 func DeleteSourceHandler(service Service, authBackend AuthorizationBackend) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		defer errors.HandleRequest("DeleteSourceHandler", w, r)
-		// Authentication Handling
-		// OAuth2 Authentication
+
 		ctx, ok := authBackend.AuthorizeOAuth2(r, w, "poi:sources:delete")
 		if !ok {
-			// No Error Handling needed, this is already done
 			return
 		}
 		r = r.WithContext(ctx)
@@ -1403,11 +1363,9 @@ GetSourceHandler handles request/response marshaling and validation for
 func GetSourceHandler(service Service, authBackend AuthorizationBackend) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		defer errors.HandleRequest("GetSourceHandler", w, r)
-		// Authentication Handling
-		// OAuth2 Authentication
+
 		ctx, ok := authBackend.AuthorizeOAuth2(r, w, "poi:sources:read")
 		if !ok {
-			// No Error Handling needed, this is already done
 			return
 		}
 		r = r.WithContext(ctx)
@@ -1453,11 +1411,9 @@ UpdateSourceHandler handles request/response marshaling and validation for
 func UpdateSourceHandler(service Service, authBackend AuthorizationBackend) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		defer errors.HandleRequest("UpdateSourceHandler", w, r)
-		// Authentication Handling
-		// OAuth2 Authentication
+
 		ctx, ok := authBackend.AuthorizeOAuth2(r, w, "poi:sources:update")
 		if !ok {
-			// No Error Handling needed, this is already done
 			return
 		}
 		r = r.WithContext(ctx)
@@ -1506,11 +1462,9 @@ CreateSubscriptionHandler handles request/response marshaling and validation for
 func CreateSubscriptionHandler(service Service, authBackend AuthorizationBackend) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		defer errors.HandleRequest("CreateSubscriptionHandler", w, r)
-		// Authentication Handling
-		// OAuth2 Authentication
+
 		ctx, ok := authBackend.AuthorizeOAuth2(r, w, "poi:subscriptions:create")
 		if !ok {
-			// No Error Handling needed, this is already done
 			return
 		}
 		r = r.WithContext(ctx)
@@ -1550,11 +1504,9 @@ GetTilesHandler handles request/response marshaling and validation for
 func GetTilesHandler(service Service, authBackend AuthorizationBackend) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		defer errors.HandleRequest("GetTilesHandler", w, r)
-		// Authentication Handling
-		// OAuth2 Authentication
+
 		ctx, ok := authBackend.AuthorizeOAuth2(r, w, "poi:tiles:read")
 		if !ok {
-			// No Error Handling needed, this is already done
 			return
 		}
 		r = r.WithContext(ctx)

@@ -614,33 +614,95 @@ func (g *Generator) buildHandler(method string, op *openapi3.Operation, pattern 
 }
 
 func generateAuthorization(op *openapi3.Operation, secSchemes map[string]*openapi3.SecuritySchemeRef) (*jen.Group, error) {
+	req := *op.Security
 	r := &jen.Group{}
-	r.Add(jen.Comment("Authentication Handling "))
-	for _, sl := range *op.Security {
-		for name, val := range sl {
-			securityScheme := secSchemes[name]
-			switch securityScheme.Value.Type {
-			case "oauth2":
-				r.Line().Add(jen.Comment("OAuth2 Authentication"))
-				if len(val) < 1 {
-					return nil, fmt.Errorf("security config for OAuth2 authorization needs %d values but had: %d", 1, len(val))
-				}
-				scope := val[0]
-				r.Line().List(jen.Id("ctx"), jen.Id("ok")).Op(":=").Id("authBackend."+authFuncPrefix+strings.Title(name)).Call(jen.Id("r"), jen.Id("w"), jen.Lit(scope))
-				r.Line().If(jen.Op("!").Id("ok")).Block(jen.Comment("No Error Handling needed, this is already done"), jen.Return())
-				r.Line().Id("r").Op("=").Id("r.WithContext").Call(jen.Id("ctx"))
-			case "apiKey":
-				if len(val) > 0 {
-					return nil, fmt.Errorf("security config for api key authoritzation needs %d values but had: %d", 0, len(val))
-				}
-				r.Line().List(jen.Id("ctx"), jen.Id("ok")).Op(":=").Id("authBackend."+authFuncPrefix+strings.Title(name)).Call(jen.Id("r"), jen.Id("w"))
-				r.Line().If(jen.Op("!").Id("ok")).Block(jen.Comment("No Error Handling needed, this is already done"), jen.Return())
-				r.Line().Id("r").Op("=").Id("r.WithContext").Call(jen.Id("ctx"))
-			default:
-				return nil, fmt.Errorf("security Scheme of type %q is not suppported", securityScheme.Value.Type)
+	if len(req[0]) == 0 {
+		return r, nil
+	}
+
+	multipleSecSchemes := len(req[0]) > 1
+	var err error
+	if multipleSecSchemes {
+		r, err = generateAuthorizationForMultipleSecSchemas(op, secSchemes)
+	} else {
+		r, err = generateAuthorizationForSingleSecSchema(op, secSchemes)
+	}
+	if err != nil {
+		return nil, err
+	}
+
+	r.Line().Id("r").Op("=").Id("r.WithContext").Call(jen.Id("ctx"))
+	return r, nil
+}
+
+func generateAuthorizationForSingleSecSchema(op *openapi3.Operation, schemas map[string]*openapi3.SecuritySchemeRef) (*jen.Group, error) {
+	req := *op.Security
+	r := &jen.Group{}
+	if len(req[0]) == 0 {
+		return nil, nil
+	}
+	for name, secConfig := range (*op.Security)[0] {
+		securityScheme := schemas[name]
+		switch securityScheme.Value.Type {
+		case "oauth2":
+			if len(secConfig) < 1 {
+				return nil, fmt.Errorf("security config for OAuth2 authorization needs %d values but had: %d", 1, len(secConfig))
 			}
+			r.Line().List(jen.Id("ctx"), jen.Id("ok")).Op(":=").Id("authBackend."+authFuncPrefix+strings.Title(name)).Call(jen.Id("r"), jen.Id("w"), jen.Lit(secConfig[0]))
+		case "apiKey":
+			if len(secConfig) > 0 {
+				return nil, fmt.Errorf("security config for api key authoritzation needs %d values but had: %d", 0, len(secConfig))
+			}
+			r.Line().List(jen.Id("ctx"), jen.Id("ok")).Op(":=").Id("authBackend."+authFuncPrefix+strings.Title(name)).Call(jen.Id("r"), jen.Id("w"))
+		default:
+			return nil, fmt.Errorf("security Scheme of type %q is not suppported", securityScheme.Value.Type)
 		}
 	}
+	r.Line().If(jen.Op("!").Id("ok")).Block(jen.Return())
+	return r, nil
+}
+
+func generateAuthorizationForMultipleSecSchemas(op *openapi3.Operation, secSchemes map[string]*openapi3.SecuritySchemeRef) (*jen.Group, error) {
+	var orderedSec [][]string
+	// Security Schemes are sorted for a reliable order of the code
+	for name, val := range (*op.Security)[0] {
+		vals := []string{name}
+		orderedSec = append(orderedSec, append(vals, val...))
+	}
+	sort.Slice(orderedSec, func(i, j int) bool {
+		return orderedSec[i][0] < orderedSec[j][0]
+	})
+
+	r := &jen.Group{}
+	last := &jen.Group{}
+	last.Qual("net/http", "Error").Call(jen.Id("w"), jen.Lit("Authorization Error"), jen.Qual("net/http", "StatusUnauthorized"))
+	last.Line().Return()
+
+	r.Line().Var().Id("ctx").Id("context.Context")
+	r.Line().Var().Id("ok").Id("bool")
+	for _, val := range orderedSec {
+		name := val[0]
+		securityScheme := secSchemes[name]
+		innerBlock := &jen.Group{}
+		innerBlock.Line().List(jen.Id("ctx"), jen.Id("ok")).Op("=").Id("authBackend." + authFuncPrefix + strings.Title(name))
+		switch securityScheme.Value.Type {
+		case "oauth2":
+			if len(val) < 2 {
+				return nil, fmt.Errorf("security config for OAuth2 authorization needs %d values but had: %d", 1, len(val))
+			}
+			innerBlock.Call(jen.Id("r"), jen.Id("w"), jen.Lit(val[1]))
+		case "apiKey":
+			if len(val) > 1 {
+				return nil, fmt.Errorf("security config for api key authoritzation needs %d values but had: %d", 0, len(val))
+			}
+			innerBlock.Call(jen.Id("r"), jen.Id("w"))
+		default:
+			return nil, fmt.Errorf("security Scheme of type %q is not suppported", securityScheme.Value.Type)
+		}
+		innerBlock.Line().If(jen.Op("!").Id("ok")).Block(jen.Return())
+		r.Line().If(jen.Id("authBackend." + authCanAuthFuncPrefix + strings.Title(name))).Call(jen.Id("r")).Block(innerBlock).Else()
+	}
+	r.Block(last)
 	return r, nil
 }
 
@@ -652,7 +714,6 @@ func generateName(method string, op *openapi3.Operation, pattern string) string 
 	for _, part := range parts {
 		name += goNameHelper(part)
 	}
-
 	return goNameHelper(name)
 }
 

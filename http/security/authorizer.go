@@ -17,3 +17,10 @@ type Authorizer interface {
 	// 		  returns the unchanged context of the request and false
 	Authorize(r *http.Request, w http.ResponseWriter) (context.Context, bool)
 }
+
+// CanAuthorize offers a method to check if an
+// authorizer can authorize a request
+type CanAuthorize interface {
+	// CanAuthorizeRequest should check if a request contains the needed information to be authorized
+	CanAuthorizeRequest(r http.Request) bool
+}

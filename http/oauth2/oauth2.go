@@ -47,6 +47,8 @@ type token struct {
 	scope    Scope
 }
 
+const oAuth2Header = "Authorization"
+
 // GetValue returns the oauth2 token of the current user
 func (t *token) GetValue() string {
 	return t.value
@@ -62,7 +64,7 @@ func introspectRequest(r *http.Request, w http.ResponseWriter, tokenIntro TokenI
 	span, ctx := opentracing.StartSpanFromContext(r.Context(), "Oauth2")
 	defer span.Finish()
 
-	tok := security.GetBearerTokenFromHeader(r.Header.Get("Authorization"))
+	tok := security.GetBearerTokenFromHeader(r.Header.Get(oAuth2Header))
 	if tok == "" {
 		log.Req(r).Info().Msg("no bearer token in header \"Authorization\" present")
 		http.Error(w, "Unauthorized", http.StatusUnauthorized)

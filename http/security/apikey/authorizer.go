@@ -23,7 +23,7 @@ type Config struct {
 	Description string
 	// Must be "Header"
 	In string
-	// Header field name, e.g. "Authorization"
+	// Header field name, should never be "Authorization" if OAuth2 and ApiKey Authorization is combined
 	Name string
 }
 
@@ -56,4 +56,9 @@ func (a *Authorizer) Authorize(r *http.Request, w http.ResponseWriter) (context.
 	}
 	http.Error(w, "ApiKey not valid", http.StatusUnauthorized)
 	return r.Context(), false
+}
+
+// CanAuthorizeRequest returns true, if the request contains a token in the configured header, otherwise false
+func (a *Authorizer) CanAuthorizeRequest(r http.Request) bool {
+	return security.GetBearerTokenFromHeader(r.Header.Get(a.authConfig.Name)) != ""
 }

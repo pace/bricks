@@ -12,6 +12,7 @@ import (
 	"strings"
 	"sync"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/require"
 )
@@ -77,10 +78,7 @@ func TestHandlerHealthCheck(t *testing.T) {
 	}
 	for _, tc := range testCases {
 		t.Run(tc.title, func(t *testing.T) {
-			//remove all previous health checks
-			requiredChecks = sync.Map{}
-			optionalChecks = sync.Map{}
-			initErrors = sync.Map{}
+			resetHealthChecks()
 			rec := httptest.NewRecorder()
 			RegisterHealthCheck(tc.check, tc.check.name)
 			req := httptest.NewRequest("GET", "/health/", nil)
@@ -96,27 +94,80 @@ func TestHandlerHealthCheck(t *testing.T) {
 	}
 }
 
-func TestHandlerHealthCheckOptional(t *testing.T) {
-	checkOpt := &testHealthChecker{name: "TestHandlerHealthCheckErr", healthCheckErr: true}
-	checkReq := &testHealthChecker{name: "TestOk"}
+func TestInitErrorRetry(t *testing.T) {
+	// No caching of the init results
+	cfg.HealthCheckInitResultErrorTTL = 0
+
+	resetHealthChecks()
+
+	// Create Check with initErr
+	checker := &testHealthChecker{
+		initErr:         true,
+		healthCheckErr:  false,
+		healthCheckWarn: false,
+		name:            "initRetry",
+	}
+	RegisterHealthCheck(checker, checker.name)
+
+	testRequest(t, http.StatusServiceUnavailable, "ERR")
+
+	// remove initErr
+	checker.initErr = false
+	testRequest(t, http.StatusOK, "OK")
+}
+
+func testRequest(t *testing.T, expCode int, expBody string) {
+	req := httptest.NewRequest("GET", "/health/", nil)
+	rec := httptest.NewRecorder()
+	HealthHandler().ServeHTTP(rec, req)
+	resp := rec.Result()
+	require.Equal(t, expCode, resp.StatusCode)
+	data, err := ioutil.ReadAll(resp.Body)
+	require.NoError(t, err)
+	require.Equal(t, expBody, string(data))
+}
+
+func resetHealthChecks() {
 	//remove all previous health checks
 	requiredChecks = sync.Map{}
 	optionalChecks = sync.Map{}
 	initErrors = sync.Map{}
+}
 
-	rec := httptest.NewRecorder()
+func TestInitErrorCaching(t *testing.T) {
+	cfg.HealthCheckInitResultErrorTTL = time.Hour
+	hc := &testHealthChecker{
+		initErr:         true,
+		healthCheckErr:  false,
+		healthCheckWarn: false,
+		name:            "initErrorCaching",
+	}
+
+	resetHealthChecks()
+	RegisterHealthCheck(hc, hc.name)
+
+	testRequest(t, http.StatusServiceUnavailable, "ERR")
+	hc.initErr = false
+	testRequest(t, http.StatusServiceUnavailable, "ERR")
+
+	cfg.HealthCheckInitResultErrorTTL = 0
+	resetHealthChecks()
+	hc.initErr = true
+	RegisterHealthCheck(hc, hc.name)
+	testRequest(t, http.StatusServiceUnavailable, "ERR")
+	hc.initErr = false
+	testRequest(t, http.StatusOK, "OK")
+
+}
+func TestHandlerHealthCheckOptional(t *testing.T) {
+	checkOpt := &testHealthChecker{name: "TestHandlerHealthCheckErr", healthCheckErr: true}
+	checkReq := &testHealthChecker{name: "TestOk"}
+	resetHealthChecks()
+
 	RegisterHealthCheck(checkReq, checkReq.name)
 	RegisterOptionalHealthCheck(checkOpt, checkOpt.name)
 
-	req := httptest.NewRequest("GET", "/health/", nil)
-	HealthHandler().ServeHTTP(rec, req)
-	resp := rec.Result()
-
-	require.Equal(t, http.StatusOK, resp.StatusCode)
-	data, err := ioutil.ReadAll(resp.Body)
-	require.NoError(t, err)
-	require.Equal(t, "OK", string(data))
-
+	testRequest(t, http.StatusOK, "OK")
 }
 
 func TestHandlerReadableHealthCheck(t *testing.T) {
@@ -166,10 +217,7 @@ func TestHandlerReadableHealthCheck(t *testing.T) {
 	}
 	for _, tc := range testcases {
 		t.Run(tc.title, func(t *testing.T) {
-			//remove all previous health checks
-			requiredChecks = sync.Map{}
-			optionalChecks = sync.Map{}
-			initErrors = sync.Map{}
+			resetHealthChecks()
 
 			rec := httptest.NewRecorder()
 			for _, hc := range tc.req {

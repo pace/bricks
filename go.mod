@@ -32,6 +32,7 @@ require (
 	github.com/prometheus/procfs v0.0.0-20180725123919-05ee40e3a273 // indirect
 	github.com/rs/zerolog v1.17.2
 	github.com/shopspring/decimal v0.0.0-20200105231215-408a2507e114
+	github.com/sony/gobreaker v0.4.1
 	github.com/spf13/cobra v0.0.3
 	github.com/spf13/pflag v1.0.2 // indirect
 	github.com/streadway/handy v0.0.0-20190108123426-d5acb3125c2a

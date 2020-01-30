@@ -14,13 +14,14 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
-// Handler is a middleware that handles all of the logging aspects of
+// Handler returns a middleware that handles all of the logging aspects of
 // any incoming http request
 func Handler() func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return hlog.NewHandler(log.Logger)(
 			hlog.AccessHandler(requestCompleted)(
 				hlog.RequestIDHandler("req_id", "Request-Id")(next)))
+
 	}
 }
 

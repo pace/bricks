@@ -13,8 +13,9 @@ import (
 )
 
 const (
-	authBackendInterface = "AuthorizationBackend"
-	authFuncPrefix       = "Authorize"
+	authBackendInterface  = "AuthorizationBackend"
+	authFuncPrefix        = "Authorize"
+	authCanAuthFuncPrefix = "CanAuthorize"
 )
 
 // buildSecurityBackendInterface builds the interface that is used to do the authentication.
@@ -37,6 +38,14 @@ func (g *Generator) buildSecurityBackendInterface(schema *openapi3.Swagger) erro
 		keys = append(keys, k)
 	}
 	sort.Strings(keys)
+	hasDuplicatedSecuritySchema := false
+	for _, pathItem := range schema.Paths {
+		for _, op := range pathItem.Operations() {
+			if op.Security != nil {
+				hasDuplicatedSecuritySchema = hasDuplicatedSecuritySchema || len((*op.Security)[0]) > 1
+			}
+		}
+	}
 
 	for _, name := range keys {
 		value := securitySchemes[name]
@@ -52,6 +61,9 @@ func (g *Generator) buildSecurityBackendInterface(schema *openapi3.Swagger) erro
 			return errors.New("security schema type not supported: " + value.Value.Type)
 		}
 		r.Params(jen.Id("context.Context"), jen.Id("bool"))
+		if hasDuplicatedSecuritySchema {
+			r.Line().Id(authCanAuthFuncPrefix + strings.Title(name)).Params(jen.Id("r").Id("*http.Request")).Id("bool")
+		}
 	}
 
 	r.Line().Id("Init").Params(configs...)

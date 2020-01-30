@@ -79,7 +79,9 @@ type TransactionRequest struct {
 type Currency string
 type AuthorizationBackend interface {
 	AuthorizeOAuth2(r *http.Request, w http.ResponseWriter, scope string) (context.Context, bool)
+	CanAuthorizeOAuth2(r *http.Request) bool
 	AuthorizeProfileKey(r *http.Request, w http.ResponseWriter) (context.Context, bool)
+	CanAuthorizeProfileKey(r *http.Request) bool
 	Init(cfgOAuth2 *oauth2.Config, cfgProfileKey *apikey.Config)
 }
 
@@ -135,11 +137,23 @@ CreatePaymentMethodSEPAHandler handles request/response marshaling and validatio
 func CreatePaymentMethodSEPAHandler(service Service, authBackend AuthorizationBackend) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		defer errors.HandleRequest("CreatePaymentMethodSEPAHandler", w, r)
-		// Authentication Handling
-		// OAuth2 Authentication
-		ctx, ok := authBackend.AuthorizeOAuth2(r, w, "pay:payment-methods:create")
-		if !ok {
-			// No Error Handling needed, this is already done
+
+		var ctx context.Context
+		var ok bool
+		if authBackend.CanAuthorizeOAuth2(r) {
+
+			ctx, ok = authBackend.AuthorizeOAuth2(r, w, "pay:payment-methods:create")
+			if !ok {
+				return
+			}
+		} else if authBackend.CanAuthorizeProfileKey(r) {
+
+			ctx, ok = authBackend.AuthorizeProfileKey(r, w)
+			if !ok {
+				return
+			}
+		} else {
+			http.Error(w, "Authorization Error", http.StatusUnauthorized)
 			return
 		}
 		r = r.WithContext(ctx)
@@ -179,10 +193,9 @@ DeletePaymentMethodHandler handles request/response marshaling and validation fo
 func DeletePaymentMethodHandler(service Service, authBackend AuthorizationBackend) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		defer errors.HandleRequest("DeletePaymentMethodHandler", w, r)
-		// Authentication Handling
+
 		ctx, ok := authBackend.AuthorizeProfileKey(r, w)
 		if !ok {
-			// No Error Handling needed, this is already done
 			return
 		}
 		r = r.WithContext(ctx)

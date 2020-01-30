@@ -7,7 +7,9 @@ import (
 	"fmt"
 	"net/http"
 	"sync"
+	"time"
 
+	"github.com/caarlos0/env"
 	"github.com/pace/bricks/maintenance/log"
 )
 
@@ -22,13 +24,20 @@ type Initialisable interface {
 	Init() error
 }
 
+type config struct {
+	// Amount of time to cache the last init
+	HealthCheckInitResultErrorTTL time.Duration `env:"HEALTH_CHECK_INIT_RESULT_ERROR_TTL" envDefault:"10s"`
+}
+
+var cfg config
+
 // requiredChecks contains all required registered Health Checks - key:Name
 var requiredChecks sync.Map
 
 // optionalChecks contains all optional registered Health Checks - key:Name
 var optionalChecks sync.Map
 
-// initErrors map with all errors that happened in the initialisation of any health check - key:Name
+// initErrors map with all err ConnectionState that happened in the initialisation of any health check - key:Name
 var initErrors sync.Map
 
 // HealthState describes if a any error or warning occurred during the health check of a service
@@ -51,6 +60,13 @@ type HealthCheckResult struct {
 	Msg   string
 }
 
+func init() {
+	err := env.Parse(&cfg)
+	if err != nil {
+		log.Fatalf("Failed to parse health check environment: %v", err)
+	}
+}
+
 func check(hcs *sync.Map) map[string]HealthCheckResult {
 	result := make(map[string]HealthCheckResult)
 	hcs.Range(func(key, value interface{}) bool {
@@ -58,15 +74,30 @@ func check(hcs *sync.Map) map[string]HealthCheckResult {
 		hc := value.(HealthCheck)
 		// If it was not possible to initialise this health check, then show the initialisation error message
 		if val, isIn := initErrors.Load(name); isIn {
-			err := val.(error)
-			result[name] = HealthCheckResult{State: Err, Msg: err.Error()}
-			return true
+			if done := reInitHealthCheck(val.(*ConnectionState), result, name, hc.(Initialisable)); done {
+				return true
+			}
 		}
 		// this is the actual health check
 		result[name] = hc.HealthCheck()
 		return true
 	})
 	return result
+}
+
+func reInitHealthCheck(conState *ConnectionState, result map[string]HealthCheckResult, name string, initHc Initialisable) bool {
+	if time.Since(conState.LastChecked()) < cfg.HealthCheckInitResultErrorTTL {
+		result[name] = conState.GetState()
+		return true
+	}
+	err := initHc.Init()
+	if err != nil {
+		conState.SetErrorState(err)
+		result[name] = conState.GetState()
+		return true
+	}
+	initErrors.Delete(name)
+	return false
 }
 
 func writeResult(w http.ResponseWriter, status int, body string) {
@@ -104,7 +135,13 @@ func registerHealthCheck(checks *sync.Map, hc HealthCheck, name string) {
 	if initHC, ok := hc.(Initialisable); ok {
 		if err := initHC.Init(); err != nil {
 			log.Warnf("error initialising health check %q: %s", name, err)
-			initErrors.Store(name, err)
+			initErrors.Store(name, &ConnectionState{
+				lastCheck: time.Now(),
+				result: HealthCheckResult{
+					State: Err,
+					Msg:   err.Error(),
+				},
+			})
 		}
 	}
 	// save the length of the longest health check name, for the width of the column in /health/check

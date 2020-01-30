@@ -6,7 +6,7 @@ package postgres
 import (
 	"time"
 
-	"github.com/go-pg/pg"
+	"github.com/go-pg/pg/orm"
 	"github.com/pace/bricks/maintenance/health/servicehealthcheck"
 )
 
@@ -14,7 +14,11 @@ import (
 // after it was registered as a health check.
 type HealthCheck struct {
 	state servicehealthcheck.ConnectionState
-	Pool  *pg.DB
+	Pool  postgresQueryExecutor
+}
+
+type postgresQueryExecutor interface {
+	Exec(query interface{}, params ...interface{}) (res orm.Result, err error)
 }
 
 // Init initialises the test table

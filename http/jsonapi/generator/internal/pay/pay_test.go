@@ -90,6 +90,14 @@ func (s *testService) ProcessPayment(ctx context.Context, w ProcessPaymentRespon
 type testAuthBackend struct {
 }
 
+func (s testAuthBackend) CanAuthorizeOAuth2(r *http.Request) bool {
+	return true
+}
+
+func (s testAuthBackend) CanAuthorizeProfileKey(r *http.Request) bool {
+	return true
+}
+
 func (s testAuthBackend) AuthorizeOAuth2(r *http.Request, w http.ResponseWriter, scope string) (context.Context, bool) {
 	return r.Context(), true
 }
