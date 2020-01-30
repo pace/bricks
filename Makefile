@@ -1,6 +1,6 @@
 # Copyright © 2018 by PACE Telematics GmbH. All rights reserved.
 # Created at 2018/08/24 by Vincent Landgraf
-.PHONY: install test jsonapi build integration ci
+.PHONY: install test jsonapi build integration ci ci-test
 
 JSONAPITEST=http/jsonapi/generator/internal
 JSONAPIGEN="./tools/jsonapigen/main.go"
@@ -43,8 +43,10 @@ integration:
 testserver:
 	docker-compose up
 
-coveralls-test:
+ci-test:
 	go test -mod=vendor -count=1 -v -cover -covermode=count -coverprofile=coverage.out -short ./...
 
-
-ci: test integration
+ci: ci-test
+	go get github.com/mattn/goveralls
+	go get golang.org/x/tools/cmd/cover
+	$(GOPATH)/bin/goveralls -coverprofile=coverage.out -service=travis-ci

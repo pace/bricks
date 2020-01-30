@@ -4,6 +4,7 @@
 package postgres
 
 import (
+	"context"
 	"time"
 
 	"github.com/go-pg/pg/orm"
@@ -29,7 +30,7 @@ func (h *HealthCheck) Init() error {
 
 // HealthCheck performs the read test on the database. If enabled, it performs a
 // write test as well.
-func (h *HealthCheck) HealthCheck() servicehealthcheck.HealthCheckResult {
+func (h *HealthCheck) HealthCheck(ctx context.Context) servicehealthcheck.HealthCheckResult {
 	if time.Since(h.state.LastChecked()) <= cfg.HealthCheckResultTTL {
 		// the last result of the Health Check is still not outdated
 		return h.state.GetState()

@@ -6,6 +6,7 @@ import (
 
 	"github.com/caarlos0/env"
 	"github.com/minio/minio-go/v6"
+	"github.com/minio/minio-go/v6/pkg/credentials"
 	"github.com/pace/bricks/http/transport"
 	"github.com/pace/bricks/maintenance/health/servicehealthcheck"
 	"github.com/pace/bricks/maintenance/log"
@@ -15,6 +16,7 @@ import (
 type config struct {
 	Endpoint        string `env:"S3_ENDPOINT" envDefault:"s3.amazonaws.com"`
 	AccessKeyID     string `env:"S3_ACCESS_KEY_ID"`
+	Region          string `env:"S3_REGION" envDefault:"us-east-1"`
 	SecretAccessKey string `env:"S3_SECRET_ACCESS_KEY"`
 	UseSSL          bool   `env:"S3_USE_SSL"`
 
@@ -43,16 +45,27 @@ func init() {
 	servicehealthcheck.RegisterHealthCheck(&HealthCheck{
 		Client: client,
 	}, "objstore")
+
+	ok, err := client.BucketExists(cfg.HealthCheckBucketName)
+	if err != nil {
+		log.Warnf("Failed to create check for bucket: %v", err)
+	}
+	if !ok {
+		err := client.MakeBucket(cfg.HealthCheckBucketName, cfg.Region)
+		if err != nil {
+			log.Warnf("Failed to create bucket: %v", err)
+		}
+	}
 }
 
 // Client with environment based configuration
 func Client() (*minio.Client, error) {
-	client, err := minio.New(cfg.Endpoint, cfg.AccessKeyID, cfg.SecretAccessKey, cfg.UseSSL)
-	if err != nil {
-		return nil, err
-	}
-	client.SetCustomTransport(newCustomTransport(cfg.Endpoint))
-	return client, nil
+	return CustomClient(cfg.Endpoint, &minio.Options{
+		Secure:       cfg.UseSSL,
+		Region:       cfg.Region,
+		BucketLookup: minio.BucketLookupAuto,
+		Creds:        credentials.NewStaticV4(cfg.AccessKeyID, cfg.SecretAccessKey, ""),
+	})
 }
 
 // CustomClient with customized client
@@ -61,6 +74,10 @@ func CustomClient(endpoint string, opts *minio.Options) (*minio.Client, error) {
 	if err != nil {
 		return nil, err
 	}
+	log.Logger().Info().Str("endpoint", endpoint).
+		Str("region", opts.Region).
+		Bool("ssl", opts.Secure).
+		Msg("S3 connection created")
 	client.SetCustomTransport(newCustomTransport(endpoint))
 	return client, nil
 }

@@ -12,6 +12,7 @@ import (
 
 	"github.com/opentracing/opentracing-go"
 	olog "github.com/opentracing/opentracing-go/log"
+	"github.com/pace/bricks/backend/objstore"
 	"github.com/pace/bricks/backend/postgres"
 	"github.com/pace/bricks/backend/redis"
 	pacehttp "github.com/pace/bricks/http"
@@ -42,6 +43,10 @@ func (*OauthBackend) IntrospectToken(ctx context.Context, token string) (*oauth2
 func main() {
 	db := postgres.DefaultConnectionPool()
 	rdb := redis.Client()
+	_, err := objstore.Client()
+	if err != nil {
+		log.Fatal(err)
+	}
 
 	h := pacehttp.Router()
 

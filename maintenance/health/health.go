@@ -9,6 +9,8 @@ import (
 	"fmt"
 	"net/http"
 
+	"github.com/rs/zerolog"
+
 	"github.com/pace/bricks/maintenance/log"
 )
 
@@ -19,7 +21,9 @@ type handler struct {
 var readinessCheck = &handler{check: liveness}
 
 func (h *handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	h.check(w, r)
+	logger := log.Logger()
+	logger.Level(zerolog.DebugLevel)
+	h.check(w, r.WithContext(logger.WithContext(r.Context())))
 }
 
 // ReadinessCheck allows to set a different function for the readiness check. The default readiness check
