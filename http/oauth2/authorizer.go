@@ -73,6 +73,6 @@ func validateScope(ctx context.Context, w http.ResponseWriter, req Scope) bool {
 }
 
 // CanAuthorizeRequest returns true, if the request contains a token in the configured header, otherwise false
-func (a *Authorizer) CanAuthorizeRequest(r http.Request) bool {
+func (a *Authorizer) CanAuthorizeRequest(r *http.Request) bool {
 	return security.GetBearerTokenFromHeader(r.Header.Get(oAuth2Header)) != ""
 }
