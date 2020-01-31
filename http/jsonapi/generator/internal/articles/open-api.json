@@ -222,6 +222,16 @@
                         "properties": {
                             "something": {
                                 "type": "string"
+                            },
+                            "maptype1": {
+                                "type": "object",
+                                "additionalProperties": true
+                            },
+                            "maptype2": {
+                                "type": "object",
+                                "additionalProperties": {
+                                    "type": "string"
+                                }
                             }
                         }
                     }

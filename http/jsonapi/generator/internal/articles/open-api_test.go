@@ -24,8 +24,10 @@ type Comments []*Comment
 
 // InlineRef ...
 type InlineRef struct {
-	ID        string `jsonapi:"primary,InlineRef,omitempty" valid:"uuid,optional"`
-	Something string `json:"something,omitempty" jsonapi:"attr,something,omitempty" valid:"optional"`
+	ID        string                 `jsonapi:"primary,InlineRef,omitempty" valid:"uuid,optional"`
+	Maptype1  map[string]interface{} `json:"maptype1,omitempty" jsonapi:"attr,maptype1,omitempty" valid:"-"`
+	Maptype2  map[string]string      `json:"maptype2,omitempty" jsonapi:"attr,maptype2,omitempty" valid:"-"`
+	Something string                 `json:"something,omitempty" jsonapi:"attr,something,omitempty" valid:"optional"`
 }
 
 // MapType1 ...
@@ -286,8 +288,10 @@ type UpdateArticleInlineRefContent []*UpdateArticleInlineRefContentItem
 
 // UpdateArticleInlineRefContentItem ...
 type UpdateArticleInlineRefContentItem struct {
-	ID        string `jsonapi:"primary,InlineRef,omitempty" valid:"uuid,optional"`
-	Something string `json:"something,omitempty" jsonapi:"attr,something,omitempty" valid:"optional"`
+	ID        string                 `jsonapi:"primary,InlineRef,omitempty" valid:"uuid,optional"`
+	Maptype1  map[string]interface{} `json:"maptype1,omitempty" jsonapi:"attr,maptype1,omitempty" valid:"-"`
+	Maptype2  map[string]string      `json:"maptype2,omitempty" jsonapi:"attr,maptype2,omitempty" valid:"-"`
+	Something string                 `json:"something,omitempty" jsonapi:"attr,something,omitempty" valid:"optional"`
 }
 
 // UpdateArticleInlineRefRequest ...
