@@ -45,6 +45,7 @@ type token struct {
 	userID   string
 	clientID string
 	scope    Scope
+	backend  interface{}
 }
 
 const oAuth2Header = "Authorization"
@@ -101,6 +102,7 @@ func fromIntrospectResponse(s *IntrospectResponse, tokenValue string) token {
 		userID:   s.UserID,
 		value:    tokenValue,
 		clientID: s.ClientID,
+		backend:  s.Backend,
 	}
 
 	t.scope = Scope(s.Scope)
@@ -157,6 +159,17 @@ func ClientID(ctx context.Context) (string, bool) {
 	}
 	return oauth2token.clientID, true
 
+}
+
+// Backend returns the backend stored in the context. It identifies the
+// authorization backend for the token.
+func Backend(ctx context.Context) (interface{}, bool) {
+	tok, _ := security.GetTokenFromContext(ctx)
+	oauth2token, ok := tok.(*token)
+	if !ok {
+		return nil, false
+	}
+	return oauth2token.backend, true
 }
 
 // ContextTransfer sources the oauth2 token from the sourceCtx

@@ -65,7 +65,7 @@ func (h *HealthCheck) HealthCheck(ctx context.Context) servicehealthcheck.Health
 		return h.state.GetState()
 	}
 
-	if bytes.Compare(buf, expContent) != 0 {
+	if !bytes.Equal(buf, expContent) {
 		h.state.SetErrorState(fmt.Errorf("unexpected content: %q <-> %q", string(buf), string(expContent)))
 		return h.state.GetState()
 	}

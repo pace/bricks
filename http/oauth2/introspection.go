@@ -29,4 +29,9 @@ type IntrospectResponse struct {
 	Scope    string `json:"scope"`
 	ClientID string `json:"client_id"`
 	UserID   string `json:"user_id"`
+
+	// Backend identifies the backend used for introspection. This attribute
+	// exists as a convenience if you have more than one authorization backend
+	// and need to distinguish between those.
+	Backend interface{} `json:"-"`
 }

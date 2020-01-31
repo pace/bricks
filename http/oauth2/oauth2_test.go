@@ -313,6 +313,7 @@ func TestSuccessfulAccessors(t *testing.T) {
 	expectedBearerToken := "somevalue"
 	expectedUserID := "someuserid"
 	expectedClientID := "someclientid"
+	expectedBackend := "some-backend"
 	expectedScopes := Scope("scope1 scope2")
 
 	var to = token{
@@ -320,6 +321,7 @@ func TestSuccessfulAccessors(t *testing.T) {
 		userID:   expectedUserID,
 		clientID: expectedClientID,
 		scope:    expectedScopes,
+		backend:  expectedBackend,
 	}
 
 	ctx := security.ContextWithToken(context.TODO(), &to)
@@ -328,6 +330,7 @@ func TestSuccessfulAccessors(t *testing.T) {
 
 	uid, _ := UserID(ctx)
 	cid, _ := ClientID(ctx)
+	backend, _ := Backend(ctx)
 	bearerToken, ok := security.GetTokenFromContext(ctx)
 	scopes := Scopes(ctx)
 	hasScope := HasScope(ctx, "scope2")
@@ -338,6 +341,10 @@ func TestSuccessfulAccessors(t *testing.T) {
 
 	if cid != expectedClientID {
 		t.Fatalf("Expected %v, got: %v", expectedClientID, cid)
+	}
+
+	if backend != expectedBackend {
+		t.Fatalf("Expected %v, got: %v", expectedBackend, backend)
 	}
 
 	if !ok || bearerToken.GetValue() != expectedBearerToken {
@@ -359,6 +366,7 @@ func TestUnsuccessfulAccessors(t *testing.T) {
 
 	uid, uidOK := UserID(ctx)
 	cid, cidOK := ClientID(ctx)
+	backend, backendOK := Backend(ctx)
 	bt, ok := security.GetTokenFromContext(ctx)
 	scopes := Scopes(ctx)
 	hasScope := HasScope(ctx, "scope2")
@@ -369,6 +377,10 @@ func TestUnsuccessfulAccessors(t *testing.T) {
 
 	if cid != "" || cidOK {
 		t.Fatalf("Expected no %v, got: %v", "ClientID", cid)
+	}
+
+	if backend != nil || backendOK {
+		t.Fatalf("Expected no %v, got: %v", "Backend", backend)
 	}
 
 	if ok || bt != nil {
