@@ -10,15 +10,17 @@ A pace/bricks microservice is:
 
 * built as a **docker container**
 * deployed into a **kubernetes cluster**
+  * support for the **termination log**
 * configured using **environment variables** ([TWELVE-FACTOR APP](https://12factor.net/))
 * monitored using **prometheus**
 * reports errors to **sentry**
 * samples traces to **jaeger**
-* **logs** to stdout using json
+* **logs** to stdout using json deployed **kubernetes** otherwise human readable
 * offers **health** endpoints
-* connects to backend services with logging, metrics and tracing:
-  * **postgres** (logging, metrics, tracing)
-  * **redis** (logging, metrics, tracing)
+* connects to backend services
+  * **postgres** (logging, metrics, tracing, health)
+  * **redis** (logging, metrics, tracing, health)
+  * **s3** (logging, metrics, tracing, health)
   * **http** (logging, metrics, tracing, retries)
 * provides two commands **control** and **daemon**
 * provides a **RESTful** API
@@ -38,7 +40,6 @@ A pace/bricks microservice is:
 ## Contributing
  
 Read our [contributors guide](CONTRIBUTING.md).
-
 
 ## Requirements
 
