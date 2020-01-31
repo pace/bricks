@@ -34,7 +34,7 @@ require (
 	github.com/sony/gobreaker v0.4.1
 	github.com/spf13/cobra v0.0.3
 	github.com/spf13/pflag v1.0.2 // indirect
-	github.com/streadway/handy v0.0.0-20190108123426-d5acb3125c2a
+	github.com/streadway/handy v0.0.0-20200128134331-0f66f006fb2e
 	github.com/stretchr/testify v1.4.0
 	github.com/uber-go/atomic v1.3.2 // indirect
 	github.com/uber/jaeger-client-go v2.14.0+incompatible
@@ -43,5 +43,3 @@ require (
 	go.uber.org/atomic v1.3.2 // indirect
 	golang.org/x/xerrors v0.0.0-20191011141410-1b5146add898
 )
-
-replace github.com/streadway/handy => github.com/Teelevision/handy v0.0.0-20190809134549-d074bcaebcac
