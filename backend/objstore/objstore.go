@@ -10,7 +10,6 @@ import (
 	"github.com/pace/bricks/http/transport"
 	"github.com/pace/bricks/maintenance/health/servicehealthcheck"
 	"github.com/pace/bricks/maintenance/log"
-	"github.com/prometheus/client_golang/prometheus"
 )
 
 type config struct {
@@ -22,16 +21,12 @@ type config struct {
 
 	HealthCheckBucketName string        `env:"S3_HEALTH_CHECK_BUCKET_NAME" envDefault:"health-check"`
 	HealthCheckObjectName string        `env:"S3_HEALTH_CHECK_OBJECT_NAME" envDefault:"latest.log"`
-	HealthCheckResultTTL  time.Duration `env:"S3_HEALTH_CHECK_RESULT_TTL" envDefault:"2m"`
+	HealthCheckResultTTL  time.Duration `env:"S3_HEALTH_CHECK_RESULT_TTL" envDefault:"10s"`
 }
 
 var cfg config
 
 func init() {
-	prometheus.MustRegister(paceObjStoreTotal)
-	prometheus.MustRegister(paceObjStoreFailed)
-	prometheus.MustRegister(paceObjStoreDurationSeconds)
-
 	// parse log config
 	err := env.Parse(&cfg)
 	if err != nil {
@@ -84,10 +79,4 @@ func CustomClient(endpoint string, opts *minio.Options) (*minio.Client, error) {
 
 func newCustomTransport(endpoint string) http.RoundTripper {
 	return transport.NewDefaultTransportChain().Use(newMetricRoundTripper(endpoint))
-}
-
-func newMetricRoundTripper(endpoint string) *metricRoundTripper {
-	return &metricRoundTripper{
-		endpoint: endpoint,
-	}
 }

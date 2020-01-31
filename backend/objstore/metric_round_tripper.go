@@ -32,9 +32,21 @@ var (
 	)
 )
 
+func init() {
+	prometheus.MustRegister(paceObjStoreTotal)
+	prometheus.MustRegister(paceObjStoreFailed)
+	prometheus.MustRegister(paceObjStoreDurationSeconds)
+}
+
 type metricRoundTripper struct {
 	transport http.RoundTripper
 	endpoint  string
+}
+
+func newMetricRoundTripper(endpoint string) *metricRoundTripper {
+	return &metricRoundTripper{
+		endpoint: endpoint,
+	}
 }
 
 func (m *metricRoundTripper) Transport() http.RoundTripper {
