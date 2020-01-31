@@ -29,4 +29,7 @@ type IntrospectResponse struct {
 	Scope    string `json:"scope"`
 	ClientID string `json:"client_id"`
 	UserID   string `json:"user_id"`
+
+	// Backend uniquely identifies the backend used for introspection.
+	Backend interface{} `json:"-"`
 }
