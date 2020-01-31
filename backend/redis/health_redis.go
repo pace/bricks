@@ -4,6 +4,7 @@
 package redis
 
 import (
+	"context"
 	"time"
 
 	"github.com/go-redis/redis"
@@ -20,7 +21,7 @@ type HealthCheck struct {
 // HealthCheck checks if the redis is healthy. If the last result is outdated,
 // redis is checked for writeability and readability,
 // otherwise return the old result
-func (h *HealthCheck) HealthCheck() servicehealthcheck.HealthCheckResult {
+func (h *HealthCheck) HealthCheck(ctx context.Context) servicehealthcheck.HealthCheckResult {
 	if time.Since(h.state.LastChecked()) <= cfg.HealthCheckResultTTL {
 		// the last health check is not outdated, an can be reused.
 		return h.state.GetState()

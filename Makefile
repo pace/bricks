@@ -43,8 +43,5 @@ integration:
 testserver:
 	docker-compose up
 
-coveralls-test:
-	go test -mod=vendor -count=1 -v -cover -covermode=count -coverprofile=coverage.out -short ./...
-
-
-ci: test integration
+ci:
+	go test -mod=vendor -count=1 -v -cover -race -covermode=atomic -coverprofile=coverage.out ./...

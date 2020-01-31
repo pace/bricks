@@ -1,23 +1,20 @@
 language: go
 
 before_install:
-  - go get github.com/mattn/goveralls
-  - go get golang.org/x/tools/cmd/cover
+- go get github.com/mattn/goveralls
+- go get golang.org/x/tools/cmd/cover
+
+after_success:
+- $HOME/gopath/bin/goveralls -coverprofile=coverage.out -service=travis-ci
 
 services:
-- postgresql
-- redis-server
+- docker
 
 env:
-- GO111MODULE=on REDIS_HOSTS=localhost:6379 POSTGRES_HOST=localhost POSTGRES_PASSWORD=
+- GO111MODULE=on
 
 go:
 - 1.13.x
 
-after_success:
-- GO111MODULE=off
-
 script:
-  - make ci
-  - make coveralls-test
-  - $HOME/gopath/bin/goveralls -coverprofile=coverage.out -service=travis-ci
+- docker-compose run testserver make ci

@@ -4,6 +4,7 @@
 package servicehealthcheck
 
 import (
+	"context"
 	"fmt"
 	"net/http"
 	"sync"
@@ -11,15 +12,16 @@ import (
 
 	"github.com/caarlos0/env"
 	"github.com/pace/bricks/maintenance/log"
+	"github.com/rs/zerolog"
 )
 
 // HealthCheck is a health check that is registered once and that is performed
 // periodically and/or spontaneously.
 type HealthCheck interface {
-	HealthCheck() HealthCheckResult
+	HealthCheck(ctx context.Context) HealthCheckResult
 }
 
-// Initialisable is used to mark that a health check needs to be initialised
+// Initialisable is used to mark that a health check needs to be initialized
 type Initialisable interface {
 	Init() error
 }
@@ -27,6 +29,8 @@ type Initialisable interface {
 type config struct {
 	// Amount of time to cache the last init
 	HealthCheckInitResultErrorTTL time.Duration `env:"HEALTH_CHECK_INIT_RESULT_ERROR_TTL" envDefault:"10s"`
+	// Amount of time to wait before failing the health check
+	HealthCheckMaxWait time.Duration `env:"HEALTH_CHECK_MAX_WAIT" envDefault:"5s"`
 }
 
 var cfg config
@@ -37,7 +41,7 @@ var requiredChecks sync.Map
 // optionalChecks contains all optional registered Health Checks - key:Name
 var optionalChecks sync.Map
 
-// initErrors map with all err ConnectionState that happened in the initialisation of any health check - key:Name
+// initErrors map with all err ConnectionState that happened in the initialization of any health check - key:Name
 var initErrors sync.Map
 
 // HealthState describes if a any error or warning occurred during the health check of a service
@@ -78,8 +82,16 @@ func check(hcs *sync.Map) map[string]HealthCheckResult {
 				return true
 			}
 		}
+
+		logger := log.Logger()
+		logger.Level(zerolog.WarnLevel)
+		ctx := logger.WithContext(context.Background())
+
+		ctx, cancel := context.WithTimeout(ctx, cfg.HealthCheckMaxWait)
 		// this is the actual health check
-		result[name] = hc.HealthCheck()
+		result[name] = hc.HealthCheck(ctx)
+		cancel()
+
 		return true
 	})
 	return result

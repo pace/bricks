@@ -4,6 +4,7 @@
 package servicehealthcheck
 
 import (
+	"context"
 	"errors"
 	"io/ioutil"
 	"net/http"
@@ -31,7 +32,7 @@ func (t *testHealthChecker) Init() error {
 	return nil
 }
 
-func (t *testHealthChecker) HealthCheck() HealthCheckResult {
+func (t *testHealthChecker) HealthCheck(ctx context.Context) HealthCheckResult {
 	if t.healthCheckErr {
 		return HealthCheckResult{Err, "healthCheckErr"}
 	}

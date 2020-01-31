@@ -15,6 +15,17 @@ services:
     ports:
       - "6379:6379"
 
+  minio:
+    image: minio/minio
+    ports:
+      # HTTP UI
+      - "9000:9000"
+    command: server /data
+    environment:
+      - MINIO_ACCESS_KEY=client
+      - MINIO_SECRET_KEY=secret01
+      - MINIO_REGION_NAME=us-east-1
+
   jaeger:
     image: jaegertracing/all-in-one:latest
     ports:
@@ -49,10 +60,15 @@ services:
       - SENTRY_RELEASE=`git rev-parse --short HEAD`
       - PACE_LIVETEST_INTERVAL=10s
       - LOG_FORMAT=console
+      - S3_ENDPOINT=minio:9000
+      - S3_ACCESS_KEY_ID=client
+      - S3_SECRET_ACCESS_KEY=secret01
+      - S3_USE_SSL=false
     command: go run -mod=vendor ./tools/testserver
     depends_on:
       - postgres
       - redis
+      - minio
       - jaeger
       - prometheus
     restart: always
