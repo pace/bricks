@@ -73,39 +73,50 @@ func init() {
 
 func check(hcs *sync.Map) map[string]HealthCheckResult {
 	result := make(map[string]HealthCheckResult)
+	var resultSync sync.Map
+	var wg sync.WaitGroup
+	logger := log.Logger()
+	logger.Level(zerolog.WarnLevel)
+	ctx := logger.WithContext(context.Background())
+	ctx, cancel := context.WithTimeout(ctx, cfg.HealthCheckMaxWait)
 	hcs.Range(func(key, value interface{}) bool {
 		name := key.(string)
 		hc := value.(HealthCheck)
-		// If it was not possible to initialise this health check, then show the initialisation error message
-		if val, isIn := initErrors.Load(name); isIn {
-			if done := reInitHealthCheck(val.(*ConnectionState), result, name, hc.(Initialisable)); done {
-				return true
-			}
-		}
-
-		logger := log.Logger()
-		logger.Level(zerolog.WarnLevel)
-		ctx := logger.WithContext(context.Background())
-
-		ctx, cancel := context.WithTimeout(ctx, cfg.HealthCheckMaxWait)
-		// this is the actual health check
-		result[name] = hc.HealthCheck(ctx)
-		cancel()
-
+		wg.Add(1)
+		go checkOfSingleHc(&wg, name, hc, &resultSync, ctx)
 		return true
 	})
+	wg.Wait()
+	cancel()
+	resultSync.Range(func(key, value interface{}) bool {
+		result[key.(string)] = value.(HealthCheckResult)
+		return true
+	})
+
 	return result
 }
 
-func reInitHealthCheck(conState *ConnectionState, result map[string]HealthCheckResult, name string, initHc Initialisable) bool {
+func checkOfSingleHc(group *sync.WaitGroup, name string, hc HealthCheck, res *sync.Map, ctx context.Context) {
+	defer group.Done()
+	// If it was not possible to initialise this health check, then show the initialisation error message
+	if val, isIn := initErrors.Load(name); isIn {
+		state := val.(*ConnectionState)
+		if done := reInitHealthCheck(state, name, hc.(Initialisable)); done {
+			res.Store(name, state.GetState())
+			return
+		}
+	}
+	// this is the actual health check
+	res.Store(name, hc.HealthCheck(ctx))
+}
+
+func reInitHealthCheck(conState *ConnectionState, name string, initHc Initialisable) bool {
 	if time.Since(conState.LastChecked()) < cfg.HealthCheckInitResultErrorTTL {
-		result[name] = conState.GetState()
 		return true
 	}
 	err := initHc.Init()
 	if err != nil {
 		conState.SetErrorState(err)
-		result[name] = conState.GetState()
 		return true
 	}
 	initErrors.Delete(name)
