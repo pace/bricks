@@ -127,7 +127,7 @@ github.com/uber/jaeger-lib/metrics
 github.com/uber/jaeger-lib/metrics/prometheus
 # github.com/zenazn/goji v0.9.0
 github.com/zenazn/goji/web/mutil
-# golang.org/x/crypto v0.0.0-20190513172903-22d7a77e9e5f
+# golang.org/x/crypto v0.0.0-20191011191535-87dc89f01550
 golang.org/x/crypto/argon2
 golang.org/x/crypto/blake2b
 # golang.org/x/net v0.0.0-20190620200207-3b0461eec859
