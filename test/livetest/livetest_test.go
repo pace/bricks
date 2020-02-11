@@ -5,12 +5,10 @@ package livetest
 
 import (
 	"context"
-	"net/http/httptest"
-	"strings"
 	"testing"
 	"time"
 
-	"github.com/pace/bricks/maintenance/metric"
+	"github.com/pace/bricks/test/testmetrics"
 )
 
 func TestIntegrationExample(t *testing.T) {
@@ -62,15 +60,11 @@ func TestIntegrationExample(t *testing.T) {
 		return
 	}
 
-	req := httptest.NewRequest("GET", "/metrics", nil)
-	resp := httptest.NewRecorder()
-	metric.Handler().ServeHTTP(resp, req)
-	body := resp.Body.String()
-
 	sn := cfg.ServiceName
-	if !strings.Contains(body, `pace_livetest_total{result="failed",service="`+sn+`"} 6`) ||
-		!strings.Contains(body, `pace_livetest_total{result="skipped",service="`+sn+`"} 3`) ||
-		!strings.Contains(body, `pace_livetest_total{result="succeeded",service="`+sn+`"} 2`) {
-		t.Errorf("expected other pace_livetest_total counts, got: %v", body)
-	}
+	suite := testmetrics.Setup(t, "test metrics",
+		`pace_livetest_total{result="failed",service="`+sn+`"} 6`,
+		`pace_livetest_total{result="skipped",service="`+sn+`"} 3`,
+		`pace_livetest_total{result="succeeded",service="`+sn+`"} 2`,
+	)
+	suite.Run()
 }

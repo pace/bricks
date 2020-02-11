@@ -11,7 +11,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/pace/bricks/maintenance/metric"
+	"github.com/pace/bricks/test/testmetrics"
 )
 
 func TestMetric(t *testing.T) {
@@ -35,22 +35,12 @@ func TestMetric(t *testing.T) {
 				t.Errorf("Failed to return correct 204 response status, got: %v", resp.StatusCode)
 			}
 		})
-		t.Run("get metrics request", func(t *testing.T) {
-			rec := httptest.NewRecorder()
-			req := httptest.NewRequest("GET", "/metrics", nil)
-			metric.Handler().ServeHTTP(rec, req)
-
-			body := rec.Body.String()
-			for _, metric := range []string{
-				"pace_api_http_request_total",
-				"pace_api_http_request_duration_seconds",
-				"pace_api_http_size_bytes",
-			} {
-				if !strings.Contains(body, metric) {
-					t.Errorf("Expected pace api metric %q, got: %v", metric, body)
-				}
-			}
-		})
+		suite := testmetrics.Setup(t, "get metrics request",
+			"pace_api_http_request_total",
+			"pace_api_http_request_duration_seconds",
+			"pace_api_http_size_bytes",
+		)
+		suite.Run()
 	})
 
 	t.Run("capture request size", func(t *testing.T) {
@@ -65,17 +55,10 @@ func TestMetric(t *testing.T) {
 			handler(rec, req)
 			req.Body.Close() // that's something the server does
 		})
-		t.Run("get metrics request", func(t *testing.T) {
-			rec := httptest.NewRecorder()
-			req := httptest.NewRequest("GET", "/metrics", nil)
-			metric.Handler().ServeHTTP(rec, req)
-
-			body := rec.Body.String()
-			wantMetric := `pace_api_http_size_bytes_sum{method="POST",path="/noop",service="noop",type="req"} 24`
-			if !strings.Contains(body, wantMetric) {
-				t.Errorf("Expected metric %q, got: %v", wantMetric, body)
-			}
-		})
+		suite := testmetrics.Setup(t, "get metrics request",
+			`pace_api_http_size_bytes_sum{method="POST",path="/noop",service="noop",type="req"} 24`,
+		)
+		suite.Run()
 	})
 
 	t.Run("capture request size of stream if body is read", func(t *testing.T) {
@@ -95,17 +78,10 @@ func TestMetric(t *testing.T) {
 			handler(rec, req)
 			req.Body.Close() // that's something the server does
 		})
-		t.Run("get metrics request", func(t *testing.T) {
-			rec := httptest.NewRecorder()
-			req := httptest.NewRequest("GET", "/metrics", nil)
-			metric.Handler().ServeHTTP(rec, req)
-
-			body := rec.Body.String()
-			wantMetric := `pace_api_http_size_bytes_sum{method="POST",path="/foobar",service="foobar",type="req"} 17`
-			if !strings.Contains(body, wantMetric) {
-				t.Errorf("Expected metric %q, got: %v", wantMetric, body)
-			}
-		})
+		suite := testmetrics.Setup(t, "get metrics request",
+			`pace_api_http_size_bytes_sum{method="POST",path="/foobar",service="foobar",type="req"} 17`,
+		)
+		suite.Run()
 	})
 
 	t.Run("capture request size of stream if body is not read", func(t *testing.T) {
@@ -122,17 +98,10 @@ func TestMetric(t *testing.T) {
 			handler(rec, req)
 			req.Body.Close() // that's something the server does
 		})
-		t.Run("get metrics request", func(t *testing.T) {
-			rec := httptest.NewRecorder()
-			req := httptest.NewRequest("GET", "/metrics", nil)
-			metric.Handler().ServeHTTP(rec, req)
-
-			body := rec.Body.String()
-			wantMetric := `pace_api_http_size_bytes_sum{method="POST",path="/barfoo",service="barfoo",type="req"} 39`
-			if !strings.Contains(body, wantMetric) {
-				t.Errorf("Expected metric %q, got: %v", wantMetric, body)
-			}
-		})
+		suite := testmetrics.Setup(t, "get metrics request",
+			`pace_api_http_size_bytes_sum{method="POST",path="/barfoo",service="barfoo",type="req"} 39`,
+		)
+		suite.Run()
 	})
 
 	t.Run("capture response size", func(t *testing.T) {
@@ -151,17 +120,10 @@ func TestMetric(t *testing.T) {
 			handler(rec, req)
 			req.Body.Close() // that's something the server does
 		})
-		t.Run("get metrics request", func(t *testing.T) {
-			rec := httptest.NewRecorder()
-			req := httptest.NewRequest("GET", "/metrics", nil)
-			metric.Handler().ServeHTTP(rec, req)
-
-			body := rec.Body.String()
-			wantMetric := `pace_api_http_size_bytes_sum{method="GET",path="/lalala",service="lalala",type="resp"} 8`
-			if !strings.Contains(body, wantMetric) {
-				t.Errorf("Expected metric %q, got: %v", wantMetric, body)
-			}
-		})
+		suite := testmetrics.Setup(t, "get metrics request",
+			`pace_api_http_size_bytes_sum{method="GET",path="/lalala",service="lalala",type="resp"} 8`,
+		)
+		suite.Run()
 	})
 }
 

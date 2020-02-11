@@ -17,6 +17,10 @@ import (
 	"github.com/pace/bricks/maintenance/util"
 )
 
+const (
+	RouteMetrics = "/metrics"
+)
+
 // Router returns the default microservice endpoints for
 // health, metrics and debugging
 func Router() *mux.Router {
@@ -32,13 +36,13 @@ func Router() *mux.Router {
 
 	r.Use(tracing.Handler(
 		// no tracing for these prefixes
-		"/metrics",
+		RouteMetrics,
 		"/health",
 		"/debug",
 	))
 
 	// for prometheus
-	r.Handle("/metrics", metric.Handler())
+	r.Handle(RouteMetrics, metric.Handler())
 
 	// health checks
 	r.Handle("/health/liveness", health.HandlerLiveness())
