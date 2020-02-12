@@ -108,7 +108,7 @@ func HandleError(rp interface{}, handlerName string, w http.ResponseWriter, r *h
 
 	sentryEvent{ctx, r, rp, handlerName}.Send()
 
-	runtime.WriteError(w, http.StatusInternalServerError, errors.New("Error"))
+	runtime.WriteError(w, http.StatusInternalServerError, errors.New("Internal Server Error"))
 }
 
 // Handle logs the given error and reports it to sentry.
@@ -133,6 +133,10 @@ func HandleWithCtx(ctx context.Context, handlerName string) {
 
 		sentryEvent{ctx, nil, rp, handlerName}.Send()
 	}
+}
+
+func HandleErrorNoStack(ctx context.Context, err error) {
+	log.Ctx(ctx).Info().Msgf("Received error, will not handle further: %v", err)
 }
 
 // New returns an error that formats as the given text.
