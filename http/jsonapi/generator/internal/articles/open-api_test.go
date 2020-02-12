@@ -92,7 +92,13 @@ func UpdateArticleCommentsHandler(service Service) http.Handler {
 			// Invoke service that implements the business logic
 			err := service.UpdateArticleComments(ctx, &writer, &request)
 			if err != nil {
-				errors.HandleError(err, "UpdateArticleCommentsHandler", w, r)
+				select {
+				case <-ctx.Done():
+					// Context cancellation should not be reported if it's the request context
+					errors.HandleErrorNoStack(ctx, err)
+				default:
+					errors.HandleError(err, "UpdateArticleCommentsHandler", w, r)
+				}
 			}
 		}
 	})
@@ -137,7 +143,13 @@ func UpdateArticleInlineTypeHandler(service Service) http.Handler {
 			// Invoke service that implements the business logic
 			err := service.UpdateArticleInlineType(ctx, &writer, &request)
 			if err != nil {
-				errors.HandleError(err, "UpdateArticleInlineTypeHandler", w, r)
+				select {
+				case <-ctx.Done():
+					// Context cancellation should not be reported if it's the request context
+					errors.HandleErrorNoStack(ctx, err)
+				default:
+					errors.HandleError(err, "UpdateArticleInlineTypeHandler", w, r)
+				}
 			}
 		}
 	})
@@ -182,7 +194,13 @@ func UpdateArticleInlineRefHandler(service Service) http.Handler {
 			// Invoke service that implements the business logic
 			err := service.UpdateArticleInlineRef(ctx, &writer, &request)
 			if err != nil {
-				errors.HandleError(err, "UpdateArticleInlineRefHandler", w, r)
+				select {
+				case <-ctx.Done():
+					// Context cancellation should not be reported if it's the request context
+					errors.HandleErrorNoStack(ctx, err)
+				default:
+					errors.HandleError(err, "UpdateArticleInlineRefHandler", w, r)
+				}
 			}
 		}
 	})

@@ -80,7 +80,13 @@ func GetTestHandler(service Service, authBackend AuthorizationBackend) http.Hand
 		// Invoke service that implements the business logic
 		err := service.GetTest(ctx, &writer, &request)
 		if err != nil {
-			errors.HandleError(err, "GetTestHandler", w, r)
+			select {
+			case <-ctx.Done():
+				// Context cancellation should not be reported if it's the request context
+				errors.HandleErrorNoStack(ctx, err)
+			default:
+				errors.HandleError(err, "GetTestHandler", w, r)
+			}
 		}
 	})
 }

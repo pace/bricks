@@ -160,7 +160,13 @@ func ProcessPaymentHandler(service Service) http.Handler {
 			// Invoke service that implements the business logic
 			err := service.ProcessPayment(ctx, &writer, &request)
 			if err != nil {
-				errors.HandleError(err, "ProcessPaymentHandler", w, r)
+				select {
+				case <-ctx.Done():
+					// Context cancellation should not be reported if it's the request context
+					errors.HandleErrorNoStack(ctx, err)
+				default:
+					errors.HandleError(err, "ProcessPaymentHandler", w, r)
+				}
 			}
 		}
 	})
@@ -209,7 +215,13 @@ func ApproachingAtTheForecourtHandler(service Service) http.Handler {
 			// Invoke service that implements the business logic
 			err := service.ApproachingAtTheForecourt(ctx, &writer, &request)
 			if err != nil {
-				errors.HandleError(err, "ApproachingAtTheForecourtHandler", w, r)
+				select {
+				case <-ctx.Done():
+					// Context cancellation should not be reported if it's the request context
+					errors.HandleErrorNoStack(ctx, err)
+				default:
+					errors.HandleError(err, "ApproachingAtTheForecourtHandler", w, r)
+				}
 			}
 		}
 	})
@@ -257,7 +269,13 @@ func GetPumpHandler(service Service) http.Handler {
 		// Invoke service that implements the business logic
 		err := service.GetPump(ctx, &writer, &request)
 		if err != nil {
-			errors.HandleError(err, "GetPumpHandler", w, r)
+			select {
+			case <-ctx.Done():
+				// Context cancellation should not be reported if it's the request context
+				errors.HandleErrorNoStack(ctx, err)
+			default:
+				errors.HandleError(err, "GetPumpHandler", w, r)
+			}
 		}
 	})
 }
@@ -316,7 +334,13 @@ func WaitOnPumpStatusChangeHandler(service Service) http.Handler {
 		// Invoke service that implements the business logic
 		err := service.WaitOnPumpStatusChange(ctx, &writer, &request)
 		if err != nil {
-			errors.HandleError(err, "WaitOnPumpStatusChangeHandler", w, r)
+			select {
+			case <-ctx.Done():
+				// Context cancellation should not be reported if it's the request context
+				errors.HandleErrorNoStack(ctx, err)
+			default:
+				errors.HandleError(err, "WaitOnPumpStatusChangeHandler", w, r)
+			}
 		}
 	})
 }
