@@ -118,7 +118,7 @@ func WriteError(w http.ResponseWriter, code int, err error) {
 		if source := ei.Source; source != nil {
 			ev = ev.Fields(*source)
 		}
-		ev.Err(ei).Msg(ei.Detail)
+		ev.Err(ei).Msgf("Error sent to the client. Details: %v", ei.Detail)
 	}
 }
 
