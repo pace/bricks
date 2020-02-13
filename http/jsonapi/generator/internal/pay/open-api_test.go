@@ -125,7 +125,13 @@ func GetPaymentMethodsHandler(service Service, authBackend AuthorizationBackend)
 		// Invoke service that implements the business logic
 		err := service.GetPaymentMethods(ctx, &writer, &request)
 		if err != nil {
-			errors.HandleError(err, "GetPaymentMethodsHandler", w, r)
+			select {
+			case <-ctx.Done():
+				// Context cancellation should not be reported if it's the request context
+				errors.HandleErrorNoStack(ctx, err)
+			default:
+				errors.HandleError(err, "GetPaymentMethodsHandler", w, r)
+			}
 		}
 	})
 }
@@ -180,7 +186,13 @@ func CreatePaymentMethodSEPAHandler(service Service, authBackend AuthorizationBa
 			// Invoke service that implements the business logic
 			err := service.CreatePaymentMethodSEPA(ctx, &writer, &request)
 			if err != nil {
-				errors.HandleError(err, "CreatePaymentMethodSEPAHandler", w, r)
+				select {
+				case <-ctx.Done():
+					// Context cancellation should not be reported if it's the request context
+					errors.HandleErrorNoStack(ctx, err)
+				default:
+					errors.HandleError(err, "CreatePaymentMethodSEPAHandler", w, r)
+				}
 			}
 		}
 	})
@@ -229,7 +241,13 @@ func DeletePaymentMethodHandler(service Service, authBackend AuthorizationBacken
 		// Invoke service that implements the business logic
 		err := service.DeletePaymentMethod(ctx, &writer, &request)
 		if err != nil {
-			errors.HandleError(err, "DeletePaymentMethodHandler", w, r)
+			select {
+			case <-ctx.Done():
+				// Context cancellation should not be reported if it's the request context
+				errors.HandleErrorNoStack(ctx, err)
+			default:
+				errors.HandleError(err, "DeletePaymentMethodHandler", w, r)
+			}
 		}
 	})
 }
@@ -273,7 +291,13 @@ func AuthorizePaymentMethodHandler(service Service, authBackend AuthorizationBac
 			// Invoke service that implements the business logic
 			err := service.AuthorizePaymentMethod(ctx, &writer, &request)
 			if err != nil {
-				errors.HandleError(err, "AuthorizePaymentMethodHandler", w, r)
+				select {
+				case <-ctx.Done():
+					// Context cancellation should not be reported if it's the request context
+					errors.HandleErrorNoStack(ctx, err)
+				default:
+					errors.HandleError(err, "AuthorizePaymentMethodHandler", w, r)
+				}
 			}
 		}
 	})
@@ -321,7 +345,13 @@ func DeletePaymentTokenHandler(service Service, authBackend AuthorizationBackend
 		// Invoke service that implements the business logic
 		err := service.DeletePaymentToken(ctx, &writer, &request)
 		if err != nil {
-			errors.HandleError(err, "DeletePaymentTokenHandler", w, r)
+			select {
+			case <-ctx.Done():
+				// Context cancellation should not be reported if it's the request context
+				errors.HandleErrorNoStack(ctx, err)
+			default:
+				errors.HandleError(err, "DeletePaymentTokenHandler", w, r)
+			}
 		}
 	})
 }
@@ -361,7 +391,13 @@ func GetPaymentMethodsIncludingCreditCheckHandler(service Service, authBackend A
 		// Invoke service that implements the business logic
 		err := service.GetPaymentMethodsIncludingCreditCheck(ctx, &writer, &request)
 		if err != nil {
-			errors.HandleError(err, "GetPaymentMethodsIncludingCreditCheckHandler", w, r)
+			select {
+			case <-ctx.Done():
+				// Context cancellation should not be reported if it's the request context
+				errors.HandleErrorNoStack(ctx, err)
+			default:
+				errors.HandleError(err, "GetPaymentMethodsIncludingCreditCheckHandler", w, r)
+			}
 		}
 	})
 }
@@ -401,7 +437,13 @@ func GetPaymentMethodsIncludingPaymentTokenHandler(service Service, authBackend 
 		// Invoke service that implements the business logic
 		err := service.GetPaymentMethodsIncludingPaymentToken(ctx, &writer, &request)
 		if err != nil {
-			errors.HandleError(err, "GetPaymentMethodsIncludingPaymentTokenHandler", w, r)
+			select {
+			case <-ctx.Done():
+				// Context cancellation should not be reported if it's the request context
+				errors.HandleErrorNoStack(ctx, err)
+			default:
+				errors.HandleError(err, "GetPaymentMethodsIncludingPaymentTokenHandler", w, r)
+			}
 		}
 	})
 }
@@ -449,7 +491,13 @@ func ProcessPaymentHandler(service Service, authBackend AuthorizationBackend) ht
 			// Invoke service that implements the business logic
 			err := service.ProcessPayment(ctx, &writer, &request)
 			if err != nil {
-				errors.HandleError(err, "ProcessPaymentHandler", w, r)
+				select {
+				case <-ctx.Done():
+					// Context cancellation should not be reported if it's the request context
+					errors.HandleErrorNoStack(ctx, err)
+				default:
+					errors.HandleError(err, "ProcessPaymentHandler", w, r)
+				}
 			}
 		}
 	})

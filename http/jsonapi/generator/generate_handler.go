@@ -555,11 +555,20 @@ func (g *Generator) buildHandler(method string, op *openapi3.Operation, pattern 
 					jen.Id("ctx"),
 					jen.Op("&").Id("writer"),
 					jen.Op("&").Id("request"),
-				).Line().If().Id("err").Op("!=").Nil().Block(
-					jen.Qual(pkgMaintErrors, "HandleError").Call(jen.Id("err"),
-						jen.Lit(handler),
-						jen.Id("w"),
-						jen.Id("r")))
+				).
+					Line().If().Id("err").Op("!=").Nil().
+					Block(
+						jen.Select().Block(
+							jen.Case(jen.Op("<-").Id("ctx").Dot("Done").Call()),
+							jen.Comment("Context cancellation should not be reported if it's the request context"),
+							jen.Qual(pkgMaintErrors, "HandleErrorNoStack").Call(jen.Id("ctx"), jen.Id("err")),
+							jen.Default(),
+							jen.Qual(pkgMaintErrors, "HandleError").Call(jen.Id("err"),
+								jen.Lit(handler),
+								jen.Id("w"),
+								jen.Id("r")),
+						),
+					)
 
 				// if there is a request body unmarshal it then call the service
 				// otherwise directly call the service
