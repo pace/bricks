@@ -219,8 +219,5 @@ func (e sentryEvent) build() *raven.Packet {
 	// from env
 	packet.Extra["microservice"] = os.Getenv("JAEGER_SERVICE_NAME")
 
-	b, _ := packet.JSON()
-	log.Print(string(b))
-
 	return packet
 }
