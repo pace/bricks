@@ -106,7 +106,7 @@ func HandleError(rp interface{}, handlerName string, w http.ResponseWriter, r *h
 	}
 	log.Stack(ctx)
 
-	sentryEvent{ctx, r, rp, handlerName}.Send()
+	sentryEvent{ctx, r, rp, 1, handlerName}.Send()
 
 	runtime.WriteError(w, http.StatusInternalServerError, errors.New("Internal Server Error"))
 }
@@ -122,7 +122,7 @@ func Handle(ctx context.Context, rp interface{}) {
 	}
 	log.Stack(ctx)
 
-	sentryEvent{ctx, nil, rp, ""}.Send()
+	sentryEvent{ctx, nil, rp, 1, ""}.Send()
 }
 
 // HandleWithCtx should be called with defer to recover panics in goroutines
@@ -131,7 +131,7 @@ func HandleWithCtx(ctx context.Context, handlerName string) {
 		log.Ctx(ctx).Error().Str("handler", handlerName).Msgf("Panic: %v", rp)
 		log.Stack(ctx)
 
-		sentryEvent{ctx, nil, rp, handlerName}.Send()
+		sentryEvent{ctx, nil, rp, 2, handlerName}.Send()
 	}
 }
 
@@ -153,6 +153,7 @@ type sentryEvent struct {
 	ctx         context.Context
 	req         *http.Request // optional
 	r           interface{}
+	level       int
 	handlerName string
 }
 
@@ -172,9 +173,11 @@ func (e sentryEvent) build() *raven.Packet {
 	var packet *raven.Packet
 
 	if err, ok := rp.(error); ok {
-		packet = raven.NewPacket(rvalStr, raven.NewException(err, raven.GetOrNewStacktrace(err, 2, 3, nil)))
+		stack := raven.GetOrNewStacktrace(err, 2+e.level, 3, nil)
+		packet = raven.NewPacket(rvalStr, raven.NewException(err, stack))
 	} else {
-		packet = raven.NewPacket(rvalStr, raven.NewException(errors.New(rvalStr), raven.NewStacktrace(2, 3, nil)))
+		stack := raven.NewStacktrace(2+e.level, 3, nil)
+		packet = raven.NewPacket(rvalStr, raven.NewException(errors.New(rvalStr), stack))
 	}
 
 	// extract ErrWithExtra info and append it to the packet
@@ -215,6 +218,9 @@ func (e sentryEvent) build() *raven.Packet {
 
 	// from env
 	packet.Extra["microservice"] = os.Getenv("JAEGER_SERVICE_NAME")
+
+	b, _ := packet.JSON()
+	log.Print(string(b))
 
 	return packet
 }
