@@ -11,6 +11,7 @@ import (
 	"testing"
 
 	"github.com/gorilla/mux"
+	"github.com/stretchr/testify/assert"
 )
 
 // Note: Tests that there is no panic if there are no
@@ -53,4 +54,21 @@ func TestWrapWithExtra(t *testing.T) {
 	if WrapWithExtra(New("Test"), map[string]interface{}{}).Error() != "Test" {
 		t.Error("invalid implementation of errors.WrapWithExtra")
 	}
+}
+
+func TestStackTrace(t *testing.T) {
+	e := sentryEvent{
+		ctx:         context.Background(),
+		handlerName: "TestStackTrace",
+		r:           nil,
+		level:       1,
+		req:         nil,
+	}
+	pak := e.build()
+
+	d, err := pak.JSON()
+	assert.NoError(t, err)
+
+	assert.NotContains(t, string(d), `"module":"testing"`)
+	assert.NotContains(t, string(d), `"filename":"testing/testing.go"`)
 }
