@@ -19,11 +19,13 @@ type testQuery struct {
 }
 
 func (q *testQuery) Where(condition string, params ...interface{}) Query {
-	var replacerVals []string
+	where := condition
 	for _, param := range params {
-		replacerVals = append(replacerVals, "?", param.(string))
+		where = strings.Replace(where, "?", param.(string), 1)
+
 	}
-	q.where = append(q.where, strings.NewReplacer(replacerVals...).Replace(condition))
+
+	q.where = append(q.where, where)
 	return q
 }
 
@@ -45,6 +47,7 @@ func (q *testQuery) Order(orders ...string) Query {
 func TestPagingFromRequest(t *testing.T) {
 	r := httptest.NewRequest("GET", "/articles?page[number]=3&page[size]=1", nil)
 	queryOpt, err := PagingFromRequest(r)
+	require.NotNil(t, queryOpt)
 	res := queryOpt(&testQuery{})
 	result := res.(*testQuery)
 	require.NoError(t, err)
@@ -53,10 +56,22 @@ func TestPagingFromRequest(t *testing.T) {
 	require.Equal(t, 0, len(result.orders))
 }
 
+func TestPagingMaxMin(t *testing.T) {
+	r := httptest.NewRequest("GET", "/articles?page[number]=3&page[size]=0", nil)
+	_, err := PagingFromRequest(r)
+	require.Error(t, err)
+
+	r = httptest.NewRequest("GET", "/articles?page[number]=3&page[size]=200", nil)
+	_, err = PagingFromRequest(r)
+	require.Error(t, err)
+
+}
+
 func TestSortingFromRequest(t *testing.T) {
 	r := httptest.NewRequest("GET", "/articles?sort=abc,-def,qwe", nil)
 	queryOpt, err := SortingFromRequest(r, DefaultMapper)
 	res := queryOpt(&testQuery{})
+	require.NotNil(t, queryOpt)
 	result := res.(*testQuery)
 	require.NoError(t, err)
 	require.Equal(t, 0, result.offset)
@@ -68,10 +83,51 @@ func TestSortingFromRequest(t *testing.T) {
 	require.Contains(t, result.orders[2], "qwe ASC")
 }
 
+func TestMapperSorting(t *testing.T) {
+	r := httptest.NewRequest("GET", "/articles?sort=abc,-def", nil)
+	queryOpt, err := SortingFromRequest(r, func(in string) (string, bool) {
+		if in == "abc" {
+			return "", false
+		}
+		return in, true
+	})
+	require.NotNil(t, queryOpt)
+	res := queryOpt(&testQuery{})
+	result := res.(*testQuery)
+	require.Error(t, err)
+	require.Equal(t, `at least one sorting parameter is not valid: "abc"`, err.Error())
+	require.Equal(t, 0, result.offset)
+	require.Equal(t, 0, result.limit)
+	require.Equal(t, 1, len(result.orders))
+	require.Equal(t, 0, len(result.where))
+	require.Contains(t, result.orders[0], "def DESC")
+}
+
+func TestMapperFiltering(t *testing.T) {
+	r := httptest.NewRequest("GET", "/articles?filter[abc]=1,2&filter[name]=1", nil)
+	queryOpt, err := FilterFromRequest(r, func(in string) (string, bool) {
+		if in == "name" {
+			return "", false
+		}
+		return in, true
+	})
+	res := queryOpt(&testQuery{})
+	require.NotNil(t, queryOpt)
+	result := res.(*testQuery)
+	require.Error(t, err)
+	require.Equal(t, `at least one filter parameter is not valid: "name"`, err.Error())
+	require.Equal(t, 0, result.offset)
+	require.Equal(t, 0, result.limit)
+	require.Equal(t, 0, len(result.orders))
+	require.Equal(t, 1, len(result.where))
+	require.Contains(t, result.where[0], "abc IN (1,2)")
+}
+
 func TestFilteringFromRequest(t *testing.T) {
 	r := httptest.NewRequest("GET", "/articles?filter[abc]=1,2&filter[name]=1&testy=test", nil)
 	queryOpt, err := FilterFromRequest(r, DefaultMapper)
 	res := queryOpt(&testQuery{})
+	require.NotNil(t, queryOpt)
 	result := res.(*testQuery)
 	require.NoError(t, err)
 	require.Equal(t, 0, result.offset)
