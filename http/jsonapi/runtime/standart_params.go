@@ -36,7 +36,7 @@ var cfg config
 func init() {
 	err := env.Parse(&cfg)
 	if err != nil {
-		log.Fatalf("Failed to parse server environment: %v", err)
+		log.Fatalf("Failed to parse jsonapi params from environment: %v", err)
 	}
 }
 
