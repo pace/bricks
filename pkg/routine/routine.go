@@ -6,9 +6,11 @@ package routine
 
 import (
 	"context"
+	"fmt"
 	"os"
 	"os/signal"
 	"sync"
+	"sync/atomic"
 	"syscall"
 
 	"github.com/pace/bricks/http/oauth2"
@@ -26,11 +28,15 @@ func Run(ctx context.Context, routine func(context.Context)) (cancel context.Can
 	routineCtx := log.Ctx(ctx).WithContext(context.Background())
 	routineCtx = oauth2.ContextTransfer(ctx, routineCtx)
 	routineCtx = errors.ContextTransfer(ctx, routineCtx)
+	// add routine number to logger
+	num := atomic.AddInt64(&ctr, 1)
+	logger := log.Ctx(routineCtx).With().Int64("routine", num).Logger()
+	routineCtx = logger.WithContext(routineCtx)
 	// get cancel function
 	routineCtx, cancel = context.WithCancel(routineCtx)
 	// register context to be cancelled when the program is shut down
 	contextsMx.Lock()
-	contexts[routineCtx] = cancel
+	contexts[num] = cancel
 	contextsMx.Unlock()
 	// deregister the above if context is done
 	go func() {
@@ -39,10 +45,10 @@ func Run(ctx context.Context, routine func(context.Context)) (cancel context.Can
 		// because the program is about to exit anyway.
 		contextsMx.Lock()
 		defer contextsMx.Unlock()
-		delete(contexts, routineCtx)
+		delete(contexts, num)
 	}()
 	go func() {
-		defer errors.HandleWithCtx(routineCtx, "routine") // handle panics
+		defer errors.HandleWithCtx(routineCtx, fmt.Sprintf("routine %d", num)) // handle panics
 		routine(routineCtx)
 		cancel()
 	}()
@@ -51,7 +57,8 @@ func Run(ctx context.Context, routine func(context.Context)) (cancel context.Can
 
 var (
 	contextsMx sync.Mutex
-	contexts   = map[context.Context]context.CancelFunc{}
+	contexts   = map[int64]context.CancelFunc{}
+	ctr        int64
 )
 
 // Starts a go routine that cancels all contexts for routines created by Run if
@@ -67,9 +74,20 @@ func init() {
 		contextsMx.Lock()
 		// Cancel all contexts. For contexts that are already done this is a
 		// no-op.
-		log.Logger().Info().Int("count", len(contexts)).Msg("received shutdown signal, canceling all running routines")
+		log.Logger().Info().
+			Int("count", len(contexts)).
+			Ints64("routines", routineNumbers()).
+			Msg("received shutdown signal, canceling all running routines")
 		for _, cancel := range contexts {
 			cancel()
 		}
 	}()
+}
+
+func routineNumbers() []int64 {
+	routines := make([]int64, 0, len(contexts))
+	for num := range contexts {
+		routines = append(routines, num)
+	}
+	return routines
 }
