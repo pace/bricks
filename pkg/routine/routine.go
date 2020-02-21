@@ -10,28 +10,24 @@ import (
 	"os/signal"
 	"sync"
 	"syscall"
-	"time"
 
 	"github.com/pace/bricks/http/oauth2"
 	"github.com/pace/bricks/maintenance/errors"
 	"github.com/pace/bricks/maintenance/log"
 )
 
-// Forever is so far in the future that it basically never ends.
-var Forever = time.Duration(1<<63 - 1)
-
-// Run runs the given function in a new context with the given timeout. The new
-// context inherits the logger and oauth2 authentication of the passed context.
-// Panics thrown in the function are logged and sent to sentry. The routines
-// context is cancelled if the program receives a shutdown signal (SIGINT,
-// SIGTERM).
-func Run(ctx context.Context, timeout time.Duration, routine func(context.Context)) (cancel context.CancelFunc) {
+// Run runs the given function in a new background context. The new context
+// inherits the logger and oauth2 authentication of the passed context. Panics
+// thrown in the function are logged and sent to sentry. The routines context is
+// canceled if the program receives a shutdown signal (SIGINT, SIGTERM), if the
+// returned CancelFunc is called, or if the routine returned.
+func Run(ctx context.Context, routine func(context.Context)) (cancel context.CancelFunc) {
 	// transfer logger, authentication and error info
 	routineCtx := log.Ctx(ctx).WithContext(context.Background())
 	routineCtx = oauth2.ContextTransfer(ctx, routineCtx)
 	routineCtx = errors.ContextTransfer(ctx, routineCtx)
-	// apply timeout
-	routineCtx, cancel = context.WithTimeout(routineCtx, timeout)
+	// get cancel function
+	routineCtx, cancel = context.WithCancel(routineCtx)
 	// register context to be cancelled when the program is shut down
 	contextsMx.Lock()
 	contexts[routineCtx] = cancel
@@ -71,7 +67,7 @@ func init() {
 		contextsMx.Lock()
 		// Cancel all contexts. For contexts that are already done this is a
 		// no-op.
-		log.Logger().Info().Int("count", len(contexts)).Msg("received shutdown signal, cancelling all running routines")
+		log.Logger().Info().Int("count", len(contexts)).Msg("received shutdown signal, canceling all running routines")
 		for _, cancel := range contexts {
 			cancel()
 		}

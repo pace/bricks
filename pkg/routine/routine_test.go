@@ -21,7 +21,7 @@ import (
 
 func TestRun_catchesPanics(t *testing.T) {
 	require.NotPanics(t, func() {
-		waitForRun(context.Background(), Forever, func(context.Context) {
+		waitForRun(context.Background(), func(context.Context) {
 			panic("test")
 		})
 	})
@@ -29,22 +29,14 @@ func TestRun_catchesPanics(t *testing.T) {
 
 func TestRun_createsNewContext(t *testing.T) {
 	ctx := context.Background()
-	require.NotEqual(t, ctx, contextAfterRun(ctx, Forever, nil))
-}
-
-func TestRun_appliesTimeout(t *testing.T) {
-	timeout := time.Hour
-	routineCtx := contextAfterRun(context.Background(), timeout, nil)
-	deadline, ok := routineCtx.Deadline()
-	require.True(t, ok)
-	require.WithinDuration(t, time.Now().Add(timeout), deadline, time.Second)
+	require.NotEqual(t, ctx, contextAfterRun(ctx, nil))
 }
 
 func TestRun_transfersLogger(t *testing.T) {
 	buf := bytes.Buffer{}
 	logger := log.Output(&buf)
 	ctx := logger.WithContext(context.Background())
-	waitForRun(ctx, Forever, func(ctx context.Context) {
+	waitForRun(ctx, func(ctx context.Context) {
 		log.Ctx(ctx).Debug().Msg("foobar")
 	})
 	require.Contains(t, buf.String(), "foobar")
@@ -52,14 +44,14 @@ func TestRun_transfersLogger(t *testing.T) {
 
 func TestRun_transfersOAuth2Token(t *testing.T) {
 	ctx := security.ContextWithToken(context.Background(), token("test-token"))
-	routineCtx := contextAfterRun(ctx, Forever, nil)
+	routineCtx := contextAfterRun(ctx, nil)
 	token, ok := security.GetTokenFromContext(routineCtx)
 	require.True(t, ok)
 	require.Equal(t, "test-token", token.GetValue())
 }
 
 func TestRun_cancelsContextAfterRoutineIsFinished(t *testing.T) {
-	routineCtx := contextAfterRun(context.Background(), Forever, nil)
+	routineCtx := contextAfterRun(context.Background(), nil)
 	require.Eventually(t, func() bool {
 		return routineCtx.Err() == context.Canceled
 	}, time.Second, time.Millisecond)
@@ -75,7 +67,7 @@ func testRunBlocksAfterShutdown(t *testing.T) {
 
 	// start routine that gets canceled by the shutdown
 	routineCtx := make(chan context.Context)
-	Run(context.Background(), Forever, func(ctx context.Context) {
+	Run(context.Background(), func(ctx context.Context) {
 		routineCtx <- ctx
 		endOfTest.Wait()
 	})
@@ -90,7 +82,7 @@ func testRunBlocksAfterShutdown(t *testing.T) {
 	// start routine
 	done := make(chan struct{})
 	go func() {
-		waitForRun(context.Background(), Forever, nil)
+		waitForRun(context.Background(), nil)
 		done <- struct{}{}
 	}()
 	select {
@@ -122,7 +114,7 @@ func testRunCancelsContextsOn(t *testing.T, signum syscall.Signal) {
 	routinesStarted.Add(len(routineContexts))
 	for i := range routineContexts {
 		i := i
-		Run(context.Background(), Forever, func(ctx context.Context) {
+		Run(context.Background(), func(ctx context.Context) {
 			routineContexts[i] = ctx
 			routinesStarted.Done()
 			endOfTest.Wait()
@@ -157,9 +149,9 @@ func exitAfterTest(t *testing.T, name string, testFunc func(*testing.T)) {
 }
 
 // Calls Run and returns once the routine is finished.
-func waitForRun(ctx context.Context, timeout time.Duration, routine func(context.Context)) {
+func waitForRun(ctx context.Context, routine func(context.Context)) {
 	done := make(chan struct{})
-	Run(ctx, timeout, func(ctx context.Context) {
+	Run(ctx, func(ctx context.Context) {
 		defer func() { done <- struct{}{} }()
 		routine(ctx)
 	})
@@ -168,9 +160,9 @@ func waitForRun(ctx context.Context, timeout time.Duration, routine func(context
 
 // Calls Run and returns the context that the routine was called with once the
 // routine is finished.
-func contextAfterRun(ctx context.Context, timeout time.Duration, routine func(context.Context)) context.Context {
+func contextAfterRun(ctx context.Context, routine func(context.Context)) context.Context {
 	var routineCtx context.Context
-	waitForRun(ctx, timeout, func(ctx context.Context) {
+	waitForRun(ctx, func(ctx context.Context) {
 		if routine != nil {
 			routine(ctx)
 		}
