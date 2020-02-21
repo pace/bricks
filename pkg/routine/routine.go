@@ -19,28 +19,28 @@ import (
 )
 
 // Run runs the given function in a new background context. The new context
-// inherits the logger and oauth2 authentication of the passed context. Panics
+// inherits the logger and oauth2 authentication of the parent context. Panics
 // thrown in the function are logged and sent to sentry. The routines context is
 // canceled if the program receives a shutdown signal (SIGINT, SIGTERM), if the
 // returned CancelFunc is called, or if the routine returned.
-func Run(ctx context.Context, routine func(context.Context)) (cancel context.CancelFunc) {
+func Run(parentCtx context.Context, routine func(context.Context)) (cancel context.CancelFunc) {
 	// transfer logger, authentication and error info
-	routineCtx := log.Ctx(ctx).WithContext(context.Background())
-	routineCtx = oauth2.ContextTransfer(ctx, routineCtx)
-	routineCtx = errors.ContextTransfer(ctx, routineCtx)
+	ctx := log.Ctx(parentCtx).WithContext(context.Background())
+	ctx = oauth2.ContextTransfer(parentCtx, ctx)
+	ctx = errors.ContextTransfer(parentCtx, ctx)
 	// add routine number to logger
 	num := atomic.AddInt64(&ctr, 1)
-	logger := log.Ctx(routineCtx).With().Int64("routine", num).Logger()
-	routineCtx = logger.WithContext(routineCtx)
+	logger := log.Ctx(ctx).With().Int64("routine", num).Logger()
+	ctx = logger.WithContext(ctx)
 	// get cancel function
-	routineCtx, cancel = context.WithCancel(routineCtx)
+	ctx, cancel = context.WithCancel(ctx)
 	// register context to be cancelled when the program is shut down
 	contextsMx.Lock()
 	contexts[num] = cancel
 	contextsMx.Unlock()
 	// deregister the above if context is done
 	go func() {
-		<-routineCtx.Done()
+		<-ctx.Done()
 		// In case of a shutdown, this will block forever. But it doesn't hurt,
 		// because the program is about to exit anyway.
 		contextsMx.Lock()
@@ -48,8 +48,8 @@ func Run(ctx context.Context, routine func(context.Context)) (cancel context.Can
 		delete(contexts, num)
 	}()
 	go func() {
-		defer errors.HandleWithCtx(routineCtx, fmt.Sprintf("routine %d", num)) // handle panics
-		routine(routineCtx)
+		defer errors.HandleWithCtx(ctx, fmt.Sprintf("routine %d", num)) // handle panics
+		routine(ctx)
 		cancel()
 	}()
 	return
