@@ -17,11 +17,12 @@ import (
 // Handler returns a middleware that handles all of the logging aspects of
 // any incoming http request
 func Handler() func(http.Handler) http.Handler {
+	sink := &Sink{}
 	return func(next http.Handler) http.Handler {
-		return hlog.NewHandler(log.Logger)(
+		return hlog.NewHandler(log.Logger.Output(sink))(
 			hlog.AccessHandler(requestCompleted)(
-				hlog.RequestIDHandler("req_id", "Request-Id")(next)))
-
+				hlog.RequestIDHandler("req_id", "Request-Id")(
+					handlerWithSink(sink)(next))))
 	}
 }
 

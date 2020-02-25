@@ -37,7 +37,10 @@ var levelMap = map[string]zerolog.Level{
 	"disabled": zerolog.Disabled,
 }
 
-var cfg config
+var (
+	cfg       config
+	logOutput io.Writer
+)
 
 func init() {
 	// parse log config
@@ -66,13 +69,15 @@ func init() {
 
 	switch cfg.Format {
 	case "console":
-		log.Logger = log.Output(zerolog.ConsoleWriter{Out: os.Stdout, TimeFormat: "2006-01-02 15:04:05"})
+		logOutput = zerolog.ConsoleWriter{Out: os.Stdout, TimeFormat: "2006-01-02 15:04:05"}
 	case "json":
 		// configure json output log
 		// use default timestamp format (RFC3339, subset of iso8601) and UTC for json as defined in https://lab.jamit.de/pace/web/meta/issues/11
-		log.Logger = log.Logger.Output(os.Stdout)
+		logOutput = os.Stdout
 		zerolog.TimestampFunc = func() time.Time { return time.Now().UTC() }
 	}
+
+	log.Logger = log.Output(logOutput)
 }
 
 // RequestID returns a unique request id or an empty string if there is none

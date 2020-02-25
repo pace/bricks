@@ -219,5 +219,10 @@ func (e sentryEvent) build() *raven.Packet {
 	// from env
 	packet.Extra["microservice"] = os.Getenv("JAEGER_SERVICE_NAME")
 
+	// add logs
+	if sink, ok := log.SinkFromContext(ctx); ok {
+		packet.Extra["logs"] = sink.ToJSON()
+	}
+
 	return packet
 }
