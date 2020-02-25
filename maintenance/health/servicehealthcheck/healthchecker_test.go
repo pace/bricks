@@ -200,7 +200,7 @@ func TestHandlerReadableHealthCheck(t *testing.T) {
 			title:   "Test health check readable all optional",
 			req:     []*testHealthChecker{},
 			opt:     []*testHealthChecker{longName, warn, err, initErr},
-			expCode: http.StatusServiceUnavailable,
+			expCode: http.StatusOK,
 			expOpt: []string{
 				"WithWarning                                                OK    ",
 				"WithErr                                                    ERR   healthCheckErr",

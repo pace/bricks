@@ -33,9 +33,7 @@ func (h *readableHealthHandler) ServeHTTP(w http.ResponseWriter, r *http.Request
 	bodyBuilder.WriteString("Optional Services: \n")
 	for name, res := range optChecks {
 		bodyBuilder.WriteString(fmt.Sprintf(table, name, res.State, res.Msg))
-		if res.State == Err {
-			status = http.StatusServiceUnavailable
-		}
+		// do not change status, as this is optional
 	}
 
 	writeResult(w, status, bodyBuilder.String())
