@@ -221,7 +221,7 @@ func (e sentryEvent) build() *raven.Packet {
 
 	// add logs
 	if sink, ok := log.SinkFromContext(ctx); ok {
-		packet.Extra["logs"] = sink.ToJSON()
+		packet.Extra["logs"] = sink.Pretty()
 	}
 
 	return packet
