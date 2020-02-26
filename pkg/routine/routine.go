@@ -18,6 +18,67 @@ import (
 	"github.com/pace/bricks/maintenance/log"
 )
 
+type options struct {
+	keepRunningOneInstance bool
+}
+
+// Option specifies how a routine is run.
+type Option func(*options)
+
+// Ideas for options in the future:
+//  * Timeout/Deadline for the context
+//  * Cronjob("30 */2 * * *"): run according to the crontab notation
+//  * AutoRestart(time.Duration): restart after routine finishes, but at most
+//    once per duration
+//  * Every(time.Duration): run regularly, use redis to get consistent behaviour
+//    on process restarts
+//  * Workers(int): run the routine a number of times in parallel
+//  * Delay(time.Duration): run once after timeout
+//  * allow useful combinations of OnceSimultaneously and other options
+//  * join a group explicitly by selecting a different redis database
+//  * join a group explicitly by choosing a different name
+
+// KeepRunningOneInstance returns an option that runs the routine once
+// simultaneously and keeps it running, restarting it if necessary. Subsequent
+// calls of the routine are stalled until the previous call returned.
+//
+// In clusters with multiple processes only one caller actually executes the
+// routine, but it can be any one of the callers. If the routine finishes any
+// caller including the same caller can execute it. If the process of the caller
+// executing the routine is stopped another caller executes the routine. If the
+// last caller is stopped, the routine stops executing due to lack of callers
+// that can continue execution. There is no automatic takeover of the routine
+// by other running members of the group, that did not call it explicitly.
+//
+// Due to lack of a better name, the name of this option is quite verbose. Feel
+// free to propose any better name as an alias for this option.
+func KeepRunningOneInstance() Option {
+	return func(o *options) {
+		o.keepRunningOneInstance = true
+	}
+}
+
+// RunNamed runs a routine like Run does. Additionally it assigns the routine a
+// name and allows using options to control how the routine is run. Routines
+// with the same name show consistent behaviour for the options, like mutual
+// exclusion, across their group. By default all callers that share the same
+// redis database are members of the same group, no matter whether they are
+// goroutines of a single process or of processes running on different hosts.
+// The default redis database is configured via the REDIS_* environment
+// variables.
+func RunNamed(parentCtx context.Context, name string, routine func(context.Context), opts ...Option) (cancel context.CancelFunc) {
+	o := options{}
+	for _, opt := range opts {
+		opt(&o)
+	}
+
+	if o.keepRunningOneInstance {
+		routine = routineThatKeepsRunningOneInstance(name, routine)
+	}
+
+	return Run(parentCtx, routine)
+}
+
 // Run runs the given function in a new background context. The new context
 // inherits the logger and oauth2 authentication of the parent context. Panics
 // thrown in the function are logged and sent to sentry. The routines context is
