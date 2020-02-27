@@ -5,16 +5,19 @@ package errors
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"net/http"
 	"os"
+	"time"
 
-	raven "github.com/getsentry/raven-go"
 	"github.com/pace/bricks/http/jsonapi/runtime"
 	"github.com/pace/bricks/http/oauth2"
+	"github.com/pace/bricks/maintenance/errors/raven"
 	"github.com/pace/bricks/maintenance/log"
 	"github.com/prometheus/client_golang/prometheus"
+	"github.com/rs/zerolog"
 )
 
 var (
@@ -70,7 +73,7 @@ type contextHandler struct {
 	next http.Handler
 }
 
-func (h contextHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+func (h *contextHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	// For error handling we want to log information about the request under
 	// which the error happened. But in some cases we only have a context,
 	// because unlike the context the request is not passed down. To make the
@@ -81,7 +84,7 @@ func (h contextHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 // Handler implements a panic recovering middleware
 func Handler() func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
-		next = contextHandler{next: next}
+		next = &contextHandler{next: next}
 		return &recoveryHandler{next: next}
 	}
 }
@@ -158,7 +161,8 @@ type sentryEvent struct {
 }
 
 func (e sentryEvent) Send() {
-	raven.Capture(e.build(), nil)
+	_, errCh := raven.Capture(e.build(), nil)
+	<-errCh // ensure the message get send even if the main goroutine is about to stop
 }
 
 func (e sentryEvent) build() *raven.Packet {
@@ -219,10 +223,133 @@ func (e sentryEvent) build() *raven.Packet {
 	// from env
 	packet.Extra["microservice"] = os.Getenv("JAEGER_SERVICE_NAME")
 
-	// add logs
-	if sink, ok := log.SinkFromContext(ctx); ok {
-		packet.Extra["logs"] = sink.Pretty()
-	}
+	// add breadcrumbs
+	packet.Breadcrumbs = getBreadcrumbs(ctx)
 
 	return packet
+}
+
+// getBreadcrumbs takes a context and tries to extract the logs from it if it
+// holds a log.Sink. If that's the case, the logs will all be translated
+// to valid sentry breadcrumbs if possible. In case of a failure, the
+// breadcrumbs will be dropped and a warning will be logged.
+func getBreadcrumbs(ctx context.Context) []*raven.Breadcrumb {
+	sink, ok := log.SinkFromContext(ctx)
+	if !ok {
+		return nil
+	}
+
+	var data []map[string]interface{}
+	if err := json.Unmarshal(sink.ToJSON(), &data); err != nil {
+		log.Ctx(ctx).Warn().Err(err).Msg("failed to prepare sentry message")
+		return nil
+	}
+
+	result := make([]*raven.Breadcrumb, len(data))
+	for i, d := range data {
+		crumb, err := createBreadcrumb(d)
+		if err != nil {
+			log.Ctx(ctx).Warn().Err(err).Msg("failed to create sentry breadcrumb")
+			return nil
+		}
+
+		result[i] = crumb
+	}
+
+	return result
+}
+
+func createBreadcrumb(data map[string]interface{}) (*raven.Breadcrumb, error) {
+	// remove the request id if it can still be found in the logs
+	delete(data, "req_id")
+
+	timeRaw, ok := data["time"].(string)
+	if !ok {
+		return nil, errors.New(`cannot parse "time"`)
+	}
+	delete(data, "time")
+
+	time, err := time.Parse(time.RFC3339, timeRaw)
+	if err != nil {
+		return nil, fmt.Errorf(`cannot parse "time": %w`, err)
+	}
+
+	levelRaw, ok := data["level"].(string)
+	if !ok {
+		return nil, errors.New(`cannot parse "level"`)
+	}
+	delete(data, "level")
+
+	level, err := translateZerologLevelToSentryLevel(levelRaw)
+	if err != nil {
+		return nil, fmt.Errorf(`cannot parse "level": %w`, err)
+	}
+
+	message, ok := data["message"].(string)
+	if !ok {
+		return nil, errors.New(`cannot parse "message"`)
+	}
+	delete(data, "message")
+
+	categoryRaw, ok := data["sentry:category"]
+	if !ok {
+		categoryRaw = ""
+	}
+	delete(data, "sentry:category")
+
+	category, ok := categoryRaw.(string)
+	if !ok {
+		return nil, errors.New(`cannot parse "category"`)
+	}
+
+	typRaw, ok := data["sentry:type"]
+	if !ok {
+		typRaw = ""
+	}
+	delete(data, "sentry:type")
+
+	typ, ok := typRaw.(string)
+	if !ok {
+		return nil, errors.New(`cannot parse "type"`)
+	}
+
+	if typ == "" && level == "fatal" {
+		typ = "error"
+	}
+
+	return &raven.Breadcrumb{
+		Category:  category,
+		Level:     level,
+		Message:   message,
+		Timestamp: time.Unix(),
+		Type:      typ,
+		Data:      data,
+	}, nil
+}
+
+// translateZerologLevelToSentryLevel takes in a zerolog.Level as string
+// and returns the equivalent sentry breadcrumb level. If the given level
+// can't be parsed to a valid zerolog.Level an error is returned.
+func translateZerologLevelToSentryLevel(l string) (string, error) {
+	level, err := zerolog.ParseLevel(l)
+	if err != nil {
+		return "", err
+	}
+
+	switch level {
+	case zerolog.TraceLevel, zerolog.InfoLevel:
+		return "info", nil
+	case zerolog.DebugLevel:
+		return "debug", nil
+	case zerolog.WarnLevel:
+		return "warning", nil
+	case zerolog.ErrorLevel:
+		return "error", nil
+	case zerolog.FatalLevel, zerolog.PanicLevel:
+		return "fatal", nil
+	case zerolog.NoLevel:
+		fallthrough
+	default:
+		return "", nil
+	}
 }

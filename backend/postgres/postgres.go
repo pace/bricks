@@ -241,7 +241,8 @@ func queryLogger(event *pg.QueryProcessedEvent) {
 		Int("line", event.Line).
 		Str("func", event.Func).
 		Int("attempt", event.Attempt).
-		Float64("duration", dur)
+		Float64("duration", dur).
+		Str("sentry:category", "postgres")
 
 	// add error or result set info
 	if event.Error != nil {

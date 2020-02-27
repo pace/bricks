@@ -3,7 +3,6 @@ package log
 import (
 	"bytes"
 	"context"
-	"encoding/json"
 	"net/http"
 	"strings"
 	"sync"
@@ -31,7 +30,7 @@ func SinkFromContext(ctx context.Context) (*Sink, bool) {
 // logs, created with log.Ctx(ctx), inside the context
 // and use them at a later point in time
 type Sink struct {
-	logs []string
+	jsonLogLines []string
 
 	rwmutex sync.RWMutex
 }
@@ -49,12 +48,12 @@ func handlerWithSink(sink *Sink) mux.MiddlewareFunc {
 }
 
 // ToJSON returns a copy of the currently available
-// logs in the Sink as json.RawMessage.
-func (s *Sink) ToJSON() json.RawMessage {
+// logs in the Sink as json formatted []byte.
+func (s *Sink) ToJSON() []byte {
 	s.rwmutex.RLock()
 	defer s.rwmutex.RUnlock()
 
-	return []byte("[" + strings.Join(s.logs, ",") + "]")
+	return []byte("[" + strings.Join(s.jsonLogLines, ",") + "]")
 }
 
 // Pretty returns the logs as string while using the
@@ -68,7 +67,7 @@ func (s *Sink) Pretty() string {
 		TimeFormat: "2006-01-02 15:04:05",
 	}
 
-	for _, str := range s.logs {
+	for _, str := range s.jsonLogLines {
 		n, err := strings.NewReader(str).WriteTo(writer)
 		if err != nil {
 			log.Warn().Err(err).Msg("log.Sink.Pretty failed")
@@ -86,7 +85,7 @@ func (s *Sink) Pretty() string {
 // and calls Write() on the default output writer.
 func (s *Sink) Write(b []byte) (int, error) {
 	s.rwmutex.Lock()
-	s.logs = append(s.logs, string(b))
+	s.jsonLogLines = append(s.jsonLogLines, string(b))
 	s.rwmutex.Unlock()
 
 	return logOutput.Write(b)

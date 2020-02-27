@@ -33,7 +33,9 @@ func (l *LoggingRoundTripper) RoundTrip(req *http.Request) (*http.Response, erro
 	startTime := time.Now()
 	le := log.Ctx(ctx).Debug().
 		Str("url", req.URL.String()).
-		Str("method", req.Method)
+		Str("method", req.Method).
+		Str("sentry:type", "http").
+		Str("sentry:category", "http")
 
 	resp, err := l.Transport().RoundTrip(req)
 
@@ -49,7 +51,7 @@ func (l *LoggingRoundTripper) RoundTrip(req *http.Request) (*http.Response, erro
 		return nil, err
 	}
 
-	le.Int("code", resp.StatusCode).Msg(logEventMsg(req))
+	le.Int("status_code", resp.StatusCode).Msg(logEventMsg(req))
 
 	return resp, nil
 }
