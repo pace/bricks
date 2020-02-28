@@ -24,11 +24,12 @@ func Router() *mux.Router {
 
 	r.Use(metricsMiddleware)
 
+	// the logging middleware needs to be registered before the error
+	// middleware to make it possible to send panics to sentry
+	r.Use(util.NewIgnorePrefixMiddleware(log.Handler(), "/health"))
+
 	// last resort error handler
 	r.Use(errors.Handler())
-
-	// for logging
-	r.Use(util.NewIgnorePrefixMiddleware(log.Handler(), "/health"))
 
 	r.Use(tracing.Handler(
 		// no tracing for these prefixes

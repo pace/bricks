@@ -6,11 +6,10 @@ require (
 	github.com/asaskevich/govalidator v0.0.0-20180720115003-f9ffefc3facf
 	github.com/beorn7/perks v0.0.0-20180321164747-3a771d992973 // indirect
 	github.com/caarlos0/env v3.3.0+incompatible
-	github.com/certifi/gocertifi v0.0.0-20180118203423-deb3ae2ef261 // indirect
+	github.com/certifi/gocertifi v0.0.0-20180118203423-deb3ae2ef261
 	github.com/codahale/hdrhistogram v0.0.0-20161010025455-3a0bb77429bd // indirect
 	github.com/dave/jennifer v1.0.2
 	github.com/getkin/kin-openapi v0.0.0-20180813063848-e1956e8013e5
-	github.com/getsentry/raven-go v0.0.0-20180903072508-084a9de9eb03
 	github.com/ghodss/yaml v1.0.0 // indirect
 	github.com/go-pg/pg v6.14.5+incompatible
 	github.com/go-redis/redis v6.14.1+incompatible
@@ -25,6 +24,7 @@ require (
 	github.com/onsi/ginkgo v1.8.0 // indirect
 	github.com/onsi/gomega v1.4.3 // indirect
 	github.com/opentracing/opentracing-go v1.0.2
+	github.com/pkg/errors v0.8.1
 	github.com/pmezard/go-difflib v1.0.0
 	github.com/prometheus/client_golang v0.8.0
 	github.com/prometheus/client_model v0.0.0-20180712105110-5c3871d89910 // indirect

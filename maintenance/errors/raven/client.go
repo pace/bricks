@@ -166,7 +166,18 @@ type Packet struct {
 	Fingerprint []string          `json:"fingerprint,omitempty"`
 	Extra       Extra             `json:"extra,omitempty"`
 
+	Breadcrumbs []*Breadcrumb `json:"breadcrumbs,omitempty"`
+
 	Interfaces []Interface `json:"-"`
+}
+
+type Breadcrumb struct {
+	Category  string                 `json:"category,omitempty"`
+	Data      map[string]interface{} `json:"data,omitempty"`
+	Level     string                 `json:"level,omitempty"`
+	Message   string                 `json:"message,omitempty"`
+	Timestamp int64                  `json:"timestamp,omitempty"`
+	Type      string                 `json:"type,omitempty"`
 }
 
 // NewPacket constructs a packet with the specified message and interfaces.

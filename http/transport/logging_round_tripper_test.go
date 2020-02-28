@@ -46,7 +46,7 @@ func TestLoggingRoundTripper(t *testing.T) {
 			t.Errorf("Expected retries to not be contained in log output, got %v", got)
 		}
 
-		exs := []string{`"level":"debug"`, `"url":"http://example.com/foo"`, `"method":"GET"`, `"code":200`, `"message":"HTTP GET example.com"`}
+		exs := []string{`"level":"debug"`, `"url":"http://example.com/foo"`, `"method":"GET"`, `"status_code":200`, `"message":"HTTP GET example.com"`}
 		for _, ex := range exs {
 			if !strings.Contains(got, ex) {
 				t.Errorf("Expected %v to be contained in log output, got %v", ex, got)
@@ -64,7 +64,7 @@ func TestLoggingRoundTripper(t *testing.T) {
 		}
 
 		got := out.String()
-		exs := []string{`"level":"debug"`, `"url":"http://example.com/foo"`, `"method":"GET"`, `"code":200`, `"message":"HTTP GET example.com"`, `"attempt":3`}
+		exs := []string{`"level":"debug"`, `"url":"http://example.com/foo"`, `"method":"GET"`, `"status_code":200`, `"message":"HTTP GET example.com"`, `"attempt":3`}
 		for _, ex := range exs {
 			if !strings.Contains(got, ex) {
 				t.Errorf("Expected %v to be contained in log output, got %v", ex, got)

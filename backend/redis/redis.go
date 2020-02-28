@@ -168,7 +168,7 @@ func (lt *logtracer) handle(realProcess func(redis.Cmder) error) func(redis.Cmde
 		}
 
 		// logging prep and tracing
-		le := logger.Debug().Str("cmd", cmder.Name())
+		le := logger.Debug().Str("cmd", cmder.Name()).Str("sentry:category", "redis")
 		startTime := time.Now()
 		span, _ := opentracing.StartSpanFromContext(lt.ctx,
 			fmt.Sprintf("Redis: %s", cmder.Name()))
