@@ -5,6 +5,7 @@ go 1.13
 require (
 	github.com/asaskevich/govalidator v0.0.0-20180720115003-f9ffefc3facf
 	github.com/beorn7/perks v0.0.0-20180321164747-3a771d992973 // indirect
+	github.com/bsm/redislock v0.4.3
 	github.com/caarlos0/env v3.3.0+incompatible
 	github.com/certifi/gocertifi v0.0.0-20180118203423-deb3ae2ef261
 	github.com/codahale/hdrhistogram v0.0.0-20161010025455-3a0bb77429bd // indirect
@@ -12,7 +13,7 @@ require (
 	github.com/getkin/kin-openapi v0.0.0-20180813063848-e1956e8013e5
 	github.com/ghodss/yaml v1.0.0 // indirect
 	github.com/go-pg/pg v6.14.5+incompatible
-	github.com/go-redis/redis v6.14.1+incompatible
+	github.com/go-redis/redis v6.15.6+incompatible
 	github.com/google/jsonapi v0.0.0-20181016150055-d0428f63eb51
 	github.com/gorilla/context v1.1.1 // indirect
 	github.com/gorilla/mux v1.6.2
@@ -21,8 +22,6 @@ require (
 	github.com/mattn/go-isatty v0.0.8
 	github.com/matttproud/golang_protobuf_extensions v1.0.1 // indirect
 	github.com/minio/minio-go/v6 v6.0.44
-	github.com/onsi/ginkgo v1.8.0 // indirect
-	github.com/onsi/gomega v1.4.3 // indirect
 	github.com/opentracing/opentracing-go v1.0.2
 	github.com/pkg/errors v0.8.1
 	github.com/pmezard/go-difflib v1.0.0

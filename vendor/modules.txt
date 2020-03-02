@@ -2,6 +2,8 @@
 github.com/asaskevich/govalidator
 # github.com/beorn7/perks v0.0.0-20180321164747-3a771d992973
 github.com/beorn7/perks/quantile
+# github.com/bsm/redislock v0.4.3
+github.com/bsm/redislock
 # github.com/caarlos0/env v3.3.0+incompatible
 github.com/caarlos0/env
 # github.com/certifi/gocertifi v0.0.0-20180118203423-deb3ae2ef261
@@ -24,14 +26,13 @@ github.com/go-pg/pg/internal/parser
 github.com/go-pg/pg/internal/pool
 github.com/go-pg/pg/orm
 github.com/go-pg/pg/types
-# github.com/go-redis/redis v6.14.1+incompatible
+# github.com/go-redis/redis v6.15.6+incompatible
 github.com/go-redis/redis
 github.com/go-redis/redis/internal
 github.com/go-redis/redis/internal/consistenthash
 github.com/go-redis/redis/internal/hashtag
 github.com/go-redis/redis/internal/pool
 github.com/go-redis/redis/internal/proto
-github.com/go-redis/redis/internal/singleflight
 github.com/go-redis/redis/internal/util
 # github.com/golang/protobuf v1.2.0
 github.com/golang/protobuf/proto

@@ -39,6 +39,7 @@ test:
 
 integration:
 	go test -mod=vendor -count=1 -v -cover -race -run TestIntegration ./...
+	go test -mod=vendor -count=1 -v -cover -race -run Example_clusterBackgroundTask ./pkg/routine
 
 testserver:
 	docker-compose up
