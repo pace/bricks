@@ -182,15 +182,26 @@ func Test_createBreadcrumb(t *testing.T) {
 // still works and the corresponding logs reach the integrated log.Sink
 // which should be passed to all subsequent requests and handler.
 func TestHandlerWithLogSink(t *testing.T) {
-	rec := httptest.NewRecorder()
-	req := httptest.NewRequest("GET", "/test", nil)
+	rec1 := httptest.NewRecorder()
+	req1 := httptest.NewRequest("GET", "/test1", nil)
 
-	var sinkCtx context.Context
+	rec2 := httptest.NewRecorder()
+	req2 := httptest.NewRequest("GET", "/test2", nil)
+
+	var (
+		sink1Ctx context.Context
+		sink2Ctx context.Context
+	)
 
 	mux := http.NewServeMux()
-	mux.HandleFunc("/test", func(w http.ResponseWriter, r *http.Request) {
+	mux.HandleFunc("/test1", func(w http.ResponseWriter, r *http.Request) {
+		sink1Ctx = r.Context()
+		log.Ctx(r.Context()).Debug().Msg("ONLY FOR SINK1")
+		w.WriteHeader(http.StatusOK)
+	})
+	mux.HandleFunc("/test2", func(w http.ResponseWriter, r *http.Request) {
 		require.NotEqual(t, "", log.RequestID(r), "request should have request id")
-		sinkCtx = r.Context()
+		sink2Ctx = r.Context()
 
 		client := &http.Client{
 			Transport: transport.NewDefaultTransportChain(),
@@ -213,31 +224,48 @@ func TestHandlerWithLogSink(t *testing.T) {
 		log.Req(r).Info().
 			Str("sentry:category", "redis").
 			Str("sentry:type", "error").
-			Msg("this is a test message for the sink")
+			Msg("ONLY FOR SINK2")
 
-		panic("Sink Test Error, IGNORE")
+		panic("Sink2 Test Error, IGNORE")
 	})
-	log.Handler()(Handler()(mux)).ServeHTTP(rec, req)
+	handler := log.Handler()(Handler()(mux))
 
-	resp := rec.Result()
-	defer resp.Body.Close()
+	handler.ServeHTTP(rec1, req1)
+	resp1 := rec1.Result()
+	require.Equal(t, http.StatusOK, resp1.StatusCode, "wrong status code")
+	resp1.Body.Close()
 
-	sink, ok := log.SinkFromContext(sinkCtx)
-	assert.True(t, ok, "failed getting sink")
+	handler.ServeHTTP(rec2, req2)
+	resp2 := rec2.Result()
+	require.Equal(t, http.StatusInternalServerError, resp2.StatusCode, "wrong status code")
+	resp2.Body.Close()
 
-	var logLines []json.RawMessage
-	assert.NoError(t, json.Unmarshal(sink.ToJSON(), &logLines), "failed extracting logs from sink")
+	sink1, ok := log.SinkFromContext(sink1Ctx)
+	assert.True(t, ok, "failed getting sink1")
 
-	assert.Contains(t, string(logLines[0]), "https://www.pace.car/de", "missing log line")
-	assert.Contains(t, string(logLines[1]), "http://localhost/fail", "missing log line")
+	var sink1LogLines []json.RawMessage
+	assert.NoError(t, json.Unmarshal(sink1.ToJSON(), &sink1LogLines), "failed extracting logs from sink1")
 
-	assert.Contains(t, string(logLines[2]), "sentry:category", "missing log line")
-	assert.Contains(t, string(logLines[2]), "redis", "missing log line")
-	assert.Contains(t, string(logLines[2]), "sentry:type", "missing log line")
-	assert.Contains(t, string(logLines[2]), "error", "missing log line")
-	assert.Contains(t, string(logLines[2]), "this is a test message for the sink", "missing log line")
+	assert.Len(t, sink1LogLines, 1, "more log lines than expected")
+	assert.Contains(t, string(sink1LogLines[0]), "ONLY FOR SINK1", "missing log line")
 
-	assert.Contains(t, string(logLines[3]), "Sink Test Error, IGNORE", "missing log line")
+	sink2, ok := log.SinkFromContext(sink2Ctx)
+	assert.True(t, ok, "failed getting sink2")
 
-	require.Equal(t, 500, resp.StatusCode, "wrong status code")
+	var sink2LogLines []json.RawMessage
+	assert.NoError(t, json.Unmarshal(sink2.ToJSON(), &sink2LogLines), "failed extracting logs from sink2")
+
+	assert.NotContains(t, string(sink2LogLines[0]), "ONLY FOR SINK1", "unexpected log line found")
+
+	assert.Contains(t, string(sink2LogLines[0]), "https://www.pace.car/de", "missing log line")
+	assert.Contains(t, string(sink2LogLines[1]), "http://localhost/fail", "missing log line")
+
+	assert.Contains(t, string(sink2LogLines[2]), "sentry:category", "missing log line")
+	assert.Contains(t, string(sink2LogLines[2]), "redis", "missing log line")
+	assert.Contains(t, string(sink2LogLines[2]), "sentry:type", "missing log line")
+	assert.Contains(t, string(sink2LogLines[2]), "error", "missing log line")
+	assert.Contains(t, string(sink2LogLines[2]), "ONLY FOR SINK2", "missing log line")
+
+	assert.Contains(t, string(sink2LogLines[3]), "Sink2 Test Error, IGNORE", "missing log line")
+
 }
