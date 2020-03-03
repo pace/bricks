@@ -10,15 +10,15 @@ import (
 	"strings"
 
 	"github.com/caarlos0/env"
+	"github.com/go-pg/pg"
 	"github.com/pace/bricks/maintenance/log"
 )
 
 // QueryOption is a function that applies an option (like sorting, filter or pagination) to a database query
 type QueryOption func(query Query) Query
 
-// Query based on orm.Query but only the needed function
+// Query based on orm.Query but only the needed functions
 // guaranties testability of all of the following functions
-// An Implementation MUST prepare statements to prevent SQL injection
 type Query interface {
 	Offset(n int) Query
 	Limit(n int) Query
@@ -40,11 +40,14 @@ func init() {
 	}
 }
 
-// Mapper maps a string value to the name of the database column, if possible.
-// The function should return "", false if the input value is not valid.
-// Add here further checking, the basic QueryOption has only very basic SQL injection checking
-type Mapper func(string) (string, bool)
+// ValueSanitizer should sanitize query parameter values,
+// the implementation should validate the value and transform it to the right type.
+type ValueSanitizer interface {
+	// SanitizeValue should sanitize a value, that should be in the column fieldName
+	SanitizeValue(fieldName string, value string) (interface{}, error)
+}
 
+// PagingFromRequest extracts pagination query parameter and  returns a function that adds the pagination to a query
 func PagingFromRequest(r *http.Request) (QueryOption, error) {
 	pageStr := r.URL.Query().Get("page[number]")
 	sizeStr := r.URL.Query().Get("page[size]")
@@ -76,11 +79,11 @@ func PagingFromRequest(r *http.Request) (QueryOption, error) {
 }
 
 // SortingFromRequest adds sorting to query based on the request query parameter
-// Database model and response type may differ, so the mapper function allows to map the name of  field from the request
+// Database model and response type may differ, so the mapper allows to map the name of  field from the request
 // to a database column name
-// returns a (possible noop) queryOption, even if any sorting parameter was invalid
+// returns a (possible nop) queryOption, even if any sorting parameter was invalid
 // The error contains a list of all invalid parameters. Invalid parameters are not added to the query.
-func SortingFromRequest(r *http.Request, mapper Mapper) (QueryOption, error) {
+func SortingFromRequest(r *http.Request, modelMapping map[string]string) (QueryOption, error) {
 	sort := r.URL.Query().Get("sort")
 	if sort == "" {
 		return func(query Query) Query { return query }, nil
@@ -100,7 +103,7 @@ func SortingFromRequest(r *http.Request, mapper Mapper) (QueryOption, error) {
 		}
 		val = strings.TrimPrefix(val, "-")
 
-		key, isValid := mapper(val)
+		key, isValid := modelMapping[val]
 		if !isValid {
 			errSortingWithReason = append(errSortingWithReason, val)
 			continue
@@ -122,42 +125,41 @@ func SortingFromRequest(r *http.Request, mapper Mapper) (QueryOption, error) {
 
 // FilterFromRequest adds filter to a query based on the request query parameter
 // filter[name]=val1,val2 results in name IN (val1, val2), filter[name]=val results in name=val
-// Database model and response type may differ, so the mapper function allows to map the name of  field from the request
-// to a database column name.
-// Will always return a QueryOptions function with all valid filters (can be a none)
+// Database model and response type may differ, so the mapper allows to map the name of field from the request
+// to a database column name and the sanitizer allows to correct type of the value and sanitize it.
+// Will always return a QueryOptions function with all valid filters (can be a nop)
 // if any filter are invalid a error with a list of all invalid filters is returned
-// Is SQLi save if the query uses prepared statements
-func FilterFromRequest(r *http.Request, mapper Mapper) (QueryOption, error) {
-	filter := make(map[string][]string)
+func FilterFromRequest(r *http.Request, modelMapping map[string]string, sanitizer ValueSanitizer) (QueryOption, error) {
+	filter := make(map[string][]interface{})
 	var invalidFilter []string
-	for queryName, val := range r.URL.Query() {
-		if !strings.HasPrefix(queryName, "filter") {
+	for queryName, queryValues := range r.URL.Query() {
+		if !(strings.HasPrefix(queryName, "filter[") && strings.HasSuffix(queryName, "]")) {
 			continue
 		}
-		field := strings.TrimPrefix(queryName, "filter[")
-		field = strings.TrimSuffix(field, "]")
-		key, isValid := mapper(field)
+		key, isValid := getFilterKey(queryName, modelMapping)
 		if !isValid {
-			invalidFilter = append(invalidFilter, field)
+			invalidFilter = append(invalidFilter, key)
 			continue
 		}
-		filter[key] = val
+		filterValues, isValid := getFilterValues(key, queryValues, sanitizer)
+		if !isValid {
+			invalidFilter = append(invalidFilter, key)
+			continue
+		}
+		filter[key] = filterValues
 	}
 
 	filterQueryOption := func(query Query) Query {
-		for name, vals := range filter {
-			if len(vals) == 0 {
+		for name, filterValues := range filter {
+			if len(filterValues) == 0 {
 				continue
 			}
-			var filterValues []string
-			for _, val := range vals {
-				filterValues = append(filterValues, strings.Split(val, ",")...)
-			}
+
 			if len(filterValues) == 1 {
 				query.Where("?=?", name, filterValues[0])
 				continue
 			}
-			query.Where("? IN (?)", name, strings.Join(filterValues, ","))
+			query.Where("? IN (?)", name, pg.In(filterValues))
 		}
 		return query
 	}
@@ -168,7 +170,27 @@ func FilterFromRequest(r *http.Request, mapper Mapper) (QueryOption, error) {
 	return filterQueryOption, nil
 }
 
-// DefaultMapper maps an query field directly name to the same name as database column name
-func DefaultMapper(in string) (string, bool) {
-	return in, true
+func getFilterKey(queryName string, modelMapping map[string]string) (string, bool) {
+	field := strings.TrimPrefix(queryName, "filter[")
+	field = strings.TrimSuffix(field, "]")
+	mapped, isValid := modelMapping[field]
+	if !isValid {
+		return field, false
+	}
+	return mapped, true
+}
+
+func getFilterValues(fieldName string, queryValues []string, sanitizer ValueSanitizer) ([]interface{}, bool) {
+	var filterValues []interface{}
+	for _, value := range queryValues {
+		separatedValues := strings.Split(value, ",")
+		for _, separatedValue := range separatedValues {
+			sanitized, err := sanitizer.SanitizeValue(fieldName, separatedValue)
+			if err != nil {
+				return nil, false
+			}
+			filterValues = append(filterValues, sanitized)
+		}
+	}
+	return filterValues, true
 }

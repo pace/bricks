@@ -8,6 +8,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/go-pg/pg/types"
 	"github.com/stretchr/testify/require"
 )
 
@@ -21,10 +22,16 @@ type testQuery struct {
 func (q *testQuery) Where(condition string, params ...interface{}) Query {
 	where := condition
 	for _, param := range params {
-		where = strings.Replace(where, "?", param.(string), 1)
+		if paramString, ok := param.(string); ok {
+			where = strings.Replace(where, "?", paramString, 1)
+		}
+		if paramTypeVal, ok := param.(types.ValueAppender); ok {
+			var value []byte
+			value = paramTypeVal.AppendValue(value, 0)
+			where = strings.Replace(where, "?", string(value), 1)
+		}
 
 	}
-
 	q.where = append(q.where, where)
 	return q
 }
@@ -42,6 +49,13 @@ func (q *testQuery) Limit(n int) Query {
 func (q *testQuery) Order(orders ...string) Query {
 	q.orders = append(q.orders, orders...)
 	return q
+}
+
+type testSanitizer struct {
+}
+
+func (t testSanitizer) SanitizeValue(fieldName string, value string) (interface{}, error) {
+	return value + "san", nil
 }
 
 func TestPagingFromRequest(t *testing.T) {
@@ -69,7 +83,12 @@ func TestPagingMaxMin(t *testing.T) {
 
 func TestSortingFromRequest(t *testing.T) {
 	r := httptest.NewRequest("GET", "/articles?sort=abc,-def,qwe", nil)
-	queryOpt, err := SortingFromRequest(r, DefaultMapper)
+	mapper := map[string]string{
+		"abc": "abc",
+		"def": "def",
+		"qwe": "qwe",
+	}
+	queryOpt, err := SortingFromRequest(r, mapper)
 	res := queryOpt(&testQuery{})
 	require.NotNil(t, queryOpt)
 	result := res.(*testQuery)
@@ -85,12 +104,10 @@ func TestSortingFromRequest(t *testing.T) {
 
 func TestMapperSorting(t *testing.T) {
 	r := httptest.NewRequest("GET", "/articles?sort=abc,-def", nil)
-	queryOpt, err := SortingFromRequest(r, func(in string) (string, bool) {
-		if in == "abc" {
-			return "", false
-		}
-		return in, true
-	})
+	mapper := map[string]string{
+		"def": "def",
+	}
+	queryOpt, err := SortingFromRequest(r, mapper)
 	require.NotNil(t, queryOpt)
 	res := queryOpt(&testQuery{})
 	result := res.(*testQuery)
@@ -105,12 +122,11 @@ func TestMapperSorting(t *testing.T) {
 
 func TestMapperFiltering(t *testing.T) {
 	r := httptest.NewRequest("GET", "/articles?filter[abc]=1,2&filter[name]=1", nil)
-	queryOpt, err := FilterFromRequest(r, func(in string) (string, bool) {
-		if in == "name" {
-			return "", false
-		}
-		return in, true
-	})
+	mapper := map[string]string{
+		"abc": "abc",
+	}
+
+	queryOpt, err := FilterFromRequest(r, mapper, &testSanitizer{})
 	res := queryOpt(&testQuery{})
 	require.NotNil(t, queryOpt)
 	result := res.(*testQuery)
@@ -120,12 +136,17 @@ func TestMapperFiltering(t *testing.T) {
 	require.Equal(t, 0, result.limit)
 	require.Equal(t, 0, len(result.orders))
 	require.Equal(t, 1, len(result.where))
-	require.Contains(t, result.where[0], "abc IN (1,2)")
+	require.Contains(t, result.where[0], "abc IN (1san,2san)")
 }
 
 func TestFilteringFromRequest(t *testing.T) {
 	r := httptest.NewRequest("GET", "/articles?filter[abc]=1,2&filter[name]=1&testy=test", nil)
-	queryOpt, err := FilterFromRequest(r, DefaultMapper)
+	mapper := map[string]string{
+		"abc":   "abc",
+		"name":  "name",
+		"testy": "testy",
+	}
+	queryOpt, err := FilterFromRequest(r, mapper, &testSanitizer{})
 	res := queryOpt(&testQuery{})
 	require.NotNil(t, queryOpt)
 	result := res.(*testQuery)
@@ -137,16 +158,22 @@ func TestFilteringFromRequest(t *testing.T) {
 	for _, val := range result.where {
 		require.False(t, strings.Contains(val, "?"))
 	}
-	require.Contains(t, result.where[0], "abc IN (1,2)")
-	require.Contains(t, result.where[1], "name=1")
+	require.Contains(t, result.where, "abc IN (1san,2san)")
+	require.Contains(t, result.where, "name=1san")
 }
 
 func TestAllInOne(t *testing.T) {
 	r := httptest.NewRequest("GET", "/articles?filter[abc]=1,2&filter[name]=1&testy=test&sort=abc,-def&page[number]=3&page[size]=1", nil)
-	queryOpt, err := FilterFromRequest(r, DefaultMapper)
+	mapper := map[string]string{
+		"abc":   "abc",
+		"name":  "name",
+		"testy": "testy",
+		"def":   "def",
+	}
+	queryOpt, err := FilterFromRequest(r, mapper, &testSanitizer{})
 	require.NoError(t, err)
 	res := queryOpt(&testQuery{})
-	queryOpt, err = SortingFromRequest(r, DefaultMapper)
+	queryOpt, err = SortingFromRequest(r, mapper)
 	require.NoError(t, err)
 	res = queryOpt(res)
 	queryOpt, err = PagingFromRequest(r)
@@ -162,8 +189,8 @@ func TestAllInOne(t *testing.T) {
 	for _, val := range result.where {
 		require.False(t, strings.Contains(val, "?"))
 	}
-	require.Contains(t, result.where, "abc IN (1,2)")
-	require.Contains(t, result.where, "name=1")
+	require.Contains(t, result.where, "abc IN (1san,2san)")
+	require.Contains(t, result.where, "name=1san")
 	require.Contains(t, result.orders, "abc ASC")
 	require.Contains(t, result.orders, "def DESC")
 }
