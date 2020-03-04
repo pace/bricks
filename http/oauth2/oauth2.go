@@ -67,7 +67,6 @@ func introspectRequest(r *http.Request, w http.ResponseWriter, tokenIntro TokenI
 
 	tok := security.GetBearerTokenFromHeader(r.Header.Get(oAuth2Header))
 	if tok == "" {
-		log.Req(r).Info().Msg("no bearer token in header \"Authorization\" present")
 		http.Error(w, "Unauthorized", http.StatusUnauthorized)
 		return nil, false
 	}

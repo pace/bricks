@@ -25,7 +25,7 @@ type testHealthChecker struct {
 	name            string
 }
 
-func (t *testHealthChecker) Init() error {
+func (t *testHealthChecker) Init(ctx context.Context) error {
 	if t.initErr {
 		return errors.New("initError")
 	}
@@ -81,7 +81,7 @@ func TestHandlerHealthCheck(t *testing.T) {
 		t.Run(tc.title, func(t *testing.T) {
 			resetHealthChecks()
 			rec := httptest.NewRecorder()
-			RegisterHealthCheck(tc.check, tc.check.name)
+			RegisterHealthCheck(tc.check.name, tc.check)
 			req := httptest.NewRequest("GET", "/health/", nil)
 			HealthHandler().ServeHTTP(rec, req)
 			resp := rec.Result()
@@ -108,7 +108,7 @@ func TestInitErrorRetry(t *testing.T) {
 		healthCheckWarn: false,
 		name:            "initRetry",
 	}
-	RegisterHealthCheck(checker, checker.name)
+	RegisterHealthCheck(checker.name, checker)
 
 	testRequest(t, http.StatusServiceUnavailable, "ERR")
 
@@ -145,7 +145,7 @@ func TestInitErrorCaching(t *testing.T) {
 	}
 
 	resetHealthChecks()
-	RegisterHealthCheck(hc, hc.name)
+	RegisterHealthCheck(hc.name, hc)
 
 	testRequest(t, http.StatusServiceUnavailable, "ERR")
 	hc.initErr = false
@@ -154,7 +154,7 @@ func TestInitErrorCaching(t *testing.T) {
 	cfg.HealthCheckInitResultErrorTTL = 0
 	resetHealthChecks()
 	hc.initErr = true
-	RegisterHealthCheck(hc, hc.name)
+	RegisterHealthCheck(hc.name, hc)
 	testRequest(t, http.StatusServiceUnavailable, "ERR")
 	hc.initErr = false
 	testRequest(t, http.StatusOK, "OK")
@@ -165,7 +165,7 @@ func TestHandlerHealthCheckOptional(t *testing.T) {
 	checkReq := &testHealthChecker{name: "TestOk"}
 	resetHealthChecks()
 
-	RegisterHealthCheck(checkReq, checkReq.name)
+	RegisterHealthCheck(checkReq.name, checkReq)
 	RegisterOptionalHealthCheck(checkOpt, checkOpt.name)
 
 	testRequest(t, http.StatusOK, "OK")
@@ -222,7 +222,7 @@ func TestHandlerReadableHealthCheck(t *testing.T) {
 
 			rec := httptest.NewRecorder()
 			for _, hc := range tc.req {
-				RegisterHealthCheck(hc, hc.name)
+				RegisterHealthCheck(hc.name, hc)
 			}
 			for _, hc := range tc.opt {
 				RegisterOptionalHealthCheck(hc, hc.name)

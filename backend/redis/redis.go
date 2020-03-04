@@ -79,9 +79,9 @@ func init() {
 		log.Fatalf("Failed to parse redis environment: %v", err)
 	}
 
-	servicehealthcheck.RegisterHealthCheck(&HealthCheck{
+	servicehealthcheck.RegisterHealthCheck("redis", &HealthCheck{
 		Client: Client(),
-	}, "redis")
+	})
 }
 
 // Client with environment based configuration

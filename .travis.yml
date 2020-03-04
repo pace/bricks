@@ -1,20 +1,13 @@
 language: go
 
-before_install:
-- go get github.com/mattn/goveralls
-- go get golang.org/x/tools/cmd/cover
-
 after_success:
-- $HOME/gopath/bin/goveralls -coverprofile=coverage.out -service=travis-ci
+- go run ./vendor/github.com/mattn/goveralls -coverprofile=coverage.out -service=travis-ci
 
 services:
 - docker
 
-env:
-- GO111MODULE=on
-
 go:
-- 1.13.x
+- 1.14.x
 
 script:
 - docker-compose run testserver make ci

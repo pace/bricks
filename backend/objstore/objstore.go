@@ -37,9 +37,9 @@ func init() {
 	if err != nil {
 		log.Fatalf("Failed to create object storage client: %v", err)
 	}
-	servicehealthcheck.RegisterHealthCheck(&HealthCheck{
+	servicehealthcheck.RegisterHealthCheck("objstore", &HealthCheck{
 		Client: client,
-	}, "objstore")
+	})
 
 	ok, err := client.BucketExists(cfg.HealthCheckBucketName)
 	if err != nil {

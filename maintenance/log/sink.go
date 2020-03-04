@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"context"
 	"io"
-	"io/ioutil"
 	"net/http"
 	"strings"
 	"sync"
@@ -14,17 +13,13 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
-// NoopSink is a Sink with no specific output.
-// All logs passed to this Sink will be stored in
-// it's internal storage but not passed further to
-// the default logging output.
-var NoopSink = &Sink{output: ioutil.Discard}
-
 type sinkKey struct{}
 
 // ContextWithSink wraps the given context in a new context with
 // the given Sink stored as value.
 func ContextWithSink(ctx context.Context, sink *Sink) context.Context {
+	l := log.Ctx(ctx).Output(sink)
+	ctx = l.WithContext(ctx)
 	return context.WithValue(ctx, sinkKey{}, sink)
 }
 
@@ -38,6 +33,7 @@ func SinkFromContext(ctx context.Context) (*Sink, bool) {
 // logs, created with log.Ctx(ctx), inside the context
 // and use them at a later point in time
 type Sink struct {
+	Silent       bool
 	jsonLogLines []string
 
 	output  io.Writer
@@ -51,9 +47,8 @@ type Sink struct {
 func handlerWithSink() mux.MiddlewareFunc {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			sink := &Sink{}
-			l := log.Ctx(r.Context()).Output(sink)
-			ctx := ContextWithSink(l.WithContext(r.Context()), sink)
+			var sink Sink
+			ctx := ContextWithSink(r.Context(), &sink)
 			next.ServeHTTP(w, r.WithContext(ctx))
 		})
 	}
@@ -103,6 +98,10 @@ func (s *Sink) Write(b []byte) (int, error) {
 
 	s.jsonLogLines = append(s.jsonLogLines, string(b))
 	s.rwmutex.Unlock()
+
+	if s.Silent {
+		return len(b), nil
+	}
 
 	return s.output.Write(b)
 }
