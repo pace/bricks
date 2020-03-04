@@ -10,6 +10,8 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/pace/bricks/maintenance/health/servicehealthcheck"
+
 	"github.com/opentracing/opentracing-go"
 	olog "github.com/opentracing/opentracing-go/log"
 	"github.com/pace/bricks/backend/objstore"
@@ -49,6 +51,14 @@ func main() {
 	}
 
 	h := pacehttp.Router()
+	servicehealthcheck.RegisterHealthCheckFunc("fail-50", func(ctx context.Context) (r servicehealthcheck.HealthCheckResult) {
+		if time.Now().Unix()%2 == 0 {
+			panic("boom")
+		}
+		r.Msg = "Foo"
+		r.State = servicehealthcheck.Ok
+		return
+	})
 
 	h.HandleFunc("/test", func(w http.ResponseWriter, r *http.Request) {
 		handlerSpan, ctx := opentracing.StartSpanFromContext(r.Context(), "TestHandler")

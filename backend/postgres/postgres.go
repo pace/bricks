@@ -147,9 +147,9 @@ func init() {
 		}
 	}
 
-	servicehealthcheck.RegisterHealthCheck(&HealthCheck{
-		Pool: DefaultConnectionPool(),
-	}, "postgresdefault")
+	servicehealthcheck.RegisterHealthCheck("postgresdefault", &HealthCheck{
+		Pool: &pgPoolAdapter{db: DefaultConnectionPool()},
+	})
 }
 
 var (

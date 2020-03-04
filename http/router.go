@@ -14,7 +14,6 @@ import (
 	"github.com/pace/bricks/maintenance/log"
 	"github.com/pace/bricks/maintenance/metric"
 	"github.com/pace/bricks/maintenance/tracing"
-	"github.com/pace/bricks/maintenance/util"
 )
 
 // Router returns the default microservice endpoints for
@@ -26,7 +25,7 @@ func Router() *mux.Router {
 
 	// the logging middleware needs to be registered before the error
 	// middleware to make it possible to send panics to sentry
-	r.Use(util.NewIgnorePrefixMiddleware(log.Handler(), "/health"))
+	r.Use(log.Handler())
 
 	// last resort error handler
 	r.Use(errors.Handler())
