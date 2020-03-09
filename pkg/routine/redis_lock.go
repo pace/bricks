@@ -25,6 +25,7 @@ func routineThatKeepsRunningOneInstance(name string, routine func(context.Contex
 			Min: retryInterval,
 			Max: 10 * time.Minute,
 		}
+		num := ctx.Value(ctxNumKey{}).(int64)
 		var tryAgainIn time.Duration // zero on first run
 		for {
 			select {
@@ -38,7 +39,10 @@ func routineThatKeepsRunningOneInstance(name string, routine func(context.Contex
 				tryAgainIn = backoff.Duration()
 				continue
 			} else if lockCtx != nil {
-				routine(lockCtx)
+				func() {
+					defer errors.HandleWithCtx(ctx, fmt.Sprintf("routine %d", num)) // handle panics
+					routine(lockCtx)
+				}()
 			}
 			backoff.Reset()
 			tryAgainIn = retryInterval
