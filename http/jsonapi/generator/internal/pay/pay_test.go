@@ -9,11 +9,11 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/google/jsonapi"
 	"github.com/pace/bricks/http/jsonapi/runtime"
 	"github.com/pace/bricks/http/oauth2"
 	"github.com/pace/bricks/http/security/apikey"
 	"github.com/pace/bricks/maintenance/log"
+	"github.com/pace/jsonapi"
 	"github.com/shopspring/decimal"
 )
 
