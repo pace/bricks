@@ -11,6 +11,7 @@ import (
 
 	"github.com/bsm/redislock"
 	"github.com/go-redis/redis"
+	exponential "github.com/jpillora/backoff"
 	redisbackend "github.com/pace/bricks/backend/redis"
 	"github.com/pace/bricks/maintenance/errors"
 	"github.com/pace/bricks/maintenance/log"
@@ -19,6 +20,11 @@ import (
 func routineThatKeepsRunningOneInstance(name string, routine func(context.Context)) func(context.Context) {
 	return func(ctx context.Context) {
 		locker := redislock.New(getDefaultRedisClient())
+		retryInterval := cfg.RedisLockTTL / 5
+		backoff := exponential.Backoff{
+			Min: retryInterval,
+			Max: 10 * time.Minute,
+		}
 		var tryAgainIn time.Duration // zero on first run
 		for {
 			select {
@@ -29,10 +35,13 @@ func routineThatKeepsRunningOneInstance(name string, routine func(context.Contex
 			lockCtx, err := obtainLock(ctx, locker, "routine:lock:"+name, cfg.RedisLockTTL)
 			if err != nil {
 				go errors.Handle(ctx, err) // report error to Sentry, non-blocking
+				tryAgainIn = backoff.Duration()
+				continue
 			} else if lockCtx != nil {
 				routine(lockCtx)
 			}
-			tryAgainIn = cfg.RedisLockTTL / 5
+			backoff.Reset()
+			tryAgainIn = retryInterval
 		}
 	}
 }

@@ -19,6 +19,7 @@ require (
 	github.com/gorilla/mux v1.6.2
 	github.com/inconshreveable/mousetrap v1.0.0 // indirect
 	github.com/jinzhu/inflection v0.0.0-20180308033659-04140366298a // indirect
+	github.com/jpillora/backoff v1.0.0
 	github.com/mattn/go-isatty v0.0.8
 	github.com/mattn/goveralls v0.0.5
 	github.com/matttproud/golang_protobuf_extensions v1.0.1 // indirect

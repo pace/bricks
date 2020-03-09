@@ -62,6 +62,9 @@ github.com/inconshreveable/mousetrap
 # github.com/jinzhu/inflection v0.0.0-20180308033659-04140366298a
 ## explicit
 github.com/jinzhu/inflection
+# github.com/jpillora/backoff v1.0.0
+## explicit
+github.com/jpillora/backoff
 # github.com/mattn/go-isatty v0.0.8
 ## explicit
 github.com/mattn/go-isatty
