@@ -7,6 +7,9 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+
 	runtime "github.com/pace/bricks/http/jsonapi/runtime"
 )
 
@@ -50,22 +53,8 @@ func TestErrorReporting(t *testing.T) {
 
 	resp := rec.Result()
 	defer resp.Body.Close()
+	b, _ := ioutil.ReadAll(resp.Body)
 
-	if resp.StatusCode != 422 {
-		t.Errorf("expected 422 got: %d", resp.StatusCode)
-		b, err := ioutil.ReadAll(resp.Body)
-		if err != nil {
-			t.Fatal(err)
-		}
-		t.Error(string(b[:]))
-	}
-
-	b, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	if strings.Contains(string(b[:]), "can't parse content: Got value \"47.8\" expected type float32: Invalid type provided") {
-		t.Errorf("expected response to contain a better error message, got: %s", string(b[:]))
-	}
+	require.Equalf(t, 422, resp.StatusCode, "expected 422 got: %s", string(b))
+	assert.Contains(t, string(b), `can't parse content: got value \"47.8\" expected type float32: Invalid type provided`)
 }
