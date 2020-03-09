@@ -111,8 +111,8 @@ func Run(parentCtx context.Context, routine func(context.Context)) (cancel conte
 	}()
 	go func() {
 		defer errors.HandleWithCtx(ctx, fmt.Sprintf("routine %d", num)) // handle panics
+		defer cancel()
 		routine(ctx)
-		cancel()
 	}()
 	return
 }

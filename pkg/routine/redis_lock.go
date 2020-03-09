@@ -33,17 +33,23 @@ func routineThatKeepsRunningOneInstance(name string, routine func(context.Contex
 				return
 			case <-time.After(tryAgainIn):
 			}
-			lockCtx, err := obtainLock(ctx, locker, "routine:lock:"+name, cfg.RedisLockTTL)
+			// lockCtx will be a child of singleRunCtx. Make sure to cancel the
+			// singleRunCtx so that the lock is not refreshed after the routine
+			// returned.
+			singleRunCtx, cancel := context.WithCancel(ctx)
+			lockCtx, err := obtainLock(singleRunCtx, locker, "routine:lock:"+name, cfg.RedisLockTTL)
 			if err != nil {
-				go errors.Handle(ctx, err) // report error to Sentry, non-blocking
+				go errors.Handle(singleRunCtx, err) // report error to Sentry, non-blocking
+				cancel()
 				tryAgainIn = backoff.Duration()
 				continue
 			} else if lockCtx != nil {
 				func() {
-					defer errors.HandleWithCtx(ctx, fmt.Sprintf("routine %d", num)) // handle panics
+					defer errors.HandleWithCtx(singleRunCtx, fmt.Sprintf("routine %d", num)) // handle panics
 					routine(lockCtx)
 				}()
 			}
+			cancel()
 			backoff.Reset()
 			tryAgainIn = retryInterval
 		}
@@ -78,8 +84,8 @@ func obtainLock(ctx context.Context, locker *redislock.Client, key string, ttl t
 	lockCtx, cancel := context.WithCancel(ctx)
 	go func() {
 		defer errors.HandleWithCtx(ctx, fmt.Sprintf("routine %d: keep up lock", num)) // handle panics
+		defer cancel()
 		keepUpLock(ctx, lock, ttl)
-		cancel()
 		err := lock.Release()
 		if err != nil && err != redislock.ErrLockNotHeld {
 			log.Ctx(ctx).Debug().Err(err).Msg("could not release lock")
