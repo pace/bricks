@@ -20,11 +20,20 @@ import (
 func routineThatKeepsRunningOneInstance(name string, routine func(context.Context)) func(context.Context) {
 	return func(ctx context.Context) {
 		locker := redislock.New(getDefaultRedisClient())
+
+		// The retry interval is used if we did not get the lock because some
+		// other caller got it. The exponential backoff is used if we encounter
+		// problems with obtaining the lock, like the Redis not being available.
+		// The retry interval is also used if the routine returned regularly, to
+		// avoid uncontrollably short restart cycles. If the routine panicked we
+		// use exponential backoff as well.
 		retryInterval := cfg.RedisLockTTL / 5
 		backoff := exponential.Backoff{
 			Min: retryInterval,
 			Max: 10 * time.Minute,
 		}
+		routineBackoff := backoff
+
 		num := ctx.Value(ctxNumKey{}).(int64)
 		var tryAgainIn time.Duration // zero on first run
 		for {
@@ -34,23 +43,33 @@ func routineThatKeepsRunningOneInstance(name string, routine func(context.Contex
 			case <-time.After(tryAgainIn):
 			}
 			// lockCtx will be a child of singleRunCtx. Make sure to cancel the
-			// singleRunCtx so that the lock is not refreshed after the routine
+			// singleRunCtx so that the lock is released after the routine
 			// returned.
 			singleRunCtx, cancel := context.WithCancel(ctx)
 			lockCtx, err := obtainLock(singleRunCtx, locker, "routine:lock:"+name, cfg.RedisLockTTL)
 			if err != nil {
 				go errors.Handle(singleRunCtx, err) // report error to Sentry, non-blocking
 				cancel()
+				routineBackoff.Reset()
 				tryAgainIn = backoff.Duration()
 				continue
 			} else if lockCtx != nil {
+				routinePanicked := true
 				func() {
 					defer errors.HandleWithCtx(singleRunCtx, fmt.Sprintf("routine %d", num)) // handle panics
 					routine(lockCtx)
+					routinePanicked = false
 				}()
+				if routinePanicked {
+					cancel()
+					backoff.Reset()
+					tryAgainIn = routineBackoff.Duration()
+					continue
+				}
 			}
 			cancel()
 			backoff.Reset()
+			routineBackoff.Reset()
 			tryAgainIn = retryInterval
 		}
 	}
