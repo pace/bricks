@@ -17,58 +17,71 @@ import (
 	"github.com/pace/bricks/maintenance/log"
 )
 
-func routineThatKeepsRunningOneInstance(name string, routine func(context.Context)) func(context.Context) {
-	return func(ctx context.Context) {
-		locker := redislock.New(getDefaultRedisClient())
+type routineThatKeepsRunningOneInstance struct {
+	Name    string
+	Routine func(context.Context)
 
-		// The retry interval is used if we did not get the lock because some
-		// other caller got it. The exponential backoff is used if we encounter
-		// problems with obtaining the lock, like the Redis not being available.
-		// The retry interval is also used if the routine returned regularly, to
-		// avoid uncontrollably short restart cycles. If the routine panicked we
-		// use exponential backoff as well.
-		retryInterval := cfg.RedisLockTTL / 5
-		backoff := combinedExponentialBackoff{
-			"lock":    &exponential.Backoff{Min: retryInterval, Max: 10 * time.Minute},
-			"routine": &exponential.Backoff{Min: retryInterval, Max: 10 * time.Minute},
+	lockTTL       time.Duration
+	locker        *redislock.Client
+	retryInterval time.Duration
+	backoff       combinedExponentialBackoff
+	num           int64
+}
+
+func (r *routineThatKeepsRunningOneInstance) Run(ctx context.Context) {
+	r.locker = redislock.New(getDefaultRedisClient())
+
+	// The retry interval is used if we did not get the lock because some
+	// other caller got it. The exponential backoff is used if we encounter
+	// problems with obtaining the lock, like the Redis not being available.
+	// The retry interval is also used if the routine returned regularly, to
+	// avoid uncontrollably short restart cycles. If the routine panicked we
+	// use exponential backoff as well.
+	r.lockTTL = cfg.RedisLockTTL
+	r.retryInterval = r.lockTTL / 5
+	r.backoff = combinedExponentialBackoff{
+		"lock":    &exponential.Backoff{Min: r.retryInterval, Max: 10 * time.Minute},
+		"routine": &exponential.Backoff{Min: r.retryInterval, Max: 10 * time.Minute},
+	}
+
+	r.num = ctx.Value(ctxNumKey{}).(int64)
+	var tryAgainIn time.Duration // zero on first run
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		case <-time.After(tryAgainIn):
 		}
+		// Make sure to cancel the singleRunCtx so that the lock is released
+		// after the routine returned.
+		singleRunCtx, cancel := context.WithCancel(ctx)
+		tryAgainIn = r.singleRun(singleRunCtx)
+		cancel()
+	}
+}
 
-		num := ctx.Value(ctxNumKey{}).(int64)
-		var tryAgainIn time.Duration // zero on first run
-		for {
-			select {
-			case <-ctx.Done():
-				return
-			case <-time.After(tryAgainIn):
-			}
-			// lockCtx will be a child of singleRunCtx. Make sure to cancel the
-			// singleRunCtx so that the lock is released after the routine
-			// returned.
-			singleRunCtx, cancel := context.WithCancel(ctx)
-			lockCtx, err := obtainLock(singleRunCtx, locker, "routine:lock:"+name, cfg.RedisLockTTL)
-			if err != nil {
-				go errors.Handle(singleRunCtx, err) // report error to Sentry, non-blocking
-				cancel()
-				tryAgainIn = backoff.Duration("lock")
-				continue
-			} else if lockCtx != nil {
-				routinePanicked := true
-				func() {
-					defer errors.HandleWithCtx(singleRunCtx, fmt.Sprintf("routine %d", num)) // handle panics
-					routine(lockCtx)
-					routinePanicked = false
-				}()
-				if routinePanicked {
-					cancel()
-					tryAgainIn = backoff.Duration("routine")
-					continue
-				}
-			}
-			cancel()
-			backoff.ResetAll()
-			tryAgainIn = retryInterval
+// Performs a single run. That is, to try to obtain the lock and run the routine
+// until it returns. Return the backoff duration after which another single run
+// should be performed.
+func (r *routineThatKeepsRunningOneInstance) singleRun(ctx context.Context) time.Duration {
+	lockCtx, err := obtainLock(ctx, r.locker, "routine:lock:"+r.Name, r.lockTTL)
+	if err != nil {
+		go errors.Handle(ctx, err) // report error to Sentry, non-blocking
+		return r.backoff.Duration("lock")
+	}
+	if lockCtx != nil {
+		routinePanicked := true
+		func() {
+			defer errors.HandleWithCtx(ctx, fmt.Sprintf("routine %d", r.num)) // handle panics
+			r.Routine(lockCtx)
+			routinePanicked = false
+		}()
+		if routinePanicked {
+			return r.backoff.Duration("routine")
 		}
 	}
+	r.backoff.ResetAll()
+	return r.retryInterval
 }
 
 var (

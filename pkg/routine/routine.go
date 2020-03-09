@@ -73,7 +73,10 @@ func RunNamed(parentCtx context.Context, name string, routine func(context.Conte
 	}
 
 	if o.keepRunningOneInstance {
-		routine = routineThatKeepsRunningOneInstance(name, routine)
+		routine = (&routineThatKeepsRunningOneInstance{
+			Name:    name,
+			Routine: routine,
+		}).Run
 	}
 
 	return Run(parentCtx, routine)
