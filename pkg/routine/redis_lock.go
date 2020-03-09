@@ -28,11 +28,10 @@ func routineThatKeepsRunningOneInstance(name string, routine func(context.Contex
 		// avoid uncontrollably short restart cycles. If the routine panicked we
 		// use exponential backoff as well.
 		retryInterval := cfg.RedisLockTTL / 5
-		backoff := exponential.Backoff{
-			Min: retryInterval,
-			Max: 10 * time.Minute,
+		backoff := combinedExponentialBackoff{
+			"lock":    &exponential.Backoff{Min: retryInterval, Max: 10 * time.Minute},
+			"routine": &exponential.Backoff{Min: retryInterval, Max: 10 * time.Minute},
 		}
-		routineBackoff := backoff
 
 		num := ctx.Value(ctxNumKey{}).(int64)
 		var tryAgainIn time.Duration // zero on first run
@@ -50,8 +49,7 @@ func routineThatKeepsRunningOneInstance(name string, routine func(context.Contex
 			if err != nil {
 				go errors.Handle(singleRunCtx, err) // report error to Sentry, non-blocking
 				cancel()
-				routineBackoff.Reset()
-				tryAgainIn = backoff.Duration()
+				tryAgainIn = backoff.Duration("lock")
 				continue
 			} else if lockCtx != nil {
 				routinePanicked := true
@@ -62,14 +60,12 @@ func routineThatKeepsRunningOneInstance(name string, routine func(context.Contex
 				}()
 				if routinePanicked {
 					cancel()
-					backoff.Reset()
-					tryAgainIn = routineBackoff.Duration()
+					tryAgainIn = backoff.Duration("routine")
 					continue
 				}
 			}
 			cancel()
-			backoff.Reset()
-			routineBackoff.Reset()
+			backoff.ResetAll()
 			tryAgainIn = retryInterval
 		}
 	}
