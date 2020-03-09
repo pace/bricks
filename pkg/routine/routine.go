@@ -89,8 +89,9 @@ func Run(parentCtx context.Context, routine func(context.Context)) (cancel conte
 	ctx := log.Ctx(parentCtx).WithContext(context.Background())
 	ctx = oauth2.ContextTransfer(parentCtx, ctx)
 	ctx = errors.ContextTransfer(parentCtx, ctx)
-	// add routine number to logger
+	// add routine number to context and logger
 	num := atomic.AddInt64(&ctr, 1)
+	ctx = context.WithValue(ctx, ctxNumKey{}, num)
 	logger := log.Ctx(ctx).With().Int64("routine", num).Logger()
 	ctx = logger.WithContext(ctx)
 	// get cancel function
@@ -115,6 +116,8 @@ func Run(parentCtx context.Context, routine func(context.Context)) (cancel conte
 	}()
 	return
 }
+
+type ctxNumKey struct{}
 
 var (
 	contextsMx sync.Mutex
