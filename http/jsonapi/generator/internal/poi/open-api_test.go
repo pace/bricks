@@ -3,13 +3,13 @@ package poi
 
 import (
 	"context"
-	jsonapi "github.com/google/jsonapi"
 	mux "github.com/gorilla/mux"
 	opentracing "github.com/opentracing/opentracing-go"
 	runtime "github.com/pace/bricks/http/jsonapi/runtime"
 	oauth2 "github.com/pace/bricks/http/oauth2"
 	errors "github.com/pace/bricks/maintenance/errors"
 	metrics "github.com/pace/bricks/maintenance/metric/jsonapi"
+	jsonapi "github.com/pace/jsonapi"
 	"net/http"
 	"time"
 )

@@ -427,7 +427,7 @@ func unmarshalAttribute(
 
 	// As a final catch-all, ensure types line up to avoid a runtime panic.
 	if fieldValue.Kind() != value.Kind() {
-		err = ErrInvalidType
+		err = fmt.Errorf("got value %q expected type %v: %w", value, fieldType, ErrInvalidType)
 		return
 	}
 
