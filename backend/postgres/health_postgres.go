@@ -19,12 +19,12 @@ type HealthCheck struct {
 }
 
 type postgresQueryExecutor interface {
-	Exec(query interface{}, params ...interface{}) (res orm.Result, err error)
+	Exec(ctx context.Context, query interface{}, params ...interface{}) (res orm.Result, err error)
 }
 
-// Init initialises the test table
-func (h *HealthCheck) Init() error {
-	_, errWrite := h.Pool.Exec(`CREATE TABLE IF NOT EXISTS ` + cfg.HealthCheckTableName + `(ok boolean);`)
+// Init initializes the test table
+func (h *HealthCheck) Init(ctx context.Context) error {
+	_, errWrite := h.Pool.Exec(ctx, `CREATE TABLE IF NOT EXISTS `+cfg.HealthCheckTableName+`(ok boolean);`)
 	return errWrite
 }
 
@@ -37,19 +37,19 @@ func (h *HealthCheck) HealthCheck(ctx context.Context) servicehealthcheck.Health
 	}
 
 	// Readcheck
-	if _, err := h.Pool.Exec(`SELECT 1;`); err != nil {
+	if _, err := h.Pool.Exec(ctx, `SELECT 1;`); err != nil {
 		h.state.SetErrorState(err)
 		return h.state.GetState()
 	}
 	// writecheck - add Data to configured Table
-	_, err := h.Pool.Exec("INSERT INTO " + cfg.HealthCheckTableName + "(ok) VALUES (true);")
+	_, err := h.Pool.Exec(ctx, "INSERT INTO "+cfg.HealthCheckTableName+"(ok) VALUES (true);")
 	if err != nil {
 		h.state.SetErrorState(err)
 		return h.state.GetState()
 	}
 	// and while we're at it, check delete as well (so as not to clutter the database
 	// because UPSERT is impractical here
-	_, err = h.Pool.Exec("DELETE FROM " + cfg.HealthCheckTableName + ";")
+	_, err = h.Pool.Exec(ctx, "DELETE FROM "+cfg.HealthCheckTableName+";")
 	if err != nil {
 		h.state.SetErrorState(err)
 		return h.state.GetState()
@@ -61,7 +61,7 @@ func (h *HealthCheck) HealthCheck(ctx context.Context) servicehealthcheck.Health
 }
 
 // CleanUp drops the test table.
-func (h *HealthCheck) CleanUp() error {
-	_, err := h.Pool.Exec("DROP TABLE IF EXISTS " + cfg.HealthCheckTableName)
+func (h *HealthCheck) CleanUp(ctx context.Context) error {
+	_, err := h.Pool.Exec(ctx, "DROP TABLE IF EXISTS "+cfg.HealthCheckTableName)
 	return err
 }

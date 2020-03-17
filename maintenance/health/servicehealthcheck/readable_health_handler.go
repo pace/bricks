@@ -8,6 +8,8 @@ import (
 	"net/http"
 	"strconv"
 	"strings"
+
+	"github.com/pace/bricks/maintenance/log"
 )
 
 // saves length of the longest name for the column width in the table. 20 characters width is the default
@@ -16,9 +18,11 @@ var longestCheckName = 20
 type readableHealthHandler struct{}
 
 func (h *readableHealthHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	s := log.Sink{Silent: true}
+	ctx := log.ContextWithSink(r.Context(), &s)
 
-	reqChecks := check(&requiredChecks)
-	optChecks := check(&optionalChecks)
+	reqChecks := check(ctx, &requiredChecks)
+	optChecks := check(ctx, &optionalChecks)
 
 	status := http.StatusOK
 	table := "%-" + strconv.Itoa(longestCheckName) + "s   %-3s   %s\n"

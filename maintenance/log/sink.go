@@ -3,6 +3,7 @@ package log
 import (
 	"bytes"
 	"context"
+	"io"
 	"net/http"
 	"strings"
 	"sync"
@@ -17,6 +18,8 @@ type sinkKey struct{}
 // ContextWithSink wraps the given context in a new context with
 // the given Sink stored as value.
 func ContextWithSink(ctx context.Context, sink *Sink) context.Context {
+	l := log.Ctx(ctx).Output(sink)
+	ctx = l.WithContext(ctx)
 	return context.WithValue(ctx, sinkKey{}, sink)
 }
 
@@ -30,19 +33,23 @@ func SinkFromContext(ctx context.Context) (*Sink, bool) {
 // logs, created with log.Ctx(ctx), inside the context
 // and use them at a later point in time
 type Sink struct {
+	Silent       bool
 	jsonLogLines []string
 
+	output  io.Writer
 	rwmutex sync.RWMutex
 }
 
 // handlerWithSink returns a mux.MiddlewareFunc which
-// adds the Sink to the request context. All logs
+// adds a Sink to the request context. All logs
 // corresponding to the request will be printed and stored
 // in the Sink for later use.
-func handlerWithSink(sink *Sink) mux.MiddlewareFunc {
+func handlerWithSink() mux.MiddlewareFunc {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			next.ServeHTTP(w, r.WithContext(ContextWithSink(r.Context(), sink)))
+			var sink Sink
+			ctx := ContextWithSink(r.Context(), &sink)
+			next.ServeHTTP(w, r.WithContext(ctx))
 		})
 	}
 }
@@ -85,8 +92,16 @@ func (s *Sink) Pretty() string {
 // and calls Write() on the default output writer.
 func (s *Sink) Write(b []byte) (int, error) {
 	s.rwmutex.Lock()
+	if s.output == nil {
+		s.output = logOutput
+	}
+
 	s.jsonLogLines = append(s.jsonLogLines, string(b))
 	s.rwmutex.Unlock()
 
-	return logOutput.Write(b)
+	if s.Silent {
+		return len(b), nil
+	}
+
+	return s.output.Write(b)
 }

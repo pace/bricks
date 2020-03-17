@@ -22,17 +22,20 @@ type HealthCheck struct {
 // redis is checked for writeability and readability,
 // otherwise return the old result
 func (h *HealthCheck) HealthCheck(ctx context.Context) servicehealthcheck.HealthCheckResult {
+	client := h.Client.WithContext(ctx)
+
 	if time.Since(h.state.LastChecked()) <= cfg.HealthCheckResultTTL {
 		// the last health check is not outdated, an can be reused.
 		return h.state.GetState()
 	}
+
 	// Try writing
-	if err := h.Client.Append(cfg.HealthCheckKey, "true").Err(); err != nil {
+	if err := client.Append(cfg.HealthCheckKey, "true").Err(); err != nil {
 		h.state.SetErrorState(err)
 		return h.state.GetState()
 	}
 	// If writing worked try reading
-	err := h.Client.Get(cfg.HealthCheckKey).Err()
+	err := client.Get(cfg.HealthCheckKey).Err()
 	if err != nil {
 		h.state.SetErrorState(err)
 		return h.state.GetState()

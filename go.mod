@@ -1,6 +1,6 @@
 module github.com/pace/bricks
 
-go 1.13
+go 1.14
 
 require (
 	github.com/asaskevich/govalidator v0.0.0-20180720115003-f9ffefc3facf
@@ -14,15 +14,17 @@ require (
 	github.com/ghodss/yaml v1.0.0 // indirect
 	github.com/go-pg/pg v6.14.5+incompatible
 	github.com/go-redis/redis v6.15.6+incompatible
-	github.com/google/jsonapi v0.0.0-20181016150055-d0428f63eb51
 	github.com/gorilla/context v1.1.1 // indirect
 	github.com/gorilla/mux v1.6.2
 	github.com/inconshreveable/mousetrap v1.0.0 // indirect
 	github.com/jinzhu/inflection v0.0.0-20180308033659-04140366298a // indirect
+	github.com/jpillora/backoff v1.0.0
 	github.com/mattn/go-isatty v0.0.8
+	github.com/mattn/goveralls v0.0.5
 	github.com/matttproud/golang_protobuf_extensions v1.0.1 // indirect
 	github.com/minio/minio-go/v6 v6.0.44
 	github.com/opentracing/opentracing-go v1.0.2
+	github.com/pace/jsonapi v0.0.0-20200309105139-adb319112d8c
 	github.com/pkg/errors v0.8.1
 	github.com/pmezard/go-difflib v1.0.0
 	github.com/prometheus/client_golang v0.8.0
@@ -35,12 +37,12 @@ require (
 	github.com/spf13/cobra v0.0.3
 	github.com/spf13/pflag v1.0.2 // indirect
 	github.com/streadway/handy v0.0.0-20200128134331-0f66f006fb2e
-	github.com/stretchr/testify v1.4.0
+	github.com/stretchr/testify v1.5.1
 	github.com/uber-go/atomic v1.3.2 // indirect
 	github.com/uber/jaeger-client-go v2.14.0+incompatible
 	github.com/uber/jaeger-lib v1.5.0
 	github.com/zenazn/goji v0.9.0
 	go.uber.org/atomic v1.3.2 // indirect
-	golang.org/x/crypto v0.0.0-20191011191535-87dc89f01550 // indirect
-	golang.org/x/xerrors v0.0.0-20191011141410-1b5146add898
+	golang.org/x/tools v0.0.0-20200304024140-c4206d458c3f
+	golang.org/x/xerrors v0.0.0-20191204190536-9bdfabe68543
 )

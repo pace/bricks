@@ -52,7 +52,7 @@ type testPool struct {
 	err error
 }
 
-func (t *testPool) Exec(query interface{}, params ...interface{}) (res orm.Result, err error) {
+func (t *testPool) Exec(ctx context.Context, query interface{}, params ...interface{}) (res orm.Result, err error) {
 	return nil, t.err
 }
 

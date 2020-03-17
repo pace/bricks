@@ -11,8 +11,8 @@ import (
 	"time"
 
 	"github.com/caarlos0/env"
+	"github.com/pace/bricks/maintenance/errors"
 	"github.com/pace/bricks/maintenance/log"
-	"github.com/rs/zerolog"
 )
 
 // HealthCheck is a health check that is registered once and that is performed
@@ -21,9 +21,15 @@ type HealthCheck interface {
 	HealthCheck(ctx context.Context) HealthCheckResult
 }
 
-// Initialisable is used to mark that a health check needs to be initialized
-type Initialisable interface {
-	Init() error
+type HealthCheckFunc func(ctx context.Context) HealthCheckResult
+
+func (hcf HealthCheckFunc) HealthCheck(ctx context.Context) HealthCheckResult {
+	return hcf(ctx)
+}
+
+// Initializable is used to mark that a health check needs to be initialized
+type Initializable interface {
+	Init(ctx context.Context) error
 }
 
 type config struct {
@@ -71,19 +77,32 @@ func init() {
 	}
 }
 
-func check(hcs *sync.Map) map[string]HealthCheckResult {
+func check(ctx context.Context, hcs *sync.Map) map[string]HealthCheckResult {
+	ctx, cancel := context.WithTimeout(ctx, cfg.HealthCheckMaxWait)
+
 	result := make(map[string]HealthCheckResult)
 	var resultSync sync.Map
 	var wg sync.WaitGroup
-	logger := log.Logger()
-	logger.Level(zerolog.WarnLevel)
-	ctx := logger.WithContext(context.Background())
-	ctx, cancel := context.WithTimeout(ctx, cfg.HealthCheckMaxWait)
+
 	hcs.Range(func(key, value interface{}) bool {
 		name := key.(string)
 		hc := value.(HealthCheck)
 		wg.Add(1)
-		go checkOfSingleHc(&wg, name, hc, &resultSync, ctx)
+		go func() {
+			defer wg.Done()
+			defer errors.HandleWithCtx(ctx, fmt.Sprintf("HealthCheck %s", name))
+
+			// If it was not possible to initialize this health check, then show the initialization error message
+			if val, isIn := initErrors.Load(name); isIn {
+				state := val.(*ConnectionState)
+				if done := reInitHealthCheck(ctx, state, name, hc.(Initializable)); done {
+					resultSync.Store(name, state.GetState())
+					return
+				}
+			}
+			// this is the actual health check
+			resultSync.Store(name, hc.HealthCheck(ctx))
+		}()
 		return true
 	})
 	wg.Wait()
@@ -96,25 +115,11 @@ func check(hcs *sync.Map) map[string]HealthCheckResult {
 	return result
 }
 
-func checkOfSingleHc(group *sync.WaitGroup, name string, hc HealthCheck, res *sync.Map, ctx context.Context) {
-	defer group.Done()
-	// If it was not possible to initialise this health check, then show the initialisation error message
-	if val, isIn := initErrors.Load(name); isIn {
-		state := val.(*ConnectionState)
-		if done := reInitHealthCheck(state, name, hc.(Initialisable)); done {
-			res.Store(name, state.GetState())
-			return
-		}
-	}
-	// this is the actual health check
-	res.Store(name, hc.HealthCheck(ctx))
-}
-
-func reInitHealthCheck(conState *ConnectionState, name string, initHc Initialisable) bool {
+func reInitHealthCheck(ctx context.Context, conState *ConnectionState, name string, initHc Initializable) bool {
 	if time.Since(conState.LastChecked()) < cfg.HealthCheckInitResultErrorTTL {
 		return true
 	}
-	err := initHc.Init()
+	err := initHc.Init(ctx)
 	if err != nil {
 		conState.SetErrorState(err)
 		return true
@@ -132,11 +137,18 @@ func writeResult(w http.ResponseWriter, status int, body string) {
 }
 
 // RegisterHealthCheck registers a required HealthCheck. The name
-// must be unique. If the health check satisfies the Initialisable interface, it
-// is initialised before it is added.
+// must be unique. If the health check satisfies the Initializable interface, it
+// is initialized before it is added.
 // It is not possible to add a health check with the same name twice, even if one is required and one is optional
-func RegisterHealthCheck(hc HealthCheck, name string) {
+func RegisterHealthCheck(name string, hc HealthCheck) {
 	registerHealthCheck(&requiredChecks, hc, name)
+}
+
+// RegisterHealthCheckFunc registers a required HealthCheck. The name
+// must be unique.  It is not possible to add a health check with the same name twice,
+// even if one is required and one is optional
+func RegisterHealthCheckFunc(name string, f HealthCheckFunc) {
+	RegisterHealthCheck(name, f)
 }
 
 // RegisterOptionalHealthCheck registers a HealthCheck like RegisterHealthCheck(hc HealthCheck, name string)
@@ -146,6 +158,8 @@ func RegisterOptionalHealthCheck(hc HealthCheck, name string) {
 }
 
 func registerHealthCheck(checks *sync.Map, hc HealthCheck, name string) {
+	ctx := log.Logger().WithContext(context.Background())
+
 	// check both lists, because
 	if _, inReq := requiredChecks.Load(name); inReq {
 		log.Warnf("tried to register health check with name %q twice", name)
@@ -155,9 +169,9 @@ func registerHealthCheck(checks *sync.Map, hc HealthCheck, name string) {
 		log.Warnf("tried to register health check with name %q twice", name)
 		return
 	}
-	if initHC, ok := hc.(Initialisable); ok {
-		if err := initHC.Init(); err != nil {
-			log.Warnf("error initialising health check %q: %s", name, err)
+	if initHC, ok := hc.(Initializable); ok {
+		if err := initHC.Init(ctx); err != nil {
+			log.Warnf("error initializing health check %q: %s", name, err)
 			initErrors.Store(name, &ConnectionState{
 				lastCheck: time.Now(),
 				result: HealthCheckResult{

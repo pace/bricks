@@ -13,7 +13,7 @@ import (
 )
 
 const (
-	pkgJSONAPI = "github.com/google/jsonapi"
+	pkgJSONAPI = "github.com/pace/jsonapi"
 )
 
 // BuildTypes transforms all component schemas into go types

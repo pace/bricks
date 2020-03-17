@@ -5,12 +5,17 @@ package servicehealthcheck
 
 import (
 	"net/http"
+
+	"github.com/pace/bricks/maintenance/log"
 )
 
 type healthHandler struct{}
 
 func (h *healthHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	for _, res := range check(&requiredChecks) {
+	s := log.Sink{Silent: true}
+	ctx := log.ContextWithSink(r.Context(), &s)
+
+	for _, res := range check(ctx, &requiredChecks) {
 		if res.State == Err {
 			writeResult(w, http.StatusServiceUnavailable, string(Err))
 			return
