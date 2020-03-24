@@ -11,12 +11,14 @@ import (
 
 	"github.com/caarlos0/env"
 	"github.com/go-pg/pg"
+	"github.com/go-pg/pg/orm"
 	"github.com/pace/bricks/maintenance/log"
 )
 
 // QueryOption is a function that applies an option (like sorting, filter or pagination) to a database query
-type QueryOption func(query Query) Query
+type QueryOption func(query *orm.Query) (*orm.Query, error)
 
+/*
 // Query based on orm.Query but only the needed functions
 // guaranties testability of all of the following functions
 type Query interface {
@@ -25,7 +27,7 @@ type Query interface {
 	Order(orders ...string) Query
 	Where(condition string, params ...interface{}) Query
 }
-
+*/
 type config struct {
 	MaxPageSize int `env:"MAX_PAGE_SIZE" envDefault:"100"`
 	MinPageSize int `env:"MIN_PAGE_SIZE" envDefault:"1"`
@@ -52,7 +54,7 @@ func PagingFromRequest(r *http.Request) (QueryOption, error) {
 	pageStr := r.URL.Query().Get("page[number]")
 	sizeStr := r.URL.Query().Get("page[size]")
 	if pageStr == "" || sizeStr == "" {
-		return func(query Query) Query { return query }, nil
+		return func(query *orm.Query) (*orm.Query, error) { return query, nil }, nil
 	}
 
 	pageNr, err := strconv.Atoi(pageStr)
@@ -67,14 +69,14 @@ func PagingFromRequest(r *http.Request) (QueryOption, error) {
 		return nil, fmt.Errorf("invalid pagesize not between min. and max. value, min: %d, max: %d", cfg.MinPageSize, cfg.MaxPageSize)
 	}
 
-	return func(query Query) Query {
+	return func(query *orm.Query) (*orm.Query, error) {
 		if pageNr == 0 {
 			query.Offset(0)
 		} else {
 			query.Offset(pageSize * (pageNr - 1))
 		}
 		query.Limit(pageSize)
-		return query
+		return query, nil
 	}, nil
 }
 
@@ -86,7 +88,7 @@ func PagingFromRequest(r *http.Request) (QueryOption, error) {
 func SortingFromRequest(r *http.Request, modelMapping map[string]string) (QueryOption, error) {
 	sort := r.URL.Query().Get("sort")
 	if sort == "" {
-		return func(query Query) Query { return query }, nil
+		return func(query *orm.Query) (*orm.Query, error) { return query, nil }, nil
 	}
 	sorting := strings.Split(sort, ",")
 
@@ -110,11 +112,11 @@ func SortingFromRequest(r *http.Request, modelMapping map[string]string) (QueryO
 		}
 		resultedOrders = append(resultedOrders, key+order)
 	}
-	sortingFilterOption := func(query Query) Query {
+	sortingFilterOption := func(query *orm.Query) (*orm.Query, error) {
 		for _, val := range resultedOrders {
 			query.Order(val)
 		}
-		return query
+		return query, nil
 	}
 
 	if len(errSortingWithReason) != 0 {
@@ -149,19 +151,19 @@ func FilterFromRequest(r *http.Request, modelMapping map[string]string, sanitize
 		filter[key] = filterValues
 	}
 
-	filterQueryOption := func(query Query) Query {
+	filterQueryOption := func(query *orm.Query) (*orm.Query, error) {
 		for name, filterValues := range filter {
 			if len(filterValues) == 0 {
 				continue
 			}
 
 			if len(filterValues) == 1 {
-				query.Where("?=?", name, filterValues[0])
+				query.Where(name+" = ?", filterValues[0])
 				continue
 			}
-			query.Where("? IN (?)", name, pg.In(filterValues))
+			query.Where(name+" IN (?)", pg.In(filterValues))
 		}
-		return query
+		return query, nil
 	}
 
 	if len(invalidFilter) != 0 {
