@@ -18,16 +18,6 @@ import (
 // QueryOption is a function that applies an option (like sorting, filter or pagination) to a database query
 type QueryOption func(query *orm.Query) (*orm.Query, error)
 
-/*
-// Query based on orm.Query but only the needed functions
-// guaranties testability of all of the following functions
-type Query interface {
-	Offset(n int) Query
-	Limit(n int) Query
-	Order(orders ...string) Query
-	Where(condition string, params ...interface{}) Query
-}
-*/
 type config struct {
 	MaxPageSize int `env:"MAX_PAGE_SIZE" envDefault:"100"`
 	MinPageSize int `env:"MIN_PAGE_SIZE" envDefault:"1"`
@@ -159,6 +149,7 @@ func FilterFromRequest(r *http.Request, modelMapping map[string]string, sanitize
 
 			if len(filterValues) == 1 {
 				query.Where(name+" = ?", filterValues[0])
+				fmt.Printf("%s = %s", name, filterValues[0])
 				continue
 			}
 			query.Where(name+" IN (?)", pg.In(filterValues))

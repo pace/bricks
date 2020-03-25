@@ -4,19 +4,21 @@
 package runtime_test
 
 import (
+	"context"
 	"net/http/httptest"
+	"sort"
 	"testing"
 
 	"github.com/go-pg/pg"
 	"github.com/go-pg/pg/orm"
 	"github.com/pace/bricks/backend/postgres"
 	"github.com/pace/bricks/http/jsonapi/runtime"
-	"github.com/stretchr/testify/require"
+	"github.com/pace/bricks/maintenance/log"
+	"github.com/stretchr/testify/assert"
 )
 
 type TestModel struct {
-	id         int
-	filterName string
+	FilterName string
 }
 
 type testValueSanitizer struct {
@@ -30,39 +32,86 @@ func TestIntegrationFilterParameter(t *testing.T) {
 	if testing.Short() {
 		t.SkipNow()
 	}
-	db := setupDatabase(t)
-	r := httptest.NewRequest("GET", "http://abc.de/whatEver?filter[test]=b", nil)
+	// Setup
+	a := assert.New(t)
+	db := setupDatabase(a)
 	mappingNames := map[string]string{
-		"test": "filterName",
+		"test": "filter_name",
 	}
+	// filter
+	r := httptest.NewRequest("GET", "http://abc.de/whatEver?filter[test]=b", nil)
 	filterFunc, err := runtime.FilterFromRequest(r, mappingNames, &testValueSanitizer{})
-	_ = filterFunc
-	require.NoError(t, err)
-	var models []TestModel
-	q := db.Model(&models)
-	//q, err = filterFunc(q)
-	require.NoError(t, err)
+	a.NoError(err)
+	var modelsFilter []TestModel
+	q := db.Model(&modelsFilter)
+	q, err = filterFunc(q)
+	a.NoError(err)
 	count, _ := q.SelectAndCount()
-	require.Equal(t, 1, count)
-	require.Equal(t, 1, models[0].id)
-	require.Equal(t, "b", models[0].filterName)
+	a.Equal(1, count)
+	a.Equal("b", modelsFilter[0].FilterName)
+
+	r = httptest.NewRequest("GET", "http://abc.de/whatEver?filter[test]=a,b", nil)
+	filterFunc, err = runtime.FilterFromRequest(r, mappingNames, &testValueSanitizer{})
+	a.NoError(err)
+	var modelsFilter2 []TestModel
+	q = db.Model(&modelsFilter2)
+	q, err = filterFunc(q)
+	a.NoError(err)
+	count, _ = q.SelectAndCount()
+	a.Equal(2, count)
+	sort.Slice(modelsFilter2, func(i, j int) bool {
+		return modelsFilter2[i].FilterName < modelsFilter2[j].FilterName
+	})
+	a.Equal("a", modelsFilter2[0].FilterName)
+	a.Equal("b", modelsFilter2[1].FilterName)
+
+	// Paging
+	r = httptest.NewRequest("GET", "http://abc.de/whatEver?page[number]=0&page[size]=1", nil)
+	pagingFunc, err := runtime.PagingFromRequest(r)
+	var modelsPaging []TestModel
+	q = db.Model(&modelsPaging)
+	q, err = pagingFunc(q)
+	a.NoError(err)
+	err = q.Select()
+	a.NoError(err)
+	a.Equal(1, len(modelsPaging))
+
+	// Sorting
+	r = httptest.NewRequest("GET", "http://abc.de/whatEver?sort=-test", nil)
+	sortingFunc, err := runtime.SortingFromRequest(r, mappingNames)
+	var modelsSort []TestModel
+	q = db.Model(&modelsSort)
+	q, err = sortingFunc(q)
+	a.NoError(err)
+	err = q.Select()
+	a.NoError(err)
+	a.Equal(3, len(modelsSort))
+	a.Equal("c", modelsSort[0].FilterName)
+	a.Equal("b", modelsSort[1].FilterName)
+	a.Equal("a", modelsSort[2].FilterName)
+
+	// Tear Down
+	db.DropTable(&TestModel{}, &orm.DropTableOptions{
+		IfExists: true,
+	})
 }
 
-func setupDatabase(t *testing.T) *pg.DB {
+func setupDatabase(a *assert.Assertions) *pg.DB {
 	dB := postgres.DefaultConnectionPool()
+	dB = dB.WithContext(log.WithContext(context.Background()))
 
-	require.NoError(t, dB.CreateTable(&TestModel{}, &orm.CreateTableOptions{Temp: true}))
-	require.NoError(t, dB.Insert(&TestModel{
-		id:         0,
-		filterName: "a",
-	}))
-	require.NoError(t, dB.Insert(&TestModel{
-		id:         1,
-		filterName: "b",
-	}))
-	require.NoError(t, dB.Insert(&TestModel{
-		id:         2,
-		filterName: "c",
-	}))
+	a.NoError(dB.CreateTable(&TestModel{}, &orm.CreateTableOptions{IfNotExists: true}))
+	_, err := dB.Model(&TestModel{
+		FilterName: "a",
+	}).Insert()
+	a.NoError(err)
+	_, err = dB.Model(&TestModel{
+		FilterName: "b",
+	}).Insert()
+	a.NoError(err)
+	_, err = dB.Model(&TestModel{
+		FilterName: "c",
+	}).Insert()
+	a.NoError(err)
 	return dB
 }
