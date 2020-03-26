@@ -42,6 +42,16 @@ func TestRun_transfersLogger(t *testing.T) {
 	require.Contains(t, buf.String(), "foobar")
 }
 
+func TestRun_transfersSink(t *testing.T) {
+	var sink log.Sink
+	logger := log.Logger()
+	ctx := log.ContextWithSink(logger.WithContext(context.Background()), &sink)
+	waitForRun(ctx, func(ctx context.Context) {
+		log.Ctx(ctx).Debug().Msg("foobar")
+	})
+	require.Contains(t, string(sink.ToJSON()), "foobar")
+}
+
 func TestRun_transfersOAuth2Token(t *testing.T) {
 	ctx := security.ContextWithToken(context.Background(), token("test-token"))
 	routineCtx := contextAfterRun(ctx, nil)

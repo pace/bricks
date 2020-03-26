@@ -88,8 +88,9 @@ func RunNamed(parentCtx context.Context, name string, routine func(context.Conte
 // canceled if the program receives a shutdown signal (SIGINT, SIGTERM), if the
 // returned CancelFunc is called, or if the routine returned.
 func Run(parentCtx context.Context, routine func(context.Context)) (cancel context.CancelFunc) {
-	// transfer logger, authentication and error info
+	// transfer logger, log.Sink, authentication and error info
 	ctx := log.Ctx(parentCtx).WithContext(context.Background())
+	ctx = log.SinkContextTransfer(parentCtx, ctx)
 	ctx = oauth2.ContextTransfer(parentCtx, ctx)
 	ctx = errors.ContextTransfer(parentCtx, ctx)
 	// add routine number to context and logger

@@ -29,6 +29,18 @@ func SinkFromContext(ctx context.Context) (*Sink, bool) {
 	return sink, ok
 }
 
+// SinkContextTransfer gets the sink from the sourceCtx
+// and returns a new context based on targetCtx with the
+// extracted sink. If no sink is present this is a noop
+func SinkContextTransfer(sourceCtx, targetCtx context.Context) context.Context {
+	sink, ok := SinkFromContext(sourceCtx)
+	if !ok {
+		return targetCtx
+	}
+
+	return context.WithValue(targetCtx, sinkKey{}, sink)
+}
+
 // Sink respresents a log sink which is used to store
 // logs, created with log.Ctx(ctx), inside the context
 // and use them at a later point in time
