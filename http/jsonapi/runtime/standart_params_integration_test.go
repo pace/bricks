@@ -38,25 +38,24 @@ func TestIntegrationFilterParameter(t *testing.T) {
 	mappingNames := map[string]string{
 		"test": "filter_name",
 	}
+	mapper := runtime.NewMapMapper(mappingNames)
 	// filter
 	r := httptest.NewRequest("GET", "http://abc.de/whatEver?filter[test]=b", nil)
-	filterFunc, err := runtime.FilterFromRequest(r, mappingNames, &testValueSanitizer{})
+	filterFunc, err := runtime.FilterFromRequest(r, mapper, &testValueSanitizer{})
 	a.NoError(err)
 	var modelsFilter []TestModel
 	q := db.Model(&modelsFilter)
-	q, err = filterFunc(q)
-	a.NoError(err)
+	q = filterFunc(q)
 	count, _ := q.SelectAndCount()
 	a.Equal(1, count)
 	a.Equal("b", modelsFilter[0].FilterName)
 
 	r = httptest.NewRequest("GET", "http://abc.de/whatEver?filter[test]=a,b", nil)
-	filterFunc, err = runtime.FilterFromRequest(r, mappingNames, &testValueSanitizer{})
+	filterFunc, err = runtime.FilterFromRequest(r, mapper, &testValueSanitizer{})
 	a.NoError(err)
 	var modelsFilter2 []TestModel
 	q = db.Model(&modelsFilter2)
-	q, err = filterFunc(q)
-	a.NoError(err)
+	q = filterFunc(q)
 	count, _ = q.SelectAndCount()
 	a.Equal(2, count)
 	sort.Slice(modelsFilter2, func(i, j int) bool {
@@ -66,23 +65,21 @@ func TestIntegrationFilterParameter(t *testing.T) {
 	a.Equal("b", modelsFilter2[1].FilterName)
 
 	// Paging
-	r = httptest.NewRequest("GET", "http://abc.de/whatEver?page[number]=0&page[size]=1", nil)
-	pagingFunc, err := runtime.PagingFromRequest(r)
+	r = httptest.NewRequest("GET", "http://abc.de/whatEver?page[number]=3&page[size]=2", nil)
+	pagingFunc, err := runtime.PaginationFromRequest(r)
 	var modelsPaging []TestModel
 	q = db.Model(&modelsPaging)
-	q, err = pagingFunc(q)
-	a.NoError(err)
+	q = pagingFunc(q)
 	err = q.Select()
 	a.NoError(err)
-	a.Equal(1, len(modelsPaging))
+	a.Equal(0, len(modelsPaging))
 
 	// Sorting
 	r = httptest.NewRequest("GET", "http://abc.de/whatEver?sort=-test", nil)
-	sortingFunc, err := runtime.SortingFromRequest(r, mappingNames)
+	sortingFunc, err := runtime.SortingFromRequest(r, mapper)
 	var modelsSort []TestModel
 	q = db.Model(&modelsSort)
-	q, err = sortingFunc(q)
-	a.NoError(err)
+	q = sortingFunc(q)
 	err = q.Select()
 	a.NoError(err)
 	a.Equal(3, len(modelsSort))
@@ -90,6 +87,15 @@ func TestIntegrationFilterParameter(t *testing.T) {
 	a.Equal("b", modelsSort[1].FilterName)
 	a.Equal("a", modelsSort[2].FilterName)
 
+	// Combine all
+	r = httptest.NewRequest("GET", "http://abc.de/whatEver?sort=-test&filter[test]=a,b&page[number]=0&page[size]=1", nil)
+	combinedFunc, err := runtime.FilterPagingSortingFromRequest(r, mapper, &testValueSanitizer{})
+	var modelsCombined []TestModel
+	q = db.Model(&modelsCombined)
+	q = combinedFunc(q)
+	err = q.Select()
+	a.Equal(1, len(modelsCombined))
+	a.Equal("b", modelsCombined[0].FilterName)
 	// Tear Down
 	db.DropTable(&TestModel{}, &orm.DropTableOptions{
 		IfExists: true,

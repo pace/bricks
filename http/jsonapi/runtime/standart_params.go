@@ -16,7 +16,7 @@ import (
 )
 
 // QueryOption is a function that applies an option (like sorting, filter or pagination) to a database query
-type QueryOption func(query *orm.Query) (*orm.Query, error)
+type QueryOption func(query *orm.Query) *orm.Query
 
 type config struct {
 	MaxPageSize int `env:"MAX_PAGE_SIZE" envDefault:"100"`
@@ -39,12 +39,36 @@ type ValueSanitizer interface {
 	SanitizeValue(fieldName string, value string) (interface{}, error)
 }
 
-// PagingFromRequest extracts pagination query parameter and  returns a function that adds the pagination to a query
-func PagingFromRequest(r *http.Request) (QueryOption, error) {
+// ColumnMapper maps the name of a filter or sorting parameter to a database column name
+type ColumnMapper interface {
+	// Map maps the value, this function decides if the value is allowed and translates it to a database column name,
+	// the function returns the database column name and a bool that indicates that the value is allowed and mapped
+	Map(value string) (string, bool)
+}
+
+// MapMapper is a very easy ColumnMapper implementation based on a map which contains all allowed values
+// and maps them with a map
+type MapMapper struct {
+	mapping map[string]string
+}
+
+// NewMapMapper returns a MapMapper for a specific map
+func NewMapMapper(mapping map[string]string) *MapMapper {
+	return &MapMapper{mapping: mapping}
+}
+
+// Map returns the mapped value and if it is valid based on a map
+func (m *MapMapper) Map(value string) (string, bool) {
+	val, isValid := m.mapping[value]
+	return val, isValid
+}
+
+// PaginationFromRequest extracts pagination query parameter and  returns a function that adds the pagination to a query
+func PaginationFromRequest(r *http.Request) (QueryOption, error) {
 	pageStr := r.URL.Query().Get("page[number]")
 	sizeStr := r.URL.Query().Get("page[size]")
 	if pageStr == "" || sizeStr == "" {
-		return func(query *orm.Query) (*orm.Query, error) { return query, nil }, nil
+		return func(query *orm.Query) *orm.Query { return query }, nil
 	}
 
 	pageNr, err := strconv.Atoi(pageStr)
@@ -59,14 +83,14 @@ func PagingFromRequest(r *http.Request) (QueryOption, error) {
 		return nil, fmt.Errorf("invalid pagesize not between min. and max. value, min: %d, max: %d", cfg.MinPageSize, cfg.MaxPageSize)
 	}
 
-	return func(query *orm.Query) (*orm.Query, error) {
+	return func(query *orm.Query) *orm.Query {
 		if pageNr == 0 {
 			query.Offset(0)
 		} else {
-			query.Offset(pageSize * (pageNr - 1))
+			query.Offset((pageSize * pageNr) - 1)
 		}
 		query.Limit(pageSize)
-		return query, nil
+		return query
 	}, nil
 }
 
@@ -75,10 +99,10 @@ func PagingFromRequest(r *http.Request) (QueryOption, error) {
 // to a database column name
 // returns a (possible nop) queryOption, even if any sorting parameter was invalid
 // The error contains a list of all invalid parameters. Invalid parameters are not added to the query.
-func SortingFromRequest(r *http.Request, modelMapping map[string]string) (QueryOption, error) {
+func SortingFromRequest(r *http.Request, modelMapping ColumnMapper) (QueryOption, error) {
 	sort := r.URL.Query().Get("sort")
 	if sort == "" {
-		return func(query *orm.Query) (*orm.Query, error) { return query, nil }, nil
+		return func(query *orm.Query) *orm.Query { return query }, nil
 	}
 	sorting := strings.Split(sort, ",")
 
@@ -95,18 +119,18 @@ func SortingFromRequest(r *http.Request, modelMapping map[string]string) (QueryO
 		}
 		val = strings.TrimPrefix(val, "-")
 
-		key, isValid := modelMapping[val]
+		key, isValid := modelMapping.Map(val)
 		if !isValid {
 			errSortingWithReason = append(errSortingWithReason, val)
 			continue
 		}
 		resultedOrders = append(resultedOrders, key+order)
 	}
-	sortingFilterOption := func(query *orm.Query) (*orm.Query, error) {
+	sortingFilterOption := func(query *orm.Query) *orm.Query {
 		for _, val := range resultedOrders {
 			query.Order(val)
 		}
-		return query, nil
+		return query
 	}
 
 	if len(errSortingWithReason) != 0 {
@@ -121,7 +145,7 @@ func SortingFromRequest(r *http.Request, modelMapping map[string]string) (QueryO
 // to a database column name and the sanitizer allows to correct type of the value and sanitize it.
 // Will always return a QueryOptions function with all valid filters (can be a nop)
 // if any filter are invalid a error with a list of all invalid filters is returned
-func FilterFromRequest(r *http.Request, modelMapping map[string]string, sanitizer ValueSanitizer) (QueryOption, error) {
+func FilterFromRequest(r *http.Request, modelMapping ColumnMapper, sanitizer ValueSanitizer) (QueryOption, error) {
 	filter := make(map[string][]interface{})
 	var invalidFilter []string
 	for queryName, queryValues := range r.URL.Query() {
@@ -141,7 +165,7 @@ func FilterFromRequest(r *http.Request, modelMapping map[string]string, sanitize
 		filter[key] = filterValues
 	}
 
-	filterQueryOption := func(query *orm.Query) (*orm.Query, error) {
+	filterQueryOption := func(query *orm.Query) *orm.Query {
 		for name, filterValues := range filter {
 			if len(filterValues) == 0 {
 				continue
@@ -154,7 +178,7 @@ func FilterFromRequest(r *http.Request, modelMapping map[string]string, sanitize
 			}
 			query.Where(name+" IN (?)", pg.In(filterValues))
 		}
-		return query, nil
+		return query
 	}
 
 	if len(invalidFilter) != 0 {
@@ -163,10 +187,32 @@ func FilterFromRequest(r *http.Request, modelMapping map[string]string, sanitize
 	return filterQueryOption, nil
 }
 
-func getFilterKey(queryName string, modelMapping map[string]string) (string, bool) {
+// FilterPagingSortingFromRequest adds filter, sorting and pagination to a query based on the request query parameters
+// this function combines filter, sorting and pagination because in most of the cases they are all needed.
+func FilterPagingSortingFromRequest(r *http.Request, modelMapping ColumnMapper, sanitizer ValueSanitizer) (QueryOption, error) {
+	sortingOption, err := SortingFromRequest(r, modelMapping)
+	if err != nil && sortingOption != nil {
+		return nil, err
+	}
+	paginationOption, err := PaginationFromRequest(r)
+	if err != nil && paginationOption != nil {
+		return nil, err
+	}
+	filterOption, err := FilterFromRequest(r, modelMapping, sanitizer)
+	if err != nil && filterOption != nil {
+		return nil, err
+	}
+	return func(query *orm.Query) *orm.Query {
+		q := sortingOption(query)
+		q = filterOption(q)
+		return paginationOption(q)
+	}, nil
+}
+
+func getFilterKey(queryName string, modelMapping ColumnMapper) (string, bool) {
 	field := strings.TrimPrefix(queryName, "filter[")
 	field = strings.TrimSuffix(field, "]")
-	mapped, isValid := modelMapping[field]
+	mapped, isValid := modelMapping.Map(field)
 	if !isValid {
 		return field, false
 	}
