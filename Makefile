@@ -46,6 +46,3 @@ testserver:
 
 ci:
 	go test -mod=vendor -count=1 -v -cover -race -covermode=atomic -coverprofile=coverage.out ./...
-
-testone:
-	go test -count=1 -v -cover -race -run TestIntegration ./http/jsonapi/runtime/...
