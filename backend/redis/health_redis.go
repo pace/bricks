@@ -7,7 +7,7 @@ import (
 	"context"
 	"time"
 
-	"github.com/go-redis/redis"
+	"github.com/go-redis/redis/v7"
 	"github.com/pace/bricks/maintenance/health/servicehealthcheck"
 )
 

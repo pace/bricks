@@ -10,7 +10,7 @@ import (
 	"time"
 
 	"github.com/bsm/redislock"
-	"github.com/go-redis/redis"
+	"github.com/go-redis/redis/v7"
 	exponential "github.com/jpillora/backoff"
 	redisbackend "github.com/pace/bricks/backend/redis"
 	"github.com/pace/bricks/maintenance/errors"
