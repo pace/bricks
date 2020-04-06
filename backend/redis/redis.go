@@ -10,13 +10,12 @@ import (
 	"time"
 
 	"github.com/caarlos0/env"
-	"github.com/go-redis/redis"
+	"github.com/go-redis/redis/v7"
 	"github.com/opentracing/opentracing-go"
 	olog "github.com/opentracing/opentracing-go/log"
 	"github.com/pace/bricks/maintenance/health/servicehealthcheck"
 	"github.com/pace/bricks/maintenance/log"
 	"github.com/prometheus/client_golang/prometheus"
-	"github.com/rs/zerolog"
 )
 
 type config struct {
@@ -142,63 +141,71 @@ func CustomClusterClient(opts *redis.ClusterOptions) *redis.ClusterClient {
 // WithContext adds a logging and tracing wrapper to the passed client
 func WithContext(ctx context.Context, c *redis.Client) *redis.Client {
 	c = c.WithContext(ctx)
-	c.WrapProcess((&logtracer{ctx}).handle)
+	c.AddHook(&logtracer{})
 	return c
 }
 
 // WithClusterContext adds a logging and tracing wrapper to the passed client
 func WithClusterContext(ctx context.Context, c *redis.ClusterClient) *redis.ClusterClient {
 	c = c.WithContext(ctx)
-	c.WrapProcess((&logtracer{ctx}).handle)
+	c.AddHook(&logtracer{})
 	return c
 }
 
-type logtracer struct {
-	ctx context.Context
+type logtracer struct{}
+
+type logtracerKey struct{}
+
+type logtracerValues struct {
+	startedAt time.Time
+	span      opentracing.Span
 }
 
-func (lt *logtracer) handle(realProcess func(redis.Cmder) error) func(redis.Cmder) error {
-	return func(cmder redis.Cmder) error {
-		// check if log context is given
-		var logger *zerolog.Logger
-		if lt.ctx != nil {
-			logger = log.Ctx(lt.ctx)
-		} else {
-			logger = log.Logger()
-		}
+func (lt *logtracer) BeforeProcess(ctx context.Context, cmd redis.Cmder) (context.Context, error) {
+	startedAt := time.Now()
 
-		// logging prep and tracing
-		le := logger.Debug().Str("cmd", cmder.Name()).Str("sentry:category", "redis")
-		startTime := time.Now()
-		span, _ := opentracing.StartSpanFromContext(lt.ctx,
-			fmt.Sprintf("Redis: %s", cmder.Name()))
-		span.LogFields(olog.String("cmd", cmder.Name()))
-		defer span.Finish()
+	span, _ := opentracing.StartSpanFromContext(ctx, fmt.Sprintf("Redis: %s", cmd.Name()))
+	span.LogFields(olog.String("cmd", cmd.Name()))
 
-		paceRedisCmdTotal.With(prometheus.Labels{
-			"method": cmder.Name(),
+	paceRedisCmdTotal.With(prometheus.Labels{
+		"method": cmd.Name(),
+	}).Inc()
+
+	return context.WithValue(ctx, logtracerKey{}, &logtracerValues{
+		startedAt: startedAt,
+		span:      span,
+	}), nil
+}
+
+func (l *logtracer) AfterProcess(ctx context.Context, cmd redis.Cmder) error {
+	vals := ctx.Value(logtracerKey{}).(*logtracerValues)
+	le := log.Ctx(ctx).Debug().Str("cmd", cmd.Name()).Str("sentry:category", "redis")
+
+	// add error
+	cmdErr := cmd.Err()
+	if cmdErr != nil {
+		vals.span.LogFields(olog.Error(cmdErr))
+		le = le.Err(cmdErr)
+		paceRedisCmdFailed.With(prometheus.Labels{
+			"method": cmd.Name(),
 		}).Inc()
-
-		// execute redis command
-		err := realProcess(cmder)
-
-		// add error
-		if err != nil {
-			span.LogFields(olog.Error(err))
-			le = le.Err(err)
-			paceRedisCmdFailed.With(prometheus.Labels{
-				"method": cmder.Name(),
-			}).Inc()
-		}
-
-		// do log statement
-		dur := float64(time.Since(startTime)) / float64(time.Millisecond)
-		le.Float64("duration", dur).Msg("Redis query")
-
-		paceRedisCmdDurationSeconds.With(prometheus.Labels{
-			"method": cmder.Name(),
-		}).Observe(dur)
-
-		return err
 	}
+
+	// do log statement
+	dur := float64(time.Since(vals.startedAt)) / float64(time.Millisecond)
+	le.Float64("duration", dur).Msg("Redis query")
+
+	paceRedisCmdDurationSeconds.With(prometheus.Labels{
+		"method": cmd.Name(),
+	}).Observe(dur)
+
+	return nil
+}
+
+func (l *logtracer) BeforeProcessPipeline(ctx context.Context, cmds []redis.Cmder) (context.Context, error) {
+	return ctx, nil
+}
+
+func (l *logtracer) AfterProcessPipeline(ctx context.Context, cmds []redis.Cmder) error {
+	return nil
 }
