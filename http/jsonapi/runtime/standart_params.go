@@ -16,8 +16,9 @@ import (
 )
 
 type config struct {
-	MaxPageSize int `env:"MAX_PAGE_SIZE" envDefault:"100"`
-	MinPageSize int `env:"MIN_PAGE_SIZE" envDefault:"1"`
+	MaxPageSize     int `env:"MAX_PAGE_SIZE" envDefault:"100"`
+	MinPageSize     int `env:"MIN_PAGE_SIZE" envDefault:"1"`
+	DefaultPageSize int `env:"DEFAULT_PAGE_SIZE" envDefault:"50"`
 }
 
 var cfg config
@@ -60,7 +61,7 @@ func (m *MapMapper) Map(value string) (string, bool) {
 	return val, isValid
 }
 
-// UrlQueryParameters contains all information that are needed for pagination, sorting and filtering.
+// UrlQueryParameters contains all information that is needed for pagination, sorting and filtering.
 // It is not depending on orm.Query
 type UrlQueryParameters struct {
 	HasPagination bool
@@ -74,14 +75,28 @@ type UrlQueryParameters struct {
 // even if any errors occur. The returned error combines all errors of pagination, filter and sorting.
 func ReadURLQueryParameters(r *http.Request, mapper ColumnMapper, sanitizer ValueSanitizer) (*UrlQueryParameters, error) {
 	result := &UrlQueryParameters{}
-	errPagination := result.setPagination(r)
-	errSorting := result.setSorting(r, mapper)
-	errFilter := result.setFilter(r, mapper, sanitizer)
-	if errPagination != nil || errSorting != nil || errFilter != nil {
-		err := fmt.Errorf("problems occured while ready filter, sorting or pagination from request: filter: %w, sorting: %w, pagination: %w", errFilter, errSorting, errPagination)
-		return result, err
+	var errs []error
+	if err := result.readPagination(r); err != nil {
+		errs = append(errs, err)
+
 	}
-	return result, nil
+	if err := result.readSorting(r, mapper); err != nil {
+		errs = append(errs, err)
+	}
+	if err := result.readFilter(r, mapper, sanitizer); err != nil {
+		errs = append(errs, err)
+	}
+	if len(errs) == 0 {
+		return result, nil
+	}
+	if len(errs) == 1 {
+		return result, errs[1]
+	}
+	var errAggregate []string
+	for _, err := range errs {
+		errAggregate = append(errAggregate, err.Error())
+	}
+	return result, fmt.Errorf("reading URL Query Parameters cased multiple errors: %v", strings.Join(errAggregate, ","))
 }
 
 // AddToQuery adds filter, sorting and pagination to a orm.Query
@@ -112,10 +127,10 @@ func (u *UrlQueryParameters) AddToQuery(query *orm.Query) *orm.Query {
 
 }
 
-func (u *UrlQueryParameters) setPagination(r *http.Request) error {
+func (u *UrlQueryParameters) readPagination(r *http.Request) error {
 	pageStr := r.URL.Query().Get("page[number]")
 	sizeStr := r.URL.Query().Get("page[size]")
-	if pageStr == "" || sizeStr == "" {
+	if pageStr == "" {
 		u.HasPagination = false
 		return nil
 	}
@@ -124,9 +139,14 @@ func (u *UrlQueryParameters) setPagination(r *http.Request) error {
 	if err != nil {
 		return err
 	}
-	pageSize, err := strconv.Atoi(sizeStr)
-	if err != nil {
-		return err
+	var pageSize int
+	if sizeStr != "" {
+		pageSize, err = strconv.Atoi(sizeStr)
+		if err != nil {
+			return err
+		}
+	} else {
+		pageSize = cfg.DefaultPageSize
 	}
 	if (pageSize < cfg.MinPageSize) || (pageSize > cfg.MaxPageSize) {
 		return fmt.Errorf("invalid pagesize not between min. and max. value, min: %d, max: %d", cfg.MinPageSize, cfg.MaxPageSize)
@@ -136,7 +156,7 @@ func (u *UrlQueryParameters) setPagination(r *http.Request) error {
 	return nil
 }
 
-func (u *UrlQueryParameters) setSorting(r *http.Request, mapper ColumnMapper) error {
+func (u *UrlQueryParameters) readSorting(r *http.Request, mapper ColumnMapper) error {
 	sort := r.URL.Query().Get("sort")
 	if sort == "" {
 		return nil
@@ -170,7 +190,7 @@ func (u *UrlQueryParameters) setSorting(r *http.Request, mapper ColumnMapper) er
 	return nil
 }
 
-func (u *UrlQueryParameters) setFilter(r *http.Request, mapper ColumnMapper, sanitizer ValueSanitizer) error {
+func (u *UrlQueryParameters) readFilter(r *http.Request, mapper ColumnMapper, sanitizer ValueSanitizer) error {
 	filter := make(map[string][]interface{})
 	var invalidFilter []string
 	for queryName, queryValues := range r.URL.Query() {
