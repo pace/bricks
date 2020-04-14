@@ -12,8 +12,8 @@ import (
 
 // RetryRoundTripper implements a chainable round tripper for retrying requests
 type RetryRoundTripper struct {
-	RetryTransport *retry.Transport
-	transport      http.RoundTripper
+	retryTransportFactory func() *retry.Transport
+	transport             http.RoundTripper
 }
 
 // RetryCodes retries when the status code is one of the provided list
@@ -69,14 +69,14 @@ func NewDefaultRetryTransport() *retry.Transport {
 }
 
 // NewRetryRoundTripper returns a retry round tripper with the specified retry transport.
-func NewRetryRoundTripper(rt *retry.Transport) *RetryRoundTripper {
-	return &RetryRoundTripper{RetryTransport: rt}
+func NewRetryRoundTripper(rtf func() *retry.Transport) *RetryRoundTripper {
+	return &RetryRoundTripper{retryTransportFactory: rtf}
 }
 
 // NewDefaultRetryRoundTripper returns a retry round tripper with a
 // NewDefaultRetryTransport() as transport.
 func NewDefaultRetryRoundTripper() *RetryRoundTripper {
-	return &RetryRoundTripper{RetryTransport: NewDefaultRetryTransport()}
+	return &RetryRoundTripper{retryTransportFactory: func() *retry.Transport { return NewDefaultRetryTransport() }}
 }
 
 // Transport returns the RoundTripper to make HTTP requests
@@ -91,8 +91,9 @@ func (l *RetryRoundTripper) SetTransport(rt http.RoundTripper) {
 
 // RoundTrip executes a HTTP request with retrying
 func (l *RetryRoundTripper) RoundTrip(req *http.Request) (*http.Response, error) {
-	l.RetryTransport.Next = transportWithAttempt(l.Transport())
-	resp, err := l.RetryTransport.RoundTrip(req)
+	retryTransport := l.retryTransportFactory()
+	retryTransport.Next = transportWithAttempt(l.Transport())
+	resp, err := retryTransport.RoundTrip(req)
 
 	if err != nil {
 		return nil, err
