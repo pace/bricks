@@ -8,10 +8,12 @@ package oauth2
 
 import (
 	"context"
+	"errors"
 	"net/http"
 
 	opentracing "github.com/opentracing/opentracing-go"
 	olog "github.com/opentracing/opentracing-go/log"
+
 	"github.com/pace/bricks/http/security"
 	"github.com/pace/bricks/maintenance/log"
 )
@@ -72,16 +74,12 @@ func introspectRequest(r *http.Request, w http.ResponseWriter, tokenIntro TokenI
 	}
 	s, err := tokenIntro.IntrospectToken(ctx, tok)
 	if err != nil {
-		switch err {
-		case ErrBadUpstreamResponse:
-			fallthrough
-		case ErrUpstreamConnection:
+		if errors.Is(err, ErrBadUpstreamResponse) || errors.Is(err, ErrUpstreamConnection) {
 			http.Error(w, err.Error(), http.StatusBadGateway)
-		case ErrInvalidToken:
+		} else if errors.Is(err, ErrInvalidToken) {
 			http.Error(w, err.Error(), http.StatusUnauthorized)
-		default:
+		} else {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
-
 		}
 		log.Req(r).Info().Msg(err.Error())
 		return nil, false
