@@ -570,10 +570,12 @@ func (g *Generator) buildHandler(method string, op *openapi3.Operation, pattern 
 							),
 						),
 					jen.Default(),
-					jen.Qual(pkgMaintErrors, "HandleError").Call(jen.Id("err"),
-						jen.Lit(handler),
-						jen.Id("w"),
-						jen.Id("r")),
+					jen.If().Id("err").Op("!=").Nil().Block(
+						jen.Qual(pkgMaintErrors, "HandleError").Call(jen.Id("err"),
+							jen.Lit(handler),
+							jen.Id("w"),
+							jen.Id("r")),
+					),
 				)
 
 				// if there is a request body unmarshal it then call the service

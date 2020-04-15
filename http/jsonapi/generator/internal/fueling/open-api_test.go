@@ -171,7 +171,9 @@ func ProcessPaymentHandler(service Service) http.Handler {
 					}
 				}
 			default:
-				errors.HandleError(err, "ProcessPaymentHandler", w, r)
+				if err != nil {
+					errors.HandleError(err, "ProcessPaymentHandler", w, r)
+				}
 			}
 		}
 	})
@@ -230,7 +232,9 @@ func ApproachingAtTheForecourtHandler(service Service) http.Handler {
 					}
 				}
 			default:
-				errors.HandleError(err, "ApproachingAtTheForecourtHandler", w, r)
+				if err != nil {
+					errors.HandleError(err, "ApproachingAtTheForecourtHandler", w, r)
+				}
 			}
 		}
 	})
@@ -288,7 +292,9 @@ func GetPumpHandler(service Service) http.Handler {
 				}
 			}
 		default:
-			errors.HandleError(err, "GetPumpHandler", w, r)
+			if err != nil {
+				errors.HandleError(err, "GetPumpHandler", w, r)
+			}
 		}
 	})
 }
@@ -357,7 +363,9 @@ func WaitOnPumpStatusChangeHandler(service Service) http.Handler {
 				}
 			}
 		default:
-			errors.HandleError(err, "WaitOnPumpStatusChangeHandler", w, r)
+			if err != nil {
+				errors.HandleError(err, "WaitOnPumpStatusChangeHandler", w, r)
+			}
 		}
 	})
 }

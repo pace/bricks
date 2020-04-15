@@ -91,7 +91,9 @@ func GetTestHandler(service Service, authBackend AuthorizationBackend) http.Hand
 				}
 			}
 		default:
-			errors.HandleError(err, "GetTestHandler", w, r)
+			if err != nil {
+				errors.HandleError(err, "GetTestHandler", w, r)
+			}
 		}
 	})
 }

@@ -103,7 +103,9 @@ func UpdateArticleCommentsHandler(service Service) http.Handler {
 					}
 				}
 			default:
-				errors.HandleError(err, "UpdateArticleCommentsHandler", w, r)
+				if err != nil {
+					errors.HandleError(err, "UpdateArticleCommentsHandler", w, r)
+				}
 			}
 		}
 	})
@@ -158,7 +160,9 @@ func UpdateArticleInlineTypeHandler(service Service) http.Handler {
 					}
 				}
 			default:
-				errors.HandleError(err, "UpdateArticleInlineTypeHandler", w, r)
+				if err != nil {
+					errors.HandleError(err, "UpdateArticleInlineTypeHandler", w, r)
+				}
 			}
 		}
 	})
@@ -213,7 +217,9 @@ func UpdateArticleInlineRefHandler(service Service) http.Handler {
 					}
 				}
 			default:
-				errors.HandleError(err, "UpdateArticleInlineRefHandler", w, r)
+				if err != nil {
+					errors.HandleError(err, "UpdateArticleInlineRefHandler", w, r)
+				}
 			}
 		}
 	})

@@ -339,7 +339,9 @@ func GetAppsHandler(service Service, authBackend AuthorizationBackend) http.Hand
 				}
 			}
 		default:
-			errors.HandleError(err, "GetAppsHandler", w, r)
+			if err != nil {
+				errors.HandleError(err, "GetAppsHandler", w, r)
+			}
 		}
 	})
 }
@@ -390,7 +392,9 @@ func CreateAppHandler(service Service, authBackend AuthorizationBackend) http.Ha
 					}
 				}
 			default:
-				errors.HandleError(err, "CreateAppHandler", w, r)
+				if err != nil {
+					errors.HandleError(err, "CreateAppHandler", w, r)
+				}
 			}
 		}
 	})
@@ -475,7 +479,9 @@ func CheckForPaceAppHandler(service Service, authBackend AuthorizationBackend) h
 				}
 			}
 		default:
-			errors.HandleError(err, "CheckForPaceAppHandler", w, r)
+			if err != nil {
+				errors.HandleError(err, "CheckForPaceAppHandler", w, r)
+			}
 		}
 	})
 }
@@ -533,7 +539,9 @@ func DeleteAppHandler(service Service, authBackend AuthorizationBackend) http.Ha
 				}
 			}
 		default:
-			errors.HandleError(err, "DeleteAppHandler", w, r)
+			if err != nil {
+				errors.HandleError(err, "DeleteAppHandler", w, r)
+			}
 		}
 	})
 }
@@ -591,7 +599,9 @@ func GetAppHandler(service Service, authBackend AuthorizationBackend) http.Handl
 				}
 			}
 		default:
-			errors.HandleError(err, "GetAppHandler", w, r)
+			if err != nil {
+				errors.HandleError(err, "GetAppHandler", w, r)
+			}
 		}
 	})
 }
@@ -651,7 +661,9 @@ func UpdateAppHandler(service Service, authBackend AuthorizationBackend) http.Ha
 					}
 				}
 			default:
-				errors.HandleError(err, "UpdateAppHandler", w, r)
+				if err != nil {
+					errors.HandleError(err, "UpdateAppHandler", w, r)
+				}
 			}
 		}
 	})
@@ -710,7 +722,9 @@ func GetAppPOIsRelationshipsHandler(service Service, authBackend AuthorizationBa
 				}
 			}
 		default:
-			errors.HandleError(err, "GetAppPOIsRelationshipsHandler", w, r)
+			if err != nil {
+				errors.HandleError(err, "GetAppPOIsRelationshipsHandler", w, r)
+			}
 		}
 	})
 }
@@ -770,7 +784,9 @@ func UpdateAppPOIsRelationshipsHandler(service Service, authBackend Authorizatio
 					}
 				}
 			default:
-				errors.HandleError(err, "UpdateAppPOIsRelationshipsHandler", w, r)
+				if err != nil {
+					errors.HandleError(err, "UpdateAppPOIsRelationshipsHandler", w, r)
+				}
 			}
 		}
 	})
@@ -839,7 +855,9 @@ func GetEventsHandler(service Service, authBackend AuthorizationBackend) http.Ha
 				}
 			}
 		default:
-			errors.HandleError(err, "GetEventsHandler", w, r)
+			if err != nil {
+				errors.HandleError(err, "GetEventsHandler", w, r)
+			}
 		}
 	})
 }
@@ -943,7 +961,9 @@ func GetGasStationsHandler(service Service, authBackend AuthorizationBackend) ht
 				}
 			}
 		default:
-			errors.HandleError(err, "GetGasStationsHandler", w, r)
+			if err != nil {
+				errors.HandleError(err, "GetGasStationsHandler", w, r)
+			}
 		}
 	})
 }
@@ -1001,7 +1021,9 @@ func GetGasStationHandler(service Service, authBackend AuthorizationBackend) htt
 				}
 			}
 		default:
-			errors.HandleError(err, "GetGasStationHandler", w, r)
+			if err != nil {
+				errors.HandleError(err, "GetGasStationHandler", w, r)
+			}
 		}
 	})
 }
@@ -1073,7 +1095,9 @@ func GetPoisHandler(service Service, authBackend AuthorizationBackend) http.Hand
 				}
 			}
 		default:
-			errors.HandleError(err, "GetPoisHandler", w, r)
+			if err != nil {
+				errors.HandleError(err, "GetPoisHandler", w, r)
+			}
 		}
 	})
 }
@@ -1131,7 +1155,9 @@ func GetPoiHandler(service Service, authBackend AuthorizationBackend) http.Handl
 				}
 			}
 		default:
-			errors.HandleError(err, "GetPoiHandler", w, r)
+			if err != nil {
+				errors.HandleError(err, "GetPoiHandler", w, r)
+			}
 		}
 	})
 }
@@ -1191,7 +1217,9 @@ func ChangePoiHandler(service Service, authBackend AuthorizationBackend) http.Ha
 					}
 				}
 			default:
-				errors.HandleError(err, "ChangePoiHandler", w, r)
+				if err != nil {
+					errors.HandleError(err, "ChangePoiHandler", w, r)
+				}
 			}
 		}
 	})
@@ -1264,7 +1292,9 @@ func GetPoliciesHandler(service Service, authBackend AuthorizationBackend) http.
 				}
 			}
 		default:
-			errors.HandleError(err, "GetPoliciesHandler", w, r)
+			if err != nil {
+				errors.HandleError(err, "GetPoliciesHandler", w, r)
+			}
 		}
 	})
 }
@@ -1315,7 +1345,9 @@ func CreatePolicyHandler(service Service, authBackend AuthorizationBackend) http
 					}
 				}
 			default:
-				errors.HandleError(err, "CreatePolicyHandler", w, r)
+				if err != nil {
+					errors.HandleError(err, "CreatePolicyHandler", w, r)
+				}
 			}
 		}
 	})
@@ -1374,7 +1406,9 @@ func GetPolicyHandler(service Service, authBackend AuthorizationBackend) http.Ha
 				}
 			}
 		default:
-			errors.HandleError(err, "GetPolicyHandler", w, r)
+			if err != nil {
+				errors.HandleError(err, "GetPolicyHandler", w, r)
+			}
 		}
 	})
 }
@@ -1442,7 +1476,9 @@ func GetSourcesHandler(service Service, authBackend AuthorizationBackend) http.H
 				}
 			}
 		default:
-			errors.HandleError(err, "GetSourcesHandler", w, r)
+			if err != nil {
+				errors.HandleError(err, "GetSourcesHandler", w, r)
+			}
 		}
 	})
 }
@@ -1493,7 +1529,9 @@ func CreateSourceHandler(service Service, authBackend AuthorizationBackend) http
 					}
 				}
 			default:
-				errors.HandleError(err, "CreateSourceHandler", w, r)
+				if err != nil {
+					errors.HandleError(err, "CreateSourceHandler", w, r)
+				}
 			}
 		}
 	})
@@ -1552,7 +1590,9 @@ func DeleteSourceHandler(service Service, authBackend AuthorizationBackend) http
 				}
 			}
 		default:
-			errors.HandleError(err, "DeleteSourceHandler", w, r)
+			if err != nil {
+				errors.HandleError(err, "DeleteSourceHandler", w, r)
+			}
 		}
 	})
 }
@@ -1610,7 +1650,9 @@ func GetSourceHandler(service Service, authBackend AuthorizationBackend) http.Ha
 				}
 			}
 		default:
-			errors.HandleError(err, "GetSourceHandler", w, r)
+			if err != nil {
+				errors.HandleError(err, "GetSourceHandler", w, r)
+			}
 		}
 	})
 }
@@ -1670,7 +1712,9 @@ func UpdateSourceHandler(service Service, authBackend AuthorizationBackend) http
 					}
 				}
 			default:
-				errors.HandleError(err, "UpdateSourceHandler", w, r)
+				if err != nil {
+					errors.HandleError(err, "UpdateSourceHandler", w, r)
+				}
 			}
 		}
 	})
@@ -1722,7 +1766,9 @@ func CreateSubscriptionHandler(service Service, authBackend AuthorizationBackend
 					}
 				}
 			default:
-				errors.HandleError(err, "CreateSubscriptionHandler", w, r)
+				if err != nil {
+					errors.HandleError(err, "CreateSubscriptionHandler", w, r)
+				}
 			}
 		}
 	})
@@ -1769,7 +1815,9 @@ func GetTilesHandler(service Service, authBackend AuthorizationBackend) http.Han
 				}
 			}
 		default:
-			errors.HandleError(err, "GetTilesHandler", w, r)
+			if err != nil {
+				errors.HandleError(err, "GetTilesHandler", w, r)
+			}
 		}
 	})
 }

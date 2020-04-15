@@ -136,7 +136,9 @@ func GetPaymentMethodsHandler(service Service, authBackend AuthorizationBackend)
 				}
 			}
 		default:
-			errors.HandleError(err, "GetPaymentMethodsHandler", w, r)
+			if err != nil {
+				errors.HandleError(err, "GetPaymentMethodsHandler", w, r)
+			}
 		}
 	})
 }
@@ -201,7 +203,9 @@ func CreatePaymentMethodSEPAHandler(service Service, authBackend AuthorizationBa
 					}
 				}
 			default:
-				errors.HandleError(err, "CreatePaymentMethodSEPAHandler", w, r)
+				if err != nil {
+					errors.HandleError(err, "CreatePaymentMethodSEPAHandler", w, r)
+				}
 			}
 		}
 	})
@@ -260,7 +264,9 @@ func DeletePaymentMethodHandler(service Service, authBackend AuthorizationBacken
 				}
 			}
 		default:
-			errors.HandleError(err, "DeletePaymentMethodHandler", w, r)
+			if err != nil {
+				errors.HandleError(err, "DeletePaymentMethodHandler", w, r)
+			}
 		}
 	})
 }
@@ -314,7 +320,9 @@ func AuthorizePaymentMethodHandler(service Service, authBackend AuthorizationBac
 					}
 				}
 			default:
-				errors.HandleError(err, "AuthorizePaymentMethodHandler", w, r)
+				if err != nil {
+					errors.HandleError(err, "AuthorizePaymentMethodHandler", w, r)
+				}
 			}
 		}
 	})
@@ -372,7 +380,9 @@ func DeletePaymentTokenHandler(service Service, authBackend AuthorizationBackend
 				}
 			}
 		default:
-			errors.HandleError(err, "DeletePaymentTokenHandler", w, r)
+			if err != nil {
+				errors.HandleError(err, "DeletePaymentTokenHandler", w, r)
+			}
 		}
 	})
 }
@@ -422,7 +432,9 @@ func GetPaymentMethodsIncludingCreditCheckHandler(service Service, authBackend A
 				}
 			}
 		default:
-			errors.HandleError(err, "GetPaymentMethodsIncludingCreditCheckHandler", w, r)
+			if err != nil {
+				errors.HandleError(err, "GetPaymentMethodsIncludingCreditCheckHandler", w, r)
+			}
 		}
 	})
 }
@@ -472,7 +484,9 @@ func GetPaymentMethodsIncludingPaymentTokenHandler(service Service, authBackend 
 				}
 			}
 		default:
-			errors.HandleError(err, "GetPaymentMethodsIncludingPaymentTokenHandler", w, r)
+			if err != nil {
+				errors.HandleError(err, "GetPaymentMethodsIncludingPaymentTokenHandler", w, r)
+			}
 		}
 	})
 }
@@ -530,7 +544,9 @@ func ProcessPaymentHandler(service Service, authBackend AuthorizationBackend) ht
 					}
 				}
 			default:
-				errors.HandleError(err, "ProcessPaymentHandler", w, r)
+				if err != nil {
+					errors.HandleError(err, "ProcessPaymentHandler", w, r)
+				}
 			}
 		}
 	})

@@ -46,7 +46,9 @@ func GetTestHandler(service Service) http.Handler {
 				}
 			}
 		default:
-			errors.HandleError(err, "GetTestHandler", w, r)
+			if err != nil {
+				errors.HandleError(err, "GetTestHandler", w, r)
+			}
 		}
 	})
 }
