@@ -3,6 +3,7 @@ package pay
 
 import (
 	"context"
+	errors1 "errors"
 	mux "github.com/gorilla/mux"
 	opentracing "github.com/opentracing/opentracing-go"
 	runtime "github.com/pace/bricks/http/jsonapi/runtime"
@@ -124,14 +125,18 @@ func GetPaymentMethodsHandler(service Service, authBackend AuthorizationBackend)
 
 		// Invoke service that implements the business logic
 		err := service.GetPaymentMethods(ctx, &writer, &request)
-		if err != nil {
-			select {
-			case <-ctx.Done():
+		select {
+		case <-ctx.Done():
+			if ctx.Err() != nil {
 				// Context cancellation should not be reported if it's the request context
-				errors.HandleErrorNoStack(ctx, err)
-			default:
-				errors.HandleError(err, "GetPaymentMethodsHandler", w, r)
+				w.WriteHeader(499)
+				if err != nil && !(errors1.Is(err, context.Canceled) || errors1.Is(err, context.DeadlineExceeded)) {
+					// Report unclean error handling (err != context err) to sentry
+					errors.Handle(ctx, err)
+				}
 			}
+		default:
+			errors.HandleError(err, "GetPaymentMethodsHandler", w, r)
 		}
 	})
 }
@@ -185,14 +190,18 @@ func CreatePaymentMethodSEPAHandler(service Service, authBackend AuthorizationBa
 		if runtime.Unmarshal(w, r, &request.Content) {
 			// Invoke service that implements the business logic
 			err := service.CreatePaymentMethodSEPA(ctx, &writer, &request)
-			if err != nil {
-				select {
-				case <-ctx.Done():
+			select {
+			case <-ctx.Done():
+				if ctx.Err() != nil {
 					// Context cancellation should not be reported if it's the request context
-					errors.HandleErrorNoStack(ctx, err)
-				default:
-					errors.HandleError(err, "CreatePaymentMethodSEPAHandler", w, r)
+					w.WriteHeader(499)
+					if err != nil && !(errors1.Is(err, context.Canceled) || errors1.Is(err, context.DeadlineExceeded)) {
+						// Report unclean error handling (err != context err) to sentry
+						errors.Handle(ctx, err)
+					}
 				}
+			default:
+				errors.HandleError(err, "CreatePaymentMethodSEPAHandler", w, r)
 			}
 		}
 	})
@@ -240,14 +249,18 @@ func DeletePaymentMethodHandler(service Service, authBackend AuthorizationBacken
 
 		// Invoke service that implements the business logic
 		err := service.DeletePaymentMethod(ctx, &writer, &request)
-		if err != nil {
-			select {
-			case <-ctx.Done():
+		select {
+		case <-ctx.Done():
+			if ctx.Err() != nil {
 				// Context cancellation should not be reported if it's the request context
-				errors.HandleErrorNoStack(ctx, err)
-			default:
-				errors.HandleError(err, "DeletePaymentMethodHandler", w, r)
+				w.WriteHeader(499)
+				if err != nil && !(errors1.Is(err, context.Canceled) || errors1.Is(err, context.DeadlineExceeded)) {
+					// Report unclean error handling (err != context err) to sentry
+					errors.Handle(ctx, err)
+				}
 			}
+		default:
+			errors.HandleError(err, "DeletePaymentMethodHandler", w, r)
 		}
 	})
 }
@@ -290,14 +303,18 @@ func AuthorizePaymentMethodHandler(service Service, authBackend AuthorizationBac
 		if runtime.Unmarshal(w, r, &request.Content) {
 			// Invoke service that implements the business logic
 			err := service.AuthorizePaymentMethod(ctx, &writer, &request)
-			if err != nil {
-				select {
-				case <-ctx.Done():
+			select {
+			case <-ctx.Done():
+				if ctx.Err() != nil {
 					// Context cancellation should not be reported if it's the request context
-					errors.HandleErrorNoStack(ctx, err)
-				default:
-					errors.HandleError(err, "AuthorizePaymentMethodHandler", w, r)
+					w.WriteHeader(499)
+					if err != nil && !(errors1.Is(err, context.Canceled) || errors1.Is(err, context.DeadlineExceeded)) {
+						// Report unclean error handling (err != context err) to sentry
+						errors.Handle(ctx, err)
+					}
 				}
+			default:
+				errors.HandleError(err, "AuthorizePaymentMethodHandler", w, r)
 			}
 		}
 	})
@@ -344,14 +361,18 @@ func DeletePaymentTokenHandler(service Service, authBackend AuthorizationBackend
 
 		// Invoke service that implements the business logic
 		err := service.DeletePaymentToken(ctx, &writer, &request)
-		if err != nil {
-			select {
-			case <-ctx.Done():
+		select {
+		case <-ctx.Done():
+			if ctx.Err() != nil {
 				// Context cancellation should not be reported if it's the request context
-				errors.HandleErrorNoStack(ctx, err)
-			default:
-				errors.HandleError(err, "DeletePaymentTokenHandler", w, r)
+				w.WriteHeader(499)
+				if err != nil && !(errors1.Is(err, context.Canceled) || errors1.Is(err, context.DeadlineExceeded)) {
+					// Report unclean error handling (err != context err) to sentry
+					errors.Handle(ctx, err)
+				}
 			}
+		default:
+			errors.HandleError(err, "DeletePaymentTokenHandler", w, r)
 		}
 	})
 }
@@ -390,14 +411,18 @@ func GetPaymentMethodsIncludingCreditCheckHandler(service Service, authBackend A
 
 		// Invoke service that implements the business logic
 		err := service.GetPaymentMethodsIncludingCreditCheck(ctx, &writer, &request)
-		if err != nil {
-			select {
-			case <-ctx.Done():
+		select {
+		case <-ctx.Done():
+			if ctx.Err() != nil {
 				// Context cancellation should not be reported if it's the request context
-				errors.HandleErrorNoStack(ctx, err)
-			default:
-				errors.HandleError(err, "GetPaymentMethodsIncludingCreditCheckHandler", w, r)
+				w.WriteHeader(499)
+				if err != nil && !(errors1.Is(err, context.Canceled) || errors1.Is(err, context.DeadlineExceeded)) {
+					// Report unclean error handling (err != context err) to sentry
+					errors.Handle(ctx, err)
+				}
 			}
+		default:
+			errors.HandleError(err, "GetPaymentMethodsIncludingCreditCheckHandler", w, r)
 		}
 	})
 }
@@ -436,14 +461,18 @@ func GetPaymentMethodsIncludingPaymentTokenHandler(service Service, authBackend 
 
 		// Invoke service that implements the business logic
 		err := service.GetPaymentMethodsIncludingPaymentToken(ctx, &writer, &request)
-		if err != nil {
-			select {
-			case <-ctx.Done():
+		select {
+		case <-ctx.Done():
+			if ctx.Err() != nil {
 				// Context cancellation should not be reported if it's the request context
-				errors.HandleErrorNoStack(ctx, err)
-			default:
-				errors.HandleError(err, "GetPaymentMethodsIncludingPaymentTokenHandler", w, r)
+				w.WriteHeader(499)
+				if err != nil && !(errors1.Is(err, context.Canceled) || errors1.Is(err, context.DeadlineExceeded)) {
+					// Report unclean error handling (err != context err) to sentry
+					errors.Handle(ctx, err)
+				}
 			}
+		default:
+			errors.HandleError(err, "GetPaymentMethodsIncludingPaymentTokenHandler", w, r)
 		}
 	})
 }
@@ -490,14 +519,18 @@ func ProcessPaymentHandler(service Service, authBackend AuthorizationBackend) ht
 		if runtime.Unmarshal(w, r, &request.Content) {
 			// Invoke service that implements the business logic
 			err := service.ProcessPayment(ctx, &writer, &request)
-			if err != nil {
-				select {
-				case <-ctx.Done():
+			select {
+			case <-ctx.Done():
+				if ctx.Err() != nil {
 					// Context cancellation should not be reported if it's the request context
-					errors.HandleErrorNoStack(ctx, err)
-				default:
-					errors.HandleError(err, "ProcessPaymentHandler", w, r)
+					w.WriteHeader(499)
+					if err != nil && !(errors1.Is(err, context.Canceled) || errors1.Is(err, context.DeadlineExceeded)) {
+						// Report unclean error handling (err != context err) to sentry
+						errors.Handle(ctx, err)
+					}
 				}
+			default:
+				errors.HandleError(err, "ProcessPaymentHandler", w, r)
 			}
 		}
 	})

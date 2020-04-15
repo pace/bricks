@@ -3,6 +3,7 @@ package poi
 
 import (
 	"context"
+	errors1 "errors"
 	mux "github.com/gorilla/mux"
 	opentracing "github.com/opentracing/opentracing-go"
 	runtime "github.com/pace/bricks/http/jsonapi/runtime"
@@ -327,14 +328,18 @@ func GetAppsHandler(service Service, authBackend AuthorizationBackend) http.Hand
 
 		// Invoke service that implements the business logic
 		err := service.GetApps(ctx, &writer, &request)
-		if err != nil {
-			select {
-			case <-ctx.Done():
+		select {
+		case <-ctx.Done():
+			if ctx.Err() != nil {
 				// Context cancellation should not be reported if it's the request context
-				errors.HandleErrorNoStack(ctx, err)
-			default:
-				errors.HandleError(err, "GetAppsHandler", w, r)
+				w.WriteHeader(499)
+				if err != nil && !(errors1.Is(err, context.Canceled) || errors1.Is(err, context.DeadlineExceeded)) {
+					// Report unclean error handling (err != context err) to sentry
+					errors.Handle(ctx, err)
+				}
 			}
+		default:
+			errors.HandleError(err, "GetAppsHandler", w, r)
 		}
 	})
 }
@@ -374,14 +379,18 @@ func CreateAppHandler(service Service, authBackend AuthorizationBackend) http.Ha
 		if runtime.Unmarshal(w, r, &request.Content) {
 			// Invoke service that implements the business logic
 			err := service.CreateApp(ctx, &writer, &request)
-			if err != nil {
-				select {
-				case <-ctx.Done():
+			select {
+			case <-ctx.Done():
+				if ctx.Err() != nil {
 					// Context cancellation should not be reported if it's the request context
-					errors.HandleErrorNoStack(ctx, err)
-				default:
-					errors.HandleError(err, "CreateAppHandler", w, r)
+					w.WriteHeader(499)
+					if err != nil && !(errors1.Is(err, context.Canceled) || errors1.Is(err, context.DeadlineExceeded)) {
+						// Report unclean error handling (err != context err) to sentry
+						errors.Handle(ctx, err)
+					}
 				}
+			default:
+				errors.HandleError(err, "CreateAppHandler", w, r)
 			}
 		}
 	})
@@ -455,14 +464,18 @@ func CheckForPaceAppHandler(service Service, authBackend AuthorizationBackend) h
 
 		// Invoke service that implements the business logic
 		err := service.CheckForPaceApp(ctx, &writer, &request)
-		if err != nil {
-			select {
-			case <-ctx.Done():
+		select {
+		case <-ctx.Done():
+			if ctx.Err() != nil {
 				// Context cancellation should not be reported if it's the request context
-				errors.HandleErrorNoStack(ctx, err)
-			default:
-				errors.HandleError(err, "CheckForPaceAppHandler", w, r)
+				w.WriteHeader(499)
+				if err != nil && !(errors1.Is(err, context.Canceled) || errors1.Is(err, context.DeadlineExceeded)) {
+					// Report unclean error handling (err != context err) to sentry
+					errors.Handle(ctx, err)
+				}
 			}
+		default:
+			errors.HandleError(err, "CheckForPaceAppHandler", w, r)
 		}
 	})
 }
@@ -509,14 +522,18 @@ func DeleteAppHandler(service Service, authBackend AuthorizationBackend) http.Ha
 
 		// Invoke service that implements the business logic
 		err := service.DeleteApp(ctx, &writer, &request)
-		if err != nil {
-			select {
-			case <-ctx.Done():
+		select {
+		case <-ctx.Done():
+			if ctx.Err() != nil {
 				// Context cancellation should not be reported if it's the request context
-				errors.HandleErrorNoStack(ctx, err)
-			default:
-				errors.HandleError(err, "DeleteAppHandler", w, r)
+				w.WriteHeader(499)
+				if err != nil && !(errors1.Is(err, context.Canceled) || errors1.Is(err, context.DeadlineExceeded)) {
+					// Report unclean error handling (err != context err) to sentry
+					errors.Handle(ctx, err)
+				}
 			}
+		default:
+			errors.HandleError(err, "DeleteAppHandler", w, r)
 		}
 	})
 }
@@ -563,14 +580,18 @@ func GetAppHandler(service Service, authBackend AuthorizationBackend) http.Handl
 
 		// Invoke service that implements the business logic
 		err := service.GetApp(ctx, &writer, &request)
-		if err != nil {
-			select {
-			case <-ctx.Done():
+		select {
+		case <-ctx.Done():
+			if ctx.Err() != nil {
 				// Context cancellation should not be reported if it's the request context
-				errors.HandleErrorNoStack(ctx, err)
-			default:
-				errors.HandleError(err, "GetAppHandler", w, r)
+				w.WriteHeader(499)
+				if err != nil && !(errors1.Is(err, context.Canceled) || errors1.Is(err, context.DeadlineExceeded)) {
+					// Report unclean error handling (err != context err) to sentry
+					errors.Handle(ctx, err)
+				}
 			}
+		default:
+			errors.HandleError(err, "GetAppHandler", w, r)
 		}
 	})
 }
@@ -619,14 +640,18 @@ func UpdateAppHandler(service Service, authBackend AuthorizationBackend) http.Ha
 		if runtime.Unmarshal(w, r, &request.Content) {
 			// Invoke service that implements the business logic
 			err := service.UpdateApp(ctx, &writer, &request)
-			if err != nil {
-				select {
-				case <-ctx.Done():
+			select {
+			case <-ctx.Done():
+				if ctx.Err() != nil {
 					// Context cancellation should not be reported if it's the request context
-					errors.HandleErrorNoStack(ctx, err)
-				default:
-					errors.HandleError(err, "UpdateAppHandler", w, r)
+					w.WriteHeader(499)
+					if err != nil && !(errors1.Is(err, context.Canceled) || errors1.Is(err, context.DeadlineExceeded)) {
+						// Report unclean error handling (err != context err) to sentry
+						errors.Handle(ctx, err)
+					}
 				}
+			default:
+				errors.HandleError(err, "UpdateAppHandler", w, r)
 			}
 		}
 	})
@@ -674,14 +699,18 @@ func GetAppPOIsRelationshipsHandler(service Service, authBackend AuthorizationBa
 
 		// Invoke service that implements the business logic
 		err := service.GetAppPOIsRelationships(ctx, &writer, &request)
-		if err != nil {
-			select {
-			case <-ctx.Done():
+		select {
+		case <-ctx.Done():
+			if ctx.Err() != nil {
 				// Context cancellation should not be reported if it's the request context
-				errors.HandleErrorNoStack(ctx, err)
-			default:
-				errors.HandleError(err, "GetAppPOIsRelationshipsHandler", w, r)
+				w.WriteHeader(499)
+				if err != nil && !(errors1.Is(err, context.Canceled) || errors1.Is(err, context.DeadlineExceeded)) {
+					// Report unclean error handling (err != context err) to sentry
+					errors.Handle(ctx, err)
+				}
 			}
+		default:
+			errors.HandleError(err, "GetAppPOIsRelationshipsHandler", w, r)
 		}
 	})
 }
@@ -730,14 +759,18 @@ func UpdateAppPOIsRelationshipsHandler(service Service, authBackend Authorizatio
 		if runtime.Unmarshal(w, r, &request.Content) {
 			// Invoke service that implements the business logic
 			err := service.UpdateAppPOIsRelationships(ctx, &writer, &request)
-			if err != nil {
-				select {
-				case <-ctx.Done():
+			select {
+			case <-ctx.Done():
+				if ctx.Err() != nil {
 					// Context cancellation should not be reported if it's the request context
-					errors.HandleErrorNoStack(ctx, err)
-				default:
-					errors.HandleError(err, "UpdateAppPOIsRelationshipsHandler", w, r)
+					w.WriteHeader(499)
+					if err != nil && !(errors1.Is(err, context.Canceled) || errors1.Is(err, context.DeadlineExceeded)) {
+						// Report unclean error handling (err != context err) to sentry
+						errors.Handle(ctx, err)
+					}
 				}
+			default:
+				errors.HandleError(err, "UpdateAppPOIsRelationshipsHandler", w, r)
 			}
 		}
 	})
@@ -795,14 +828,18 @@ func GetEventsHandler(service Service, authBackend AuthorizationBackend) http.Ha
 
 		// Invoke service that implements the business logic
 		err := service.GetEvents(ctx, &writer, &request)
-		if err != nil {
-			select {
-			case <-ctx.Done():
+		select {
+		case <-ctx.Done():
+			if ctx.Err() != nil {
 				// Context cancellation should not be reported if it's the request context
-				errors.HandleErrorNoStack(ctx, err)
-			default:
-				errors.HandleError(err, "GetEventsHandler", w, r)
+				w.WriteHeader(499)
+				if err != nil && !(errors1.Is(err, context.Canceled) || errors1.Is(err, context.DeadlineExceeded)) {
+					// Report unclean error handling (err != context err) to sentry
+					errors.Handle(ctx, err)
+				}
 			}
+		default:
+			errors.HandleError(err, "GetEventsHandler", w, r)
 		}
 	})
 }
@@ -895,14 +932,18 @@ func GetGasStationsHandler(service Service, authBackend AuthorizationBackend) ht
 
 		// Invoke service that implements the business logic
 		err := service.GetGasStations(ctx, &writer, &request)
-		if err != nil {
-			select {
-			case <-ctx.Done():
+		select {
+		case <-ctx.Done():
+			if ctx.Err() != nil {
 				// Context cancellation should not be reported if it's the request context
-				errors.HandleErrorNoStack(ctx, err)
-			default:
-				errors.HandleError(err, "GetGasStationsHandler", w, r)
+				w.WriteHeader(499)
+				if err != nil && !(errors1.Is(err, context.Canceled) || errors1.Is(err, context.DeadlineExceeded)) {
+					// Report unclean error handling (err != context err) to sentry
+					errors.Handle(ctx, err)
+				}
 			}
+		default:
+			errors.HandleError(err, "GetGasStationsHandler", w, r)
 		}
 	})
 }
@@ -949,14 +990,18 @@ func GetGasStationHandler(service Service, authBackend AuthorizationBackend) htt
 
 		// Invoke service that implements the business logic
 		err := service.GetGasStation(ctx, &writer, &request)
-		if err != nil {
-			select {
-			case <-ctx.Done():
+		select {
+		case <-ctx.Done():
+			if ctx.Err() != nil {
 				// Context cancellation should not be reported if it's the request context
-				errors.HandleErrorNoStack(ctx, err)
-			default:
-				errors.HandleError(err, "GetGasStationHandler", w, r)
+				w.WriteHeader(499)
+				if err != nil && !(errors1.Is(err, context.Canceled) || errors1.Is(err, context.DeadlineExceeded)) {
+					// Report unclean error handling (err != context err) to sentry
+					errors.Handle(ctx, err)
+				}
 			}
+		default:
+			errors.HandleError(err, "GetGasStationHandler", w, r)
 		}
 	})
 }
@@ -1017,14 +1062,18 @@ func GetPoisHandler(service Service, authBackend AuthorizationBackend) http.Hand
 
 		// Invoke service that implements the business logic
 		err := service.GetPois(ctx, &writer, &request)
-		if err != nil {
-			select {
-			case <-ctx.Done():
+		select {
+		case <-ctx.Done():
+			if ctx.Err() != nil {
 				// Context cancellation should not be reported if it's the request context
-				errors.HandleErrorNoStack(ctx, err)
-			default:
-				errors.HandleError(err, "GetPoisHandler", w, r)
+				w.WriteHeader(499)
+				if err != nil && !(errors1.Is(err, context.Canceled) || errors1.Is(err, context.DeadlineExceeded)) {
+					// Report unclean error handling (err != context err) to sentry
+					errors.Handle(ctx, err)
+				}
 			}
+		default:
+			errors.HandleError(err, "GetPoisHandler", w, r)
 		}
 	})
 }
@@ -1071,14 +1120,18 @@ func GetPoiHandler(service Service, authBackend AuthorizationBackend) http.Handl
 
 		// Invoke service that implements the business logic
 		err := service.GetPoi(ctx, &writer, &request)
-		if err != nil {
-			select {
-			case <-ctx.Done():
+		select {
+		case <-ctx.Done():
+			if ctx.Err() != nil {
 				// Context cancellation should not be reported if it's the request context
-				errors.HandleErrorNoStack(ctx, err)
-			default:
-				errors.HandleError(err, "GetPoiHandler", w, r)
+				w.WriteHeader(499)
+				if err != nil && !(errors1.Is(err, context.Canceled) || errors1.Is(err, context.DeadlineExceeded)) {
+					// Report unclean error handling (err != context err) to sentry
+					errors.Handle(ctx, err)
+				}
 			}
+		default:
+			errors.HandleError(err, "GetPoiHandler", w, r)
 		}
 	})
 }
@@ -1127,14 +1180,18 @@ func ChangePoiHandler(service Service, authBackend AuthorizationBackend) http.Ha
 		if runtime.Unmarshal(w, r, &request.Content) {
 			// Invoke service that implements the business logic
 			err := service.ChangePoi(ctx, &writer, &request)
-			if err != nil {
-				select {
-				case <-ctx.Done():
+			select {
+			case <-ctx.Done():
+				if ctx.Err() != nil {
 					// Context cancellation should not be reported if it's the request context
-					errors.HandleErrorNoStack(ctx, err)
-				default:
-					errors.HandleError(err, "ChangePoiHandler", w, r)
+					w.WriteHeader(499)
+					if err != nil && !(errors1.Is(err, context.Canceled) || errors1.Is(err, context.DeadlineExceeded)) {
+						// Report unclean error handling (err != context err) to sentry
+						errors.Handle(ctx, err)
+					}
 				}
+			default:
+				errors.HandleError(err, "ChangePoiHandler", w, r)
 			}
 		}
 	})
@@ -1196,14 +1253,18 @@ func GetPoliciesHandler(service Service, authBackend AuthorizationBackend) http.
 
 		// Invoke service that implements the business logic
 		err := service.GetPolicies(ctx, &writer, &request)
-		if err != nil {
-			select {
-			case <-ctx.Done():
+		select {
+		case <-ctx.Done():
+			if ctx.Err() != nil {
 				// Context cancellation should not be reported if it's the request context
-				errors.HandleErrorNoStack(ctx, err)
-			default:
-				errors.HandleError(err, "GetPoliciesHandler", w, r)
+				w.WriteHeader(499)
+				if err != nil && !(errors1.Is(err, context.Canceled) || errors1.Is(err, context.DeadlineExceeded)) {
+					// Report unclean error handling (err != context err) to sentry
+					errors.Handle(ctx, err)
+				}
 			}
+		default:
+			errors.HandleError(err, "GetPoliciesHandler", w, r)
 		}
 	})
 }
@@ -1243,14 +1304,18 @@ func CreatePolicyHandler(service Service, authBackend AuthorizationBackend) http
 		if runtime.Unmarshal(w, r, &request.Content) {
 			// Invoke service that implements the business logic
 			err := service.CreatePolicy(ctx, &writer, &request)
-			if err != nil {
-				select {
-				case <-ctx.Done():
+			select {
+			case <-ctx.Done():
+				if ctx.Err() != nil {
 					// Context cancellation should not be reported if it's the request context
-					errors.HandleErrorNoStack(ctx, err)
-				default:
-					errors.HandleError(err, "CreatePolicyHandler", w, r)
+					w.WriteHeader(499)
+					if err != nil && !(errors1.Is(err, context.Canceled) || errors1.Is(err, context.DeadlineExceeded)) {
+						// Report unclean error handling (err != context err) to sentry
+						errors.Handle(ctx, err)
+					}
 				}
+			default:
+				errors.HandleError(err, "CreatePolicyHandler", w, r)
 			}
 		}
 	})
@@ -1298,14 +1363,18 @@ func GetPolicyHandler(service Service, authBackend AuthorizationBackend) http.Ha
 
 		// Invoke service that implements the business logic
 		err := service.GetPolicy(ctx, &writer, &request)
-		if err != nil {
-			select {
-			case <-ctx.Done():
+		select {
+		case <-ctx.Done():
+			if ctx.Err() != nil {
 				// Context cancellation should not be reported if it's the request context
-				errors.HandleErrorNoStack(ctx, err)
-			default:
-				errors.HandleError(err, "GetPolicyHandler", w, r)
+				w.WriteHeader(499)
+				if err != nil && !(errors1.Is(err, context.Canceled) || errors1.Is(err, context.DeadlineExceeded)) {
+					// Report unclean error handling (err != context err) to sentry
+					errors.Handle(ctx, err)
+				}
 			}
+		default:
+			errors.HandleError(err, "GetPolicyHandler", w, r)
 		}
 	})
 }
@@ -1362,14 +1431,18 @@ func GetSourcesHandler(service Service, authBackend AuthorizationBackend) http.H
 
 		// Invoke service that implements the business logic
 		err := service.GetSources(ctx, &writer, &request)
-		if err != nil {
-			select {
-			case <-ctx.Done():
+		select {
+		case <-ctx.Done():
+			if ctx.Err() != nil {
 				// Context cancellation should not be reported if it's the request context
-				errors.HandleErrorNoStack(ctx, err)
-			default:
-				errors.HandleError(err, "GetSourcesHandler", w, r)
+				w.WriteHeader(499)
+				if err != nil && !(errors1.Is(err, context.Canceled) || errors1.Is(err, context.DeadlineExceeded)) {
+					// Report unclean error handling (err != context err) to sentry
+					errors.Handle(ctx, err)
+				}
 			}
+		default:
+			errors.HandleError(err, "GetSourcesHandler", w, r)
 		}
 	})
 }
@@ -1409,14 +1482,18 @@ func CreateSourceHandler(service Service, authBackend AuthorizationBackend) http
 		if runtime.Unmarshal(w, r, &request.Content) {
 			// Invoke service that implements the business logic
 			err := service.CreateSource(ctx, &writer, &request)
-			if err != nil {
-				select {
-				case <-ctx.Done():
+			select {
+			case <-ctx.Done():
+				if ctx.Err() != nil {
 					// Context cancellation should not be reported if it's the request context
-					errors.HandleErrorNoStack(ctx, err)
-				default:
-					errors.HandleError(err, "CreateSourceHandler", w, r)
+					w.WriteHeader(499)
+					if err != nil && !(errors1.Is(err, context.Canceled) || errors1.Is(err, context.DeadlineExceeded)) {
+						// Report unclean error handling (err != context err) to sentry
+						errors.Handle(ctx, err)
+					}
 				}
+			default:
+				errors.HandleError(err, "CreateSourceHandler", w, r)
 			}
 		}
 	})
@@ -1464,14 +1541,18 @@ func DeleteSourceHandler(service Service, authBackend AuthorizationBackend) http
 
 		// Invoke service that implements the business logic
 		err := service.DeleteSource(ctx, &writer, &request)
-		if err != nil {
-			select {
-			case <-ctx.Done():
+		select {
+		case <-ctx.Done():
+			if ctx.Err() != nil {
 				// Context cancellation should not be reported if it's the request context
-				errors.HandleErrorNoStack(ctx, err)
-			default:
-				errors.HandleError(err, "DeleteSourceHandler", w, r)
+				w.WriteHeader(499)
+				if err != nil && !(errors1.Is(err, context.Canceled) || errors1.Is(err, context.DeadlineExceeded)) {
+					// Report unclean error handling (err != context err) to sentry
+					errors.Handle(ctx, err)
+				}
 			}
+		default:
+			errors.HandleError(err, "DeleteSourceHandler", w, r)
 		}
 	})
 }
@@ -1518,14 +1599,18 @@ func GetSourceHandler(service Service, authBackend AuthorizationBackend) http.Ha
 
 		// Invoke service that implements the business logic
 		err := service.GetSource(ctx, &writer, &request)
-		if err != nil {
-			select {
-			case <-ctx.Done():
+		select {
+		case <-ctx.Done():
+			if ctx.Err() != nil {
 				// Context cancellation should not be reported if it's the request context
-				errors.HandleErrorNoStack(ctx, err)
-			default:
-				errors.HandleError(err, "GetSourceHandler", w, r)
+				w.WriteHeader(499)
+				if err != nil && !(errors1.Is(err, context.Canceled) || errors1.Is(err, context.DeadlineExceeded)) {
+					// Report unclean error handling (err != context err) to sentry
+					errors.Handle(ctx, err)
+				}
 			}
+		default:
+			errors.HandleError(err, "GetSourceHandler", w, r)
 		}
 	})
 }
@@ -1574,14 +1659,18 @@ func UpdateSourceHandler(service Service, authBackend AuthorizationBackend) http
 		if runtime.Unmarshal(w, r, &request.Content) {
 			// Invoke service that implements the business logic
 			err := service.UpdateSource(ctx, &writer, &request)
-			if err != nil {
-				select {
-				case <-ctx.Done():
+			select {
+			case <-ctx.Done():
+				if ctx.Err() != nil {
 					// Context cancellation should not be reported if it's the request context
-					errors.HandleErrorNoStack(ctx, err)
-				default:
-					errors.HandleError(err, "UpdateSourceHandler", w, r)
+					w.WriteHeader(499)
+					if err != nil && !(errors1.Is(err, context.Canceled) || errors1.Is(err, context.DeadlineExceeded)) {
+						// Report unclean error handling (err != context err) to sentry
+						errors.Handle(ctx, err)
+					}
 				}
+			default:
+				errors.HandleError(err, "UpdateSourceHandler", w, r)
 			}
 		}
 	})
@@ -1622,14 +1711,18 @@ func CreateSubscriptionHandler(service Service, authBackend AuthorizationBackend
 		if runtime.Unmarshal(w, r, &request.Content) {
 			// Invoke service that implements the business logic
 			err := service.CreateSubscription(ctx, &writer, &request)
-			if err != nil {
-				select {
-				case <-ctx.Done():
+			select {
+			case <-ctx.Done():
+				if ctx.Err() != nil {
 					// Context cancellation should not be reported if it's the request context
-					errors.HandleErrorNoStack(ctx, err)
-				default:
-					errors.HandleError(err, "CreateSubscriptionHandler", w, r)
+					w.WriteHeader(499)
+					if err != nil && !(errors1.Is(err, context.Canceled) || errors1.Is(err, context.DeadlineExceeded)) {
+						// Report unclean error handling (err != context err) to sentry
+						errors.Handle(ctx, err)
+					}
 				}
+			default:
+				errors.HandleError(err, "CreateSubscriptionHandler", w, r)
 			}
 		}
 	})
@@ -1665,14 +1758,18 @@ func GetTilesHandler(service Service, authBackend AuthorizationBackend) http.Han
 
 		// Invoke service that implements the business logic
 		err := service.GetTiles(ctx, &writer, &request)
-		if err != nil {
-			select {
-			case <-ctx.Done():
+		select {
+		case <-ctx.Done():
+			if ctx.Err() != nil {
 				// Context cancellation should not be reported if it's the request context
-				errors.HandleErrorNoStack(ctx, err)
-			default:
-				errors.HandleError(err, "GetTilesHandler", w, r)
+				w.WriteHeader(499)
+				if err != nil && !(errors1.Is(err, context.Canceled) || errors1.Is(err, context.DeadlineExceeded)) {
+					// Report unclean error handling (err != context err) to sentry
+					errors.Handle(ctx, err)
+				}
 			}
+		default:
+			errors.HandleError(err, "GetTilesHandler", w, r)
 		}
 	})
 }

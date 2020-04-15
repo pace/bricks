@@ -3,6 +3,7 @@ package fueling
 
 import (
 	"context"
+	errors1 "errors"
 	mux "github.com/gorilla/mux"
 	opentracing "github.com/opentracing/opentracing-go"
 	runtime "github.com/pace/bricks/http/jsonapi/runtime"
@@ -159,14 +160,18 @@ func ProcessPaymentHandler(service Service) http.Handler {
 		if runtime.Unmarshal(w, r, &request.Content) {
 			// Invoke service that implements the business logic
 			err := service.ProcessPayment(ctx, &writer, &request)
-			if err != nil {
-				select {
-				case <-ctx.Done():
+			select {
+			case <-ctx.Done():
+				if ctx.Err() != nil {
 					// Context cancellation should not be reported if it's the request context
-					errors.HandleErrorNoStack(ctx, err)
-				default:
-					errors.HandleError(err, "ProcessPaymentHandler", w, r)
+					w.WriteHeader(499)
+					if err != nil && !(errors1.Is(err, context.Canceled) || errors1.Is(err, context.DeadlineExceeded)) {
+						// Report unclean error handling (err != context err) to sentry
+						errors.Handle(ctx, err)
+					}
 				}
+			default:
+				errors.HandleError(err, "ProcessPaymentHandler", w, r)
 			}
 		}
 	})
@@ -214,14 +219,18 @@ func ApproachingAtTheForecourtHandler(service Service) http.Handler {
 		if runtime.Unmarshal(w, r, &request.Content) {
 			// Invoke service that implements the business logic
 			err := service.ApproachingAtTheForecourt(ctx, &writer, &request)
-			if err != nil {
-				select {
-				case <-ctx.Done():
+			select {
+			case <-ctx.Done():
+				if ctx.Err() != nil {
 					// Context cancellation should not be reported if it's the request context
-					errors.HandleErrorNoStack(ctx, err)
-				default:
-					errors.HandleError(err, "ApproachingAtTheForecourtHandler", w, r)
+					w.WriteHeader(499)
+					if err != nil && !(errors1.Is(err, context.Canceled) || errors1.Is(err, context.DeadlineExceeded)) {
+						// Report unclean error handling (err != context err) to sentry
+						errors.Handle(ctx, err)
+					}
 				}
+			default:
+				errors.HandleError(err, "ApproachingAtTheForecourtHandler", w, r)
 			}
 		}
 	})
@@ -268,14 +277,18 @@ func GetPumpHandler(service Service) http.Handler {
 
 		// Invoke service that implements the business logic
 		err := service.GetPump(ctx, &writer, &request)
-		if err != nil {
-			select {
-			case <-ctx.Done():
+		select {
+		case <-ctx.Done():
+			if ctx.Err() != nil {
 				// Context cancellation should not be reported if it's the request context
-				errors.HandleErrorNoStack(ctx, err)
-			default:
-				errors.HandleError(err, "GetPumpHandler", w, r)
+				w.WriteHeader(499)
+				if err != nil && !(errors1.Is(err, context.Canceled) || errors1.Is(err, context.DeadlineExceeded)) {
+					// Report unclean error handling (err != context err) to sentry
+					errors.Handle(ctx, err)
+				}
 			}
+		default:
+			errors.HandleError(err, "GetPumpHandler", w, r)
 		}
 	})
 }
@@ -333,14 +346,18 @@ func WaitOnPumpStatusChangeHandler(service Service) http.Handler {
 
 		// Invoke service that implements the business logic
 		err := service.WaitOnPumpStatusChange(ctx, &writer, &request)
-		if err != nil {
-			select {
-			case <-ctx.Done():
+		select {
+		case <-ctx.Done():
+			if ctx.Err() != nil {
 				// Context cancellation should not be reported if it's the request context
-				errors.HandleErrorNoStack(ctx, err)
-			default:
-				errors.HandleError(err, "WaitOnPumpStatusChangeHandler", w, r)
+				w.WriteHeader(499)
+				if err != nil && !(errors1.Is(err, context.Canceled) || errors1.Is(err, context.DeadlineExceeded)) {
+					// Report unclean error handling (err != context err) to sentry
+					errors.Handle(ctx, err)
+				}
 			}
+		default:
+			errors.HandleError(err, "WaitOnPumpStatusChangeHandler", w, r)
 		}
 	})
 }

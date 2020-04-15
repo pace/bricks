@@ -27,6 +27,12 @@ jsonapi:
 	go run $(JSONAPIGEN) -pkg articles \
 		-path $(JSONAPITEST)/articles/open-api_test.go \
 		-source $(JSONAPITEST)/articles/open-api.json
+	go run $(JSONAPIGEN) -pkg securitytest \
+		-path $(JSONAPITEST)/securitytest/open-api_test.go \
+		-source $(JSONAPITEST)/securitytest/open-api.json
+	go run $(JSONAPIGEN) -pkg simple \
+		-path tools/testserver/simple/open-api.go \
+		-source tools/testserver/simple/open-api.json
 
 lint: $(GOPATH)/bin/golangci-lint
 	$(GOPATH)/bin/golangci-lint run
