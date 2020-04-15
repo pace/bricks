@@ -3,6 +3,7 @@ package articles
 
 import (
 	"context"
+	errors1 "errors"
 	mux "github.com/gorilla/mux"
 	opentracing "github.com/opentracing/opentracing-go"
 	runtime "github.com/pace/bricks/http/jsonapi/runtime"
@@ -91,12 +92,18 @@ func UpdateArticleCommentsHandler(service Service) http.Handler {
 			}
 			// Invoke service that implements the business logic
 			err := service.UpdateArticleComments(ctx, &writer, &request)
-			if err != nil {
-				select {
-				case <-ctx.Done():
+			select {
+			case <-ctx.Done():
+				if ctx.Err() != nil {
 					// Context cancellation should not be reported if it's the request context
-					errors.HandleErrorNoStack(ctx, err)
-				default:
+					w.WriteHeader(499)
+					if err != nil && !(errors1.Is(err, context.Canceled) || errors1.Is(err, context.DeadlineExceeded)) {
+						// Report unclean error handling (err != context err) to sentry
+						errors.Handle(ctx, err)
+					}
+				}
+			default:
+				if err != nil {
 					errors.HandleError(err, "UpdateArticleCommentsHandler", w, r)
 				}
 			}
@@ -142,12 +149,18 @@ func UpdateArticleInlineTypeHandler(service Service) http.Handler {
 		if runtime.Unmarshal(w, r, &request.Content) {
 			// Invoke service that implements the business logic
 			err := service.UpdateArticleInlineType(ctx, &writer, &request)
-			if err != nil {
-				select {
-				case <-ctx.Done():
+			select {
+			case <-ctx.Done():
+				if ctx.Err() != nil {
 					// Context cancellation should not be reported if it's the request context
-					errors.HandleErrorNoStack(ctx, err)
-				default:
+					w.WriteHeader(499)
+					if err != nil && !(errors1.Is(err, context.Canceled) || errors1.Is(err, context.DeadlineExceeded)) {
+						// Report unclean error handling (err != context err) to sentry
+						errors.Handle(ctx, err)
+					}
+				}
+			default:
+				if err != nil {
 					errors.HandleError(err, "UpdateArticleInlineTypeHandler", w, r)
 				}
 			}
@@ -193,12 +206,18 @@ func UpdateArticleInlineRefHandler(service Service) http.Handler {
 		if runtime.Unmarshal(w, r, &request.Content) {
 			// Invoke service that implements the business logic
 			err := service.UpdateArticleInlineRef(ctx, &writer, &request)
-			if err != nil {
-				select {
-				case <-ctx.Done():
+			select {
+			case <-ctx.Done():
+				if ctx.Err() != nil {
 					// Context cancellation should not be reported if it's the request context
-					errors.HandleErrorNoStack(ctx, err)
-				default:
+					w.WriteHeader(499)
+					if err != nil && !(errors1.Is(err, context.Canceled) || errors1.Is(err, context.DeadlineExceeded)) {
+						// Report unclean error handling (err != context err) to sentry
+						errors.Handle(ctx, err)
+					}
+				}
+			default:
+				if err != nil {
 					errors.HandleError(err, "UpdateArticleInlineRefHandler", w, r)
 				}
 			}

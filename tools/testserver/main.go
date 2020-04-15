@@ -23,6 +23,7 @@ import (
 	"github.com/pace/bricks/maintenance/log"
 	_ "github.com/pace/bricks/maintenance/tracing"
 	"github.com/pace/bricks/test/livetest"
+	simple "github.com/pace/bricks/tools/testserver/simple"
 )
 
 // pace lat/lon
@@ -42,6 +43,21 @@ func (*OauthBackend) IntrospectToken(ctx context.Context, token string) (*oauth2
 	}, nil
 }
 
+type TestService struct{}
+
+func (*TestService) GetTest(ctx context.Context, w simple.GetTestResponseWriter, r *simple.GetTestRequest) error {
+	log.Debug("Request in flight, this will wait 5 min....")
+	for t := 0; t < 360; t++ {
+		select {
+		case <-ctx.Done():
+			return ctx.Err()
+		default:
+			time.Sleep(time.Second)
+		}
+	}
+	return nil
+}
+
 func main() {
 	db := postgres.DefaultConnectionPool()
 	rdb := redis.Client()
@@ -59,6 +75,8 @@ func main() {
 		r.State = servicehealthcheck.Ok
 		return
 	})
+
+	h.Handle("/pay/beta/test", simple.Router(new(TestService)))
 
 	h.HandleFunc("/test", func(w http.ResponseWriter, r *http.Request) {
 		handlerSpan, ctx := opentracing.StartSpanFromContext(r.Context(), "TestHandler")
