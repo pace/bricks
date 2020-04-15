@@ -12,7 +12,7 @@ import (
 
 // RetryRoundTripper implements a chainable round tripper for retrying requests
 type RetryRoundTripper struct {
-	RetryTransport *retry.Transport
+	retryTransport *retry.Transport
 	transport      http.RoundTripper
 }
 
@@ -44,22 +44,6 @@ func Context() retry.Retryer {
 	}
 }
 
-// DefaultRetryTransport is used as default retry mechanism
-//
-// Deprecated: Use NewDefaultRetryTransport() instead. The DefaultRetryTransport
-// will be removed in future versions. It is broken as its global nature means
-// that the DefaultRetryTransport.Next http.RoundTripper is shared among all
-// users. In previous versions of this package this would mean that the last
-// user to call RetryRoundTripper.SetTransport() defines the shared
-// DefaultRetryTransport.Next http.RoundTripper. This was unknowingly changed in
-// v0.1.12. After that this still is at least a race condition issue as we can
-// have multiple simultaneous usages, that all set DefaultRetryTransport.Next
-// and indirectly call this shared state via DefaultRetryTransport.RoundTrip().
-var DefaultRetryTransport = retry.Transport{
-	Delay: retry.Constant(100 * time.Millisecond),
-	Retry: retry.All(Context(), retry.Max(9), retry.EOF(), retry.Net(), retry.Temporary(), RetryCodes(408, 502, 503, 504)),
-}
-
 // NewDefaultRetryTransport returns a new default retry transport.
 func NewDefaultRetryTransport() *retry.Transport {
 	return &retry.Transport{
@@ -70,13 +54,13 @@ func NewDefaultRetryTransport() *retry.Transport {
 
 // NewRetryRoundTripper returns a retry round tripper with the specified retry transport.
 func NewRetryRoundTripper(rt *retry.Transport) *RetryRoundTripper {
-	return &RetryRoundTripper{RetryTransport: rt}
+	return &RetryRoundTripper{retryTransport: rt}
 }
 
 // NewDefaultRetryRoundTripper returns a retry round tripper with a
 // NewDefaultRetryTransport() as transport.
 func NewDefaultRetryRoundTripper() *RetryRoundTripper {
-	return &RetryRoundTripper{RetryTransport: NewDefaultRetryTransport()}
+	return &RetryRoundTripper{retryTransport: NewDefaultRetryTransport()}
 }
 
 // Transport returns the RoundTripper to make HTTP requests
@@ -91,8 +75,9 @@ func (l *RetryRoundTripper) SetTransport(rt http.RoundTripper) {
 
 // RoundTrip executes a HTTP request with retrying
 func (l *RetryRoundTripper) RoundTrip(req *http.Request) (*http.Response, error) {
-	l.RetryTransport.Next = transportWithAttempt(l.Transport())
-	resp, err := l.RetryTransport.RoundTrip(req)
+	retryTransport := *l.retryTransport
+	retryTransport.Next = transportWithAttempt(l.Transport())
+	resp, err := retryTransport.RoundTrip(req)
 
 	if err != nil {
 		return nil, err

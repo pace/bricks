@@ -7,7 +7,41 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"testing"
+	"time"
+
+	"github.com/gorilla/mux"
 )
+
+// TestRoundTripperRace will detect race conditions
+// in any RoundTripper by sending concurrent requests.
+// Make sure to use the -race parameter when
+// executing this test
+func TestRoundTripperRace(t *testing.T) {
+	client := http.Client{
+		Transport: NewDefaultTransportChain(),
+	}
+
+	slowOKHandler := func(w http.ResponseWriter, r *http.Request) {
+		time.Sleep(100 * time.Millisecond)
+		w.WriteHeader(http.StatusOK)
+	}
+
+	router := mux.NewRouter()
+	router.HandleFunc("/test001", slowOKHandler)
+	router.HandleFunc("/test002", slowOKHandler)
+
+	server := httptest.NewServer(router)
+
+	go func() {
+		for i := 0; i < 10; i++ {
+			client.Get(server.URL + "/test001")
+		}
+	}()
+
+	for i := 0; i < 10; i++ {
+		client.Get(server.URL + "/test002")
+	}
+}
 
 func TestRoundTripperChaining(t *testing.T) {
 	t.Run("Chain empty", func(t *testing.T) {
