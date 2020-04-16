@@ -8,6 +8,7 @@ import (
 	"net/http/pprof"
 
 	"github.com/gorilla/mux"
+	"github.com/pace/bricks/locale"
 	"github.com/pace/bricks/maintenance/errors"
 	"github.com/pace/bricks/maintenance/health"
 	"github.com/pace/bricks/maintenance/health/servicehealthcheck"
@@ -36,6 +37,8 @@ func Router() *mux.Router {
 		"/health",
 		"/debug",
 	))
+
+	r.Use(locale.Handler())
 
 	// for prometheus
 	r.Handle("/metrics", metric.Handler())
