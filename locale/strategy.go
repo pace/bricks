@@ -12,7 +12,7 @@ import (
 type Strategy func(ctx context.Context) *Locale
 
 // NewContextStrategy returns a strategy that defines a static fallback language and timezone.
-// If only lang or timezine fallback should be defined as a fallback, the None value may be used.
+// If only lang or timezone fallback should be defined as a fallback, the None value may be used.
 func NewFallbackStrategy(lang, timezone string) Strategy {
 	l := NewLocale(lang, timezone)
 	return func(ctx context.Context) *Locale {
