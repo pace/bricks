@@ -18,7 +18,7 @@ type sinkKey struct{}
 // ContextWithSink wraps the given context in a new context with
 // the given Sink stored as value.
 func ContextWithSink(ctx context.Context, sink *Sink) context.Context {
-	l := log.Ctx(ctx).Output(sink)
+	l := log.Ctx(ctx).Output(JSONDedup(sink))
 	ctx = l.WithContext(ctx)
 	return context.WithValue(ctx, sinkKey{}, sink)
 }

@@ -77,6 +77,7 @@ func init() {
 		zerolog.TimestampFunc = func() time.Time { return time.Now().UTC() }
 	}
 
+	logOutput = JSONDedup(logOutput)
 	log.Logger = log.Output(logOutput)
 }
 
