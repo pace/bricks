@@ -13,10 +13,12 @@ import (
 	"testing"
 	"time"
 
+	"github.com/stretchr/testify/require"
+
 	"github.com/pace/bricks/http/security"
+	"github.com/pace/bricks/locale"
 	"github.com/pace/bricks/maintenance/log"
 	. "github.com/pace/bricks/pkg/routine"
-	"github.com/stretchr/testify/require"
 )
 
 func TestRun_catchesPanics(t *testing.T) {
@@ -50,6 +52,18 @@ func TestRun_transfersSink(t *testing.T) {
 		log.Ctx(ctx).Debug().Msg("foobar")
 	})
 	require.Contains(t, string(sink.ToJSON()), "foobar")
+}
+
+func TestRun_transfersLocale(t *testing.T) {
+	testLocale := locale.NewLocale("en-US, en;q=0.9, de-DE;q=0.8, ru;q=0.6", "Europe/Berlin")
+	ctx := locale.WithLocale(context.Background(), testLocale)
+	waitForRun(ctx, func(ctx context.Context) {
+		transferredLocale, ok := locale.FromCtx(ctx)
+		require.True(t, ok)
+		require.NotNil(t, transferredLocale)
+		require.Equal(t, "en-US, en;q=0.9, de-DE;q=0.8, ru;q=0.6", transferredLocale.Language())
+		require.Equal(t, "Europe/Berlin", transferredLocale.Timezone())
+	})
 }
 
 func TestRun_transfersOAuth2Token(t *testing.T) {
