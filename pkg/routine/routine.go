@@ -14,6 +14,7 @@ import (
 	"syscall"
 
 	"github.com/pace/bricks/http/oauth2"
+	"github.com/pace/bricks/locale"
 	"github.com/pace/bricks/maintenance/errors"
 	"github.com/pace/bricks/maintenance/log"
 )
@@ -93,6 +94,7 @@ func Run(parentCtx context.Context, routine func(context.Context)) (cancel conte
 	ctx = log.SinkContextTransfer(parentCtx, ctx)
 	ctx = oauth2.ContextTransfer(parentCtx, ctx)
 	ctx = errors.ContextTransfer(parentCtx, ctx)
+	ctx = locale.ContextTransfer(parentCtx, ctx)
 	// add routine number to context and logger
 	num := atomic.AddInt64(&ctr, 1)
 	ctx = context.WithValue(ctx, ctxNumKey{}, num)
