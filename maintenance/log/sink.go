@@ -52,14 +52,23 @@ type Sink struct {
 	rwmutex sync.RWMutex
 }
 
-// handlerWithSink returns a mux.MiddlewareFunc which
-// adds a Sink to the request context. All logs
-// corresponding to the request will be printed and stored
-// in the Sink for later use.
-func handlerWithSink() mux.MiddlewareFunc {
+// handlerWithSink returns a mux.MiddlewareFunc which adds a Sink
+// to the request context. All logs corresponding to the request
+// will be printed and stored in the Sink for later use. Optionally
+// several path prefixes like "/health" can be provided to decrease
+// log spamming. All url paths with these prefixes will set the Sink
+// to silent and all logs will only reach the Sink but not the
+// actual log output.
+func handlerWithSink(silentPrefixes ...string) mux.MiddlewareFunc {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			var sink Sink
+			for _, prefix := range silentPrefixes {
+				if strings.HasPrefix(r.URL.Path, prefix) {
+					sink.Silent = true
+				}
+			}
+
 			ctx := ContextWithSink(r.Context(), &sink)
 			next.ServeHTTP(w, r.WithContext(ctx))
 		})
