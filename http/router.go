@@ -25,8 +25,9 @@ func Router() *mux.Router {
 	r.Use(metricsMiddleware)
 
 	// the logging middleware needs to be registered before the error
-	// middleware to make it possible to send panics to sentry
-	r.Use(log.Handler())
+	// middleware to make it possible to send panics to sentry.
+	// "/health" is only logged to the log.Sink but not to log.output (silent)
+	r.Use(log.Handler("/health"))
 
 	// last resort error handler
 	r.Use(errors.Handler())
