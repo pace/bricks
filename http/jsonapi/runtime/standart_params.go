@@ -90,7 +90,7 @@ func ReadURLQueryParameters(r *http.Request, mapper ColumnMapper, sanitizer Valu
 		return result, nil
 	}
 	if len(errs) == 1 {
-		return result, errs[1]
+		return result, errs[0]
 	}
 	var errAggregate []string
 	for _, err := range errs {
