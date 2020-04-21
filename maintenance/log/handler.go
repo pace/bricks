@@ -15,13 +15,16 @@ import (
 )
 
 // Handler returns a middleware that handles all of the logging aspects of
-// any incoming http request
-func Handler() func(http.Handler) http.Handler {
+// any incoming http request. Optionally several path prefixes like "/health"
+// can be provided to decrease log spamming. All url paths with these
+// prefixes will not be logged to the standard output but still be available
+// in the request specific Sink.
+func Handler(silentPrefixes ...string) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return hlog.NewHandler(log.Logger)(
-			hlog.AccessHandler(requestCompleted)(
-				hlog.RequestIDHandler("req_id", "Request-Id")(
-					handlerWithSink()(next))))
+			handlerWithSink(silentPrefixes...)(
+				hlog.AccessHandler(requestCompleted)(
+					hlog.RequestIDHandler("req_id", "Request-Id")(next))))
 	}
 }
 

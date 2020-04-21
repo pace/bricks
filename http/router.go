@@ -8,6 +8,7 @@ import (
 	"net/http/pprof"
 
 	"github.com/gorilla/mux"
+	"github.com/pace/bricks/locale"
 	"github.com/pace/bricks/maintenance/errors"
 	"github.com/pace/bricks/maintenance/health"
 	"github.com/pace/bricks/maintenance/health/servicehealthcheck"
@@ -23,9 +24,11 @@ func Router() *mux.Router {
 
 	r.Use(metricsMiddleware)
 
-	// the logging middleware needs to be registered before the error
-	// middleware to make it possible to send panics to sentry
-	r.Use(log.Handler())
+	// the logging middleware needs to be registered before the
+	// error middleware to make it possible to send panics to
+	// sentry. "/health" and "/metrics" are only logged to the
+	// log.Sink but not to log.output (silent)
+	r.Use(log.Handler("/health", "/metrics"))
 
 	// last resort error handler
 	r.Use(errors.Handler())
@@ -36,6 +39,8 @@ func Router() *mux.Router {
 		"/health",
 		"/debug",
 	))
+
+	r.Use(locale.Handler())
 
 	// for prometheus
 	r.Handle("/metrics", metric.Handler())
