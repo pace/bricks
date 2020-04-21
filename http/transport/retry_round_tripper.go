@@ -4,6 +4,7 @@
 package transport
 
 import (
+	"errors"
 	"net/http"
 	"time"
 
@@ -79,8 +80,14 @@ func (l *RetryRoundTripper) RoundTrip(req *http.Request) (*http.Response, error)
 	retryTransport.Next = transportWithAttempt(l.Transport())
 	resp, err := retryTransport.RoundTrip(req)
 
+	var maxRetriesError retry.MaxError
 	if err != nil {
-		return nil, err
+		switch {
+		case errors.As(err, &maxRetriesError):
+			return nil, ErrRetryFailed
+		default:
+			return nil, err
+		}
 	}
 
 	return resp, nil
