@@ -246,7 +246,7 @@ func TestHandlerWithLogSink(t *testing.T) {
 	var sink1LogLines []json.RawMessage
 	assert.NoError(t, json.Unmarshal(sink1.ToJSON(), &sink1LogLines), "failed extracting logs from sink1")
 
-	assert.Len(t, sink1LogLines, 1, "more log lines than expected")
+	assert.Len(t, sink1LogLines, 2, "more log lines than expected")
 	assert.Contains(t, string(sink1LogLines[0]), "ONLY FOR SINK1", "missing log line")
 
 	sink2, ok := log.SinkFromContext(sink2Ctx)
