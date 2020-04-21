@@ -20,13 +20,13 @@ func TestCircuitBreakerTripper(t *testing.T) {
 		chain := Chain(breaker).Final(&failingRoundTripper{})
 
 		for i := 0; i < 6; i++ {
-			if _, err := chain.RoundTrip(req); errors.Is(err, gobreaker.ErrOpenState) {
-				t.Errorf("got err=%q, before expected", gobreaker.ErrOpenState)
+			if _, err := chain.RoundTrip(req); errors.Is(err, ErrCircuitBroken) {
+				t.Errorf("got err=%q, before expected", ErrCircuitBroken)
 			}
 		}
 
-		if _, err := chain.RoundTrip(req); !errors.Is(err, gobreaker.ErrOpenState) {
-			t.Errorf("wanted err=%q, got err=%q", gobreaker.ErrOpenState, err)
+		if _, err := chain.RoundTrip(req); !errors.Is(err, ErrCircuitBroken) {
+			t.Errorf("wanted err=%q, got err=%q", ErrCircuitBroken, err)
 		}
 	})
 

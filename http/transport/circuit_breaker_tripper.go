@@ -1,6 +1,7 @@
 package transport
 
 import (
+	"errors"
 	"fmt"
 	"net/http"
 
@@ -87,7 +88,13 @@ func (c *circuitBreakerTripper) RoundTrip(req *http.Request) (*http.Response, er
 		return c.transport.RoundTrip(req)
 	})
 	if err != nil {
-		return nil, err
+		switch {
+		case errors.Is(err, gobreaker.ErrOpenState):
+			// inform the caller about the broken circuit
+			return nil, fmt.Errorf("%w: considering host '%s' unreachable", ErrCircuitBroken, req.Host)
+		default:
+			return nil, err
+		}
 	}
 
 	return resp.(*http.Response), nil

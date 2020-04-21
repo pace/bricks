@@ -37,5 +37,5 @@ func Test_Sink(t *testing.T) {
 	var result []interface{}
 	require.NoError(t, json.Unmarshal(logs, &result), "could not unmarshal logs")
 
-	require.Len(t, result, 1, "expecting exactly one log, but got %d", len(result))
+	require.Len(t, result, 2, "expecting exactly one log, but got %d", len(result))
 }
