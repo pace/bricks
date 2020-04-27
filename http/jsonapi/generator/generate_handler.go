@@ -661,14 +661,13 @@ func generateAuthorizationForSingleSecSchema(op *openapi3.Operation, schemas map
 	for name, secConfig := range (*op.Security)[0] {
 		securityScheme := schemas[name]
 		switch securityScheme.Value.Type {
-		case "oauth2":
-			if len(secConfig) < 1 {
-				return nil, fmt.Errorf("security config for OAuth2 authorization needs %d values but had: %d", 1, len(secConfig))
+		case "oauth2", "openIdConnect":
+			if len(secConfig) > 0 {
+				r.Line().List(jen.Id("ctx"), jen.Id("ok")).Op(":=").Id("authBackend."+authFuncPrefix+strings.Title(name)).Call(jen.Id("r"), jen.Id("w"), jen.Lit(secConfig[0]))
 			}
-			r.Line().List(jen.Id("ctx"), jen.Id("ok")).Op(":=").Id("authBackend."+authFuncPrefix+strings.Title(name)).Call(jen.Id("r"), jen.Id("w"), jen.Lit(secConfig[0]))
 		case "apiKey":
 			if len(secConfig) > 0 {
-				return nil, fmt.Errorf("security config for api key authoritzation needs %d values but had: %d", 0, len(secConfig))
+				return nil, fmt.Errorf("security config for api key authorization needs %d values but had: %d", 0, len(secConfig))
 			}
 			r.Line().List(jen.Id("ctx"), jen.Id("ok")).Op(":=").Id("authBackend."+authFuncPrefix+strings.Title(name)).Call(jen.Id("r"), jen.Id("w"))
 		default:
@@ -703,14 +702,15 @@ func generateAuthorizationForMultipleSecSchemas(op *openapi3.Operation, secSchem
 		innerBlock := &jen.Group{}
 		innerBlock.Line().List(jen.Id("ctx"), jen.Id("ok")).Op("=").Id("authBackend." + authFuncPrefix + strings.Title(name))
 		switch securityScheme.Value.Type {
-		case "oauth2":
-			if len(val) < 2 {
-				return nil, fmt.Errorf("security config for OAuth2 authorization needs %d values but had: %d", 1, len(val))
+		case "oauth2", "openIdConnect":
+			if len(val) >= 2 {
+				innerBlock.Call(jen.Id("r"), jen.Id("w"), jen.Lit(val[1]))
+			} else {
+				innerBlock.Call(jen.Id("r"), jen.Id("w"), jen.Lit(""))
 			}
-			innerBlock.Call(jen.Id("r"), jen.Id("w"), jen.Lit(val[1]))
 		case "apiKey":
 			if len(val) > 1 {
-				return nil, fmt.Errorf("security config for api key authoritzation needs %d values but had: %d", 0, len(val))
+				return nil, fmt.Errorf("security config for api key authorization needs %d values but had: %d", 0, len(val))
 			}
 			innerBlock.Call(jen.Id("r"), jen.Id("w"))
 		default:

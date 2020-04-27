@@ -51,7 +51,7 @@ func (g *Generator) buildSecurityBackendInterface(schema *openapi3.Swagger) erro
 		value := securitySchemes[name]
 		r.Line().Id(authFuncPrefix + strings.Title(name))
 		switch value.Value.Type {
-		case "oauth2":
+		case "oauth2", "openIdConnect":
 			configs = append(configs, jen.Id("cfg"+strings.Title(name)).Op("*").Qual(pkgOAuth2, "Config"))
 			r.Params(jen.Id("r").Id("*http.Request"), jen.Id("w").Id("http.ResponseWriter"), jen.Id("scope").String())
 		case "apiKey":
@@ -89,7 +89,7 @@ func (g *Generator) buildSecurityConfigs(schema *openapi3.Swagger) error {
 		instanceVal := jen.Dict{}
 		var pkgName string
 		switch value.Value.Type {
-		case "oauth2":
+		case "oauth2", "openIdConnect":
 			pkgName = pkgOAuth2
 			t := value.Value.Description
 			instanceVal[jen.Id("Description")] = jen.Lit(t)

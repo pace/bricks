@@ -22,9 +22,8 @@
         "operationId": "CreatePaymentMethodSEPA",
         "security": [
           {
-            "OAuth2": [
-              "pay:payment-methods:create"
-            ],
+            "OpenID": [],
+            "OAuth2": [],
             "ProfileKey": []
           }
         ],
@@ -114,6 +113,9 @@
         "operationId": "DeletePaymentMethod",
         "security": [
           {
+            "OAuth2": [
+              "id:sessions:create"
+            ],
             "ProfileKey": []
           }
         ],
@@ -1208,6 +1210,10 @@
             }
           }
         }
+      },
+      "OpenID": {
+        "type": "openIdConnect",
+        "openIdConnectUrl": "https://example.com/.well-known/openid-configuration"
       },
       "ProfileKey": {
         "type": "apiKey",
