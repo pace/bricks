@@ -94,6 +94,10 @@ func (s testAuthBackend) CanAuthorizeOAuth2(r *http.Request) bool {
 	return true
 }
 
+func (s testAuthBackend) CanAuthorizeOpenID(r *http.Request) bool {
+	return true
+}
+
 func (s testAuthBackend) CanAuthorizeProfileKey(r *http.Request) bool {
 	return true
 }
@@ -102,11 +106,15 @@ func (s testAuthBackend) AuthorizeOAuth2(r *http.Request, w http.ResponseWriter,
 	return r.Context(), true
 }
 
+func (s testAuthBackend) AuthorizeOpenID(r *http.Request, w http.ResponseWriter, scope string) (context.Context, bool) {
+	return r.Context(), true
+}
+
 func (s testAuthBackend) AuthorizeProfileKey(r *http.Request, w http.ResponseWriter) (context.Context, bool) {
 	return r.Context(), true
 }
 
-func (s testAuthBackend) Init(cfgOAuth2 *oauth2.Config, cfgProfileKey *apikey.Config) {
+func (s testAuthBackend) Init(cfgOAuth2 *oauth2.Config, cfgOpenID *oauth2.Config, cfgProfileKey *apikey.Config) {
 }
 
 func TestHandler(t *testing.T) {
