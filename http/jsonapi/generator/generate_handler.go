@@ -664,6 +664,8 @@ func generateAuthorizationForSingleSecSchema(op *openapi3.Operation, schemas map
 		case "oauth2", "openIdConnect":
 			if len(secConfig) > 0 {
 				r.Line().List(jen.Id("ctx"), jen.Id("ok")).Op(":=").Id("authBackend."+authFuncPrefix+strings.Title(name)).Call(jen.Id("r"), jen.Id("w"), jen.Lit(secConfig[0]))
+			} else {
+				r.Line().List(jen.Id("ctx"), jen.Id("ok")).Op(":=").Id("authBackend."+authFuncPrefix+strings.Title(name)).Call(jen.Id("r"), jen.Id("w"), jen.Lit(""))
 			}
 		case "apiKey":
 			if len(secConfig) > 0 {

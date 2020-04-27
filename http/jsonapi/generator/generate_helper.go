@@ -40,7 +40,7 @@ func (g *Generator) goType(stmt *jen.Statement, schema *openapi3.Schema, tags ma
 			stmt.Op("*").Qual("time", "Time") // time.Time can not be nil, so a pointer is needed for omitempty to work
 		case "date":
 			addValidator(tags, "time(2006-01-02)")
-			stmt.Qual("time", "Date")
+			stmt.Qual("time", "Time")
 		case "uuid":
 			addValidator(tags, "uuid")
 			stmt.String()
