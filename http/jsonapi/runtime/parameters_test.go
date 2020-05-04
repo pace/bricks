@@ -9,6 +9,63 @@ import (
 	"testing"
 )
 
+func TestScanStringParametersInQuery(t *testing.T) {
+	tests := []struct {
+		path   string
+		result string
+	}{
+		{"/?q=", ""},
+		{"/?q=Super", "Super"},
+		{"/?q=Super%20Plus", "Super Plus"},
+		{"/?q=Super+Plus", "Super Plus"},
+	}
+
+	for _, tc := range tests {
+		req := httptest.NewRequest("GET", tc.path, nil)
+		rec := httptest.NewRecorder()
+		var param0 string
+		ok := ScanParameters(rec, req, &ScanParameter{&param0, ScanInQuery, "", "q"})
+		// Parsing
+		if !ok {
+			t.Errorf("expected the scanning of %q to be successful", tc.path)
+		}
+		// comparison
+		if param0 != tc.result {
+			t.Errorf("expected parsing result %q got: %q", tc.result, param0)
+		}
+	}
+}
+
+func TestScanBoolParametersInQuery(t *testing.T) {
+	tests := []struct {
+		path   string
+		result bool
+	}{
+		{"/?b=1", true},
+		{"/?b=0", false},
+		{"/?b=", false},
+		{"/?b=true", true},
+		{"/?b=false", false},
+		{"/?b=t", true},
+		{"/?b=f", false},
+	}
+
+	for _, tc := range tests {
+		req := httptest.NewRequest("GET", tc.path, nil)
+		rec := httptest.NewRecorder()
+		var param0 bool
+		ok := ScanParameters(rec, req, &ScanParameter{&param0, ScanInQuery, "", "b"})
+		// Parsing
+		if !ok {
+			t.Errorf("expected the scanning of %q to be successful", tc.path)
+		}
+		// comparison
+		if param0 != tc.result {
+			t.Errorf("expected parsing result %v got: %v", tc.result, param0)
+		}
+	}
+}
+
 func TestScanNumericParametersInPath(t *testing.T) {
 	req := httptest.NewRequest("GET", "/foo/", nil)
 	rec := httptest.NewRecorder()

@@ -35,6 +35,17 @@ type ScanParameter struct {
 	Name string
 }
 
+// BuildInvalidValueError build a new error, using the passed type and data
+func (p *ScanParameter) BuildInvalidValueError(typ reflect.Type, data string) error {
+	return &Error{
+		Title:  fmt.Sprintf("invalid value for %s", p.Name),
+		Detail: fmt.Sprintf("invalid value, expected %s got: %q", typ, data),
+		Source: &map[string]interface{}{
+			"parameter": p.Name,
+		},
+	}
+}
+
 // ScanParameters scans the request using the given path parameter objects
 // in case an error is encountered a 400 along with a jsonapi errors object
 // is sent to the ResponseWriter and false is returned. Returns true if all
@@ -64,15 +75,9 @@ func ScanParameters(w http.ResponseWriter, r *http.Request, parameters ...*ScanP
 					}
 
 					arrElem := array.Index(i - invalid)
-					n, _ := fmt.Sscan(input[i], arrElem.Addr().Interface()) // nolint: gosec
+					n, _ := Scan(input[i], arrElem.Addr().Interface()) // nolint: gosec
 					if n != 1 {
-						WriteError(w, http.StatusBadRequest, &Error{
-							Title:  fmt.Sprintf("invalid value for %s", param.Name),
-							Detail: fmt.Sprintf("invalid value, expected %s got: %q", arrElem.Type(), input[i]),
-							Source: &map[string]interface{}{
-								"parameter": param.Name,
-							},
-						})
+						WriteError(w, http.StatusBadRequest, param.BuildInvalidValueError(arrElem.Type(), input[i]))
 						return false
 					}
 				}
@@ -94,18 +99,24 @@ func ScanParameters(w http.ResponseWriter, r *http.Request, parameters ...*ScanP
 			panic(fmt.Errorf("impossible scanning location: %d", param.Location))
 		}
 
-		n, _ := fmt.Sscan(scanData, param.Data) // nolint: gosec
+		n, _ := Scan(scanData, param.Data)
 		// only report on non empty data, govalidator will handle the other cases
 		if n != 1 && scanData != "" {
-			WriteError(w, http.StatusBadRequest, &Error{
-				Title:  fmt.Sprintf("invalid value for %s", param.Name),
-				Detail: fmt.Sprintf("invalid value, expected %s got: %q", reflect.ValueOf(param.Data).Type(), scanData),
-				Source: &map[string]interface{}{
-					"parameter": param.Name,
-				},
-			})
+			WriteError(w, http.StatusBadRequest, param.BuildInvalidValueError(reflect.ValueOf(param.Data).Type(), scanData))
 			return false
 		}
 	}
 	return true
+}
+
+// Scan works like fmt.Sscan except for strings, they are directly assigned
+func Scan(str string, data interface{}) (int, error) {
+	// Don't handle plain strings with sscan but directly assign the value
+	strPtr, ok := data.(*string)
+	if ok {
+		(*strPtr) = str
+		return 1, nil
+	}
+
+	return fmt.Sscan(str, data) // nolint: gosec
 }
