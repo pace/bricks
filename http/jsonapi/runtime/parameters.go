@@ -61,7 +61,6 @@ func ScanParameters(w http.ResponseWriter, r *http.Request, parameters ...*ScanP
 		case ScanInQuery:
 			// input may not be filled and needs to be parsed from the request
 			input := r.URL.Query()[param.Name]
-			fmt.Println(param.Name)
 
 			// if parameter is a slice
 			reValue := reflect.ValueOf(param.Data).Elem()
@@ -113,13 +112,10 @@ func ScanParameters(w http.ResponseWriter, r *http.Request, parameters ...*ScanP
 // Scan works like fmt.Sscan except for strings, they are directly assigned
 func Scan(str string, data interface{}) (int, error) {
 	// Don't handle plain strings with sscan but directly assign the value
-	t := reflect.TypeOf(data)
-	if t.Kind() == reflect.Ptr && t.Elem().Kind() == reflect.String {
-		strPtr, ok := data.(*string)
-		if ok {
-			(*strPtr) = str
-			return 1, nil
-		}
+	strPtr, ok := data.(*string)
+	if ok {
+		(*strPtr) = str
+		return 1, nil
 	}
 
 	return fmt.Sscan(str, data) // nolint: gosec
