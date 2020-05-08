@@ -24,6 +24,7 @@ const (
 	pkgMaintErrors    = "github.com/pace/bricks/maintenance/errors"
 	pkgOpentracing    = "github.com/opentracing/opentracing-go"
 	pkgOAuth2         = "github.com/pace/bricks/http/oauth2"
+	pkgOIDC           = "github.com/pace/bricks/http/oidc"
 	pkgApiKey         = "github.com/pace/bricks/http/security/apikey"
 )
 
@@ -332,16 +333,14 @@ func (g *Generator) buildRouter(routes []*route, schema *openapi3.Swagger) error
 		startInd++
 		routeStmts = make([]jen.Code, 2, (len(routes)+2)*len(schema.Servers)+2)
 		// Init Authentication
-		var configs []jen.Code
 		var names []string
 		for name := range schema.Components.SecuritySchemes {
 			names = append(names, name)
 		}
 		sort.Strings(names)
 		for _, name := range names {
-			configs = append(configs, jen.Id("cfg"+strings.Title(name)))
+			routeStmts = append(routeStmts, jen.Id("authBackend").Dot("Init"+strings.Title(name)).Call(jen.Id("cfg"+strings.Title(name))))
 		}
-		routeStmts[0] = jen.Id("authBackend").Dot("Init").Call(configs...)
 	} else {
 		routeStmts = make([]jen.Code, 1, (len(routes)+2)*len(schema.Servers)+1)
 

@@ -44,7 +44,10 @@ func (a *testAuthBackend) AuthorizeProfileKey(r *http.Request, w http.ResponseWr
 	return r.Context(), a.profileKeyCode == 200
 }
 
-func (testAuthBackend) Init(cfgOAuth2 *oauth2.Config, cfgProfileKey *apikey.Config) {
+func (testAuthBackend) InitOAuth2(cfgOAuth2 *oauth2.Config) {
+	//NoOp
+}
+func (testAuthBackend) InitProfileKey(cfgProfileKey *apikey.Config) {
 	//NoOp
 }
 

@@ -15,10 +15,11 @@ import (
 
 type AuthorizationBackend interface {
 	AuthorizeOAuth2(r *http.Request, w http.ResponseWriter, scope string) (context.Context, bool)
+	InitOAuth2(cfgOAuth2 *oauth2.Config)
 	CanAuthorizeOAuth2(r *http.Request) bool
 	AuthorizeProfileKey(r *http.Request, w http.ResponseWriter) (context.Context, bool)
+	InitProfileKey(cfgProfileKey *apikey.Config)
 	CanAuthorizeProfileKey(r *http.Request) bool
-	Init(cfgOAuth2 *oauth2.Config, cfgProfileKey *apikey.Config)
 }
 
 var cfgOAuth2 = &oauth2.Config{
@@ -137,8 +138,9 @@ Welcome to the PACE Payment API documentation.
 This API is responsible for managing payment methods for users as well as authorizing payments on behalf of PACE services.
 */
 func Router(service Service, authBackend AuthorizationBackend) *mux.Router {
-	authBackend.Init(cfgOAuth2, cfgProfileKey)
 	router := mux.NewRouter()
+	authBackend.InitOAuth2(cfgOAuth2)
+	authBackend.InitProfileKey(cfgProfileKey)
 	// Subrouter s1 - Path: /pay
 	s1 := router.PathPrefix("/pay").Subrouter()
 	s1.Methods("GET").Path("/beta/test").Handler(GetTestHandler(service, authBackend)).Name("GetTest")
