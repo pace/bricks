@@ -11,6 +11,7 @@ import (
 
 	"github.com/pace/bricks/http/jsonapi/runtime"
 	"github.com/pace/bricks/http/oauth2"
+	oidc "github.com/pace/bricks/http/oidc"
 	"github.com/pace/bricks/http/security/apikey"
 	"github.com/pace/bricks/maintenance/log"
 	"github.com/pace/jsonapi"
@@ -114,7 +115,13 @@ func (s testAuthBackend) AuthorizeProfileKey(r *http.Request, w http.ResponseWri
 	return r.Context(), true
 }
 
-func (s testAuthBackend) Init(cfgOAuth2 *oauth2.Config, cfgOpenID *oauth2.Config, cfgProfileKey *apikey.Config) {
+func (s testAuthBackend) InitOAuth2(cfgOAuth2 *oauth2.Config) {
+}
+
+func (s testAuthBackend) InitOpenID(cfgOpenID *oidc.Config) {
+}
+
+func (s testAuthBackend) InitProfileKey(cfgProfileKey *apikey.Config) {
 }
 
 func TestHandler(t *testing.T) {

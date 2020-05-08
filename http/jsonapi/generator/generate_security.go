@@ -4,6 +4,7 @@
 package generator
 
 import (
+	"encoding/json"
 	"sort"
 	"strings"
 
@@ -28,9 +29,6 @@ func (g *Generator) buildSecurityBackendInterface(schema *openapi3.Swagger) erro
 	securitySchemes := schema.Components.SecuritySchemes
 	// r contains the methods for the security interface
 	r := &jen.Group{}
-	// configs contains the names and types of the needed configs for the init method
-	// (that initializes the backend with the security configs)
-	var configs []jen.Code
 
 	// Because the order of the values while iterating over a map is randomized the generated result can only be tested if the keys are sorted
 	var keys []string
@@ -51,22 +49,24 @@ func (g *Generator) buildSecurityBackendInterface(schema *openapi3.Swagger) erro
 		value := securitySchemes[name]
 		r.Line().Id(authFuncPrefix + strings.Title(name))
 		switch value.Value.Type {
-		case "oauth2", "openIdConnect":
-			configs = append(configs, jen.Id("cfg"+strings.Title(name)).Op("*").Qual(pkgOAuth2, "Config"))
-			r.Params(jen.Id("r").Id("*http.Request"), jen.Id("w").Id("http.ResponseWriter"), jen.Id("scope").String())
+		case "oauth2":
+			r.Params(jen.Id("r").Id("*http.Request"), jen.Id("w").Id("http.ResponseWriter"), jen.Id("scope").String()).Params(jen.Id("context.Context"), jen.Id("bool"))
+			r.Line().Id("Init" + strings.Title(name)).Params(jen.Id("cfg"+strings.Title(name)).Op("*").Qual(pkgOAuth2, "Config"))
+		case "openIdConnect":
+			r.Params(jen.Id("r").Id("*http.Request"), jen.Id("w").Id("http.ResponseWriter"), jen.Id("scope").String()).Params(jen.Id("context.Context"), jen.Id("bool"))
+			r.Line().Id("Init" + strings.Title(name)).Params(jen.Id("cfg"+strings.Title(name)).Op("*").Qual(pkgOIDC, "Config"))
 		case "apiKey":
-			configs = append(configs, jen.Id("cfg"+strings.Title(name)).Op("*").Qual(pkgApiKey, "Config"))
-			r.Params(jen.Id("r").Id("*http.Request"), jen.Id("w").Id("http.ResponseWriter"))
+			r.Params(jen.Id("r").Id("*http.Request"), jen.Id("w").Id("http.ResponseWriter")).Params(jen.Id("context.Context"), jen.Id("bool"))
+			r.Line().Id("Init" + strings.Title(name)).Params(jen.Id("cfg"+strings.Title(name)).Op("*").Qual(pkgApiKey, "Config"))
 		default:
 			return errors.New("security schema type not supported: " + value.Value.Type)
 		}
-		r.Params(jen.Id("context.Context"), jen.Id("bool"))
+
 		if hasDuplicatedSecuritySchema {
 			r.Line().Id(authCanAuthFuncPrefix + strings.Title(name)).Params(jen.Id("r").Id("*http.Request")).Id("bool")
 		}
 	}
 
-	r.Line().Id("Init").Params(configs...)
 	g.goSource.Type().Id(authBackendInterface).Interface(r)
 	return nil
 }
@@ -89,7 +89,7 @@ func (g *Generator) buildSecurityConfigs(schema *openapi3.Swagger) error {
 		instanceVal := jen.Dict{}
 		var pkgName string
 		switch value.Value.Type {
-		case "oauth2", "openIdConnect":
+		case "oauth2":
 			pkgName = pkgOAuth2
 			t := value.Value.Description
 			instanceVal[jen.Id("Description")] = jen.Lit(t)
@@ -106,7 +106,16 @@ func (g *Generator) buildSecurityConfigs(schema *openapi3.Swagger) error {
 					}
 				}
 			}
-
+		case "openIdConnect":
+			pkgName = pkgOIDC
+			instanceVal[jen.Id("Description")] = jen.Lit(value.Value.Description)
+			if e, ok := value.Value.Extensions["openIdConnectUrl"]; ok {
+				var url string
+				if data, ok := e.(json.RawMessage); ok {
+					json.Unmarshal(data, &url)
+					instanceVal[jen.Id("OpenIdConnectURL")] = jen.Lit(url)
+				}
+			}
 		case "apiKey":
 			pkgName = pkgApiKey
 			instanceVal[jen.Id("Description")] = jen.Lit(value.Value.Description)

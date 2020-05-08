@@ -8,6 +8,7 @@ import (
 	opentracing "github.com/opentracing/opentracing-go"
 	runtime "github.com/pace/bricks/http/jsonapi/runtime"
 	oauth2 "github.com/pace/bricks/http/oauth2"
+	oidc "github.com/pace/bricks/http/oidc"
 	apikey "github.com/pace/bricks/http/security/apikey"
 	errors "github.com/pace/bricks/maintenance/errors"
 	metrics "github.com/pace/bricks/maintenance/metric/jsonapi"
@@ -80,12 +81,14 @@ type TransactionRequest struct {
 type Currency string
 type AuthorizationBackend interface {
 	AuthorizeOAuth2(r *http.Request, w http.ResponseWriter, scope string) (context.Context, bool)
+	InitOAuth2(cfgOAuth2 *oauth2.Config)
 	CanAuthorizeOAuth2(r *http.Request) bool
 	AuthorizeOpenID(r *http.Request, w http.ResponseWriter, scope string) (context.Context, bool)
+	InitOpenID(cfgOpenID *oidc.Config)
 	CanAuthorizeOpenID(r *http.Request) bool
 	AuthorizeProfileKey(r *http.Request, w http.ResponseWriter) (context.Context, bool)
+	InitProfileKey(cfgProfileKey *apikey.Config)
 	CanAuthorizeProfileKey(r *http.Request) bool
-	Init(cfgOAuth2 *oauth2.Config, cfgOpenID *oauth2.Config, cfgProfileKey *apikey.Config)
 }
 
 var cfgOAuth2 = &oauth2.Config{
@@ -97,7 +100,10 @@ var cfgOAuth2 = &oauth2.Config{
 	},
 	Description: "",
 }
-var cfgOpenID = &oauth2.Config{Description: ""}
+var cfgOpenID = &oidc.Config{
+	Description:      "",
+	OpenIdConnectURL: "https://example.com/.well-known/openid-configuration",
+}
 var cfgProfileKey = &apikey.Config{
 	Description: "prefix with \"Bearer \"",
 	In:          "header",
@@ -933,8 +939,10 @@ Welcome to the PACE Payment API documentation.
 This API is responsible for managing payment methods for users as well as authorizing payments on behalf of PACE services.
 */
 func Router(service Service, authBackend AuthorizationBackend) *mux.Router {
-	authBackend.Init(cfgOAuth2, cfgOpenID, cfgProfileKey)
 	router := mux.NewRouter()
+	authBackend.InitOAuth2(cfgOAuth2)
+	authBackend.InitOpenID(cfgOpenID)
+	authBackend.InitProfileKey(cfgProfileKey)
 	// Subrouter s1 - Path: /pay
 	s1 := router.PathPrefix("/pay").Subrouter()
 	s1.Methods("DELETE").Path("/beta/payment-methods/{paymentMethodId}/paymentTokens/{paymentTokenId}").Handler(DeletePaymentTokenHandler(service, authBackend)).Name("DeletePaymentToken")

@@ -128,7 +128,7 @@ func (s testAuthBackend) AuthorizeOAuth2(r *http.Request, w http.ResponseWriter,
 	return r.Context(), true
 }
 
-func (s testAuthBackend) Init(cfgOAuth2 *oauth2.Config) {
+func (s testAuthBackend) InitOAuth2(cfgOAuth2 *oauth2.Config) {
 }
 
 func TestHandler(t *testing.T) {

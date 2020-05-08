@@ -246,7 +246,7 @@ type Currency string
 type FuelAmountUnit string
 type AuthorizationBackend interface {
 	AuthorizeOAuth2(r *http.Request, w http.ResponseWriter, scope string) (context.Context, bool)
-	Init(cfgOAuth2 *oauth2.Config)
+	InitOAuth2(cfgOAuth2 *oauth2.Config)
 }
 
 var cfgOAuth2 = &oauth2.Config{
@@ -2838,8 +2838,8 @@ Router implements: PACE POI API
 POI API
 */
 func Router(service Service, authBackend AuthorizationBackend) *mux.Router {
-	authBackend.Init(cfgOAuth2)
 	router := mux.NewRouter()
+	authBackend.InitOAuth2(cfgOAuth2)
 	// Subrouter s1 - Path: /poi
 	s1 := router.PathPrefix("/poi").Subrouter()
 	s1.Methods("GET").Path("/beta/apps/query").Handler(CheckForPaceAppHandler(service, authBackend)).Name("CheckForPaceApp")
