@@ -13,7 +13,7 @@ import (
 	"time"
 
 	"github.com/caarlos0/env"
-	"github.com/rs/zerolog/hlog"
+	"github.com/pace/bricks/maintenance/log/hlog"
 
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
