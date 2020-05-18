@@ -43,7 +43,7 @@ var requestCompleted = func(r *http.Request, status, size int, duration time.Dur
 	hlog.FromRequest(r).Info().
 		Str("method", r.Method).
 		Str("url", r.URL.String()).
-		Int("status", status).
+		Int("status_code", status).
 		Str("host", r.Host).
 		Int("size", size).
 		Dur("duration", duration).

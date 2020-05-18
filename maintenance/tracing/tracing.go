@@ -64,7 +64,7 @@ func (h *traceHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 	ww := mutil.WrapWriter(w)
 	h.next.ServeHTTP(ww, r.WithContext(ctx))
-	handlerSpan.LogFields(olog.Int("bytes", ww.BytesWritten()), olog.Int("status", ww.Status()))
+	handlerSpan.LogFields(olog.Int("bytes", ww.BytesWritten()), olog.Int("status_code", ww.Status()))
 	handlerSpan.Finish()
 }
 
