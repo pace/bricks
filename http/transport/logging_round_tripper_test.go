@@ -6,7 +6,6 @@ package transport
 import (
 	"bytes"
 	"context"
-	"net/http"
 	"net/http/httptest"
 	"net/url"
 	"strings"
@@ -71,14 +70,4 @@ func TestLoggingRoundTripper(t *testing.T) {
 			}
 		}
 	})
-}
-
-type transportWithResponse struct {
-	statusCode int
-}
-
-func (t *transportWithResponse) RoundTrip(req *http.Request) (*http.Response, error) {
-	resp := &http.Response{StatusCode: t.statusCode}
-
-	return resp, nil
 }
