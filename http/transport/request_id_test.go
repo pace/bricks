@@ -22,7 +22,7 @@ func TestRequestIDRoundTripper(t *testing.T) {
 		req := httptest.NewRequest("GET", "/foo", nil)
 		_, err := rt.RoundTrip(req)
 		assert.NoError(t, err)
-		assert.Empty(t, req.Header["Request-ID"])
+		assert.Empty(t, req.Header["Request-Id"])
 	})
 
 	t.Run("with req_id", func(t *testing.T) {

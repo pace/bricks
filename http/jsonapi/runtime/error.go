@@ -100,7 +100,7 @@ func WriteError(w http.ResponseWriter, code int, err error) {
 
 	// update the http status code of the error
 	errList.List.setHTTPStatus(code)
-	reqID := w.Header().Get("Request-ID")
+	reqID := w.Header().Get("Request-Id")
 	errList.List.setID(reqID)
 
 	// render the error to the client
