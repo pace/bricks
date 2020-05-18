@@ -31,6 +31,7 @@ require (
 	github.com/prometheus/client_model v0.0.0-20180712105110-5c3871d89910 // indirect
 	github.com/prometheus/common v0.0.0-20180801064454-c7de2306084e // indirect
 	github.com/prometheus/procfs v0.0.0-20180725123919-05ee40e3a273 // indirect
+	github.com/rs/xid v1.2.1
 	github.com/rs/zerolog v1.17.2
 	github.com/shopspring/decimal v0.0.0-20200105231215-408a2507e114
 	github.com/sony/gobreaker v0.4.1

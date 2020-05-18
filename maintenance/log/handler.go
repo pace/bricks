@@ -4,15 +4,21 @@
 package log
 
 import (
+	"errors"
 	"net"
 	"net/http"
 	"strings"
 	"time"
 
+	"github.com/pace/bricks/maintenance/log/hlog"
 	"github.com/pace/bricks/maintenance/tracing/wire"
-	"github.com/rs/zerolog/hlog"
+	"github.com/rs/xid"
+	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 )
+
+// RequestIDHeader name of the header that can contain a request ID
+const RequestIDHeader = "Request-Id"
 
 // Handler returns a middleware that handles all of the logging aspects of
 // any incoming http request. Optionally several path prefixes like "/health"
@@ -24,7 +30,7 @@ func Handler(silentPrefixes ...string) func(http.Handler) http.Handler {
 		return hlog.NewHandler(log.Logger)(
 			handlerWithSink(silentPrefixes...)(
 				hlog.AccessHandler(requestCompleted)(
-					hlog.RequestIDHandler("req_id", "Request-Id")(next))))
+					RequestIDHandler("req_id", RequestIDHeader)(next))))
 	}
 }
 
@@ -77,4 +83,47 @@ func ProxyAwareRemote(r *http.Request) string {
 		return ""
 	}
 	return host
+}
+
+var noXid = errors.New("no xid")
+
+func RequestIDHandler(fieldKey, headerName string) func(next http.Handler) http.Handler {
+	return func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			ctx := r.Context()
+			var id xid.ID
+			var err error
+
+			// try extract of xid from header
+			reqID := r.Header.Get(headerName)
+			if reqID != "" {
+				id, err = xid.FromString(reqID)
+			} else {
+				err = noXid
+			}
+
+			// try extract of xid context
+			if err != nil {
+				nid, ok := hlog.IDFromCtx(ctx)
+				if !ok {
+					// give up, generate a new xid
+					id = xid.New()
+				}
+				id = nid
+			}
+
+			ctx = hlog.WithValue(ctx, id)
+			r = r.WithContext(ctx)
+
+			// log requests with request id
+			log := zerolog.Ctx(ctx)
+			log.UpdateContext(func(c zerolog.Context) zerolog.Context {
+				return c.Str(fieldKey, id.String())
+			})
+
+			// return the request id as a header to the client
+			w.Header().Set(headerName, id.String())
+			next.ServeHTTP(w, r)
+		})
+	}
 }

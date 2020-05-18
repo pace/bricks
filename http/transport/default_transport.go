@@ -6,5 +6,11 @@ package transport
 // NewDefaultTransportChain returns a transport chain with retry, jaeger and logging support.
 // If not explicitly finalized via `Final` it uses `http.DefaultTransport` as finalizer.
 func NewDefaultTransportChain() *RoundTripperChain {
-	return Chain(NewDefaultRetryRoundTripper(), &JaegerRoundTripper{}, &LoggingRoundTripper{}, &LocaleRoundTripper{})
+	return Chain(
+		NewDefaultRetryRoundTripper(),
+		&JaegerRoundTripper{},
+		&LoggingRoundTripper{},
+		&LocaleRoundTripper{},
+		&RequestIDRoundTripper{},
+	)
 }

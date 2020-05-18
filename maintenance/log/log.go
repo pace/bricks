@@ -13,7 +13,7 @@ import (
 	"time"
 
 	"github.com/caarlos0/env"
-	"github.com/rs/zerolog/hlog"
+	"github.com/pace/bricks/maintenance/log/hlog"
 
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
@@ -91,13 +91,12 @@ func RequestID(r *http.Request) string {
 
 // RequestIDFromContext returns a unique request id or an empty string if there is none
 func RequestIDFromContext(ctx context.Context) string {
-	// create dummy request to get the request id
-	r, err := http.NewRequest("GET", "", nil)
-	if err != nil {
-		panic(err)
+	id, ok := hlog.IDFromCtx(ctx)
+	if ok {
+		return id.String()
 	}
 
-	return RequestID(r.WithContext(ctx))
+	return ""
 }
 
 // Req returns the logger for the passed request

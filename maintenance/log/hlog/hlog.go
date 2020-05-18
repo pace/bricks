@@ -1,4 +1,5 @@
 // Package hlog provides a set of http.Handler helpers for zerolog.
+// ## COPY of zero log helpers to get access to context values ##
 package hlog
 
 import (
@@ -197,4 +198,8 @@ func AccessHandler(f func(r *http.Request, status, size int, duration time.Durat
 			f(r, lw.Status(), lw.BytesWritten(), time.Since(start))
 		})
 	}
+}
+
+func WithValue(ctx context.Context, reqID xid.ID) context.Context {
+	return context.WithValue(ctx, idKey{}, reqID)
 }
