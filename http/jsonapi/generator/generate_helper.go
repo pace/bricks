@@ -46,7 +46,7 @@ func (g *Generator) goType(stmt *jen.Statement, schema *openapi3.Schema, tags ma
 			stmt.String()
 		case "decimal":
 			addValidator(tags, "matches(^(\\d*\\.)?\\d+$)")
-			stmt.Qual(pkgRuntime, "Decimal")
+			stmt.Qual(pkgDecimal, "Decimal")
 		default:
 			stmt.String()
 		}

@@ -1,3 +1,6 @@
+// This file is originating from https://github.com/google/jsonapi/
+// To this file the license conditions of LICENSE apply.
+
 package jsonapi
 
 import (
@@ -10,6 +13,8 @@ import (
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/shopspring/decimal"
 )
 
 const (
@@ -142,7 +147,7 @@ func UnmarshalManyPayload(in io.Reader, t reflect.Type) ([]interface{}, error) {
 func unmarshalNode(data *Node, model reflect.Value, included *map[string]*Node) (err error) {
 	defer func() {
 		if r := recover(); r != nil {
-			err = fmt.Errorf("data is not a jsonapi representation of '%v'", model.Type())
+			err = fmt.Errorf("data is not a jsonapi representation of '%v': %q", model.Type(), r)
 		}
 	}()
 
@@ -253,7 +258,9 @@ func unmarshalNode(data *Node, model reflect.Value, included *map[string]*Node) 
 				break
 			}
 
-			assign(fieldValue, value)
+			if value.IsValid() {
+				assign(fieldValue, value)
+			}
 		} else if annotation == annotationRelation {
 			isSlice := fieldValue.Type().Kind() == reflect.Slice
 
@@ -380,12 +387,25 @@ func assignValue(field, value reflect.Value) {
 }
 
 func unmarshalAttribute(
-	attribute interface{},
+	rawAttribute json.RawMessage,
 	args []string,
 	structField reflect.StructField,
 	fieldValue reflect.Value) (value reflect.Value, err error) {
+
+	var attribute interface{}
+	err = json.Unmarshal(rawAttribute, &attribute)
+	if err != nil {
+		return reflect.Value{}, err
+	}
+
 	value = reflect.ValueOf(attribute)
 	fieldType := structField.Type
+
+	// decimal.Decimal
+	if fieldValue.Type() == reflect.TypeOf(decimal.Decimal{}) {
+		value, err = handleDecimal(rawAttribute)
+		return
+	}
 
 	// Handle field of type []string
 	if fieldValue.Type() == reflect.TypeOf([]string{}) {
@@ -432,6 +452,16 @@ func unmarshalAttribute(
 	}
 
 	return
+}
+
+func handleDecimal(attribute json.RawMessage) (reflect.Value, error) {
+	var dec decimal.Decimal
+	err := json.Unmarshal(attribute, &dec)
+	if err != nil {
+		return reflect.Value{}, fmt.Errorf("can't decode decimal from value %q: %v", string(attribute), err)
+	}
+
+	return reflect.ValueOf(dec), nil
 }
 
 func handleStringSlice(attribute interface{}) (reflect.Value, error) {
@@ -559,6 +589,10 @@ func handlePointer(
 	structField reflect.StructField) (reflect.Value, error) {
 	t := fieldValue.Type()
 	var concreteVal reflect.Value
+
+	if attribute == nil {
+		return reflect.ValueOf(attribute), nil
+	}
 
 	switch cVal := attribute.(type) {
 	case string:

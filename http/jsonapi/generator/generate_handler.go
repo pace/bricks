@@ -26,6 +26,7 @@ const (
 	pkgOAuth2         = "github.com/pace/bricks/http/oauth2"
 	pkgOIDC           = "github.com/pace/bricks/http/oidc"
 	pkgApiKey         = "github.com/pace/bricks/http/security/apikey"
+	pkgDecimal        = "github.com/shopspring/decimal"
 )
 
 const serviceInterface = "Service"

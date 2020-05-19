@@ -1,3 +1,6 @@
+// This file is originating from https://github.com/google/jsonapi/
+// To this file the license conditions of LICENSE apply.
+
 /*
 Package jsonapi provides a serializer and deserializer for jsonapi.org spec payloads.
 

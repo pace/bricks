@@ -1,6 +1,12 @@
+// This file is originating from https://github.com/google/jsonapi/
+// To this file the license conditions of LICENSE apply.
+
 package jsonapi
 
-import "fmt"
+import (
+	"encoding/json"
+	"fmt"
+)
 
 // Payloader is used to encapsulate the One and Many payload types
 type Payloader interface {
@@ -35,13 +41,13 @@ func (p *ManyPayload) clearIncluded() {
 
 // Node is used to represent a generic JSON API Resource
 type Node struct {
-	Type          string                 `json:"type"`
-	ID            string                 `json:"id,omitempty"`
-	ClientID      string                 `json:"client-id,omitempty"`
-	Attributes    map[string]interface{} `json:"attributes,omitempty"`
-	Relationships map[string]interface{} `json:"relationships,omitempty"`
-	Links         *Links                 `json:"links,omitempty"`
-	Meta          *Meta                  `json:"meta,omitempty"`
+	Type          string                     `json:"type"`
+	ID            string                     `json:"id,omitempty"`
+	ClientID      string                     `json:"client-id,omitempty"`
+	Attributes    map[string]json.RawMessage `json:"attributes,omitempty"`
+	Relationships map[string]interface{}     `json:"relationships,omitempty"`
+	Links         *Links                     `json:"links,omitempty"`
+	Meta          *Meta                      `json:"meta,omitempty"`
 }
 
 // RelationshipOneNode is used to represent a generic has one JSON API relation

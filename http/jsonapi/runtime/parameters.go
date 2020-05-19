@@ -8,6 +8,8 @@ import (
 	"net/http"
 	"reflect"
 	"strings"
+
+	"github.com/shopspring/decimal"
 )
 
 // ScanIn help to avoid missuse using iota for the possible values
@@ -109,12 +111,22 @@ func ScanParameters(w http.ResponseWriter, r *http.Request, parameters ...*ScanP
 	return true
 }
 
-// Scan works like fmt.Sscan except for strings, they are directly assigned
+// Scan works like fmt.Sscan except for strings and decimals, they are directly assigned
 func Scan(str string, data interface{}) (int, error) {
+	// handle decimal
+	if d, ok := data.(*decimal.Decimal); ok {
+		nd, err := decimal.NewFromString(str)
+		if err != nil {
+			return 0, err
+		}
+		*d = nd
+		return 1, nil
+	}
+
 	// Don't handle plain strings with sscan but directly assign the value
 	strPtr, ok := data.(*string)
 	if ok {
-		(*strPtr) = str
+		*strPtr = str
 		return 1, nil
 	}
 
