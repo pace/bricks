@@ -313,6 +313,9 @@ func visitModelNode(model interface{}, included *map[string]*Node,
 					continue
 				}
 
+				if !decimal.MarshalJSONWithoutQuotes {
+					return nil, fmt.Errorf("decimal.MarshalJSONWithoutQuotes needs to be turned on to export decimals as numbers")
+				}
 				node.Attributes[args[1]] = json.RawMessage(d.String())
 			} else if fieldValue.Type() == reflect.TypeOf(time.Time{}) {
 				t := fieldValue.Interface().(time.Time)
