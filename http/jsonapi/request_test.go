@@ -19,18 +19,15 @@ import (
 func TestUnmarshall_attrStringSlice(t *testing.T) {
 	out := &Book{}
 	tags := []string{"fiction", "sale"}
-	dec1 := "10.63"
-	dec2 := 10.63
-	dec3 := 10
 	data := map[string]interface{}{
 		"data": map[string]interface{}{
 			"type": "books",
 			"id":   "1",
-			"attributes": map[string]interface{}{
-				"tags": tags,
-				"dec1": dec1,
-				"dec2": dec2,
-				"dec3": dec3,
+			"attributes": map[string]json.RawMessage{
+				"tags": json.RawMessage(`["fiction", "sale"]`),
+				"dec1": json.RawMessage(`"9.9999999999999999999"`),
+				"dec2": json.RawMessage("9.9999999999999999999"),
+				"dec3": json.RawMessage("10"),
 			},
 		},
 	}
@@ -50,14 +47,14 @@ func TestUnmarshall_attrStringSlice(t *testing.T) {
 	sort.Strings(tags)
 	sort.Strings(out.Tags)
 
-	if out.Decimal1.String() != "10.63" {
-		t.Fatalf("Expected json dec1 data to be %#v got: %#v", dec1, out.Decimal1.String())
+	if out.Decimal1.String() != "9.9999999999999999999" {
+		t.Fatalf("Expected json dec1 data to be %#v got: %#v", "9.9999999999999999999", out.Decimal1.String())
 	}
-	if out.Decimal2.String() != "10.63" {
-		t.Fatalf("Expected json dec2 data to be %#v got: %#v", dec2, out.Decimal2.String())
+	if out.Decimal2.String() != "9.9999999999999999999" {
+		t.Fatalf("Expected json dec2 data to be %#v got: %#v", "9.9999999999999999999", out.Decimal2.String())
 	}
 	if out.Decimal3.String() != "10" {
-		t.Fatalf("Expected json dec2 data to be %#v got: %#v", dec3, out.Decimal3.String())
+		t.Fatalf("Expected json dec2 data to be %#v got: %#v", 10, out.Decimal3.String())
 	}
 
 	for i, tag := range tags {
@@ -69,11 +66,11 @@ func TestUnmarshall_attrStringSlice(t *testing.T) {
 
 func TestUnmarshalToStructWithPointerAttr(t *testing.T) {
 	out := new(WithPointer)
-	in := map[string]interface{}{
-		"name":      "The name",
-		"is-active": true,
-		"int-val":   8,
-		"float-val": 1.1,
+	in := map[string]json.RawMessage{
+		"name":      json.RawMessage(`"The name"`),
+		"is-active": json.RawMessage(`true`),
+		"int-val":   json.RawMessage(`8`),
+		"float-val": json.RawMessage(`1.1`),
 	}
 	if err := UnmarshalPayload(sampleWithPointerPayload(in), out); err != nil {
 		t.Fatal(err)
@@ -106,7 +103,7 @@ func TestUnmarshalPayload_ptrsAllNil(t *testing.T) {
 
 func TestUnmarshalPayloadWithPointerID(t *testing.T) {
 	out := new(WithPointer)
-	attrs := map[string]interface{}{}
+	attrs := map[string]json.RawMessage{}
 
 	if err := UnmarshalPayload(sampleWithPointerPayload(attrs), out); err != nil {
 		t.Fatalf("Error unmarshalling to Foo")
@@ -123,9 +120,9 @@ func TestUnmarshalPayloadWithPointerID(t *testing.T) {
 
 func TestUnmarshalPayloadWithPointerAttr_AbsentVal(t *testing.T) {
 	out := new(WithPointer)
-	in := map[string]interface{}{
-		"name":      "The name",
-		"is-active": true,
+	in := map[string]json.RawMessage{
+		"name":      json.RawMessage(`"The name"`),
+		"is-active": json.RawMessage(`true`),
 	}
 
 	if err := UnmarshalPayload(sampleWithPointerPayload(in), out); err != nil {
@@ -145,8 +142,8 @@ func TestUnmarshalPayloadWithPointerAttr_AbsentVal(t *testing.T) {
 
 func TestUnmarshalToStructWithPointerAttr_BadType_bool(t *testing.T) {
 	out := new(WithPointer)
-	in := map[string]interface{}{
-		"name": true, // This is the wrong type.
+	in := map[string]json.RawMessage{
+		"name": json.RawMessage(`true`), // This is the wrong type.
 	}
 	expectedErrorMessage := "jsonapi: Can't unmarshal true (bool) to struct field `Name`, which is a pointer to `string`"
 
@@ -165,8 +162,8 @@ func TestUnmarshalToStructWithPointerAttr_BadType_bool(t *testing.T) {
 
 func TestUnmarshalToStructWithPointerAttr_BadType_MapPtr(t *testing.T) {
 	out := new(WithPointer)
-	in := map[string]interface{}{
-		"name": &map[string]interface{}{"a": 5}, // This is the wrong type.
+	in := map[string]json.RawMessage{
+		"name": json.RawMessage(`{"a": 5}`), // This is the wrong type.
 	}
 	expectedErrorMessage := "jsonapi: Can't unmarshal map[a:5] (map) to struct field `Name`, which is a pointer to `string`"
 
@@ -185,9 +182,8 @@ func TestUnmarshalToStructWithPointerAttr_BadType_MapPtr(t *testing.T) {
 
 func TestUnmarshalToStructWithPointerAttr_BadType_Struct(t *testing.T) {
 	out := new(WithPointer)
-	type FooStruct struct{ A int }
-	in := map[string]interface{}{
-		"name": FooStruct{A: 5}, // This is the wrong type.
+	in := map[string]json.RawMessage{
+		"name": json.RawMessage(`{"A": 5}`), // This is the wrong type.
 	}
 	expectedErrorMessage := "jsonapi: Can't unmarshal map[A:5] (map) to struct field `Name`, which is a pointer to `string`"
 
@@ -207,8 +203,8 @@ func TestUnmarshalToStructWithPointerAttr_BadType_Struct(t *testing.T) {
 func TestUnmarshalToStructWithPointerAttr_BadType_IntSlice(t *testing.T) {
 	out := new(WithPointer)
 	type FooStruct struct{ A, B int }
-	in := map[string]interface{}{
-		"name": []int{4, 5}, // This is the wrong type.
+	in := map[string]json.RawMessage{
+		"name": json.RawMessage(`[4, 5]`), // This is the wrong type.
 	}
 	expectedErrorMessage := "jsonapi: Can't unmarshal [4 5] (slice) to struct field `Name`, which is a pointer to `string`"
 
@@ -280,18 +276,18 @@ func TestUnmarshalInvalidJSON(t *testing.T) {
 func TestUnmarshalInvalidJSON_BadType(t *testing.T) {
 	var badTypeTests = []struct {
 		Field    string
-		BadValue interface{}
+		BadValue json.RawMessage
 		Error    error
 	}{ // The `Field` values here correspond to the `ModelBadTypes` jsonapi fields.
-		{Field: "string_field", BadValue: 0, Error: ErrUnknownFieldNumberType},                                                                   // Expected string.
-		{Field: "float_field", BadValue: "A string.", Error: errors.New("got value \"A string.\" expected type float64: Invalid type provided")}, // Expected float64.
-		{Field: "time_field", BadValue: "A string.", Error: ErrInvalidTime},                                                                      // Expected int64.
-		{Field: "time_ptr_field", BadValue: "A string.", Error: ErrInvalidTime},                                                                  // Expected *time / int64.
+		{Field: "string_field", BadValue: json.RawMessage(`0`), Error: ErrUnknownFieldNumberType},                                                                   // Expected string.
+		{Field: "float_field", BadValue: json.RawMessage(`"A string."`), Error: errors.New("got value \"A string.\" expected type float64: Invalid type provided")}, // Expected float64.
+		{Field: "time_field", BadValue: json.RawMessage(`"A string."`), Error: ErrInvalidTime},                                                                      // Expected int64.
+		{Field: "time_ptr_field", BadValue: json.RawMessage(`"A string."`), Error: ErrInvalidTime},                                                                  // Expected *time / int64.
 	}
 	for i, test := range badTypeTests {
 		t.Run(fmt.Sprintf("Test_%s", test.Field), func(t *testing.T) {
 			out := new(ModelBadTypes)
-			in := map[string]interface{}{}
+			in := map[string]json.RawMessage{}
 			in[test.Field] = test.BadValue
 			expectedErrorMessage := test.Error.Error()
 
@@ -358,8 +354,8 @@ func TestUnmarshalParsesISO8601(t *testing.T) {
 	payload := &OnePayload{
 		Data: &Node{
 			Type: "timestamps",
-			Attributes: map[string]interface{}{
-				"timestamp": "2016-08-17T08:27:12Z",
+			Attributes: map[string]json.RawMessage{
+				"timestamp": json.RawMessage(`"2016-08-17T08:27:12Z"`),
 			},
 		},
 	}
@@ -384,8 +380,8 @@ func TestUnmarshalParsesISO8601TimePointer(t *testing.T) {
 	payload := &OnePayload{
 		Data: &Node{
 			Type: "timestamps",
-			Attributes: map[string]interface{}{
-				"next": "2016-08-17T08:27:12Z",
+			Attributes: map[string]json.RawMessage{
+				"next": json.RawMessage(`"2016-08-17T08:27:12Z"`),
 			},
 		},
 	}
@@ -410,8 +406,8 @@ func TestUnmarshalInvalidISO8601(t *testing.T) {
 	payload := &OnePayload{
 		Data: &Node{
 			Type: "timestamps",
-			Attributes: map[string]interface{}{
-				"timestamp": "17 Aug 16 08:027 MST",
+			Attributes: map[string]json.RawMessage{
+				"timestamp": json.RawMessage(`"17 Aug 16 08:027 MST"`),
 			},
 		},
 	}
@@ -805,13 +801,12 @@ func TestUnmarshalCustomTypeAttributes(t *testing.T) {
 		"data": map[string]interface{}{
 			"type": "customtypes",
 			"id":   "1",
-			"attributes": map[string]interface{}{
-				"int":        5,
-				"intptr":     5,
-				"intptrnull": nil,
-
-				"float":  1.5,
-				"string": "Test",
+			"attributes": map[string]json.RawMessage{
+				"int":        json.RawMessage("5"),
+				"intptr":     json.RawMessage("5"),
+				"intptrnull": json.RawMessage("null"),
+				"float":      json.RawMessage("1.5"),
+				"string":     json.RawMessage(`"Test"`),
 			},
 		},
 	}
@@ -849,13 +844,12 @@ func TestUnmarshalCustomTypeAttributes_ErrInvalidType(t *testing.T) {
 		"data": map[string]interface{}{
 			"type": "customtypes",
 			"id":   "1",
-			"attributes": map[string]interface{}{
-				"int":        "bad",
-				"intptr":     5,
-				"intptrnull": nil,
-
-				"float":  1.5,
-				"string": "Test",
+			"attributes": map[string]json.RawMessage{
+				"int":        json.RawMessage(`"bad"`),
+				"intptr":     json.RawMessage(`5`),
+				"intptrnull": json.RawMessage(`null`),
+				"float":      json.RawMessage(`1.5`),
+				"string":     json.RawMessage(`"Test"`),
 			},
 		},
 	}
@@ -882,9 +876,9 @@ func samplePayloadWithoutIncluded() map[string]interface{} {
 		"data": map[string]interface{}{
 			"type": "posts",
 			"id":   "1",
-			"attributes": map[string]interface{}{
-				"body":  "Hello",
-				"title": "World",
+			"attributes": map[string]json.RawMessage{
+				"body":  json.RawMessage(`"Hello"`),
+				"title": json.RawMessage(`"World"`),
 			},
 			"relationships": map[string]interface{}{
 				"comments": map[string]interface{}{
@@ -914,27 +908,27 @@ func samplePayload() io.Reader {
 	payload := &OnePayload{
 		Data: &Node{
 			Type: "blogs",
-			Attributes: map[string]interface{}{
-				"title":      "New blog",
-				"created_at": 1436216820,
-				"view_count": 1000,
+			Attributes: map[string]json.RawMessage{
+				"title":      json.RawMessage(`"New blog"`),
+				"created_at": json.RawMessage(`1436216820`),
+				"view_count": json.RawMessage(`1000`),
 			},
 			Relationships: map[string]interface{}{
 				"posts": &RelationshipManyNode{
 					Data: []*Node{
 						{
 							Type: "posts",
-							Attributes: map[string]interface{}{
-								"title": "Foo",
-								"body":  "Bar",
+							Attributes: map[string]json.RawMessage{
+								"title": json.RawMessage(`"Foo"`),
+								"body":  json.RawMessage(`"Bar"`),
 							},
 							ClientID: "1",
 						},
 						{
 							Type: "posts",
-							Attributes: map[string]interface{}{
-								"title": "X",
-								"body":  "Y",
+							Attributes: map[string]json.RawMessage{
+								"title": json.RawMessage(`"X"`),
+								"body":  json.RawMessage(`"Y"`),
 							},
 							ClientID: "2",
 						},
@@ -943,9 +937,9 @@ func samplePayload() io.Reader {
 				"current_post": &RelationshipOneNode{
 					Data: &Node{
 						Type: "posts",
-						Attributes: map[string]interface{}{
-							"title": "Bas",
-							"body":  "Fuubar",
+						Attributes: map[string]json.RawMessage{
+							"title": json.RawMessage(`"Bas"`),
+							"body":  json.RawMessage(`"Fuubar"`),
 						},
 						ClientID: "3",
 						Relationships: map[string]interface{}{
@@ -953,15 +947,15 @@ func samplePayload() io.Reader {
 								Data: []*Node{
 									{
 										Type: "comments",
-										Attributes: map[string]interface{}{
-											"body": "Great post!",
+										Attributes: map[string]json.RawMessage{
+											"body": json.RawMessage(`"Great post!"`),
 										},
 										ClientID: "4",
 									},
 									{
 										Type: "comments",
-										Attributes: map[string]interface{}{
-											"body": "Needs some work!",
+										Attributes: map[string]json.RawMessage{
+											"body": json.RawMessage(`"Needs some work!"`),
 										},
 										ClientID: "5",
 									},
@@ -985,9 +979,9 @@ func samplePayloadWithID() io.Reader {
 		Data: &Node{
 			ID:   "2",
 			Type: "blogs",
-			Attributes: map[string]interface{}{
-				"title":      "New blog",
-				"view_count": 1000,
+			Attributes: map[string]json.RawMessage{
+				"title":      json.RawMessage(`"New blog"`),
+				"view_count": json.RawMessage(`1000`),
 			},
 		},
 	}
@@ -998,7 +992,7 @@ func samplePayloadWithID() io.Reader {
 	return out
 }
 
-func samplePayloadWithBadTypes(m map[string]interface{}) io.Reader {
+func samplePayloadWithBadTypes(m map[string]json.RawMessage) io.Reader {
 	payload := &OnePayload{
 		Data: &Node{
 			ID:         "2",
@@ -1013,7 +1007,7 @@ func samplePayloadWithBadTypes(m map[string]interface{}) io.Reader {
 	return out
 }
 
-func sampleWithPointerPayload(m map[string]interface{}) io.Reader {
+func sampleWithPointerPayload(m map[string]json.RawMessage) io.Reader {
 	payload := &OnePayload{
 		Data: &Node{
 			ID:         "2",

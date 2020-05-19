@@ -258,7 +258,9 @@ func unmarshalNode(data *Node, model reflect.Value, included *map[string]*Node) 
 				break
 			}
 
-			assign(fieldValue, value)
+			if value.IsValid() {
+				assign(fieldValue, value)
+			}
 		} else if annotation == annotationRelation {
 			isSlice := fieldValue.Type().Kind() == reflect.Slice
 
@@ -385,16 +387,23 @@ func assignValue(field, value reflect.Value) {
 }
 
 func unmarshalAttribute(
-	attribute interface{},
+	rawAttribute json.RawMessage,
 	args []string,
 	structField reflect.StructField,
 	fieldValue reflect.Value) (value reflect.Value, err error) {
+
+	var attribute interface{}
+	err = json.Unmarshal(rawAttribute, &attribute)
+	if err != nil {
+		return reflect.Value{}, err
+	}
+
 	value = reflect.ValueOf(attribute)
 	fieldType := structField.Type
 
 	// decimal.Decimal
 	if fieldValue.Type() == reflect.TypeOf(decimal.Decimal{}) {
-		value, err = handleDecimal(attribute)
+		value, err = handleDecimal(rawAttribute)
 		return
 	}
 
@@ -445,43 +454,11 @@ func unmarshalAttribute(
 	return
 }
 
-func handleDecimal(attribute interface{}) (reflect.Value, error) {
+func handleDecimal(attribute json.RawMessage) (reflect.Value, error) {
 	var dec decimal.Decimal
-	var err error
-
-	switch v := attribute.(type) {
-	case string:
-		dec, err = decimal.NewFromString(v)
-		if err != nil {
-			return reflect.Value{}, err
-		}
-	case int:
-		dec = decimal.NewFromInt(int64(v))
-	case int8:
-		dec = decimal.NewFromInt(int64(v))
-	case int16:
-		dec = decimal.NewFromInt(int64(v))
-	case int32:
-		dec = decimal.NewFromInt(int64(v))
-	case int64:
-		dec = decimal.NewFromInt(int64(v))
-	case uint:
-		dec = decimal.NewFromInt(int64(v))
-	case uint8:
-		dec = decimal.NewFromInt(int64(v))
-	case uint16:
-		dec = decimal.NewFromInt(int64(v))
-	case uint32:
-		dec = decimal.NewFromInt(int64(v))
-	case uint64:
-		dec = decimal.NewFromInt(int64(v))
-	case float32:
-		dec = decimal.NewFromFloat32(v)
-	case float64:
-		dec = decimal.NewFromFloat(v)
-	default:
-		return reflect.Value{}, fmt.Errorf("can't decode decimal from value: %#v (%s)",
-			attribute, reflect.TypeOf(attribute))
+	err := json.Unmarshal(attribute, &dec)
+	if err != nil {
+		return reflect.Value{}, fmt.Errorf("can't decode decimal from value %q: %v", string(attribute), err)
 	}
 
 	return reflect.ValueOf(dec), nil
@@ -612,6 +589,10 @@ func handlePointer(
 	structField reflect.StructField) (reflect.Value, error) {
 	t := fieldValue.Type()
 	var concreteVal reflect.Value
+
+	if attribute == nil {
+		return reflect.ValueOf(attribute), nil
+	}
 
 	switch cVal := attribute.(type) {
 	case string:

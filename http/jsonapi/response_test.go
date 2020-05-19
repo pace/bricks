@@ -17,7 +17,11 @@ import (
 )
 
 func TestMarshalPayload(t *testing.T) {
-	book := &Book{ID: 1, Decimal1: decimal.NewFromFloat(10.63)}
+	d, e := decimal.NewFromString("9.9999999999999999999")
+	if e != nil {
+		panic(e)
+	}
+	book := &Book{ID: 1, Decimal1: d}
 	books := []*Book{book, {ID: 2}}
 	var jsonData map[string]interface{}
 
@@ -25,7 +29,7 @@ func TestMarshalPayload(t *testing.T) {
 	out1 := bytes.NewBuffer(nil)
 	MarshalPayload(out1, book)
 
-	if strings.Contains(out1.String(), `"10.63"`) {
+	if strings.Contains(out1.String(), `"9.9999999999999999999"`) {
 		t.Fatalf("decimals should be encoded as number, got: %q", out1.String())
 	}
 
@@ -449,7 +453,7 @@ func TestSupportsAttributes(t *testing.T) {
 		t.Fatalf("Expected attributes")
 	}
 
-	if data.Attributes["title"] != "Title 1" {
+	if !bytes.Equal(data.Attributes["title"], json.RawMessage(`"Title 1"`)) {
 		t.Fatalf("Attributes hash not populated using tags correctly")
 	}
 }
@@ -504,7 +508,7 @@ func TestMarshalISO8601Time(t *testing.T) {
 		t.Fatalf("Expected attributes")
 	}
 
-	if data.Attributes["timestamp"] != "2016-08-17T08:27:12Z" {
+	if !bytes.Equal(data.Attributes["timestamp"], json.RawMessage(`"2016-08-17T08:27:12Z"`)) {
 		t.Fatal("Timestamp was not serialised into ISO8601 correctly")
 	}
 }
@@ -532,8 +536,8 @@ func TestMarshalISO8601TimePointer(t *testing.T) {
 		t.Fatalf("Expected attributes")
 	}
 
-	if data.Attributes["next"] != "2016-08-17T08:27:12Z" {
-		t.Fatal("Next was not serialised into ISO8601 correctly")
+	if !bytes.Equal(data.Attributes["next"], json.RawMessage(`"2016-08-17T08:27:12Z"`)) {
+		t.Fatalf("Next was not serialised into ISO8601 correctly got: %q", string(data.Attributes["next"]))
 	}
 }
 

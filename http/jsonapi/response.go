@@ -302,8 +302,9 @@ func visitModelNode(model interface{}, included *map[string]*Node,
 			}
 
 			if node.Attributes == nil {
-				node.Attributes = make(map[string]interface{})
+				node.Attributes = make(map[string]json.RawMessage)
 			}
+			var err error
 
 			if fieldValue.Type() == reflect.TypeOf(decimal.Decimal{}) {
 				d := fieldValue.Interface().(decimal.Decimal)
@@ -321,9 +322,12 @@ func visitModelNode(model interface{}, included *map[string]*Node,
 				}
 
 				if iso8601 {
-					node.Attributes[args[1]] = t.UTC().Format(iso8601TimeFormat)
+					node.Attributes[args[1]], err = json.Marshal(t.UTC().Format(iso8601TimeFormat))
 				} else {
-					node.Attributes[args[1]] = t.Unix()
+					node.Attributes[args[1]], err = json.Marshal(t.Unix())
+				}
+				if err != nil {
+					return nil, err
 				}
 			} else if fieldValue.Type() == reflect.TypeOf(new(time.Time)) {
 				// A time pointer may be nil
@@ -332,7 +336,7 @@ func visitModelNode(model interface{}, included *map[string]*Node,
 						continue
 					}
 
-					node.Attributes[args[1]] = nil
+					node.Attributes[args[1]] = []byte("null")
 				} else {
 					tm := fieldValue.Interface().(*time.Time)
 
@@ -341,9 +345,12 @@ func visitModelNode(model interface{}, included *map[string]*Node,
 					}
 
 					if iso8601 {
-						node.Attributes[args[1]] = tm.UTC().Format(iso8601TimeFormat)
+						node.Attributes[args[1]], err = json.Marshal(tm.UTC().Format(iso8601TimeFormat))
 					} else {
-						node.Attributes[args[1]] = tm.Unix()
+						node.Attributes[args[1]], err = json.Marshal(tm.Unix())
+					}
+					if err != nil {
+						return nil, err
 					}
 				}
 			} else {
@@ -357,9 +364,12 @@ func visitModelNode(model interface{}, included *map[string]*Node,
 
 				strAttr, ok := fieldValue.Interface().(string)
 				if ok {
-					node.Attributes[args[1]] = strAttr
+					node.Attributes[args[1]], err = json.Marshal(strAttr)
 				} else {
-					node.Attributes[args[1]] = fieldValue.Interface()
+					node.Attributes[args[1]], err = json.Marshal(fieldValue.Interface())
+				}
+				if err != nil {
+					return nil, err
 				}
 			}
 		} else if annotation == annotationRelation {
