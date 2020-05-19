@@ -12,6 +12,8 @@ import (
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/shopspring/decimal"
 )
 
 var (
@@ -303,7 +305,15 @@ func visitModelNode(model interface{}, included *map[string]*Node,
 				node.Attributes = make(map[string]interface{})
 			}
 
-			if fieldValue.Type() == reflect.TypeOf(time.Time{}) {
+			if fieldValue.Type() == reflect.TypeOf(decimal.Decimal{}) {
+				d := fieldValue.Interface().(decimal.Decimal)
+
+				if d.IsZero() {
+					continue
+				}
+
+				node.Attributes[args[1]] = json.RawMessage(d.String())
+			} else if fieldValue.Type() == reflect.TypeOf(time.Time{}) {
 				t := fieldValue.Interface().(time.Time)
 
 				if t.IsZero() {

@@ -13,6 +13,8 @@ import (
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/shopspring/decimal"
 )
 
 const (
@@ -390,12 +392,11 @@ func unmarshalAttribute(
 	value = reflect.ValueOf(attribute)
 	fieldType := structField.Type
 
-	// Handle field of type json.RawMessage
-	// if fieldValue.Type() == reflect.TypeOf(decimal.Decimal{}) {
-	// 	panic(attribute)
-	// 	value, err = handleDecimal(attribute)
-	// 	return
-	// }
+	// decimal.Decimal
+	if fieldValue.Type() == reflect.TypeOf(decimal.Decimal{}) {
+		value, err = handleDecimal(attribute)
+		return
+	}
 
 	// Handle field of type []string
 	if fieldValue.Type() == reflect.TypeOf([]string{}) {
@@ -445,7 +446,45 @@ func unmarshalAttribute(
 }
 
 func handleDecimal(attribute interface{}) (reflect.Value, error) {
-	return reflect.ValueOf(attribute), nil
+	var dec decimal.Decimal
+	var err error
+
+	switch v := attribute.(type) {
+	case string:
+		dec, err = decimal.NewFromString(v)
+		if err != nil {
+			return reflect.Value{}, err
+		}
+	case int:
+		dec = decimal.NewFromInt(int64(v))
+	case int8:
+		dec = decimal.NewFromInt(int64(v))
+	case int16:
+		dec = decimal.NewFromInt(int64(v))
+	case int32:
+		dec = decimal.NewFromInt(int64(v))
+	case int64:
+		dec = decimal.NewFromInt(int64(v))
+	case uint:
+		dec = decimal.NewFromInt(int64(v))
+	case uint8:
+		dec = decimal.NewFromInt(int64(v))
+	case uint16:
+		dec = decimal.NewFromInt(int64(v))
+	case uint32:
+		dec = decimal.NewFromInt(int64(v))
+	case uint64:
+		dec = decimal.NewFromInt(int64(v))
+	case float32:
+		dec = decimal.NewFromFloat32(v)
+	case float64:
+		dec = decimal.NewFromFloat(v)
+	default:
+		return reflect.Value{}, fmt.Errorf("can't decode decimal from value: %#v (%s)",
+			attribute, reflect.TypeOf(attribute))
+	}
+
+	return reflect.ValueOf(dec), nil
 }
 
 func handleStringSlice(attribute interface{}) (reflect.Value, error) {

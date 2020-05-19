@@ -6,6 +6,8 @@ package jsonapi
 import (
 	"fmt"
 	"time"
+
+	"github.com/shopspring/decimal"
 )
 
 type BadModel struct {
@@ -67,9 +69,10 @@ type Book struct {
 	Description *string `jsonapi:"attr,description"`
 	Pages       *uint   `jsonapi:"attr,pages,omitempty"`
 	PublishedAt time.Time
-	Tags        []string `jsonapi:"attr,tags"`
-	// Decimal1    decimal.Decimal `jsonapi:"attr,dec1"`
-	// Decimal2    decimal.Decimal `jsonapi:"attr,dec2"`
+	Tags        []string        `jsonapi:"attr,tags"`
+	Decimal1    decimal.Decimal `jsonapi:"attr,dec1,omitempty"`
+	Decimal2    decimal.Decimal `jsonapi:"attr,dec2,omitempty"`
+	Decimal3    decimal.Decimal `jsonapi:"attr,dec3,omitempty"`
 }
 
 type Blog struct {

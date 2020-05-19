@@ -19,16 +19,18 @@ import (
 func TestUnmarshall_attrStringSlice(t *testing.T) {
 	out := &Book{}
 	tags := []string{"fiction", "sale"}
-	// dec1 := "10.63"
-	// dec2 := 10.63
+	dec1 := "10.63"
+	dec2 := 10.63
+	dec3 := 10
 	data := map[string]interface{}{
 		"data": map[string]interface{}{
 			"type": "books",
 			"id":   "1",
 			"attributes": map[string]interface{}{
 				"tags": tags,
-				// "dec1": dec1,
-				// "dec2": dec2,
+				"dec1": dec1,
+				"dec2": dec2,
+				"dec3": dec3,
 			},
 		},
 	}
@@ -48,12 +50,15 @@ func TestUnmarshall_attrStringSlice(t *testing.T) {
 	sort.Strings(tags)
 	sort.Strings(out.Tags)
 
-	// if out.Decimal1.String() == "10.63" {
-	// 	t.Fatalf("Expected json dec1 data to be %#v got: %#v", dec1, out.Decimal1)
-	// }
-	// if out.Decimal2.String() == "10.63" {
-	// 	t.Fatalf("Expected json dec2 data to be %#v got: %#v", dec2, out.Decimal2)
-	// }
+	if out.Decimal1.String() != "10.63" {
+		t.Fatalf("Expected json dec1 data to be %#v got: %#v", dec1, out.Decimal1.String())
+	}
+	if out.Decimal2.String() != "10.63" {
+		t.Fatalf("Expected json dec2 data to be %#v got: %#v", dec2, out.Decimal2.String())
+	}
+	if out.Decimal3.String() != "10" {
+		t.Fatalf("Expected json dec2 data to be %#v got: %#v", dec3, out.Decimal3.String())
+	}
 
 	for i, tag := range tags {
 		if e, a := tag, out.Tags[i]; e != a {

@@ -6,14 +6,18 @@ package jsonapi
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"reflect"
 	"sort"
+	"strings"
 	"testing"
 	"time"
+
+	"github.com/shopspring/decimal"
 )
 
 func TestMarshalPayload(t *testing.T) {
-	book := &Book{ID: 1}
+	book := &Book{ID: 1, Decimal1: decimal.NewFromFloat(10.63)}
 	books := []*Book{book, {ID: 2}}
 	var jsonData map[string]interface{}
 
@@ -21,12 +25,17 @@ func TestMarshalPayload(t *testing.T) {
 	out1 := bytes.NewBuffer(nil)
 	MarshalPayload(out1, book)
 
+	if strings.Contains(out1.String(), `"10.63"`) {
+		t.Fatalf("decimals should be encoded as number, got: %q", out1.String())
+	}
+
 	if err := json.Unmarshal(out1.Bytes(), &jsonData); err != nil {
 		t.Fatal(err)
 	}
 	if _, ok := jsonData["data"].(map[string]interface{}); !ok {
 		t.Fatalf("data key did not contain an Hash/Dict/Map")
 	}
+	fmt.Println(string(out1.Bytes()))
 
 	// Many
 	out2 := bytes.NewBuffer(nil)
