@@ -9,8 +9,8 @@ import (
 	"net/http"
 	"reflect"
 
+	"github.com/pace/bricks/http/jsonapi"
 	"github.com/pace/bricks/maintenance/log"
-	"github.com/pace/jsonapi"
 )
 
 // Unmarshal processes the request content and fills passed data struct with the

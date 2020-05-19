@@ -1,3 +1,6 @@
+// This file is originating from https://github.com/google/jsonapi/
+// To this file the license conditions of LICENSE apply.
+
 package jsonapi
 
 import "fmt"

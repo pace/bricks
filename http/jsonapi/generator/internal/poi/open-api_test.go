@@ -6,11 +6,11 @@ import (
 	errors1 "errors"
 	mux "github.com/gorilla/mux"
 	opentracing "github.com/opentracing/opentracing-go"
+	jsonapi "github.com/pace/bricks/http/jsonapi"
 	runtime "github.com/pace/bricks/http/jsonapi/runtime"
 	oauth2 "github.com/pace/bricks/http/oauth2"
 	errors "github.com/pace/bricks/maintenance/errors"
 	metrics "github.com/pace/bricks/maintenance/metric/jsonapi"
-	jsonapi "github.com/pace/jsonapi"
 	"net/http"
 	"time"
 )

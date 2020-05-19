@@ -1,3 +1,6 @@
+// This file is originating from https://github.com/google/jsonapi/
+// To this file the license conditions of LICENSE apply.
+
 package jsonapi
 
 import (
@@ -142,7 +145,7 @@ func UnmarshalManyPayload(in io.Reader, t reflect.Type) ([]interface{}, error) {
 func unmarshalNode(data *Node, model reflect.Value, included *map[string]*Node) (err error) {
 	defer func() {
 		if r := recover(); r != nil {
-			err = fmt.Errorf("data is not a jsonapi representation of '%v'", model.Type())
+			err = fmt.Errorf("data is not a jsonapi representation of '%v': %q", model.Type(), r)
 		}
 	}()
 
@@ -387,6 +390,13 @@ func unmarshalAttribute(
 	value = reflect.ValueOf(attribute)
 	fieldType := structField.Type
 
+	// Handle field of type json.RawMessage
+	// if fieldValue.Type() == reflect.TypeOf(decimal.Decimal{}) {
+	// 	panic(attribute)
+	// 	value, err = handleDecimal(attribute)
+	// 	return
+	// }
+
 	// Handle field of type []string
 	if fieldValue.Type() == reflect.TypeOf([]string{}) {
 		value, err = handleStringSlice(attribute)
@@ -432,6 +442,10 @@ func unmarshalAttribute(
 	}
 
 	return
+}
+
+func handleDecimal(attribute interface{}) (reflect.Value, error) {
+	return reflect.ValueOf(attribute), nil
 }
 
 func handleStringSlice(attribute interface{}) (reflect.Value, error) {

@@ -24,7 +24,6 @@ require (
 	github.com/matttproud/golang_protobuf_extensions v1.0.1 // indirect
 	github.com/minio/minio-go/v6 v6.0.44
 	github.com/opentracing/opentracing-go v1.0.2
-	github.com/pace/jsonapi v0.0.0-20200309105139-adb319112d8c
 	github.com/pkg/errors v0.8.1
 	github.com/pmezard/go-difflib v1.0.0
 	github.com/prometheus/client_golang v0.8.0
