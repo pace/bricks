@@ -558,26 +558,26 @@
                               "type": "object",
                               "properties": {
                                 "amount": {
-                                  "type": "string",
+                                  "type": "number",
                                   "format": "decimal",
-                                  "example": "11.07"
+                                  "example": 11.07
                                 },
                                 "rate": {
-                                  "type": "string",
+                                  "type": "number",
                                   "format": "decimal",
-                                  "example": "0.19"
+                                  "example": 0.19
                                 }
                               }
                             },
                             "priceWithoutVAT": {
-                              "type": "string",
+                              "type": "number",
                               "format": "decimal",
-                              "example": "58.27"
+                              "example": 58.27
                             },
                             "priceIncludingVAT": {
-                              "type": "string",
+                              "type": "number",
                               "format": "decimal",
-                              "example": "69.34"
+                              "example": 69.34
                             },
                             "currency": {
                               "$ref": "#/components/schemas/currency"
@@ -742,9 +742,9 @@
                     }
                   },
                   "priceIncludingVAT": {
-                    "type": "string",
+                    "type": "number",
                     "format": "decimal",
-                    "example": "69.34"
+                    "example": 69.34
                   },
                   "currency": {
                     "$ref": "#/components/schemas/currency"
@@ -1224,6 +1224,3 @@
     }
   }
 }
-
-
-

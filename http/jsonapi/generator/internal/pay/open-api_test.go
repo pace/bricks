@@ -74,8 +74,8 @@ type TransactionRequest struct {
 	ID                string                    `jsonapi:"primary,transaction,omitempty" valid:"uuid,optional"` // Transaction ID
 	Currency          Currency                  `json:"currency,omitempty" jsonapi:"attr,currency,omitempty" valid:"optional"`
 	Fueling           TransactionRequestFueling `json:"fueling,omitempty" jsonapi:"attr,fueling,omitempty" valid:"optional"`
-	PaymentToken      string                    `json:"paymentToken,omitempty" jsonapi:"attr,paymentToken,omitempty" valid:"required"`                                  // Example: "f106ac99-213c-4cf7-8c1b-1e841516026b"
-	PriceIncludingVAT decimal.Decimal           `json:"priceIncludingVAT,omitempty" jsonapi:"attr,priceIncludingVAT,omitempty" valid:"optional,matches(^(\d*\.)?\d+$)"` // Example: "69.34"
+	PaymentToken      string                    `json:"paymentToken,omitempty" jsonapi:"attr,paymentToken,omitempty" valid:"required"`           // Example: "f106ac99-213c-4cf7-8c1b-1e841516026b"
+	PriceIncludingVAT decimal.Decimal           `json:"priceIncludingVAT,omitempty" jsonapi:"attr,priceIncludingVAT,omitempty" valid:"optional"` // Example: "69.34"
 }
 
 // Currency ...
@@ -825,15 +825,15 @@ type ProcessPaymentCreated struct {
 	VAT               ProcessPaymentCreatedVAT     `json:"VAT,omitempty" jsonapi:"attr,VAT,omitempty" valid:"optional"`
 	Currency          Currency                     `json:"currency,omitempty" jsonapi:"attr,currency,omitempty" valid:"optional"`
 	Fueling           ProcessPaymentCreatedFueling `json:"fueling,omitempty" jsonapi:"attr,fueling,omitempty" valid:"optional"`
-	PaymentToken      string                       `json:"paymentToken,omitempty" jsonapi:"attr,paymentToken,omitempty" valid:"optional"`                                  // Example: "f106ac99-213c-4cf7-8c1b-1e841516026b"
-	PriceIncludingVAT decimal.Decimal              `json:"priceIncludingVAT,omitempty" jsonapi:"attr,priceIncludingVAT,omitempty" valid:"optional,matches(^(\d*\.)?\d+$)"` // Example: "69.34"
-	PriceWithoutVAT   decimal.Decimal              `json:"priceWithoutVAT,omitempty" jsonapi:"attr,priceWithoutVAT,omitempty" valid:"optional,matches(^(\d*\.)?\d+$)"`     // Example: "58.27"
+	PaymentToken      string                       `json:"paymentToken,omitempty" jsonapi:"attr,paymentToken,omitempty" valid:"optional"`           // Example: "f106ac99-213c-4cf7-8c1b-1e841516026b"
+	PriceIncludingVAT decimal.Decimal              `json:"priceIncludingVAT,omitempty" jsonapi:"attr,priceIncludingVAT,omitempty" valid:"optional"` // Example: "69.34"
+	PriceWithoutVAT   decimal.Decimal              `json:"priceWithoutVAT,omitempty" jsonapi:"attr,priceWithoutVAT,omitempty" valid:"optional"`     // Example: "58.27"
 }
 
 // ProcessPaymentCreatedVAT ...
 type ProcessPaymentCreatedVAT struct {
-	Amount decimal.Decimal `json:"amount,omitempty" jsonapi:"attr,amount,omitempty" valid:"optional,matches(^(\d*\.)?\d+$)"` // Example: "11.07"
-	Rate   decimal.Decimal `json:"rate,omitempty" jsonapi:"attr,rate,omitempty" valid:"optional,matches(^(\d*\.)?\d+$)"`     // Example: "0.19"
+	Amount decimal.Decimal `json:"amount,omitempty" jsonapi:"attr,amount,omitempty" valid:"optional"` // Example: "11.07"
+	Rate   decimal.Decimal `json:"rate,omitempty" jsonapi:"attr,rate,omitempty" valid:"optional"`     // Example: "0.19"
 }
 
 // ProcessPaymentCreatedFueling ...
