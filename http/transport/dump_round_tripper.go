@@ -39,7 +39,7 @@ const (
 func NewDumpRoundTripperEnv() *DumpRoundTripper {
 	// parse config
 	var cfg struct {
-		Options []DumpRoundTripperOption `env:"HTTP_TRANSPORT_DUMP" envSeparator:"," envDefault:""`
+		Options []string `env:"HTTP_TRANSPORT_DUMP" envSeparator:"," envDefault:""`
 	}
 	err := env.Parse(&cfg)
 	if err != nil {
@@ -51,7 +51,7 @@ func NewDumpRoundTripperEnv() *DumpRoundTripper {
 }
 
 // NewDumpRoundTripper return the roundtripper with configured options
-func NewDumpRoundTripper(options ...DumpRoundTripperOption) *DumpRoundTripper {
+func NewDumpRoundTripper(options ...string) *DumpRoundTripper {
 	rt := &DumpRoundTripper{}
 	for _, option := range options {
 		switch option {
