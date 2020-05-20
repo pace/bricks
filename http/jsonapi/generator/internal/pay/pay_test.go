@@ -67,6 +67,10 @@ func (s *testService) ProcessPayment(ctx context.Context, w ProcessPaymentRespon
 		s.t.Errorf(`expected queryDecimal "123.456", got %q`, r.ParamPathDecimal)
 	}
 
+	if r.Content.PriceIncludingVAT.String() != "69.34" {
+		s.t.Errorf(`expected priceIncludingVAT "69.34", got %q`, r.Content.PriceIncludingVAT)
+	}
+
 	w.Created(&ProcessPaymentCreated{
 		ID: "42",
 		VAT: ProcessPaymentCreatedVAT{
@@ -189,7 +193,7 @@ func TestHandlerDecimal(t *testing.T) {
 	 				"mileage": 66435
 				},
 				"currency": "EUR",
-				"priceIncludingVAT": "69.34"
+				"priceIncludingVAT": 69.34
 			}
 		}
 	}`))

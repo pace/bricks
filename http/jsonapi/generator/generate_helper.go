@@ -59,6 +59,8 @@ func (g *Generator) goType(stmt *jen.Statement, schema *openapi3.Schema, tags ma
 		}
 	case "number":
 		switch schema.Format {
+		case "decimal":
+			stmt.Qual(pkgDecimal, "Decimal")
 		case "float":
 			stmt.Float32()
 		case "double":
