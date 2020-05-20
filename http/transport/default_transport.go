@@ -7,6 +7,7 @@ package transport
 // If not explicitly finalized via `Final` it uses `http.DefaultTransport` as finalizer.
 func NewDefaultTransportChain() *RoundTripperChain {
 	return Chain(
+		NewDumpRoundTripperEnv(),
 		NewDefaultRetryRoundTripper(),
 		&JaegerRoundTripper{},
 		&LoggingRoundTripper{},
