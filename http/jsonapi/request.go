@@ -407,12 +407,6 @@ func unmarshalAttribute(
 		return
 	}
 
-	// Handle field of type []string
-	if fieldValue.Type() == reflect.TypeOf([]string{}) {
-		value, err = handleStringSlice(attribute)
-		return
-	}
-
 	// Handle field of type time.Time
 	if fieldValue.Type() == reflect.TypeOf(time.Time{}) ||
 		fieldValue.Type() == reflect.TypeOf(new(time.Time)) {
@@ -426,10 +420,10 @@ func unmarshalAttribute(
 		return
 	}
 
-	// Handle field containing slice of structs
-	if fieldValue.Type().Kind() == reflect.Slice &&
-		reflect.TypeOf(fieldValue.Interface()).Elem().Kind() == reflect.Struct {
-		value, err = handleStructSlice(attribute, fieldValue)
+	// Handle field containing slices
+	if fieldValue.Type().Kind() == reflect.Slice {
+		value = reflect.New(fieldValue.Type())
+		err = json.Unmarshal(rawAttribute, value.Interface())
 		return
 	}
 
@@ -462,16 +456,6 @@ func handleDecimal(attribute json.RawMessage) (reflect.Value, error) {
 	}
 
 	return reflect.ValueOf(dec), nil
-}
-
-func handleStringSlice(attribute interface{}) (reflect.Value, error) {
-	v := reflect.ValueOf(attribute)
-	values := make([]string, v.Len())
-	for i := 0; i < v.Len(); i++ {
-		values[i] = v.Index(i).Interface().(string)
-	}
-
-	return reflect.ValueOf(values), nil
 }
 
 func handleTime(attribute interface{}, args []string, fieldValue reflect.Value) (reflect.Value, error) {
@@ -648,24 +632,4 @@ func handleStruct(
 	}
 
 	return model, nil
-}
-
-func handleStructSlice(
-	attribute interface{},
-	fieldValue reflect.Value) (reflect.Value, error) {
-	models := reflect.New(fieldValue.Type()).Elem()
-	dataMap := reflect.ValueOf(attribute).Interface().([]interface{})
-	for _, data := range dataMap {
-		model := reflect.New(fieldValue.Type().Elem()).Elem()
-
-		value, err := handleStruct(data, model)
-
-		if err != nil {
-			continue
-		}
-
-		models = reflect.Append(models, reflect.Indirect(value))
-	}
-
-	return models, nil
 }
