@@ -92,24 +92,23 @@ func RequestIDHandler(fieldKey, headerName string) func(next http.Handler) http.
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			ctx := r.Context()
 			var id xid.ID
-			var err error
 
 			// try extract of xid from header
 			reqID := r.Header.Get(headerName)
 			if reqID != "" {
-				id, err = xid.FromString(reqID)
-			} else {
-				err = noXid
+				id, _ = xid.FromString(reqID)
 			}
 
 			// try extract of xid context
-			if err != nil {
-				nid, ok := hlog.IDFromCtx(ctx)
-				if !ok {
-					// give up, generate a new xid
-					id = xid.New()
+			if id.Compare(xid.NilID()) == 0 {
+				if nid, ok := hlog.IDFromCtx(ctx); ok {
+					id = nid
 				}
-				id = nid
+			}
+
+			// give up, generate a new xid
+			if id.Compare(xid.NilID()) == 0 {
+				id = xid.New()
 			}
 
 			ctx = hlog.WithValue(ctx, id)
