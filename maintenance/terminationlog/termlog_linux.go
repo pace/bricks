@@ -16,7 +16,7 @@ import (
 const termLog = "/dev/termination-log"
 
 func init() {
-	file, err := os.Open(termLog)
+	file, err := os.OpenFile(termLog, O_RDWR, 0666)
 
 	if err == nil {
 		logFile = file
