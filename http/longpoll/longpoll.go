@@ -54,12 +54,12 @@ func (c Config) LongPollUntil(ctx context.Context, d time.Duration, fn LongPollF
 		}
 	}
 
-	ctx, cancel := context.WithDeadline(ctx, until)
+	fnCtx, cancel := context.WithDeadline(ctx, until)
 	defer cancel()
 
 loop:
 	for {
-		ok, err = fn(ctx)
+		ok, err = fn(fnCtx)
 		if err != nil {
 			return
 		}
