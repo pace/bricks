@@ -28,8 +28,8 @@ var Default = Config{
 	MaxWaitTime: time.Second * 60,
 }
 
-// LongPollUntil executes the given function fn until duration d is passed or context is canceled
-func LongPollUntil(ctx context.Context, d time.Duration, fn LongPollFunc) (ok bool, err error) {
+// Until executes the given function fn until duration d is passed or context is canceled
+func Until(ctx context.Context, d time.Duration, fn LongPollFunc) (ok bool, err error) {
 	return Default.LongPollUntil(ctx, d, fn)
 }
 

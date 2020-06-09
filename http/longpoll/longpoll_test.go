@@ -11,7 +11,7 @@ import (
 
 func TestLongPollUntilNoTimeout(t *testing.T) {
 	called := 0
-	ok, err := LongPollUntil(context.Background(), 0, func() (bool, error) {
+	ok, err := Until(context.Background(), 0, func() (bool, error) {
 		called++
 		return false, nil
 	})
@@ -20,7 +20,7 @@ func TestLongPollUntilNoTimeout(t *testing.T) {
 	assert.Equal(t, 1, called)
 
 	called = 0
-	ok, err = LongPollUntil(context.Background(), 0, func() (bool, error) {
+	ok, err = Until(context.Background(), 0, func() (bool, error) {
 		called++
 		return true, nil
 	})
@@ -31,7 +31,7 @@ func TestLongPollUntilNoTimeout(t *testing.T) {
 
 func TestLongPollUntilErr(t *testing.T) {
 	called := 0
-	ok, err := LongPollUntil(context.Background(), 0, func() (bool, error) {
+	ok, err := Until(context.Background(), 0, func() (bool, error) {
 		called++
 		return false, errors.New("Foo")
 	})
@@ -42,7 +42,7 @@ func TestLongPollUntilErr(t *testing.T) {
 
 func TestLongPollUntilTimeout(t *testing.T) {
 	called := 0
-	ok, err := LongPollUntil(context.Background(), time.Second*1, func() (bool, error) {
+	ok, err := Until(context.Background(), time.Second*1, func() (bool, error) {
 		called++
 		return false, nil
 	})
@@ -55,7 +55,7 @@ func TestLongPollUntilTimeoutWithContext(t *testing.T) {
 	called := 0
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
 	defer cancel()
-	ok, err := LongPollUntil(ctx, time.Second*2, func() (bool, error) {
+	ok, err := Until(ctx, time.Second*2, func() (bool, error) {
 		called++
 		return false, nil
 	})
