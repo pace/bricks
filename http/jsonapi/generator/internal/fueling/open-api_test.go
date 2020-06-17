@@ -21,9 +21,9 @@ type ApproachingRequest struct {
 
 // ApproachingResponse ...
 type ApproachingResponse struct {
-	ID             string           `jsonapi:"primary,approaching,omitempty" valid:"uuid,optional"`                                                                                                                                        // Approaching ID
-	CarFuelType    string           `json:"carFuelType,omitempty" jsonapi:"attr,carFuelType,omitempty" valid:"optional,in(e85|ron91|ron95_e5|ron95_e10|ron98|ron98_e5|ron100|diesel|diesel_gtl|diesel_b7|lpg|cng|h2|Truck Diesel|AdBlue)"` // Fuel type of the car
-	ExpectedAmount float32          `json:"expectedAmount,omitempty" jsonapi:"attr,expectedAmount,omitempty" valid:"optional"`                                                                                                             // Expected amount in liters for refuel
+	ID             string           `jsonapi:"primary,approaching,omitempty" valid:"uuid,optional"`                                                                                                                                         // Approaching ID
+	CarFuelType    string           `json:"carFuelType,omitempty" jsonapi:"attr,carFuelType,omitempty" valid:"optional,in(e85|ron91|ron95_e5|ron95_e10|ron98|ron98_e5|ron100|diesel|diesel_gtl|diesel_b7|lpg|cng|h2|Truck Diesel|AdBlue|)"` // Fuel type of the car
+	ExpectedAmount float32          `json:"expectedAmount,omitempty" jsonapi:"attr,expectedAmount,omitempty" valid:"optional"`                                                                                                              // Expected amount in liters for refuel
 	GasStation     *GasStation      `json:"gasStation,omitempty" jsonapi:"relation,gasStation,omitempty" valid:"optional"`
 	PaymentMethods []*PaymentMethod `json:"paymentMethods,omitempty" jsonapi:"relation,paymentMethods,omitempty" valid:"optional"`
 }
@@ -32,9 +32,9 @@ type ApproachingResponse struct {
 type FuelPrice struct {
 	ID          string   `jsonapi:"primary,fuelPrice,omitempty" valid:"optional"` // Fuel Price ID
 	Currency    Currency `json:"currency,omitempty" jsonapi:"attr,currency,omitempty" valid:"optional"`
-	FuelType    string   `json:"fuelType,omitempty" jsonapi:"attr,fuelType,omitempty" valid:"optional,in(e85|ron91|ron95_e5|ron95_e10|ron98|ron98_e5|ron100|diesel|diesel_gtl|diesel_b7|lpg|cng|h2|Truck Diesel|AdBlue)"` // Example: "ron95_e10"
-	Price       float32  `json:"price,omitempty" jsonapi:"attr,price,omitempty" valid:"optional"`                                                                                                                         // Price in liters
-	ProductName string   `json:"productName,omitempty" jsonapi:"attr,productName,omitempty" valid:"optional"`                                                                                                             // Example: "Super E10"
+	FuelType    string   `json:"fuelType,omitempty" jsonapi:"attr,fuelType,omitempty" valid:"optional,in(e85|ron91|ron95_e5|ron95_e10|ron98|ron98_e5|ron100|diesel|diesel_gtl|diesel_b7|lpg|cng|h2|Truck Diesel|AdBlue|)"` // Example: "ron95_e10"
+	Price       float32  `json:"price,omitempty" jsonapi:"attr,price,omitempty" valid:"optional"`                                                                                                                          // Price in liters
+	ProductName string   `json:"productName,omitempty" jsonapi:"attr,productName,omitempty" valid:"optional"`                                                                                                              // Example: "Super E10"
 }
 
 // FuelPriceResponse ...
@@ -467,7 +467,7 @@ type ApproachingAtTheForecourtRequest struct {
 	Request             *http.Request      `valid:"-"`
 	Content             ApproachingRequest `valid:"-"`
 	ParamGasStationID   string             `valid:"required,uuid"`
-	ParamAcceptLanguage string             `valid:"optional,in(de|en)"`
+	ParamAcceptLanguage string             `valid:"optional,in(de|en|)"`
 }
 
 /*
