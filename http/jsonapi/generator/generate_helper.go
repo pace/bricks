@@ -85,6 +85,13 @@ func (g *Generator) goType(stmt *jen.Statement, schema *openapi3.Schema, tags ma
 		for i := 0; i < len(schema.Enum); i++ {
 			strs[i] = fmt.Sprintf("%v", schema.Enum[i])
 		}
+
+		// in case the field/value is optional
+		// an empty value needs to be added to the enum validator
+		if hasValidator(tags, "optional") {
+			strs = append(strs, "")
+		}
+
 		addValidator(tags, fmt.Sprintf("in(%v)", strings.Join(strs, "|")))
 	}
 
@@ -109,6 +116,21 @@ func addValidator(tags map[string]string, validator string) {
 		validator = tags["valid"] + "," + validator
 	}
 	tags["valid"] = validator
+}
+
+func hasValidator(tags map[string]string, validator string) bool {
+	validatorCfg, ok := tags["valid"]
+	if !ok {
+		return false
+	}
+	validators := strings.Split(validatorCfg, ",")
+	for _, v := range validators {
+		if strings.HasPrefix(v, validator) {
+			return true
+		}
+	}
+
+	return false
 }
 
 var idRegex = regexp.MustCompile("Id$")

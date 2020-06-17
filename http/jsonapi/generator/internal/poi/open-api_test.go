@@ -29,13 +29,13 @@ type CommonCountryID string
 // CommonGeoJSONPoint https://tools.ietf.org/html/rfc7946#section-3.1.2
 type CommonGeoJSONPoint struct {
 	Coordinates CommonLatLong `json:"coordinates,omitempty" jsonapi:"attr,coordinates,omitempty" valid:"optional"`
-	Type        string        `json:"type,omitempty" jsonapi:"attr,type,omitempty" valid:"optional,in(Point)"` // Example: "Point"
+	Type        string        `json:"type,omitempty" jsonapi:"attr,type,omitempty" valid:"optional,in(Point|)"` // Example: "Point"
 }
 
 // CommonGeoJSONPolygon https://tools.ietf.org/html/rfc7946#section-3.1.6; used as [bounding box](https://tools.ietf.org/html/rfc7946#section-5)
 type CommonGeoJSONPolygon struct {
 	Coordinates []CommonLatLong `json:"coordinates,omitempty" jsonapi:"attr,coordinates,omitempty" valid:"optional"` // Example: "[[49.012 8.424] [49.1 9.34] [49.012 8.424]]"
-	Type        string          `json:"type,omitempty" jsonapi:"attr,type,omitempty" valid:"optional,in(Polygon)"`   // Example: "Polygon"
+	Type        string          `json:"type,omitempty" jsonapi:"attr,type,omitempty" valid:"optional,in(Polygon|)"`  // Example: "Polygon"
 }
 
 // CommonLatLong https://tools.ietf.org/html/rfc7946
@@ -85,9 +85,9 @@ type FieldName string
 type FuelPrice struct {
 	ID          string   `jsonapi:"primary,fuelPrice,omitempty" valid:"uuid,optional"` // Fuel Price ID
 	Currency    Currency `json:"currency,omitempty" jsonapi:"attr,currency,omitempty" valid:"optional"`
-	FuelType    string   `json:"fuelType,omitempty" jsonapi:"attr,fuelType,omitempty" valid:"optional,in(e85|ron91|ron95_e5|ron95_e10|ron98|ron98_e5|ron100|diesel|diesel_gtl|diesel_b7|lpg|lng|cng|h2|Truck Diesel|AdBlue)"` // Example: "ron95_e10"
-	Price       float32  `json:"price,omitempty" jsonapi:"attr,price,omitempty" valid:"optional"`                                                                                                                             // per liter
-	ProductName string   `json:"productName,omitempty" jsonapi:"attr,productName,omitempty" valid:"optional"`                                                                                                                 // Example: "Super E10"
+	FuelType    string   `json:"fuelType,omitempty" jsonapi:"attr,fuelType,omitempty" valid:"optional,in(e85|ron91|ron95_e5|ron95_e10|ron98|ron98_e5|ron100|diesel|diesel_gtl|diesel_b7|lpg|lng|cng|h2|Truck Diesel|AdBlue|)"` // Example: "ron95_e10"
+	Price       float32  `json:"price,omitempty" jsonapi:"attr,price,omitempty" valid:"optional"`                                                                                                                              // per liter
+	ProductName string   `json:"productName,omitempty" jsonapi:"attr,productName,omitempty" valid:"optional"`                                                                                                                  // Example: "Super E10"
 }
 
 // FuelPriceResponse ...
@@ -110,8 +110,8 @@ type GasStation struct {
 	Latitude          float32             `json:"latitude,omitempty" jsonapi:"attr,latitude,omitempty" valid:"optional"`   // Example: "49.013"
 	Longitude         float32             `json:"longitude,omitempty" jsonapi:"attr,longitude,omitempty" valid:"optional"` // Example: "8.425"
 	OpeningHours      CommonOpeningHours  `json:"openingHours,omitempty" jsonapi:"attr,openingHours,omitempty" valid:"optional"`
-	PaymentMethods    []string            `json:"paymentMethods,omitempty" jsonapi:"attr,paymentMethods,omitempty" valid:"optional,in(sepa)"` // Example: "[sepa]"
-	StationName       string              `json:"stationName,omitempty" jsonapi:"attr,stationName,omitempty" valid:"optional"`                // Example: "PACE Station"
+	PaymentMethods    []string            `json:"paymentMethods,omitempty" jsonapi:"attr,paymentMethods,omitempty" valid:"optional,in(sepa|)"` // Example: "[sepa]"
+	StationName       string              `json:"stationName,omitempty" jsonapi:"attr,stationName,omitempty" valid:"optional"`                 // Example: "PACE Station"
 	FuelPrices        []*FuelPrice        `json:"fuelPrices,omitempty" jsonapi:"relation,fuelPrices,omitempty" valid:"optional"`
 	LocationBasedApps []*LocationBasedApp `json:"locationBasedApps,omitempty" jsonapi:"relation,locationBasedApps,omitempty" valid:"optional"`
 }
@@ -129,7 +129,7 @@ type LocationBasedAppMeta struct {
 type LocationBasedApp struct {
 	ID                   string                `jsonapi:"primary,locationBasedApp,omitempty" valid:"uuid,optional"`                                   // Location-based app ID
 	AndroidInstantAppURL string                `json:"androidInstantAppUrl,omitempty" jsonapi:"attr,androidInstantAppUrl,omitempty" valid:"optional"` // Android instant app URL
-	AppType              string                `json:"appType,omitempty" jsonapi:"attr,appType,omitempty" valid:"optional,in(fueling)"`
+	AppType              string                `json:"appType,omitempty" jsonapi:"attr,appType,omitempty" valid:"optional,in(fueling|)"`
 	LogoURL              string                `json:"logoUrl,omitempty" jsonapi:"attr,logoUrl,omitempty" valid:"optional"`   // Logo URL
 	PwaURL               string                `json:"pwaUrl,omitempty" jsonapi:"attr,pwaUrl,omitempty" valid:"optional"`     // Progressive web application URL
 	Subtitle             string                `json:"subtitle,omitempty" jsonapi:"attr,subtitle,omitempty" valid:"optional"` // Example: "Zahle bargeldlos mit der PACE Fueling App"
@@ -1853,7 +1853,7 @@ type GetAppsRequest struct {
 	Request            *http.Request `valid:"-"`
 	ParamPageNumber    int64         `valid:"optional"`
 	ParamPageSize      int64         `valid:"optional"`
-	ParamFilterAppType string        `valid:"optional,in(fueling)"`
+	ParamFilterAppType string        `valid:"optional,in(fueling|)"`
 	ParamFilterQuery   string        `valid:"optional"`
 }
 
