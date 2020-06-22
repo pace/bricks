@@ -3,6 +3,7 @@ package queue
 import (
 	"context"
 	"fmt"
+	"sync"
 	"time"
 
 	"github.com/adjust/rmq/v2"
@@ -12,15 +13,13 @@ import (
 
 var (
 	rmqConnection     rmq.Connection
-	queueHealthLimits map[string]int
+	queueHealthLimits sync.Map
 )
 
 func init() {
 	rmqConnection = rmq.OpenConnectionWithRedisClient("default", redis.Client())
 	gatherMetrics(rmqConnection)
 	servicehealthcheck.RegisterHealthCheck("rmq", &HealthCheck{})
-
-	queueHealthLimits = map[string]int{}
 }
 
 // NewQueue creates a new rmq.Queue and initializes health checks for this queue
@@ -30,10 +29,10 @@ func init() {
 // be updated
 func NewQueue(name string, healthyLimit int) rmq.Queue {
 	queue := rmqConnection.OpenQueue(name)
-	if _, ok := queueHealthLimits[name]; ok {
+	if _, ok := queueHealthLimits.Load(name); ok {
 		return queue
 	}
-	queueHealthLimits[name] = healthyLimit
+	queueHealthLimits.Store(name, healthyLimit)
 	return queue
 }
 
@@ -52,13 +51,16 @@ func (h *HealthCheck) HealthCheck(ctx context.Context) servicehealthcheck.Health
 	}
 
 	stats := rmqConnection.CollectStats(rmqConnection.GetOpenQueues())
-	for k, healthLimit := range queueHealthLimits {
-		stat := stats.QueueStats[k]
+	queueHealthLimits.Range(func(k, v interface{}) bool {
+		name := k.(string)
+		healthLimit := v.(int)
+		stat := stats.QueueStats[name]
 		if stat.ReadyCount > healthLimit {
-			h.state.SetErrorState(fmt.Errorf("Queue '%s' exceeded safe health limit of '%d'", k, healthLimit))
-			return h.state.GetState()
+			h.state.SetErrorState(fmt.Errorf("Queue '%s' exceeded safe health limit of '%d'", name, healthLimit))
+			return false
 		}
-	}
-	h.state.SetHealthy()
+		h.state.SetHealthy()
+		return true
+	})
 	return h.state.GetState()
 }
