@@ -39,12 +39,15 @@ func NewQueue(name string, healthyLimit int) rmq.Queue {
 
 type HealthCheck struct {
 	state servicehealthcheck.ConnectionState
+	// IgnoreInterval is a switch used for testing, just to allow multiple
+	// functional queries of HealthCheck in rapid bursts
+	IgnoreInterval bool
 }
 
 // HealthCheck checks if the queues are healthy, i.e. whether the number of
 // items accumulated is below the healthyLimit defined when opening the queue
 func (h *HealthCheck) HealthCheck(ctx context.Context) servicehealthcheck.HealthCheckResult {
-	if time.Since(h.state.LastChecked()) <= cfg.HealthCheckResultTTL {
+	if !h.IgnoreInterval && time.Since(h.state.LastChecked()) <= cfg.HealthCheckResultTTL {
 		return h.state.GetState()
 	}
 

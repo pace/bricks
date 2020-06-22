@@ -29,10 +29,10 @@ func gatherMetrics(connection rmq.Connection) {
 				"queue": queue,
 			}
 			gauges.readyGauge.With(labels).Set(float64(queueStats.ReadyCount))
-			gauges.rejectedGauge.With(labels).Set(float64(queueStats.ReadyCount))
-			gauges.connectionGauge.With(labels).Set(float64(queueStats.ReadyCount))
-			gauges.consumerGauge.With(labels).Set(float64(queueStats.ReadyCount))
-			gauges.unackedGauge.With(labels).Set(float64(queueStats.ReadyCount))
+			gauges.rejectedGauge.With(labels).Set(float64(queueStats.RejectedCount))
+			gauges.connectionGauge.With(labels).Set(float64(queueStats.ConnectionCount()))
+			gauges.consumerGauge.With(labels).Set(float64(queueStats.ConsumerCount()))
+			gauges.unackedGauge.With(labels).Set(float64(queueStats.UnackedCount()))
 		}
 		time.Sleep(cfg.MetricsRefreshInterval)
 	})
