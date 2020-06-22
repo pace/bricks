@@ -1,3 +1,8 @@
+# github.com/adjust/rmq/v2 v2.0.0-20200523123200-98c5e969f342
+## explicit
+github.com/adjust/rmq/v2
+# github.com/adjust/uniuri v0.0.0-20130923163420-498743145e60
+github.com/adjust/uniuri
 # github.com/asaskevich/govalidator v0.0.0-20180720115003-f9ffefc3facf
 ## explicit
 github.com/asaskevich/govalidator
@@ -179,7 +184,7 @@ golang.org/x/net/http2
 golang.org/x/net/http2/hpack
 golang.org/x/net/idna
 golang.org/x/net/publicsuffix
-# golang.org/x/sys v0.0.0-20191010194322-b09406accb47
+# golang.org/x/sys v0.0.0-20191120155948-bd437916bb0e
 golang.org/x/sys/cpu
 golang.org/x/sys/unix
 # golang.org/x/text v0.3.2
