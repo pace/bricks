@@ -1,0 +1,14 @@
+sudo: false
+language: go
+go:
+  - "1.13"
+  - tip
+
+matrix:
+  allow_failures:
+    - go: tip
+
+install: go build .
+
+services:
+  - redis-server
