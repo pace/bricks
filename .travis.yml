@@ -10,4 +10,5 @@ go:
 - 1.14.x
 
 script:
+- make test
 - docker-compose run testserver make ci
