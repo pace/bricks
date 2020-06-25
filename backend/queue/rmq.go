@@ -16,7 +16,10 @@ var (
 	queueHealthLimits sync.Map
 )
 
-func init() {
+func initDefault() {
+	if rmqConnection != nil {
+		return
+	}
 	rmqConnection = rmq.OpenConnectionWithRedisClient("default", redis.Client())
 	gatherMetrics(rmqConnection)
 	servicehealthcheck.RegisterHealthCheck("rmq", &HealthCheck{})
@@ -28,6 +31,7 @@ func init() {
 // If the queue has already been opened, it will just be returned. Limits will not
 // be updated
 func NewQueue(name string, healthyLimit int) rmq.Queue {
+	initDefault()
 	queue := rmqConnection.OpenQueue(name)
 	if _, ok := queueHealthLimits.Load(name); ok {
 		return queue
