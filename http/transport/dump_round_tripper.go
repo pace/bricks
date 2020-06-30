@@ -111,7 +111,9 @@ func (l *DumpRoundTripper) RoundTrip(req *http.Request) (*http.Response, error) 
 	}
 
 	resp, err := l.Transport().RoundTrip(req)
-
+	if err != nil {
+		return resp, err
+	}
 	// response logging
 	if l.DumpResponse || l.DumpResponseHEX {
 		respDump, err := httputil.DumpResponse(resp, l.DumpBody)
