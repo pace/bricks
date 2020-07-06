@@ -14,12 +14,18 @@ import (
 var (
 	rmqConnection     rmq.Connection
 	queueHealthLimits sync.Map
+
+	initMutex sync.Mutex
 )
 
 func initDefault() {
+	initMutex.Lock()
+	defer initMutex.Unlock()
+
 	if rmqConnection != nil {
 		return
 	}
+
 	rmqConnection = rmq.OpenConnectionWithRedisClient("default", redis.Client())
 	gatherMetrics(rmqConnection)
 	servicehealthcheck.RegisterHealthCheck("rmq", &HealthCheck{})
