@@ -39,13 +39,17 @@ func (l *sortableRouteList) Len() int {
 func (l *sortableRouteList) Less(i, j int) bool {
 	elemI, elemJ := (*l)[i], (*l)[j]
 
-	// Prio, generic to the bottom, specific to the top:
+	// Prio, generic to the bottom, specific to the top (less):
 	// * longer paths are more specific
 	// * no parameter values is more specific
 	// * more query values are more specific
-	return strings.Count(elemI.url.Path, "/") > strings.Count(elemJ.url.Path, "/") ||
-		strings.Count(elemJ.url.Path, "{") > strings.Count(elemI.url.Path, "{") ||
-		len(elemI.queryValues) > len(elemJ.queryValues)
+	if a, b := strings.Count(elemI.url.Path, "/"), strings.Count(elemJ.url.Path, "/"); a != b {
+		return a > b
+	}
+	if a, b := strings.Count(elemJ.url.Path, "{"), strings.Count(elemI.url.Path, "{"); a != b {
+		return a > b
+	}
+	return len(elemI.queryValues) > len(elemJ.queryValues)
 }
 
 // Swap swaps the elements with indexes i and j.
