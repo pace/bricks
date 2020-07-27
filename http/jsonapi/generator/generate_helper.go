@@ -23,76 +23,98 @@ func (g *Generator) addGoDoc(typeName, description string) {
 	}
 }
 
-func (g *Generator) goType(stmt *jen.Statement, schema *openapi3.Schema, tags map[string]string) error { // nolint: gocyclo
-	switch schema.Type {
+func (g *Generator) goType(stmt *jen.Statement, schema *openapi3.Schema, tags map[string]string) *typeGenerator { // nolint: gocyclo
+	return &typeGenerator{
+		g:      g,
+		stmt:   stmt,
+		schema: schema,
+		tags:   tags,
+	}
+}
+
+type typeGenerator struct {
+	g       *Generator
+	stmt    *jen.Statement
+	schema  *openapi3.Schema
+	tags    map[string]string
+	isParam bool
+}
+
+func (g *typeGenerator) invoke() error { // nolint: gocyclo
+	switch g.schema.Type {
 	case "string":
-		switch schema.Format {
+		switch g.schema.Format {
 		case "byte": // TODO: needs to be base64 encoded/decoded
-			stmt.Index().Byte()
+			g.stmt.Index().Byte()
 		case "binary":
-			stmt.Index().Byte()
+			g.stmt.Index().Byte()
 		case "date-time":
-			if jsonapi, ok := tags["jsonapi"]; ok { // add hint for jsonapi that time is in iso8601 format
-				tags["jsonapi"] = jsonapi + ",iso8601"
+			if jsonapi, ok := g.tags["jsonapi"]; ok { // add hint for jsonapi that time is in iso8601 format
+				g.tags["jsonapi"] = jsonapi + ",iso8601"
 			} else {
-				addValidator(tags, "rfc3339WithoutZone")
+				addValidator(g.tags, "iso8601")
 			}
-			stmt.Op("*").Qual("time", "Time") // time.Time can not be nil, so a pointer is needed for omitempty to work
+
+			if g.isParam {
+				g.stmt.Qual("time", "Time")
+			} else {
+				g.stmt.Op("*").Qual("time", "Time") // time.Time can not be nil, so a pointer is needed for omitempty to work
+			}
 		case "date":
-			addValidator(tags, "time(2006-01-02)")
-			stmt.Qual("time", "Time")
+			addValidator(g.tags, "time(2006-01-02)")
+			g.stmt.Qual("time", "Time")
 		case "uuid":
-			addValidator(tags, "uuid")
-			stmt.String()
+			addValidator(g.tags, "uuid")
+			g.stmt.String()
 		case "decimal":
-			addValidator(tags, "matches(^(\\d*\\.)?\\d+$)")
-			stmt.Qual(pkgDecimal, "Decimal")
+			addValidator(g.tags, "matches(^(\\d*\\.)?\\d+$)")
+			g.stmt.Qual(pkgDecimal, "Decimal")
 		default:
-			stmt.String()
+			g.stmt.String()
 		}
 	case "integer":
-		switch schema.Format {
+		switch g.schema.Format {
 		case "int32":
-			stmt.Int32()
+			g.stmt.Int32()
 		default:
-			stmt.Int64()
+			g.stmt.Int64()
 		}
 	case "number":
-		switch schema.Format {
+		switch g.schema.Format {
 		case "decimal":
-			stmt.Qual(pkgDecimal, "Decimal")
+			g.stmt.Qual(pkgDecimal, "Decimal")
 		case "float":
-			stmt.Float32()
+			g.stmt.Float32()
 		case "double":
 			fallthrough
 		default:
-			stmt.Float64()
+			g.stmt.Float64()
 		}
 	case "boolean":
-		stmt.Bool()
+		g.stmt.Bool()
 	case "array": // nolint: goconst
-		err := g.goType(stmt.Index(), schema.Items.Value, tags)
+		err := g.g.goType(g.stmt.Index(), g.schema.Items.Value, g.tags).invoke()
 		if err != nil {
 			return err
 		}
 	default:
-		return fmt.Errorf("unknown type: %s", schema.Type)
+		return fmt.Errorf("unknown type: %s", g.schema.Type)
 	}
 
 	// add enum validation
-	if len(schema.Enum) > 0 {
-		strs := make([]string, len(schema.Enum))
-		for i := 0; i < len(schema.Enum); i++ {
-			strs[i] = fmt.Sprintf("%v", schema.Enum[i])
+	if len(g.schema.Enum) > 0 {
+		strs := make([]string, len(g.schema.Enum))
+		for i := 0; i < len(g.schema.Enum); i++ {
+			strs[i] = fmt.Sprintf("%v", g.schema.Enum[i])
 		}
 
 		// in case the field/value is optional
 		// an empty value needs to be added to the enum validator
-		if hasValidator(tags, "optional") {
+		if hasValidator(g.tags, "optional") {
 			strs = append(strs, "")
 		}
 
-		addValidator(tags, fmt.Sprintf("in(%v)", strings.Join(strs, "|")))
+		addValidator(g.tags, fmt.Sprintf("in(%v)", strings.Join(strs, "|")))
 	}
 
 	return nil

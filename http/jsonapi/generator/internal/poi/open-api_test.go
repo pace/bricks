@@ -6,11 +6,13 @@ import (
 	errors1 "errors"
 	mux "github.com/gorilla/mux"
 	opentracing "github.com/opentracing/opentracing-go"
-	jsonapi "github.com/pace/bricks/http/jsonapi"
 	runtime "github.com/pace/bricks/http/jsonapi/runtime"
 	oauth2 "github.com/pace/bricks/http/oauth2"
+	oidc "github.com/pace/bricks/http/oidc"
+	apikey "github.com/pace/bricks/http/security/apikey"
 	errors "github.com/pace/bricks/maintenance/errors"
 	metrics "github.com/pace/bricks/maintenance/metric/jsonapi"
+	decimal "github.com/shopspring/decimal"
 	"net/http"
 	"time"
 )
@@ -23,6 +25,18 @@ type AppPOIsRelationshipsItem struct {
 // AppPOIsRelationships ...
 type AppPOIsRelationships []*AppPOIsRelationshipsItem
 
+// Categories ...
+type Categories []*Category
+
+// Category ...
+type Category struct {
+	ID          string   `jsonapi:"primary,category,omitempty" valid:"optional"`
+	Available   []string `json:"available,omitempty" jsonapi:"attr,available,omitempty" valid:"optional"`
+	Field       string   `json:"field,omitempty" jsonapi:"attr,field,omitempty" valid:"optional"`         // Example: "pm"
+	FieldName   string   `json:"fieldName,omitempty" jsonapi:"attr,fieldName,omitempty" valid:"optional"` // Example: "paymentMethods"
+	Unavailable []string `json:"unavailable,omitempty" jsonapi:"attr,unavailable,omitempty" valid:"optional"`
+}
+
 // CommonCountryID Country this policy applies to (as ISO3166Alpha2)
 type CommonCountryID string
 
@@ -34,23 +48,36 @@ type CommonGeoJSONPoint struct {
 
 // CommonGeoJSONPolygon https://tools.ietf.org/html/rfc7946#section-3.1.6; used as [bounding box](https://tools.ietf.org/html/rfc7946#section-5)
 type CommonGeoJSONPolygon struct {
-	Coordinates []CommonLatLong `json:"coordinates,omitempty" jsonapi:"attr,coordinates,omitempty" valid:"optional"` // Example: "[[49.012 8.424] [49.1 9.34] [49.012 8.424]]"
+	Coordinates []CommonLatLong `json:"coordinates,omitempty" jsonapi:"attr,coordinates,omitempty" valid:"optional"` // Example: "[[8.424 49.012] [9.34 49.1] [8.424 49.012]]"
 	Type        string          `json:"type,omitempty" jsonapi:"attr,type,omitempty" valid:"optional,in(Polygon|)"`  // Example: "Polygon"
 }
 
 // CommonLatLong https://tools.ietf.org/html/rfc7946
 type CommonLatLong []float32
 
-// CommonOpeningHoursTimespans ...
-type CommonOpeningHoursTimespans struct {
-	From string `json:"from,omitempty" jsonapi:"attr,from,omitempty" valid:"optional"` // Example: "07:30"
-	To   string `json:"to,omitempty" jsonapi:"attr,to,omitempty" valid:"optional"`     // Example: "20:30"
+// CommonOpeningHoursRulesTimespans ...
+type CommonOpeningHoursRulesTimespans struct {
+	From string `json:"from,omitempty" jsonapi:"attr,from,omitempty" valid:"optional"` // relative to the specified time zone (local time)
+	To   string `json:"to,omitempty" jsonapi:"attr,to,omitempty" valid:"optional"`     // relative to the specified time zone (local time)
+}
+
+// CommonOpeningHoursRules ...
+type CommonOpeningHoursRules struct {
+	Action    string                             `json:"action,omitempty" jsonapi:"attr,action,omitempty" valid:"optional,in(open|close|)"`
+	Days      []string                           `json:"days,omitempty" jsonapi:"attr,days,omitempty" valid:"optional,in(monday|tuesday|wednesday|thursday|friday|saturday|sunday|)"`
+	Timespans []CommonOpeningHoursRulesTimespans `json:"timespans,omitempty" jsonapi:"attr,timespans,omitempty" valid:"optional"`
 }
 
 // CommonOpeningHours ...
-type CommonOpeningHours []struct {
-	Days      []string                      `json:"days,omitempty" jsonapi:"attr,days,omitempty" valid:"optional"` // Example: "[Montag Dienstag]"
-	Timespans []CommonOpeningHoursTimespans `json:"timespans,omitempty" jsonapi:"attr,timespans,omitempty" valid:"optional"`
+type CommonOpeningHours struct {
+	Rules    []CommonOpeningHoursRules `json:"rules,omitempty" jsonapi:"attr,rules,omitempty" valid:"optional"`
+	Timezone string                    `json:"timezone,omitempty" jsonapi:"attr,timezone,omitempty" valid:"optional"` // As defined by ISO 8601, the timezone
+}
+
+// DedupeRequest ...
+type DedupeRequest struct {
+	ID         string   `jsonapi:"primary,dedupePoi,omitempty" valid:"uuid,optional"`                           // UUID of the POI that is considered as origin of all the other POI duplicate UUIDs
+	Duplicates []string `json:"duplicates,omitempty" jsonapi:"attr,duplicates,omitempty" valid:"optional,uuid"` // UUIDs of the duplicate POIs
 }
 
 // Event ...
@@ -81,17 +108,28 @@ type FieldMetaData struct {
 // FieldName ...
 type FieldName string
 
+// Fuel Fuel type for cars, based on the EU fuel marking
+type Fuel string
+
 // FuelPrice ...
 type FuelPrice struct {
-	ID          string   `jsonapi:"primary,fuelPrice,omitempty" valid:"uuid,optional"` // Fuel Price ID
-	Currency    Currency `json:"currency,omitempty" jsonapi:"attr,currency,omitempty" valid:"optional"`
-	FuelType    string   `json:"fuelType,omitempty" jsonapi:"attr,fuelType,omitempty" valid:"optional,in(e85|ron91|ron95_e5|ron95_e10|ron98|ron98_e5|ron100|diesel|diesel_gtl|diesel_b7|lpg|lng|cng|h2|Truck Diesel|AdBlue|)"` // Example: "ron95_e10"
-	Price       float32  `json:"price,omitempty" jsonapi:"attr,price,omitempty" valid:"optional"`                                                                                                                              // per liter
-	ProductName string   `json:"productName,omitempty" jsonapi:"attr,productName,omitempty" valid:"optional"`                                                                                                                  // Example: "Super E10"
+	ID          string          `jsonapi:"primary,fuelPrice,omitempty" valid:"uuid,optional"` // Fuel Price ID
+	Currency    Currency        `json:"currency,omitempty" jsonapi:"attr,currency,omitempty" valid:"optional"`
+	FuelType    Fuel            `json:"fuelType,omitempty" jsonapi:"attr,fuelType,omitempty" valid:"optional"`
+	Price       decimal.Decimal `json:"price,omitempty" jsonapi:"attr,price,omitempty" valid:"optional"`                 // per liter
+	ProductName string          `json:"productName,omitempty" jsonapi:"attr,productName,omitempty" valid:"optional"`     // Example: "Super E10"
+	UpdatedAt   *time.Time      `json:"updatedAt,omitempty" jsonapi:"attr,updatedAt,omitempty,iso8601" valid:"optional"` // Time of FuelPrices last update iso8601 with microseconds UTC
 }
 
 // FuelPriceResponse ...
 type FuelPriceResponse *FuelPrice
+
+// FuelType ...
+type FuelType struct {
+	ID          string `jsonapi:"primary,fuelType,omitempty" valid:"optional"`                              // FuelType ID
+	FuelType    string `json:"fuelType,omitempty" jsonapi:"attr,fuelType,omitempty" valid:"optional"`       // Normalized name, i.e., converted to a fuel type.
+	ProductName string `json:"productName,omitempty" jsonapi:"attr,productName,omitempty" valid:"optional"` // Product name.
+}
 
 // GasStationAddress ...
 type GasStationAddress struct {
@@ -102,67 +140,111 @@ type GasStationAddress struct {
 	Street      string `json:"street,omitempty" jsonapi:"attr,street,omitempty" valid:"optional"`           // Example: "Haid-und-Neu-Str."
 }
 
+// GasStationContact ...
+type GasStationContact struct {
+	Email       string `json:"email,omitempty" jsonapi:"attr,email,omitempty" valid:"optional"`              // Example: "max.mustermann@pace.de"
+	FaxNumber   string `json:"faxNumber,omitempty" jsonapi:"attr,faxNumber,omitempty" valid:"optional"`      // Example: "+49-175-5559-723"
+	FirstName   string `json:"firstName,omitempty" jsonapi:"attr,firstName,omitempty" valid:"optional"`      // Example: "Max"
+	Gender      string `json:"gender,omitempty" jsonapi:"attr,gender,omitempty" valid:"optional,in(m|f|o|)"` // Example: "m"
+	LastName    string `json:"lastName,omitempty" jsonapi:"attr,lastName,omitempty" valid:"optional"`        // Example: "Mustermann"
+	PhoneNumber string `json:"phoneNumber,omitempty" jsonapi:"attr,phoneNumber,omitempty" valid:"optional"`  // Example: "+49-175-5559-722"
+}
+
 // GasStation ...
 type GasStation struct {
 	ID                string              `jsonapi:"primary,gasStation,omitempty" valid:"uuid,optional"` // Gas Station ID
 	Address           GasStationAddress   `json:"address,omitempty" jsonapi:"attr,address,omitempty" valid:"optional"`
-	Amenities         []string            `json:"amenities,omitempty" jsonapi:"attr,amenities,omitempty" valid:"optional"` // Example: "[restaurant]"
-	Latitude          float32             `json:"latitude,omitempty" jsonapi:"attr,latitude,omitempty" valid:"optional"`   // Example: "49.013"
-	Longitude         float32             `json:"longitude,omitempty" jsonapi:"attr,longitude,omitempty" valid:"optional"` // Example: "8.425"
+	Amenities         []string            `json:"amenities,omitempty" jsonapi:"attr,amenities,omitempty" valid:"optional,in(atm|disabilityFriendly|shop|shower|toilet|tollTerminal|carParking|truckParking|truckSuitable|unmanned|paymentTerminal|motel|)"` // Example: "[atm truckParking]"
+	Brand             string              `json:"brand,omitempty" jsonapi:"attr,brand,omitempty" valid:"optional"`                                                                                                                                          // Example: "Total"
+	Contact           GasStationContact   `json:"contact,omitempty" jsonapi:"attr,contact,omitempty" valid:"optional"`
+	Food              []string            `json:"food,omitempty" jsonapi:"attr,food,omitempty" valid:"optional,in(bakery|bistro|cafe|restaurant|takeaway|)"`                                 // Example: "[restaurant bakery]"
+	Latitude          float32             `json:"latitude,omitempty" jsonapi:"attr,latitude,omitempty" valid:"optional"`                                                                     // Example: "49.013"
+	Longitude         float32             `json:"longitude,omitempty" jsonapi:"attr,longitude,omitempty" valid:"optional"`                                                                   // Example: "8.425"
+	LoyaltyPrograms   []string            `json:"loyaltyPrograms,omitempty" jsonapi:"attr,loyaltyPrograms,omitempty" valid:"optional,in(deutschlandCard|payback|shellClubsmart|totalClub|)"` // Example: "[payback]"
 	OpeningHours      CommonOpeningHours  `json:"openingHours,omitempty" jsonapi:"attr,openingHours,omitempty" valid:"optional"`
-	PaymentMethods    []string            `json:"paymentMethods,omitempty" jsonapi:"attr,paymentMethods,omitempty" valid:"optional,in(sepa|)"` // Example: "[sepa]"
-	StationName       string              `json:"stationName,omitempty" jsonapi:"attr,stationName,omitempty" valid:"optional"`                 // Example: "PACE Station"
+	PaymentMethods    []string            `json:"paymentMethods,omitempty" jsonapi:"attr,paymentMethods,omitempty" valid:"optional,in(americanExpress|applyPay|aralKomfort|aviaCard|barclays|bayWaCard|cash|dinersClub|dkv|essoCard|essoVoucher|euroshell|ffCard|girocard|googlePay|hemMycard|jetCard|logPay|maestro|masterCard|novofleet|pacePay|paypal|routex|sepaDirectDebit|starFleetCard|tndCard|totalCard|uta|visa|vPay|westfalenCard|)"` // Example: "[sepaDirectDebit visa]"
+	PostalServices    []string            `json:"postalServices,omitempty" jsonapi:"attr,postalServices,omitempty" valid:"optional,in(dhl|dhlPackstation|dpd|gls|hermes|post|ups|)"`                                                                                                                                                                                                                                                            // Example: "[gls dhl]"
+	PriceFormat       string              `json:"priceFormat,omitempty" jsonapi:"attr,priceFormat,omitempty" valid:"optional"`                                                                                                                                                                                                                                                                                                                  // Example: "d.dds"
+	References        []string            `json:"references,omitempty" jsonapi:"attr,references,omitempty" valid:"optional"`                                                                                                                                                                                                                                                                                                                    // References are PRNs to external and internal resources that are represented by this poi
+	Services          []string            `json:"services,omitempty" jsonapi:"attr,services,omitempty" valid:"optional,in(carWash|freeWifi|gasBottleRefill|gasStationAttendant|laundryService|lotto|oilService|paceConnectedFueling|screenWashWater|selfServiceCarWash|truckWash|twentyFourHoursFueling|twentyFourHoursShopping|tyreAir|tyreService|vacuum|wifi|workshop|)"`                                                                    // Example: "[wifi tyreAir]"
+	ShopGoods         []string            `json:"shopGoods,omitempty" jsonapi:"attr,shopGoods,omitempty" valid:"optional,in(adBlue|contactLenses|crushedIce|flowers|vignette|lubricants|)"`
+	StationName       string              `json:"stationName,omitempty" jsonapi:"attr,stationName,omitempty" valid:"optional"` // Example: "PACE Station"
 	FuelPrices        []*FuelPrice        `json:"fuelPrices,omitempty" jsonapi:"relation,fuelPrices,omitempty" valid:"optional"`
 	LocationBasedApps []*LocationBasedApp `json:"locationBasedApps,omitempty" jsonapi:"relation,locationBasedApps,omitempty" valid:"optional"`
+	ReferenceStatuses []*ReferenceStatus  `json:"referenceStatuses,omitempty" jsonapi:"relation,referenceStatuses,omitempty" valid:"optional"`
+	SucessorOf        []*GasStation       `json:"sucessorOf,omitempty" jsonapi:"relation,sucessorOf,omitempty" valid:"optional"`
 }
 
 // GasStations ...
 type GasStations []*GasStation
 
-// LocationBasedAppMeta ...
-type LocationBasedAppMeta struct {
-	AppArea       CommonGeoJSONPolygon `json:"appArea,omitempty" jsonapi:"attr,appArea,omitempty" valid:"optional"`
-	InsideAppArea bool                 `json:"insideAppArea,omitempty" jsonapi:"attr,insideAppArea,omitempty" valid:"optional"` // Boolean flag if the current position is inside the app area (polygon).
-}
-
 // LocationBasedApp ...
 type LocationBasedApp struct {
-	ID                   string                `jsonapi:"primary,locationBasedApp,omitempty" valid:"uuid,optional"`                                   // Location-based app ID
-	AndroidInstantAppURL string                `json:"androidInstantAppUrl,omitempty" jsonapi:"attr,androidInstantAppUrl,omitempty" valid:"optional"` // Android instant app URL
-	AppType              string                `json:"appType,omitempty" jsonapi:"attr,appType,omitempty" valid:"optional,in(fueling|)"`
-	LogoURL              string                `json:"logoUrl,omitempty" jsonapi:"attr,logoUrl,omitempty" valid:"optional"`   // Logo URL
-	PwaURL               string                `json:"pwaUrl,omitempty" jsonapi:"attr,pwaUrl,omitempty" valid:"optional"`     // Progressive web application URL
-	Subtitle             string                `json:"subtitle,omitempty" jsonapi:"attr,subtitle,omitempty" valid:"optional"` // Example: "Zahle bargeldlos mit der PACE Fueling App"
-	Title                string                `json:"title,omitempty" jsonapi:"attr,title,omitempty" valid:"optional"`       // Example: "PACE Fueling App"
-	Meta                 *LocationBasedAppMeta // Resource meta data (json:api meta)
+	ID                   string `jsonapi:"primary,locationBasedApp,omitempty" valid:"uuid,optional"`                                   // Location-based app ID
+	AndroidInstantAppURL string `json:"androidInstantAppUrl,omitempty" jsonapi:"attr,androidInstantAppUrl,omitempty" valid:"optional"` // Android instant app URL
+	AppType              string `json:"appType,omitempty" jsonapi:"attr,appType,omitempty" valid:"optional,in(fueling|)"`
+	Cache                string `json:"cache,omitempty" jsonapi:"attr,cache,omitempty" valid:"optional,in(approaching|preload|)"` /*
+	A location-based app is by default loaded on `approaching`. Some apps should be loaded in advance. They have the cache set to `preload`.
+	*/
+	CreatedAt *time.Time `json:"createdAt,omitempty" jsonapi:"attr,createdAt,omitempty,iso8601" valid:"optional"` // Time of LocationBasedApp creation (iso8601 without time zone)
+	DeletedAt *time.Time `json:"deletedAt,omitempty" jsonapi:"attr,deletedAt,omitempty,iso8601" valid:"optional"` // Time of LocationBasedApp deletion (iso8601 without time zone)
+	LogoURL   string     `json:"logoUrl,omitempty" jsonapi:"attr,logoUrl,omitempty" valid:"optional"`             // Logo URL
+	PwaURL    string     `json:"pwaUrl,omitempty" jsonapi:"attr,pwaUrl,omitempty" valid:"optional"`               /*
+	Progressive web application URL. The URL satisfies the following criteria: <li>The URL responds with `text/html` on a GET request</li> <li>The response contains HTTP caching headers e.g. `Cache-Control` and `ETag`</li> <li>HTTP GET request on the URL with an `ETag` will return `304` (`Not Modified`), if the content didn't change</li> <li>If `503` (`Service Unavailable`) is returned the request should be retried later</li> <li>If `404` (`Not Found`) is returned the URL is invalidated and a new app should be requested</li>
+	*/
+	Subtitle  string     `json:"subtitle,omitempty" jsonapi:"attr,subtitle,omitempty" valid:"optional"`           // Example: "Zahle bargeldlos mit der PACE Fueling App"
+	Title     string     `json:"title,omitempty" jsonapi:"attr,title,omitempty" valid:"optional"`                 // Example: "PACE Fueling App"
+	UpdatedAt *time.Time `json:"updatedAt,omitempty" jsonapi:"attr,updatedAt,omitempty,iso8601" valid:"optional"` // Time of LocationBasedApp last update (iso8601 without time zone)
 }
 
-// JSONAPIMeta implements the meta data API for json:api
-func (r *LocationBasedApp) JSONAPIMeta() *jsonapi.Meta {
-	if r.Meta == nil {
-		return nil
-	}
-	meta := make(jsonapi.Meta)
-	meta["appArea"] = r.Meta.AppArea
-	meta["insideAppArea"] = r.Meta.InsideAppArea
-	return &meta
+// LocationBasedAppWithRefs ...
+type LocationBasedAppWithRefs struct {
+	ID                   string `jsonapi:"primary,locationBasedAppWithRefs,omitempty" valid:"uuid,optional"`                           // Location-based app ID
+	AndroidInstantAppURL string `json:"androidInstantAppUrl,omitempty" jsonapi:"attr,androidInstantAppUrl,omitempty" valid:"optional"` // Android instant app URL
+	AppType              string `json:"appType,omitempty" jsonapi:"attr,appType,omitempty" valid:"optional,in(fueling|)"`
+	Cache                string `json:"cache,omitempty" jsonapi:"attr,cache,omitempty" valid:"optional,in(approaching|preload|)"` /*
+	A location-based app is by default loaded on `approaching`. Some apps should be loaded in advance. They have the cache set to `preload`.
+	*/
+	CreatedAt *time.Time `json:"createdAt,omitempty" jsonapi:"attr,createdAt,omitempty,iso8601" valid:"optional"` // Time of LocationBasedApp creation (iso8601 without time zone)
+	DeletedAt *time.Time `json:"deletedAt,omitempty" jsonapi:"attr,deletedAt,omitempty,iso8601" valid:"optional"` // Time of LocationBasedApp deletion (iso8601 without time zone)
+	LogoURL   string     `json:"logoUrl,omitempty" jsonapi:"attr,logoUrl,omitempty" valid:"optional"`             // Logo URL
+	PwaURL    string     `json:"pwaUrl,omitempty" jsonapi:"attr,pwaUrl,omitempty" valid:"optional"`               /*
+	Progressive web application URL. The URL satisfies the following criteria: <li>The URL responds with `text/html` on a GET request</li> <li>The response contains HTTP caching headers e.g. `Cache-Control` and `ETag`</li> <li>HTTP GET request on the URL with an `ETag` will return `304` (`Not Modified`), if the content didn't change</li> <li>If `503` (`Service Unavailable`) is returned the request should be retried later</li> <li>If `404` (`Not Found`) is returned the URL is invalidated and a new app should be requested</li>
+	*/
+	References []string   `json:"references,omitempty" jsonapi:"attr,references,omitempty" valid:"optional"`       // References are PRNs to external and internal resources that are related to the query
+	Subtitle   string     `json:"subtitle,omitempty" jsonapi:"attr,subtitle,omitempty" valid:"optional"`           // Example: "Zahle bargeldlos mit der PACE Fueling App"
+	Title      string     `json:"title,omitempty" jsonapi:"attr,title,omitempty" valid:"optional"`                 // Example: "PACE Fueling App"
+	UpdatedAt  *time.Time `json:"updatedAt,omitempty" jsonapi:"attr,updatedAt,omitempty,iso8601" valid:"optional"` // Time of LocationBasedApp last update (iso8601 without time zone)
 }
 
 // LocationBasedApps ...
 type LocationBasedApps []*LocationBasedApp
 
+// LocationBasedAppsWithRefs ...
+type LocationBasedAppsWithRefs []*LocationBasedAppWithRefs
+
+// MoveRequest Creates a new event object at lat/lng from this POI ID
+type MoveRequest struct {
+	ID        string  `jsonapi:"primary,movePoi,omitempty" valid:"uuid,optional"`                      // UUID of the POI that is going to be moved
+	Latitude  float32 `json:"latitude,omitempty" jsonapi:"attr,latitude,omitempty" valid:"optional"`   // Latitude in degrees
+	Longitude float32 `json:"longitude,omitempty" jsonapi:"attr,longitude,omitempty" valid:"optional"` // Longitude in degrees
+}
+
 // POI ...
 type POI struct {
-	ID         string               `jsonapi:"primary,SpeedCamera,omitempty" valid:"uuid,optional"` // POI ID
-	Active     bool                 `json:"active,omitempty" jsonapi:"attr,active,omitempty" valid:"optional"`
-	Boundary   CommonGeoJSONPolygon `json:"boundary,omitempty" jsonapi:"attr,boundary,omitempty" valid:"optional"`
-	CountryID  CommonCountryID      `json:"countryId,omitempty" jsonapi:"attr,countryId,omitempty" valid:"optional"`
-	CreatedAt  *time.Time           `json:"createdAt,omitempty" jsonapi:"attr,createdAt,omitempty,iso8601" valid:"optional"`
-	Data       []FieldData          `json:"data,omitempty" jsonapi:"attr,data,omitempty" valid:"optional"` // a JSON field containing POI specific data
-	LastSeenAt *time.Time           `json:"lastSeenAt,omitempty" jsonapi:"attr,lastSeenAt,omitempty,iso8601" valid:"optional"`
-	Metadata   []FieldMetaData      `json:"metadata,omitempty" jsonapi:"attr,metadata,omitempty" valid:"optional"` // a JSON field containing information about data field origin and update time
-	Position   CommonGeoJSONPoint   `json:"position,omitempty" jsonapi:"attr,position,omitempty" valid:"optional"`
-	UpdatedAt  *time.Time           `json:"updatedAt,omitempty" jsonapi:"attr,updatedAt,omitempty,iso8601" valid:"optional"`
+	ID                string               `jsonapi:"primary,GasStation,omitempty" valid:"uuid,optional"` // POI ID
+	Active            bool                 `json:"active,omitempty" jsonapi:"attr,active,omitempty" valid:"optional"`
+	Boundary          CommonGeoJSONPolygon `json:"boundary,omitempty" jsonapi:"attr,boundary,omitempty" valid:"optional"`
+	CountryID         CommonCountryID      `json:"countryId,omitempty" jsonapi:"attr,countryId,omitempty" valid:"optional"`
+	CreatedAt         *time.Time           `json:"createdAt,omitempty" jsonapi:"attr,createdAt,omitempty,iso8601" valid:"optional"`
+	Data              []FieldData          `json:"data,omitempty" jsonapi:"attr,data,omitempty" valid:"optional"` // a JSON field containing POI specific data
+	LastSeenAt        *time.Time           `json:"lastSeenAt,omitempty" jsonapi:"attr,lastSeenAt,omitempty,iso8601" valid:"optional"`
+	Metadata          []FieldMetaData      `json:"metadata,omitempty" jsonapi:"attr,metadata,omitempty" valid:"optional"` // a JSON field containing information about data field origin and update time
+	Position          CommonGeoJSONPoint   `json:"position,omitempty" jsonapi:"attr,position,omitempty" valid:"optional"`
+	References        []string             `json:"references,omitempty" jsonapi:"attr,references,omitempty" valid:"optional"` // References are PRNs to external and internal resources that are represented by this poi
+	UpdatedAt         *time.Time           `json:"updatedAt,omitempty" jsonapi:"attr,updatedAt,omitempty,iso8601" valid:"optional"`
+	ReferenceStatuses []*ReferenceStatus   `json:"referenceStatuses,omitempty" jsonapi:"relation,referenceStatuses,omitempty" valid:"optional"`
+	SucessorOf        []*GasStation        `json:"sucessorOf,omitempty" jsonapi:"relation,sucessorOf,omitempty" valid:"optional"`
 }
 
 // POIType POI type this applies to
@@ -196,9 +278,47 @@ type PolicyRulePriority struct {
 	TimeToLive float64 `json:"timeToLive,omitempty" jsonapi:"attr,timeToLive,omitempty" valid:"optional"`  // Time to live in seconds (in relation to other entries)
 }
 
+// PriceHistoryFuelPrices ...
+type PriceHistoryFuelPrices struct {
+	At    *time.Time      `json:"at,omitempty" jsonapi:"attr,at,omitempty,iso8601" valid:"optional"` // The datetime of the price value
+	Price decimal.Decimal `json:"price,omitempty" jsonapi:"attr,price,omitempty" valid:"optional"`   // The price at this point in time
+}
+
+// PriceHistory ...
+type PriceHistory struct {
+	ID          string                   `jsonapi:"primary,priceHistory,omitempty" valid:"optional"` // Fuel Type
+	Currency    Currency                 `json:"currency,omitempty" jsonapi:"attr,currency,omitempty" valid:"optional"`
+	From        *time.Time               `json:"from,omitempty" jsonapi:"attr,from,omitempty,iso8601" valid:"optional"` // Beginning of time interval
+	FuelPrices  []PriceHistoryFuelPrices `json:"fuelPrices,omitempty" jsonapi:"attr,fuelPrices,omitempty" valid:"optional"`
+	ProductName string                   `json:"productName,omitempty" jsonapi:"attr,productName,omitempty" valid:"optional"` // Example: "Super E5"
+	To          *time.Time               `json:"to,omitempty" jsonapi:"attr,to,omitempty,iso8601" valid:"optional"`           // End of time interval
+}
+
+// ReferenceStatus ...
+type ReferenceStatus struct {
+	ID     string `jsonapi:"primary,referenceStatus,omitempty" valid:"optional"`                                 // Service Provider PRN
+	Status string `json:"status,omitempty" jsonapi:"attr,status,omitempty" valid:"optional,in(online|offline|)"` // Availability status of the referenced resource
+}
+
+// ReferenceStatuses ...
+type ReferenceStatuses []*ReferenceStatus
+
+// RegionalPricesItem Regional prices
+type RegionalPricesItem struct {
+	ID       string          `jsonapi:"primary,regionalPrices,omitempty" valid:"in(ron98|ron98e5|ron95e10|diesel|e85|ron91|ron95e5|ron100|dieselGtl|dieselB7|dieselPremium|lpg|cng|lng|h2|truckDiesel|adBlue|truckAdBlue|truckDieselPremium|truckLpg|heatingOil),optional"` // Fuel type for cars, based on the EU fuel marking
+	Average  decimal.Decimal `json:"average,omitempty" jsonapi:"attr,average,omitempty" valid:"optional"`                                                                                                                                                                   // Average price for this fuel type
+	Currency string          `json:"currency,omitempty" jsonapi:"attr,currency,omitempty" valid:"optional"`                                                                                                                                                                 // Currency based on country
+	Lower    decimal.Decimal `json:"lower,omitempty" jsonapi:"attr,lower,omitempty" valid:"optional"`                                                                                                                                                                       // Price value indicator below which a price is considered cheap
+	Upper    decimal.Decimal `json:"upper,omitempty" jsonapi:"attr,upper,omitempty" valid:"optional"`                                                                                                                                                                       // Price value indicator after which a price is considered expensive
+}
+
+// RegionalPrices ...
+type RegionalPrices []*RegionalPricesItem
+
 // Source ...
 type Source struct {
-	ID         string      `jsonapi:"primary,sources,omitempty" valid:"uuid,optional"` // Source ID
+	ID         string      `jsonapi:"primary,sources,omitempty" valid:"uuid,optional"`                      // Source ID
+	Countries  []string    `json:"countries,omitempty" jsonapi:"attr,countries,omitempty" valid:"optional"` // list of ISO-3166-1 ALPHA-2 encoded countries
 	CreatedAt  *time.Time  `json:"createdAt,omitempty" jsonapi:"attr,createdAt,omitempty,iso8601" valid:"optional"`
 	LastDataAt *time.Time  `json:"lastDataAt,omitempty" jsonapi:"attr,lastDataAt,omitempty,iso8601" valid:"optional"` // timestamp of last import from source
 	Name       string      `json:"name,omitempty" jsonapi:"attr,name,omitempty" valid:"optional"`                     // source name, unique
@@ -210,33 +330,39 @@ type Source struct {
 // Sources ...
 type Sources []*Source
 
-// Subscription ...
-type Subscription struct {
-	ID        string  `jsonapi:"primary,subscription,omitempty" valid:"uuid,optional"`                 // POI Subscription ID
-	PushToken string  `json:"pushToken,omitempty" jsonapi:"attr,pushToken,omitempty" valid:"optional"` // Firebase registration token
-	Ttl       float64 `json:"ttl,omitempty" jsonapi:"attr,ttl,omitempty" valid:"optional"`             // TTL value for the subscription in minutes
+// SubscriptionConditionsFuelPrice Condition on the fuelPrice of a gas station.
+type SubscriptionConditionsFuelPrice struct {
+	Lt float64 `json:"lt,omitempty" jsonapi:"attr,lt,omitempty" valid:"optional"` /*
+	Fuel price is less then given amount. Amount is always given in the currency of the gas station. The units are not scaled, for `EUR`, the value 1.3 means 1 euro and 30 cents.
+	*/
+}
+
+// SubscriptionConditionsFuelType Condition on the fuelType of a gas station
+type SubscriptionConditionsFuelType struct {
+	Eq string `json:"eq,omitempty" jsonapi:"attr,eq,omitempty" valid:"optional,in(ron98|ron98e5|ron95e10|diesel|e85|ron91|ron95e5|ron100|dieselGtl|dieselB7|dieselB15|dieselPremium|lpg|cng|lng|h2|truckDiesel|adBlue|truckAdBlue|truckDieselPremium|truckLpg|heatingOil|)"` // Fuel type is equal to given value
 }
 
 /*
-SubscriptionRequestArea Once entered, a notification is sent
+SubscriptionConditions Optional conditions to reduce the number of notifications to the device. For a notification to be fired, all conditions need to be true.
+The example reads as `fuelPrice < 1.3 && fuelType == "diesel"`. For or conditions use multiple subscriptions.
 */
-type SubscriptionRequestArea struct {
-	Coordinates [][]float32 `json:"coordinates,omitempty" jsonapi:"attr,coordinates,omitempty" valid:"required"` /*
-	Polygon coordinates with 4 or more positions. The first and last positions are equivalent (they represent equivalent points)
-	*/
-	Type string `json:"type,omitempty" jsonapi:"attr,type,omitempty" valid:"required,in(Polygon)"`
+type SubscriptionConditions struct {
+	FuelPrice SubscriptionConditionsFuelPrice `json:"fuelPrice,omitempty" jsonapi:"attr,fuelPrice,omitempty" valid:"optional"` // Condition on the fuelPrice of a gas station.
+	FuelType  SubscriptionConditionsFuelType  `json:"fuelType,omitempty" jsonapi:"attr,fuelType,omitempty" valid:"optional"`   // Condition on the fuelType of a gas station
 }
 
-// SubscriptionRequest ...
-type SubscriptionRequest struct {
-	ID   string                  `jsonapi:"primary,subscription,omitempty" valid:"uuid,optional"`       // Example: "0c5b01d8-8dde-4d9f-be20-0865766bae6e"
-	Area SubscriptionRequestArea `json:"area,omitempty" jsonapi:"attr,area,omitempty" valid:"required"` /*
-	Once entered, a notification is sent
+// Subscription ...
+type Subscription struct {
+	ID         string                 `jsonapi:"primary,subscription,omitempty" valid:"uuid,optional"`                   // POI Subscription ID
+	Conditions SubscriptionConditions `json:"conditions,omitempty" jsonapi:"attr,conditions,omitempty" valid:"optional"` /*
+	Optional conditions to reduce the number of notifications to the device. For a notification to be fired, all conditions need to be true.
+	The example reads as `fuelPrice < 1.3 && fuelType == "diesel"`. For or conditions use multiple subscriptions.
 	*/
-	PushToken string   `json:"pushToken,omitempty" jsonapi:"attr,pushToken,omitempty" valid:"required"`                                  // Firebase registration token
-	Types     []string `json:"types,omitempty" jsonapi:"attr,types,omitempty" valid:"required,in(gasStation|movableCamera|fixedCamera)"` /*
-	Filter for POI types contained in the push notification. An empty array indicates, that all POI types are allowed
-	*/
+	CreatedAt    *time.Time `json:"createdAt,omitempty" jsonapi:"attr,createdAt,omitempty,iso8601" valid:"optional"`    // Time of subscription creation (iso8601 without time zone)
+	ExpiresAt    *time.Time `json:"expiresAt,omitempty" jsonapi:"attr,expiresAt,omitempty,iso8601" valid:"optional"`    // Time when the subscription will expire, must not be more then 60 days in the future (iso8601 without time zone)
+	ObservedPois []string   `json:"observedPois,omitempty" jsonapi:"attr,observedPois,omitempty" valid:"required,uuid"` // Example: "[prn:pos:gas-stations:4d6dd9db-b0ac-40e8-a099-b606cace6f72 prn:pos:gas-stations:9536bb4a-6623-4b96-9bed-655f30c5b5cf prn:pos:gas-stations:f0fca287-94f7-47f7-8f5a-0fea0dccfaa6]"
+	PushToken    string     `json:"pushToken,omitempty" jsonapi:"attr,pushToken,omitempty" valid:"required"`            // PRN describing the push token. E.g. FCM token.
+	UpdatedAt    *time.Time `json:"updatedAt,omitempty" jsonapi:"attr,updatedAt,omitempty,iso8601" valid:"optional"`    // Time of LocationBasedApp last update (iso8601 without time zone)
 }
 
 // Currency ...
@@ -245,35 +371,161 @@ type Currency string
 // FuelAmountUnit ...
 type FuelAmountUnit string
 type AuthorizationBackend interface {
+	AuthorizeDeviceID(r *http.Request, w http.ResponseWriter) (context.Context, bool)
+	InitDeviceID(cfgDeviceID *apikey.Config)
 	AuthorizeOAuth2(r *http.Request, w http.ResponseWriter, scope string) (context.Context, bool)
 	InitOAuth2(cfgOAuth2 *oauth2.Config)
+	AuthorizeOIDC(r *http.Request, w http.ResponseWriter, scope string) (context.Context, bool)
+	InitOIDC(cfgOIDC *oidc.Config)
 }
 
+var cfgDeviceID = &apikey.Config{
+	Description: "Authentication using a unique device id. This is allows usage of the api without a user account. The device id has to be 32 bytes long and is best generated with a secure random function. E.g. `3b5cb427432aee46a2aa1dbad6f1c7629ec7928ce732afdd73ff7554b9c46272` generated using `openssl rand -hex 32`. The device id may not be the same across a re-install of the app. In case the device id is lost, all data stored with that device id is lost. If a device ID is not seen for a longer time period, the data may be deleted.\n",
+	In:          "header",
+	Name:        "Device-ID",
+}
 var cfgOAuth2 = &oauth2.Config{
 	AuthorizationCode: &oauth2.Flow{
-		AuthorizationURL: "https://id.pace.cloud/oauth2/authorize",
-		RefreshURL:       "https://id.pace.cloud/oauth2/token",
+		AuthorizationURL: "https://id.pace.cloud/auth/realms/pace/protocol/openid-connect/auth",
+		RefreshURL:       "https://id.pace.cloud/auth/realms/pace/protocol/openid-connect/token",
 		Scopes: map[string]string{
-			"poi:apps:create":          "Create an app",
-			"poi:apps:delete":          "Delete an app",
-			"poi:apps:read":            "Get/search for an app",
-			"poi:apps:update":          "Change an app",
-			"poi:events:read":          "Get/search for events",
-			"poi:gas-stations:read":    "Get/search for gas stations",
-			"poi:pois:read":            "Get/search for pois",
-			"poi:pois:update":          "Update a poi",
-			"poi:policies:create":      "Create a policy",
-			"poi:policies:read":        "Get/search for policies",
-			"poi:sources:create":       "Create a source",
-			"poi:sources:delete":       "Delete a source",
-			"poi:sources:read":         "Get/search for sources",
-			"poi:sources:update":       "Update a source",
-			"poi:subscriptions:create": "Create a subscription",
-			"poi:tiles:read":           "Get/search for tiles",
+			"poi:apps:create":                    "Create an app",
+			"poi:apps:delete":                    "Delete an app",
+			"poi:apps:read":                      "Get/search for an app",
+			"poi:apps:update":                    "Change an app",
+			"poi:events:read":                    "Get/search for events",
+			"poi:gas-stations.references:read":   "Enabled additional reference data on the gas station",
+			"poi:gas-stations.references:update": "Write additional reference data on the gas station",
+			"poi:gas-stations:read":              "Get/search for gas stations",
+			"poi:pois.references:read":           "Enabled additional reference data on the poi",
+			"poi:pois:read":                      "Get/search for pois",
+			"poi:pois:update":                    "Update a poi",
+			"poi:policies:create":                "Create a policy",
+			"poi:policies:read":                  "Get/search for policies",
+			"poi:sources:create":                 "Create a source",
+			"poi:sources:delete":                 "Delete a source",
+			"poi:sources:read":                   "Get/search for sources",
+			"poi:sources:update":                 "Update a source",
+			"poi:subscriptions:create":           "Create a subscription",
+			"poi:subscriptions:delete":           "Delete a subscription",
+			"poi:subscriptions:read":             "List all subscriptions",
+			"poi:tiles:read":                     "Get/search for tiles",
 		},
-		TokenURL: "https://id.pace.cloud/oauth2/token",
+		TokenURL: "https://id.pace.cloud/auth/realms/pace/protocol/openid-connect/token",
 	},
 	Description: "",
+}
+var cfgOIDC = &oidc.Config{
+	Description:      "",
+	OpenIdConnectURL: "https://id.pace.cloud/auth/realms/pace/.well-known/openid-configuration",
+}
+
+/*
+DeduplicatePoiHandler handles request/response marshaling and validation for
+ Patch /beta/admin/poi/dedupe
+*/
+func DeduplicatePoiHandler(service Service, authBackend AuthorizationBackend) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		defer errors.HandleRequest("DeduplicatePoiHandler", w, r)
+
+		ctx, ok := authBackend.AuthorizeOAuth2(r, w, "poi:pois:update")
+		if !ok {
+			return
+		}
+		r = r.WithContext(ctx)
+
+		// Trace the service function handler execution
+		handlerSpan, ctx := opentracing.StartSpanFromContext(r.Context(), "DeduplicatePoiHandler")
+		defer handlerSpan.Finish()
+
+		// Setup context, response writer and request type
+		writer := deduplicatePoiResponseWriter{
+			ResponseWriter: metrics.NewMetric("poi", "/beta/admin/poi/dedupe", w, r),
+		}
+		request := DeduplicatePoiRequest{
+			Request: r.WithContext(ctx),
+		}
+
+		// Scan and validate incoming request parameters
+		if !runtime.ValidateParameters(w, r, &request) {
+			return // invalid request stop further processing
+		}
+
+		// Unmarshal the service request body
+		if runtime.Unmarshal(w, r, &request.Content) {
+			// Invoke service that implements the business logic
+			err := service.DeduplicatePoi(ctx, &writer, &request)
+			select {
+			case <-ctx.Done():
+				if ctx.Err() != nil {
+					// Context cancellation should not be reported if it's the request context
+					w.WriteHeader(499)
+					if err != nil && !(errors1.Is(err, context.Canceled) || errors1.Is(err, context.DeadlineExceeded)) {
+						// Report unclean error handling (err != context err) to sentry
+						errors.Handle(ctx, err)
+					}
+				}
+			default:
+				if err != nil {
+					errors.HandleError(err, "DeduplicatePoiHandler", w, r)
+				}
+			}
+		}
+	})
+}
+
+/*
+MovePoiAtPositionHandler handles request/response marshaling and validation for
+ Patch /beta/admin/poi/move
+*/
+func MovePoiAtPositionHandler(service Service, authBackend AuthorizationBackend) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		defer errors.HandleRequest("MovePoiAtPositionHandler", w, r)
+
+		ctx, ok := authBackend.AuthorizeOAuth2(r, w, "poi:pois:update")
+		if !ok {
+			return
+		}
+		r = r.WithContext(ctx)
+
+		// Trace the service function handler execution
+		handlerSpan, ctx := opentracing.StartSpanFromContext(r.Context(), "MovePoiAtPositionHandler")
+		defer handlerSpan.Finish()
+
+		// Setup context, response writer and request type
+		writer := movePoiAtPositionResponseWriter{
+			ResponseWriter: metrics.NewMetric("poi", "/beta/admin/poi/move", w, r),
+		}
+		request := MovePoiAtPositionRequest{
+			Request: r.WithContext(ctx),
+		}
+
+		// Scan and validate incoming request parameters
+		if !runtime.ValidateParameters(w, r, &request) {
+			return // invalid request stop further processing
+		}
+
+		// Unmarshal the service request body
+		if runtime.Unmarshal(w, r, &request.Content) {
+			// Invoke service that implements the business logic
+			err := service.MovePoiAtPosition(ctx, &writer, &request)
+			select {
+			case <-ctx.Done():
+				if ctx.Err() != nil {
+					// Context cancellation should not be reported if it's the request context
+					w.WriteHeader(499)
+					if err != nil && !(errors1.Is(err, context.Canceled) || errors1.Is(err, context.DeadlineExceeded)) {
+						// Report unclean error handling (err != context err) to sentry
+						errors.Handle(ctx, err)
+					}
+				}
+			default:
+				if err != nil {
+					errors.HandleError(err, "MovePoiAtPositionHandler", w, r)
+				}
+			}
+		}
+	})
 }
 
 /*
@@ -316,9 +568,13 @@ func GetAppsHandler(service Service, authBackend AuthorizationBackend) http.Hand
 			Location: runtime.ScanInQuery,
 			Name:     "filter[appType]",
 		}, &runtime.ScanParameter{
-			Data:     &request.ParamFilterQuery,
+			Data:     &request.ParamFilterCache,
 			Location: runtime.ScanInQuery,
-			Name:     "filter[query]",
+			Name:     "filter[cache]",
+		}, &runtime.ScanParameter{
+			Data:     &request.ParamFilterSince,
+			Location: runtime.ScanInQuery,
+			Name:     "filter[since]",
 		}) {
 			return
 		}
@@ -428,14 +684,6 @@ func CheckForPaceAppHandler(service Service, authBackend AuthorizationBackend) h
 
 		// Scan and validate incoming request parameters
 		if !runtime.ScanParameters(w, r, &runtime.ScanParameter{
-			Data:     &request.ParamPageNumber,
-			Location: runtime.ScanInQuery,
-			Name:     "page[number]",
-		}, &runtime.ScanParameter{
-			Data:     &request.ParamPageSize,
-			Location: runtime.ScanInQuery,
-			Name:     "page[size]",
-		}, &runtime.ScanParameter{
 			Data:     &request.ParamFilterLatitude,
 			Location: runtime.ScanInQuery,
 			Name:     "filter[latitude]",
@@ -444,21 +692,9 @@ func CheckForPaceAppHandler(service Service, authBackend AuthorizationBackend) h
 			Location: runtime.ScanInQuery,
 			Name:     "filter[longitude]",
 		}, &runtime.ScanParameter{
-			Data:     &request.ParamFilterGpsSource,
-			Location: runtime.ScanInQuery,
-			Name:     "filter[gpsSource]",
-		}, &runtime.ScanParameter{
 			Data:     &request.ParamFilterAppType,
 			Location: runtime.ScanInQuery,
 			Name:     "filter[appType]",
-		}, &runtime.ScanParameter{
-			Data:     &request.ParamFilterAccuracy,
-			Location: runtime.ScanInQuery,
-			Name:     "filter[accuracy]",
-		}, &runtime.ScanParameter{
-			Data:     &request.ParamFilterDeviation,
-			Location: runtime.ScanInQuery,
-			Name:     "filter[deviation]",
 		}) {
 			return
 		}
@@ -793,6 +1029,257 @@ func UpdateAppPOIsRelationshipsHandler(service Service, authBackend Authorizatio
 }
 
 /*
+GetDuplicatesKMLHandler handles request/response marshaling and validation for
+ Get /beta/datadumps/duplicatemap/{countryCode}
+*/
+func GetDuplicatesKMLHandler(service Service, authBackend AuthorizationBackend) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		defer errors.HandleRequest("GetDuplicatesKMLHandler", w, r)
+
+		ctx, ok := authBackend.AuthorizeOAuth2(r, w, "poi:dumps:duplicatemap")
+		if !ok {
+			return
+		}
+		r = r.WithContext(ctx)
+
+		// Trace the service function handler execution
+		handlerSpan, ctx := opentracing.StartSpanFromContext(r.Context(), "GetDuplicatesKMLHandler")
+		defer handlerSpan.Finish()
+
+		// Setup context, response writer and request type
+		writer := getDuplicatesKMLResponseWriter{
+			ResponseWriter: metrics.NewMetric("poi", "/beta/datadumps/duplicatemap/{countryCode}", w, r),
+		}
+		request := GetDuplicatesKMLRequest{
+			Request: r.WithContext(ctx),
+		}
+
+		// Scan and validate incoming request parameters
+		vars := mux.Vars(r)
+		if !runtime.ScanParameters(w, r, &runtime.ScanParameter{
+			Data:     &request.ParamCountryCode,
+			Location: runtime.ScanInPath,
+			Input:    vars["countryCode"],
+			Name:     "countryCode",
+		}) {
+			return
+		}
+		if !runtime.ValidateParameters(w, r, &request) {
+			return // invalid request stop further processing
+		}
+
+		// Invoke service that implements the business logic
+		err := service.GetDuplicatesKML(ctx, &writer, &request)
+		select {
+		case <-ctx.Done():
+			if ctx.Err() != nil {
+				// Context cancellation should not be reported if it's the request context
+				w.WriteHeader(499)
+				if err != nil && !(errors1.Is(err, context.Canceled) || errors1.Is(err, context.DeadlineExceeded)) {
+					// Report unclean error handling (err != context err) to sentry
+					errors.Handle(ctx, err)
+				}
+			}
+		default:
+			if err != nil {
+				errors.HandleError(err, "GetDuplicatesKMLHandler", w, r)
+			}
+		}
+	})
+}
+
+/*
+GetPoisDumpHandler handles request/response marshaling and validation for
+ Get /beta/datadumps/pois
+*/
+func GetPoisDumpHandler(service Service, authBackend AuthorizationBackend) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		defer errors.HandleRequest("GetPoisDumpHandler", w, r)
+
+		ctx, ok := authBackend.AuthorizeOAuth2(r, w, "poi:dumps:pois")
+		if !ok {
+			return
+		}
+		r = r.WithContext(ctx)
+
+		// Trace the service function handler execution
+		handlerSpan, ctx := opentracing.StartSpanFromContext(r.Context(), "GetPoisDumpHandler")
+		defer handlerSpan.Finish()
+
+		// Setup context, response writer and request type
+		writer := getPoisDumpResponseWriter{
+			ResponseWriter: metrics.NewMetric("poi", "/beta/datadumps/pois", w, r),
+		}
+		request := GetPoisDumpRequest{
+			Request: r.WithContext(ctx),
+		}
+
+		// Scan and validate incoming request parameters
+		if !runtime.ScanParameters(w, r, &runtime.ScanParameter{
+			Data:     &request.ParamAccept,
+			Location: runtime.ScanInHeader,
+			Name:     "Accept",
+		}) {
+			return
+		}
+		if !runtime.ValidateParameters(w, r, &request) {
+			return // invalid request stop further processing
+		}
+
+		// Invoke service that implements the business logic
+		err := service.GetPoisDump(ctx, &writer, &request)
+		select {
+		case <-ctx.Done():
+			if ctx.Err() != nil {
+				// Context cancellation should not be reported if it's the request context
+				w.WriteHeader(499)
+				if err != nil && !(errors1.Is(err, context.Canceled) || errors1.Is(err, context.DeadlineExceeded)) {
+					// Report unclean error handling (err != context err) to sentry
+					errors.Handle(ctx, err)
+				}
+			}
+		default:
+			if err != nil {
+				errors.HandleError(err, "GetPoisDumpHandler", w, r)
+			}
+		}
+	})
+}
+
+/*
+DeleteGasStationReferenceStatusHandler handles request/response marshaling and validation for
+ Delete /beta/delivery/gas-stations/{gasStationId}/reference-status/{reference}
+*/
+func DeleteGasStationReferenceStatusHandler(service Service, authBackend AuthorizationBackend) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		defer errors.HandleRequest("DeleteGasStationReferenceStatusHandler", w, r)
+
+		ctx, ok := authBackend.AuthorizeOAuth2(r, w, "poi:gas-stations.references:update")
+		if !ok {
+			return
+		}
+		r = r.WithContext(ctx)
+
+		// Trace the service function handler execution
+		handlerSpan, ctx := opentracing.StartSpanFromContext(r.Context(), "DeleteGasStationReferenceStatusHandler")
+		defer handlerSpan.Finish()
+
+		// Setup context, response writer and request type
+		writer := deleteGasStationReferenceStatusResponseWriter{
+			ResponseWriter: metrics.NewMetric("poi", "/beta/delivery/gas-stations/{gasStationId}/reference-status/{reference}", w, r),
+		}
+		request := DeleteGasStationReferenceStatusRequest{
+			Request: r.WithContext(ctx),
+		}
+
+		// Scan and validate incoming request parameters
+		vars := mux.Vars(r)
+		if !runtime.ScanParameters(w, r, &runtime.ScanParameter{
+			Data:     &request.ParamGasStationID,
+			Location: runtime.ScanInPath,
+			Input:    vars["gasStationId"],
+			Name:     "gasStationId",
+		}, &runtime.ScanParameter{
+			Data:     &request.ParamReference,
+			Location: runtime.ScanInPath,
+			Input:    vars["reference"],
+			Name:     "reference",
+		}) {
+			return
+		}
+		if !runtime.ValidateParameters(w, r, &request) {
+			return // invalid request stop further processing
+		}
+
+		// Invoke service that implements the business logic
+		err := service.DeleteGasStationReferenceStatus(ctx, &writer, &request)
+		select {
+		case <-ctx.Done():
+			if ctx.Err() != nil {
+				// Context cancellation should not be reported if it's the request context
+				w.WriteHeader(499)
+				if err != nil && !(errors1.Is(err, context.Canceled) || errors1.Is(err, context.DeadlineExceeded)) {
+					// Report unclean error handling (err != context err) to sentry
+					errors.Handle(ctx, err)
+				}
+			}
+		default:
+			if err != nil {
+				errors.HandleError(err, "DeleteGasStationReferenceStatusHandler", w, r)
+			}
+		}
+	})
+}
+
+/*
+PutGasStationReferenceStatusHandler handles request/response marshaling and validation for
+ Put /beta/delivery/gas-stations/{gasStationId}/reference-status/{reference}
+*/
+func PutGasStationReferenceStatusHandler(service Service, authBackend AuthorizationBackend) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		defer errors.HandleRequest("PutGasStationReferenceStatusHandler", w, r)
+
+		ctx, ok := authBackend.AuthorizeOAuth2(r, w, "poi:gas-stations.references:update")
+		if !ok {
+			return
+		}
+		r = r.WithContext(ctx)
+
+		// Trace the service function handler execution
+		handlerSpan, ctx := opentracing.StartSpanFromContext(r.Context(), "PutGasStationReferenceStatusHandler")
+		defer handlerSpan.Finish()
+
+		// Setup context, response writer and request type
+		writer := putGasStationReferenceStatusResponseWriter{
+			ResponseWriter: metrics.NewMetric("poi", "/beta/delivery/gas-stations/{gasStationId}/reference-status/{reference}", w, r),
+		}
+		request := PutGasStationReferenceStatusRequest{
+			Request: r.WithContext(ctx),
+		}
+
+		// Scan and validate incoming request parameters
+		vars := mux.Vars(r)
+		if !runtime.ScanParameters(w, r, &runtime.ScanParameter{
+			Data:     &request.ParamGasStationID,
+			Location: runtime.ScanInPath,
+			Input:    vars["gasStationId"],
+			Name:     "gasStationId",
+		}, &runtime.ScanParameter{
+			Data:     &request.ParamReference,
+			Location: runtime.ScanInPath,
+			Input:    vars["reference"],
+			Name:     "reference",
+		}) {
+			return
+		}
+		if !runtime.ValidateParameters(w, r, &request) {
+			return // invalid request stop further processing
+		}
+
+		// Unmarshal the service request body
+		if runtime.Unmarshal(w, r, &request.Content) {
+			// Invoke service that implements the business logic
+			err := service.PutGasStationReferenceStatus(ctx, &writer, &request)
+			select {
+			case <-ctx.Done():
+				if ctx.Err() != nil {
+					// Context cancellation should not be reported if it's the request context
+					w.WriteHeader(499)
+					if err != nil && !(errors1.Is(err, context.Canceled) || errors1.Is(err, context.DeadlineExceeded)) {
+						// Report unclean error handling (err != context err) to sentry
+						errors.Handle(ctx, err)
+					}
+				}
+			default:
+				if err != nil {
+					errors.HandleError(err, "PutGasStationReferenceStatusHandler", w, r)
+				}
+			}
+		}
+	})
+}
+
+/*
 GetEventsHandler handles request/response marshaling and validation for
  Get /beta/events
 */
@@ -906,14 +1393,6 @@ func GetGasStationsHandler(service Service, authBackend AuthorizationBackend) ht
 			Location: runtime.ScanInQuery,
 			Name:     "filter[appType]",
 		}, &runtime.ScanParameter{
-			Data:     &request.ParamFilterGpsSource,
-			Location: runtime.ScanInQuery,
-			Name:     "filter[gpsSource]",
-		}, &runtime.ScanParameter{
-			Data:     &request.ParamInclude,
-			Location: runtime.ScanInQuery,
-			Name:     "include",
-		}, &runtime.ScanParameter{
 			Data:     &request.ParamFilterLatitude,
 			Location: runtime.ScanInQuery,
 			Name:     "filter[latitude]",
@@ -926,21 +1405,17 @@ func GetGasStationsHandler(service Service, authBackend AuthorizationBackend) ht
 			Location: runtime.ScanInQuery,
 			Name:     "filter[radius]",
 		}, &runtime.ScanParameter{
-			Data:     &request.ParamFilterAccuracy,
-			Location: runtime.ScanInQuery,
-			Name:     "filter[accuracy]",
-		}, &runtime.ScanParameter{
-			Data:     &request.ParamFilterDeviation,
-			Location: runtime.ScanInQuery,
-			Name:     "filter[deviation]",
-		}, &runtime.ScanParameter{
 			Data:     &request.ParamFilterBoundingBox,
 			Location: runtime.ScanInQuery,
 			Name:     "filter[boundingBox]",
 		}, &runtime.ScanParameter{
-			Data:     &request.ParamFilterPath,
+			Data:     &request.ParamCompileOpeningHours,
 			Location: runtime.ScanInQuery,
-			Name:     "filter[path]",
+			Name:     "compile[openingHours]",
+		}, &runtime.ScanParameter{
+			Data:     &request.ParamFilterSource,
+			Location: runtime.ScanInQuery,
+			Name:     "filter[source]",
 		}) {
 			return
 		}
@@ -1001,6 +1476,10 @@ func GetGasStationHandler(service Service, authBackend AuthorizationBackend) htt
 			Location: runtime.ScanInPath,
 			Input:    vars["id"],
 			Name:     "id",
+		}, &runtime.ScanParameter{
+			Data:     &request.ParamCompileOpeningHours,
+			Location: runtime.ScanInQuery,
+			Name:     "compile[openingHours]",
 		}) {
 			return
 		}
@@ -1023,6 +1502,209 @@ func GetGasStationHandler(service Service, authBackend AuthorizationBackend) htt
 		default:
 			if err != nil {
 				errors.HandleError(err, "GetGasStationHandler", w, r)
+			}
+		}
+	})
+}
+
+/*
+GetPriceHistoryHandler handles request/response marshaling and validation for
+ Get /beta/gas-stations/{id}/fuel-price-histories/{fuel_type}
+*/
+func GetPriceHistoryHandler(service Service, authBackend AuthorizationBackend) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		defer errors.HandleRequest("GetPriceHistoryHandler", w, r)
+
+		ctx, ok := authBackend.AuthorizeOAuth2(r, w, "poi:gas-stations:read")
+		if !ok {
+			return
+		}
+		r = r.WithContext(ctx)
+
+		// Trace the service function handler execution
+		handlerSpan, ctx := opentracing.StartSpanFromContext(r.Context(), "GetPriceHistoryHandler")
+		defer handlerSpan.Finish()
+
+		// Setup context, response writer and request type
+		writer := getPriceHistoryResponseWriter{
+			ResponseWriter: metrics.NewMetric("poi", "/beta/gas-stations/{id}/fuel-price-histories/{fuel_type}", w, r),
+		}
+		request := GetPriceHistoryRequest{
+			Request: r.WithContext(ctx),
+		}
+
+		// Scan and validate incoming request parameters
+		vars := mux.Vars(r)
+		if !runtime.ScanParameters(w, r, &runtime.ScanParameter{
+			Data:     &request.ParamID,
+			Location: runtime.ScanInPath,
+			Input:    vars["id"],
+			Name:     "id",
+		}, &runtime.ScanParameter{
+			Data:     &request.ParamFuelType,
+			Location: runtime.ScanInPath,
+			Input:    vars["fuel_type"],
+			Name:     "fuel_type",
+		}, &runtime.ScanParameter{
+			Data:     &request.ParamFilterFrom,
+			Location: runtime.ScanInQuery,
+			Name:     "filter[from]",
+		}, &runtime.ScanParameter{
+			Data:     &request.ParamFilterTo,
+			Location: runtime.ScanInQuery,
+			Name:     "filter[to]",
+		}, &runtime.ScanParameter{
+			Data:     &request.ParamFilterGranularity,
+			Location: runtime.ScanInQuery,
+			Name:     "filter[granularity]",
+		}) {
+			return
+		}
+		if !runtime.ValidateParameters(w, r, &request) {
+			return // invalid request stop further processing
+		}
+
+		// Invoke service that implements the business logic
+		err := service.GetPriceHistory(ctx, &writer, &request)
+		select {
+		case <-ctx.Done():
+			if ctx.Err() != nil {
+				// Context cancellation should not be reported if it's the request context
+				w.WriteHeader(499)
+				if err != nil && !(errors1.Is(err, context.Canceled) || errors1.Is(err, context.DeadlineExceeded)) {
+					// Report unclean error handling (err != context err) to sentry
+					errors.Handle(ctx, err)
+				}
+			}
+		default:
+			if err != nil {
+				errors.HandleError(err, "GetPriceHistoryHandler", w, r)
+			}
+		}
+	})
+}
+
+/*
+GetGasStationFuelTypeNameMappingHandler handles request/response marshaling and validation for
+ Get /beta/gas-stations/{id}/fueltype
+*/
+func GetGasStationFuelTypeNameMappingHandler(service Service, authBackend AuthorizationBackend) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		defer errors.HandleRequest("GetGasStationFuelTypeNameMappingHandler", w, r)
+
+		ctx, ok := authBackend.AuthorizeOAuth2(r, w, "poi:gas-stations:read")
+		if !ok {
+			return
+		}
+		r = r.WithContext(ctx)
+
+		// Trace the service function handler execution
+		handlerSpan, ctx := opentracing.StartSpanFromContext(r.Context(), "GetGasStationFuelTypeNameMappingHandler")
+		defer handlerSpan.Finish()
+
+		// Setup context, response writer and request type
+		writer := getGasStationFuelTypeNameMappingResponseWriter{
+			ResponseWriter: metrics.NewMetric("poi", "/beta/gas-stations/{id}/fueltype", w, r),
+		}
+		request := GetGasStationFuelTypeNameMappingRequest{
+			Request: r.WithContext(ctx),
+		}
+
+		// Scan and validate incoming request parameters
+		vars := mux.Vars(r)
+		if !runtime.ScanParameters(w, r, &runtime.ScanParameter{
+			Data:     &request.ParamID,
+			Location: runtime.ScanInPath,
+			Input:    vars["id"],
+			Name:     "id",
+		}, &runtime.ScanParameter{
+			Data:     &request.ParamFilterProductName,
+			Location: runtime.ScanInQuery,
+			Name:     "filter[productName]",
+		}) {
+			return
+		}
+		if !runtime.ValidateParameters(w, r, &request) {
+			return // invalid request stop further processing
+		}
+
+		// Invoke service that implements the business logic
+		err := service.GetGasStationFuelTypeNameMapping(ctx, &writer, &request)
+		select {
+		case <-ctx.Done():
+			if ctx.Err() != nil {
+				// Context cancellation should not be reported if it's the request context
+				w.WriteHeader(499)
+				if err != nil && !(errors1.Is(err, context.Canceled) || errors1.Is(err, context.DeadlineExceeded)) {
+					// Report unclean error handling (err != context err) to sentry
+					errors.Handle(ctx, err)
+				}
+			}
+		default:
+			if err != nil {
+				errors.HandleError(err, "GetGasStationFuelTypeNameMappingHandler", w, r)
+			}
+		}
+	})
+}
+
+/*
+GetMetadataFiltersHandler handles request/response marshaling and validation for
+ Get /beta/meta
+*/
+func GetMetadataFiltersHandler(service Service, authBackend AuthorizationBackend) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		defer errors.HandleRequest("GetMetadataFiltersHandler", w, r)
+
+		ctx, ok := authBackend.AuthorizeOAuth2(r, w, "poi:gas-stations:read")
+		if !ok {
+			return
+		}
+		r = r.WithContext(ctx)
+
+		// Trace the service function handler execution
+		handlerSpan, ctx := opentracing.StartSpanFromContext(r.Context(), "GetMetadataFiltersHandler")
+		defer handlerSpan.Finish()
+
+		// Setup context, response writer and request type
+		writer := getMetadataFiltersResponseWriter{
+			ResponseWriter: metrics.NewMetric("poi", "/beta/meta", w, r),
+		}
+		request := GetMetadataFiltersRequest{
+			Request: r.WithContext(ctx),
+		}
+
+		// Scan and validate incoming request parameters
+		if !runtime.ScanParameters(w, r, &runtime.ScanParameter{
+			Data:     &request.ParamLatitude,
+			Location: runtime.ScanInQuery,
+			Name:     "latitude",
+		}, &runtime.ScanParameter{
+			Data:     &request.ParamLongitude,
+			Location: runtime.ScanInQuery,
+			Name:     "longitude",
+		}) {
+			return
+		}
+		if !runtime.ValidateParameters(w, r, &request) {
+			return // invalid request stop further processing
+		}
+
+		// Invoke service that implements the business logic
+		err := service.GetMetadataFilters(ctx, &writer, &request)
+		select {
+		case <-ctx.Done():
+			if ctx.Err() != nil {
+				// Context cancellation should not be reported if it's the request context
+				w.WriteHeader(499)
+				if err != nil && !(errors1.Is(err, context.Canceled) || errors1.Is(err, context.DeadlineExceeded)) {
+					// Report unclean error handling (err != context err) to sentry
+					errors.Handle(ctx, err)
+				}
+			}
+		default:
+			if err != nil {
+				errors.HandleError(err, "GetMetadataFiltersHandler", w, r)
 			}
 		}
 	})
@@ -1071,10 +1753,6 @@ func GetPoisHandler(service Service, authBackend AuthorizationBackend) http.Hand
 			Data:     &request.ParamFilterAppID,
 			Location: runtime.ScanInQuery,
 			Name:     "filter[appId]",
-		}, &runtime.ScanParameter{
-			Data:     &request.ParamFilterQuery,
-			Location: runtime.ScanInQuery,
-			Name:     "filter[query]",
 		}) {
 			return
 		}
@@ -1414,6 +2092,62 @@ func GetPolicyHandler(service Service, authBackend AuthorizationBackend) http.Ha
 }
 
 /*
+GetRegionalPricesHandler handles request/response marshaling and validation for
+ Get /beta/prices/regional
+*/
+func GetRegionalPricesHandler(service Service, authBackend AuthorizationBackend) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		defer errors.HandleRequest("GetRegionalPricesHandler", w, r)
+
+		// Trace the service function handler execution
+		handlerSpan, ctx := opentracing.StartSpanFromContext(r.Context(), "GetRegionalPricesHandler")
+		defer handlerSpan.Finish()
+
+		// Setup context, response writer and request type
+		writer := getRegionalPricesResponseWriter{
+			ResponseWriter: metrics.NewMetric("poi", "/beta/prices/regional", w, r),
+		}
+		request := GetRegionalPricesRequest{
+			Request: r.WithContext(ctx),
+		}
+
+		// Scan and validate incoming request parameters
+		if !runtime.ScanParameters(w, r, &runtime.ScanParameter{
+			Data:     &request.ParamFilterLatitude,
+			Location: runtime.ScanInQuery,
+			Name:     "filter[latitude]",
+		}, &runtime.ScanParameter{
+			Data:     &request.ParamFilterLongitude,
+			Location: runtime.ScanInQuery,
+			Name:     "filter[longitude]",
+		}) {
+			return
+		}
+		if !runtime.ValidateParameters(w, r, &request) {
+			return // invalid request stop further processing
+		}
+
+		// Invoke service that implements the business logic
+		err := service.GetRegionalPrices(ctx, &writer, &request)
+		select {
+		case <-ctx.Done():
+			if ctx.Err() != nil {
+				// Context cancellation should not be reported if it's the request context
+				w.WriteHeader(499)
+				if err != nil && !(errors1.Is(err, context.Canceled) || errors1.Is(err, context.DeadlineExceeded)) {
+					// Report unclean error handling (err != context err) to sentry
+					errors.Handle(ctx, err)
+				}
+			}
+		default:
+			if err != nil {
+				errors.HandleError(err, "GetRegionalPricesHandler", w, r)
+			}
+		}
+	})
+}
+
+/*
 GetSourcesHandler handles request/response marshaling and validation for
  Get /beta/sources
 */
@@ -1721,28 +2455,28 @@ func UpdateSourceHandler(service Service, authBackend AuthorizationBackend) http
 }
 
 /*
-CreateSubscriptionHandler handles request/response marshaling and validation for
- Post /beta/subscriptions
+GetSubscriptionsHandler handles request/response marshaling and validation for
+ Get /beta/subscriptions
 */
-func CreateSubscriptionHandler(service Service, authBackend AuthorizationBackend) http.Handler {
+func GetSubscriptionsHandler(service Service, authBackend AuthorizationBackend) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		defer errors.HandleRequest("CreateSubscriptionHandler", w, r)
+		defer errors.HandleRequest("GetSubscriptionsHandler", w, r)
 
-		ctx, ok := authBackend.AuthorizeOAuth2(r, w, "poi:subscriptions:create")
+		ctx, ok := authBackend.AuthorizeOAuth2(r, w, "poi:subscriptions:read")
 		if !ok {
 			return
 		}
 		r = r.WithContext(ctx)
 
 		// Trace the service function handler execution
-		handlerSpan, ctx := opentracing.StartSpanFromContext(r.Context(), "CreateSubscriptionHandler")
+		handlerSpan, ctx := opentracing.StartSpanFromContext(r.Context(), "GetSubscriptionsHandler")
 		defer handlerSpan.Finish()
 
 		// Setup context, response writer and request type
-		writer := createSubscriptionResponseWriter{
+		writer := getSubscriptionsResponseWriter{
 			ResponseWriter: metrics.NewMetric("poi", "/beta/subscriptions", w, r),
 		}
-		request := CreateSubscriptionRequest{
+		request := GetSubscriptionsRequest{
 			Request: r.WithContext(ctx),
 		}
 
@@ -1754,7 +2488,7 @@ func CreateSubscriptionHandler(service Service, authBackend AuthorizationBackend
 		// Unmarshal the service request body
 		if runtime.Unmarshal(w, r, &request.Content) {
 			// Invoke service that implements the business logic
-			err := service.CreateSubscription(ctx, &writer, &request)
+			err := service.GetSubscriptions(ctx, &writer, &request)
 			select {
 			case <-ctx.Done():
 				if ctx.Err() != nil {
@@ -1767,7 +2501,109 @@ func CreateSubscriptionHandler(service Service, authBackend AuthorizationBackend
 				}
 			default:
 				if err != nil {
-					errors.HandleError(err, "CreateSubscriptionHandler", w, r)
+					errors.HandleError(err, "GetSubscriptionsHandler", w, r)
+				}
+			}
+		}
+	})
+}
+
+/*
+DeleteSubscriptionHandler handles request/response marshaling and validation for
+ Delete /beta/subscriptions/{id}
+*/
+func DeleteSubscriptionHandler(service Service, authBackend AuthorizationBackend) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		defer errors.HandleRequest("DeleteSubscriptionHandler", w, r)
+
+		ctx, ok := authBackend.AuthorizeOAuth2(r, w, "poi:subscriptions:delete")
+		if !ok {
+			return
+		}
+		r = r.WithContext(ctx)
+
+		// Trace the service function handler execution
+		handlerSpan, ctx := opentracing.StartSpanFromContext(r.Context(), "DeleteSubscriptionHandler")
+		defer handlerSpan.Finish()
+
+		// Setup context, response writer and request type
+		writer := deleteSubscriptionResponseWriter{
+			ResponseWriter: metrics.NewMetric("poi", "/beta/subscriptions/{id}", w, r),
+		}
+		request := DeleteSubscriptionRequest{
+			Request: r.WithContext(ctx),
+		}
+
+		// Scan and validate incoming request parameters
+
+		// Invoke service that implements the business logic
+		err := service.DeleteSubscription(ctx, &writer, &request)
+		select {
+		case <-ctx.Done():
+			if ctx.Err() != nil {
+				// Context cancellation should not be reported if it's the request context
+				w.WriteHeader(499)
+				if err != nil && !(errors1.Is(err, context.Canceled) || errors1.Is(err, context.DeadlineExceeded)) {
+					// Report unclean error handling (err != context err) to sentry
+					errors.Handle(ctx, err)
+				}
+			}
+		default:
+			if err != nil {
+				errors.HandleError(err, "DeleteSubscriptionHandler", w, r)
+			}
+		}
+	})
+}
+
+/*
+StoreSubscriptionHandler handles request/response marshaling and validation for
+ Put /beta/subscriptions/{id}
+*/
+func StoreSubscriptionHandler(service Service, authBackend AuthorizationBackend) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		defer errors.HandleRequest("StoreSubscriptionHandler", w, r)
+
+		ctx, ok := authBackend.AuthorizeOAuth2(r, w, "poi:subscriptions:create")
+		if !ok {
+			return
+		}
+		r = r.WithContext(ctx)
+
+		// Trace the service function handler execution
+		handlerSpan, ctx := opentracing.StartSpanFromContext(r.Context(), "StoreSubscriptionHandler")
+		defer handlerSpan.Finish()
+
+		// Setup context, response writer and request type
+		writer := storeSubscriptionResponseWriter{
+			ResponseWriter: metrics.NewMetric("poi", "/beta/subscriptions/{id}", w, r),
+		}
+		request := StoreSubscriptionRequest{
+			Request: r.WithContext(ctx),
+		}
+
+		// Scan and validate incoming request parameters
+		if !runtime.ValidateParameters(w, r, &request) {
+			return // invalid request stop further processing
+		}
+
+		// Unmarshal the service request body
+		if runtime.Unmarshal(w, r, &request.Content) {
+			// Invoke service that implements the business logic
+			err := service.StoreSubscription(ctx, &writer, &request)
+			select {
+			case <-ctx.Done():
+				if ctx.Err() != nil {
+					// Context cancellation should not be reported if it's the request context
+					w.WriteHeader(499)
+					if err != nil && !(errors1.Is(err, context.Canceled) || errors1.Is(err, context.DeadlineExceeded)) {
+						// Report unclean error handling (err != context err) to sentry
+						errors.Handle(ctx, err)
+					}
+				}
+			default:
+				if err != nil {
+					errors.HandleError(err, "StoreSubscriptionHandler", w, r)
 				}
 			}
 		}
@@ -1776,7 +2612,7 @@ func CreateSubscriptionHandler(service Service, authBackend AuthorizationBackend
 
 /*
 GetTilesHandler handles request/response marshaling and validation for
- Post /beta/tiles/query
+ Post /v1/tiles/query
 */
 func GetTilesHandler(service Service, authBackend AuthorizationBackend) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -1794,7 +2630,7 @@ func GetTilesHandler(service Service, authBackend AuthorizationBackend) http.Han
 
 		// Setup context, response writer and request type
 		writer := getTilesResponseWriter{
-			ResponseWriter: metrics.NewMetric("poi", "/beta/tiles/query", w, r),
+			ResponseWriter: metrics.NewMetric("poi", "/v1/tiles/query", w, r),
 		}
 		request := GetTilesRequest{
 			Request: r.WithContext(ctx),
@@ -1820,6 +2656,78 @@ func GetTilesHandler(service Service, authBackend AuthorizationBackend) http.Han
 			}
 		}
 	})
+}
+
+/*
+DeduplicatePoiResponseWriter is a standard http.ResponseWriter extended with methods
+to generate the respective responses easily
+*/
+type DeduplicatePoiResponseWriter interface {
+	http.ResponseWriter
+	OK()
+	BadRequest(error)
+	NotFound(error)
+}
+type deduplicatePoiResponseWriter struct {
+	http.ResponseWriter
+}
+
+// NotFound responds with jsonapi error (HTTP code 404)
+func (w *deduplicatePoiResponseWriter) NotFound(err error) {
+	runtime.WriteError(w, 404, err)
+}
+
+// BadRequest responds with jsonapi error (HTTP code 400)
+func (w *deduplicatePoiResponseWriter) BadRequest(err error) {
+	runtime.WriteError(w, 400, err)
+}
+
+// OK responds with empty response (HTTP code 204)
+func (w *deduplicatePoiResponseWriter) OK() {
+	w.Header().Set("Content-Type", "application/vnd.api+json")
+	w.WriteHeader(204)
+}
+
+// DeduplicatePoiRequest ...
+type DeduplicatePoiRequest struct {
+	Request *http.Request `valid:"-"`
+	Content DedupeRequest `valid:"-"`
+}
+
+/*
+MovePoiAtPositionResponseWriter is a standard http.ResponseWriter extended with methods
+to generate the respective responses easily
+*/
+type MovePoiAtPositionResponseWriter interface {
+	http.ResponseWriter
+	OK()
+	BadRequest(error)
+	NotFound(error)
+}
+type movePoiAtPositionResponseWriter struct {
+	http.ResponseWriter
+}
+
+// NotFound responds with jsonapi error (HTTP code 404)
+func (w *movePoiAtPositionResponseWriter) NotFound(err error) {
+	runtime.WriteError(w, 404, err)
+}
+
+// BadRequest responds with jsonapi error (HTTP code 400)
+func (w *movePoiAtPositionResponseWriter) BadRequest(err error) {
+	runtime.WriteError(w, 400, err)
+}
+
+// OK responds with empty response (HTTP code 204)
+func (w *movePoiAtPositionResponseWriter) OK() {
+	w.Header().Set("Content-Type", "application/vnd.api+json")
+	w.WriteHeader(204)
+}
+
+// MovePoiAtPositionRequest ...
+type MovePoiAtPositionRequest struct {
+	Request *http.Request `valid:"-"`
+	Content MoveRequest   `valid:"-"`
 }
 
 /*
@@ -1854,7 +2762,8 @@ type GetAppsRequest struct {
 	ParamPageNumber    int64         `valid:"optional"`
 	ParamPageSize      int64         `valid:"optional"`
 	ParamFilterAppType string        `valid:"optional,in(fueling|)"`
-	ParamFilterQuery   string        `valid:"optional"`
+	ParamFilterCache   string        `valid:"optional,in(preload|approaching|)"`
+	ParamFilterSince   time.Time     `valid:"optional,iso8601"`
 }
 
 /*
@@ -1892,7 +2801,7 @@ to generate the respective responses easily
 */
 type CheckForPaceAppResponseWriter interface {
 	http.ResponseWriter
-	OK(LocationBasedApps)
+	OK(LocationBasedAppsWithRefs)
 	BadRequest(error)
 }
 type checkForPaceAppResponseWriter struct {
@@ -1905,7 +2814,7 @@ func (w *checkForPaceAppResponseWriter) BadRequest(err error) {
 }
 
 // OK responds with jsonapi marshaled data (HTTP code 200)
-func (w *checkForPaceAppResponseWriter) OK(data LocationBasedApps) {
+func (w *checkForPaceAppResponseWriter) OK(data LocationBasedAppsWithRefs) {
 	runtime.Marshal(w, data, 200)
 }
 
@@ -1915,14 +2824,9 @@ un-marshaled content object
 */
 type CheckForPaceAppRequest struct {
 	Request              *http.Request `valid:"-"`
-	ParamPageNumber      int64         `valid:"optional"`
-	ParamPageSize        int64         `valid:"optional"`
 	ParamFilterLatitude  float32       `valid:"required"`
 	ParamFilterLongitude float32       `valid:"required"`
-	ParamFilterGpsSource string        `valid:"required,in(raw|mapMatched)"`
-	ParamFilterAppType   string        `valid:"required,in(fueling)"`
-	ParamFilterAccuracy  float32       `valid:"optional"`
-	ParamFilterDeviation float32       `valid:"optional"`
+	ParamFilterAppType   string        `valid:"optional,in(fueling|)"`
 }
 
 /*
@@ -2101,6 +3005,138 @@ type UpdateAppPOIsRelationshipsRequest struct {
 }
 
 /*
+GetDuplicatesKMLResponseWriter is a standard http.ResponseWriter extended with methods
+to generate the respective responses easily
+*/
+type GetDuplicatesKMLResponseWriter interface {
+	http.ResponseWriter
+	OK()
+	NotFound(error)
+}
+type getDuplicatesKMLResponseWriter struct {
+	http.ResponseWriter
+}
+
+// NotFound responds with jsonapi error (HTTP code 404)
+func (w *getDuplicatesKMLResponseWriter) NotFound(err error) {
+	runtime.WriteError(w, 404, err)
+}
+
+// OK responds with empty response (HTTP code 200)
+func (w *getDuplicatesKMLResponseWriter) OK() {
+	w.Header().Set("Content-Type", "application/vnd.google-earth.kml+xml")
+	w.WriteHeader(200)
+}
+
+/*
+GetDuplicatesKMLRequest is a standard http.Request extended with the
+un-marshaled content object
+*/
+type GetDuplicatesKMLRequest struct {
+	Request          *http.Request `valid:"-"`
+	ParamCountryCode string        `valid:"optional"`
+}
+
+/*
+GetPoisDumpResponseWriter is a standard http.ResponseWriter extended with methods
+to generate the respective responses easily
+*/
+type GetPoisDumpResponseWriter interface {
+	http.ResponseWriter
+	XLSXPOIReport()
+}
+type getPoisDumpResponseWriter struct {
+	http.ResponseWriter
+}
+
+// XLSXPOIReport responds with empty response (HTTP code 200)
+func (w *getPoisDumpResponseWriter) XLSXPOIReport() {
+	w.Header().Set("Content-Type", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+	w.WriteHeader(200)
+}
+
+/*
+GetPoisDumpRequest is a standard http.Request extended with the
+un-marshaled content object
+*/
+type GetPoisDumpRequest struct {
+	Request     *http.Request `valid:"-"`
+	ParamAccept string        `valid:"required,in(application/vnd.openxmlformats-officedocument.spreadsheetml.sheet)"`
+}
+
+/*
+DeleteGasStationReferenceStatusResponseWriter is a standard http.ResponseWriter extended with methods
+to generate the respective responses easily
+*/
+type DeleteGasStationReferenceStatusResponseWriter interface {
+	http.ResponseWriter
+	NoContent()
+	NotFound(error)
+}
+type deleteGasStationReferenceStatusResponseWriter struct {
+	http.ResponseWriter
+}
+
+// NotFound responds with jsonapi error (HTTP code 404)
+func (w *deleteGasStationReferenceStatusResponseWriter) NotFound(err error) {
+	runtime.WriteError(w, 404, err)
+}
+
+// NoContent responds with empty response (HTTP code 204)
+func (w *deleteGasStationReferenceStatusResponseWriter) NoContent() {
+	w.Header().Set("Content-Type", "application/vnd.api+json")
+	w.WriteHeader(204)
+}
+
+/*
+DeleteGasStationReferenceStatusRequest is a standard http.Request extended with the
+un-marshaled content object
+*/
+type DeleteGasStationReferenceStatusRequest struct {
+	Request           *http.Request `valid:"-"`
+	ParamGasStationID string        `valid:"required,uuid"`
+	ParamReference    string        `valid:"required"`
+}
+
+/*
+PutGasStationReferenceStatusResponseWriter is a standard http.ResponseWriter extended with methods
+to generate the respective responses easily
+*/
+type PutGasStationReferenceStatusResponseWriter interface {
+	http.ResponseWriter
+	NoContent()
+	BadRequest(error)
+	NotFound(error)
+}
+type putGasStationReferenceStatusResponseWriter struct {
+	http.ResponseWriter
+}
+
+// NotFound responds with jsonapi error (HTTP code 404)
+func (w *putGasStationReferenceStatusResponseWriter) NotFound(err error) {
+	runtime.WriteError(w, 404, err)
+}
+
+// BadRequest responds with jsonapi error (HTTP code 400)
+func (w *putGasStationReferenceStatusResponseWriter) BadRequest(err error) {
+	runtime.WriteError(w, 400, err)
+}
+
+// NoContent responds with empty response (HTTP code 204)
+func (w *putGasStationReferenceStatusResponseWriter) NoContent() {
+	w.Header().Set("Content-Type", "application/vnd.api+json")
+	w.WriteHeader(204)
+}
+
+// PutGasStationReferenceStatusRequest ...
+type PutGasStationReferenceStatusRequest struct {
+	Request           *http.Request   `valid:"-"`
+	Content           ReferenceStatus `valid:"-"`
+	ParamGasStationID string          `valid:"required,uuid"`
+	ParamReference    string          `valid:"required"`
+}
+
+/*
 GetEventsResponseWriter is a standard http.ResponseWriter extended with methods
 to generate the respective responses easily
 */
@@ -2157,20 +3193,17 @@ GetGasStationsRequest is a standard http.Request extended with the
 un-marshaled content object
 */
 type GetGasStationsRequest struct {
-	Request                *http.Request `valid:"-"`
-	ParamPageNumber        int64         `valid:"optional"`
-	ParamPageSize          int64         `valid:"optional"`
-	ParamFilterPoiType     string        `valid:"required,in(gasStation)"`
-	ParamFilterAppType     []string      `valid:"required,in(fueling)"`
-	ParamFilterGpsSource   string        `valid:"required,in(raw|mapMatched)"`
-	ParamInclude           string        `valid:"required,in(insideAppArea)"`
-	ParamFilterLatitude    float32       `valid:"optional"`
-	ParamFilterLongitude   float32       `valid:"optional"`
-	ParamFilterRadius      float32       `valid:"optional"`
-	ParamFilterAccuracy    float32       `valid:"optional"`
-	ParamFilterDeviation   float32       `valid:"optional"`
-	ParamFilterBoundingBox []float32     `valid:"optional"`
-	ParamFilterPath        string        `valid:"optional"`
+	Request                  *http.Request `valid:"-"`
+	ParamPageNumber          int64         `valid:"optional"`
+	ParamPageSize            int64         `valid:"optional"`
+	ParamFilterPoiType       string        `valid:"optional,in(gasStation|)"`
+	ParamFilterAppType       []string      `valid:"optional,in(fueling|)"`
+	ParamFilterLatitude      float32       `valid:"optional"`
+	ParamFilterLongitude     float32       `valid:"optional"`
+	ParamFilterRadius        float32       `valid:"optional"`
+	ParamFilterBoundingBox   []float32     `valid:"optional"`
+	ParamCompileOpeningHours bool          `valid:"optional,in(true|false|)"`
+	ParamFilterSource        string        `valid:"optional,uuid"`
 }
 
 /*
@@ -2180,15 +3213,28 @@ to generate the respective responses easily
 type GetGasStationResponseWriter interface {
 	http.ResponseWriter
 	OK(*GasStation)
+	MovedPermanently()
 	NotFound(error)
+	Expired(error)
 }
 type getGasStationResponseWriter struct {
 	http.ResponseWriter
 }
 
+// Expired responds with jsonapi error (HTTP code 410)
+func (w *getGasStationResponseWriter) Expired(err error) {
+	runtime.WriteError(w, 410, err)
+}
+
 // NotFound responds with jsonapi error (HTTP code 404)
 func (w *getGasStationResponseWriter) NotFound(err error) {
 	runtime.WriteError(w, 404, err)
+}
+
+// MovedPermanently responds with empty response (HTTP code 301)
+func (w *getGasStationResponseWriter) MovedPermanently() {
+	w.Header().Set("Content-Type", "application/vnd.api+json")
+	w.WriteHeader(301)
 }
 
 // OK responds with jsonapi marshaled data (HTTP code 200)
@@ -2201,8 +3247,117 @@ GetGasStationRequest is a standard http.Request extended with the
 un-marshaled content object
 */
 type GetGasStationRequest struct {
-	Request *http.Request `valid:"-"`
-	ParamID string        `valid:"required,uuid"`
+	Request                  *http.Request `valid:"-"`
+	ParamID                  string        `valid:"required,uuid"`
+	ParamCompileOpeningHours bool          `valid:"optional,in(true|false|)"`
+}
+
+/*
+GetPriceHistoryResponseWriter is a standard http.ResponseWriter extended with methods
+to generate the respective responses easily
+*/
+type GetPriceHistoryResponseWriter interface {
+	http.ResponseWriter
+	OK(*PriceHistory)
+	BadRequest(error)
+	NotFound(error)
+}
+type getPriceHistoryResponseWriter struct {
+	http.ResponseWriter
+}
+
+// NotFound responds with jsonapi error (HTTP code 404)
+func (w *getPriceHistoryResponseWriter) NotFound(err error) {
+	runtime.WriteError(w, 404, err)
+}
+
+// BadRequest responds with jsonapi error (HTTP code 400)
+func (w *getPriceHistoryResponseWriter) BadRequest(err error) {
+	runtime.WriteError(w, 400, err)
+}
+
+// OK responds with jsonapi marshaled data (HTTP code 200)
+func (w *getPriceHistoryResponseWriter) OK(data *PriceHistory) {
+	runtime.Marshal(w, data, 200)
+}
+
+/*
+GetPriceHistoryRequest is a standard http.Request extended with the
+un-marshaled content object
+*/
+type GetPriceHistoryRequest struct {
+	Request                *http.Request `valid:"-"`
+	ParamID                string        `valid:"required,uuid"`
+	ParamFuelType          Fuel          `valid:"optional"`
+	ParamFilterFrom        time.Time     `valid:"optional,iso8601"`
+	ParamFilterTo          time.Time     `valid:"optional,iso8601"`
+	ParamFilterGranularity string        `valid:"optional"`
+}
+
+/*
+GetGasStationFuelTypeNameMappingResponseWriter is a standard http.ResponseWriter extended with methods
+to generate the respective responses easily
+*/
+type GetGasStationFuelTypeNameMappingResponseWriter interface {
+	http.ResponseWriter
+	OK(*FuelType)
+	NotFound(error)
+}
+type getGasStationFuelTypeNameMappingResponseWriter struct {
+	http.ResponseWriter
+}
+
+// NotFound responds with jsonapi error (HTTP code 404)
+func (w *getGasStationFuelTypeNameMappingResponseWriter) NotFound(err error) {
+	runtime.WriteError(w, 404, err)
+}
+
+// OK responds with jsonapi marshaled data (HTTP code 200)
+func (w *getGasStationFuelTypeNameMappingResponseWriter) OK(data *FuelType) {
+	runtime.Marshal(w, data, 200)
+}
+
+/*
+GetGasStationFuelTypeNameMappingRequest is a standard http.Request extended with the
+un-marshaled content object
+*/
+type GetGasStationFuelTypeNameMappingRequest struct {
+	Request                *http.Request `valid:"-"`
+	ParamID                string        `valid:"required,uuid"`
+	ParamFilterProductName string        `valid:"required"`
+}
+
+/*
+GetMetadataFiltersResponseWriter is a standard http.ResponseWriter extended with methods
+to generate the respective responses easily
+*/
+type GetMetadataFiltersResponseWriter interface {
+	http.ResponseWriter
+	OK(Categories)
+	BadRequest(error)
+}
+type getMetadataFiltersResponseWriter struct {
+	http.ResponseWriter
+}
+
+// BadRequest responds with jsonapi error (HTTP code 400)
+func (w *getMetadataFiltersResponseWriter) BadRequest(err error) {
+	runtime.WriteError(w, 400, err)
+}
+
+// OK responds with jsonapi marshaled data (HTTP code 200)
+func (w *getMetadataFiltersResponseWriter) OK(data Categories) {
+	runtime.Marshal(w, data, 200)
+}
+
+/*
+GetMetadataFiltersRequest is a standard http.Request extended with the
+un-marshaled content object
+*/
+type GetMetadataFiltersRequest struct {
+	Request        *http.Request `valid:"-"`
+	ParamLatitude  float32       `valid:"required"`
+	ParamLongitude float32       `valid:"required"`
 }
 
 /*
@@ -2238,7 +3393,6 @@ type GetPoisRequest struct {
 	ParamPageSize      int64         `valid:"optional"`
 	ParamFilterPoiType POIType       `valid:"optional"`
 	ParamFilterAppID   string        `valid:"optional,uuid"`
-	ParamFilterQuery   string        `valid:"optional"`
 }
 
 /*
@@ -2248,11 +3402,18 @@ to generate the respective responses easily
 type GetPoiResponseWriter interface {
 	http.ResponseWriter
 	OK(*POI)
+	MovedPermanently()
 	BadRequest(error)
 	NotFound(error)
+	Expired(error)
 }
 type getPoiResponseWriter struct {
 	http.ResponseWriter
+}
+
+// Expired responds with jsonapi error (HTTP code 410)
+func (w *getPoiResponseWriter) Expired(err error) {
+	runtime.WriteError(w, 410, err)
 }
 
 // NotFound responds with jsonapi error (HTTP code 404)
@@ -2263,6 +3424,12 @@ func (w *getPoiResponseWriter) NotFound(err error) {
 // BadRequest responds with jsonapi error (HTTP code 400)
 func (w *getPoiResponseWriter) BadRequest(err error) {
 	runtime.WriteError(w, 400, err)
+}
+
+// MovedPermanently responds with empty response (HTTP code 301)
+func (w *getPoiResponseWriter) MovedPermanently() {
+	w.Header().Set("Content-Type", "application/vnd.api+json")
+	w.WriteHeader(301)
 }
 
 // OK responds with jsonapi marshaled data (HTTP code 200)
@@ -2416,6 +3583,39 @@ un-marshaled content object
 type GetPolicyRequest struct {
 	Request       *http.Request `valid:"-"`
 	ParamPolicyID string        `valid:"optional,uuid"`
+}
+
+/*
+GetRegionalPricesResponseWriter is a standard http.ResponseWriter extended with methods
+to generate the respective responses easily
+*/
+type GetRegionalPricesResponseWriter interface {
+	http.ResponseWriter
+	OK(RegionalPrices)
+	BadRequest(error)
+}
+type getRegionalPricesResponseWriter struct {
+	http.ResponseWriter
+}
+
+// BadRequest responds with jsonapi error (HTTP code 400)
+func (w *getRegionalPricesResponseWriter) BadRequest(err error) {
+	runtime.WriteError(w, 400, err)
+}
+
+// OK responds with jsonapi marshaled data (HTTP code 200)
+func (w *getRegionalPricesResponseWriter) OK(data RegionalPrices) {
+	runtime.Marshal(w, data, 200)
+}
+
+/*
+GetRegionalPricesRequest is a standard http.Request extended with the
+un-marshaled content object
+*/
+type GetRegionalPricesRequest struct {
+	Request              *http.Request `valid:"-"`
+	ParamFilterLatitude  float32       `valid:"required"`
+	ParamFilterLongitude float32       `valid:"required"`
 }
 
 /*
@@ -2590,32 +3790,131 @@ type UpdateSourceRequest struct {
 }
 
 /*
-CreateSubscriptionResponseWriter is a standard http.ResponseWriter extended with methods
+GetSubscriptionsResponseWriter is a standard http.ResponseWriter extended with methods
 to generate the respective responses easily
 */
-type CreateSubscriptionResponseWriter interface {
+type GetSubscriptionsResponseWriter interface {
 	http.ResponseWriter
-	Created(*Subscription)
+	OK(*Subscription)
 	BadRequest(error)
 }
-type createSubscriptionResponseWriter struct {
+type getSubscriptionsResponseWriter struct {
 	http.ResponseWriter
 }
 
 // BadRequest responds with jsonapi error (HTTP code 400)
-func (w *createSubscriptionResponseWriter) BadRequest(err error) {
+func (w *getSubscriptionsResponseWriter) BadRequest(err error) {
 	runtime.WriteError(w, 400, err)
 }
 
-// Created responds with jsonapi marshaled data (HTTP code 201)
-func (w *createSubscriptionResponseWriter) Created(data *Subscription) {
-	runtime.Marshal(w, data, 201)
+// OK responds with jsonapi marshaled data (HTTP code 200)
+func (w *getSubscriptionsResponseWriter) OK(data *Subscription) {
+	runtime.Marshal(w, data, 200)
 }
 
-// CreateSubscriptionRequest ...
-type CreateSubscriptionRequest struct {
-	Request *http.Request       `valid:"-"`
-	Content SubscriptionRequest `valid:"-"`
+// GetSubscriptionsContent ...
+type GetSubscriptionsContent []*GetSubscriptionsContentItem
+
+// GetSubscriptionsContentItem ...
+type GetSubscriptionsContentItem struct {
+	ID         string                            `jsonapi:"primary,subscription,omitempty" valid:"uuid,optional"`                   // POI Subscription ID
+	Conditions GetSubscriptionsContentConditions `json:"conditions,omitempty" jsonapi:"attr,conditions,omitempty" valid:"optional"` /*
+	Optional conditions to reduce the number of notifications to the device. For a notification to be fired, all conditions need to be true.
+	The example reads as `fuelPrice < 1.3 && fuelType == "diesel"`. For or conditions use multiple subscriptions.
+	*/
+	CreatedAt    *time.Time `json:"createdAt,omitempty" jsonapi:"attr,createdAt,omitempty,iso8601" valid:"optional"`    // Time of subscription creation (iso8601 without time zone)
+	ExpiresAt    *time.Time `json:"expiresAt,omitempty" jsonapi:"attr,expiresAt,omitempty,iso8601" valid:"optional"`    // Time when the subscription will expire, must not be more then 60 days in the future (iso8601 without time zone)
+	ObservedPois []string   `json:"observedPois,omitempty" jsonapi:"attr,observedPois,omitempty" valid:"required,uuid"` // Example: "[prn:pos:gas-stations:4d6dd9db-b0ac-40e8-a099-b606cace6f72 prn:pos:gas-stations:9536bb4a-6623-4b96-9bed-655f30c5b5cf prn:pos:gas-stations:f0fca287-94f7-47f7-8f5a-0fea0dccfaa6]"
+	PushToken    string     `json:"pushToken,omitempty" jsonapi:"attr,pushToken,omitempty" valid:"required"`            // PRN describing the push token. E.g. FCM token.
+	UpdatedAt    *time.Time `json:"updatedAt,omitempty" jsonapi:"attr,updatedAt,omitempty,iso8601" valid:"optional"`    // Time of LocationBasedApp last update (iso8601 without time zone)
+}
+
+// GetSubscriptionsContentConditionsFuelPrice Condition on the fuelPrice of a gas station.
+type GetSubscriptionsContentConditionsFuelPrice struct {
+	Lt float64 `json:"lt,omitempty" jsonapi:"attr,lt,omitempty" valid:"optional"` /*
+	Fuel price is less then given amount. Amount is always given in the currency of the gas station. The units are not scaled, for `EUR`, the value 1.3 means 1 euro and 30 cents.
+	*/
+}
+
+// GetSubscriptionsContentConditionsFuelType Condition on the fuelType of a gas station
+type GetSubscriptionsContentConditionsFuelType struct {
+	Eq string `json:"eq,omitempty" jsonapi:"attr,eq,omitempty" valid:"optional,in(ron98|ron98e5|ron95e10|diesel|e85|ron91|ron95e5|ron100|dieselGtl|dieselB7|dieselB15|dieselPremium|lpg|cng|lng|h2|truckDiesel|adBlue|truckAdBlue|truckDieselPremium|truckLpg|heatingOil|)"` // Fuel type is equal to given value
+}
+
+/*
+GetSubscriptionsContentConditions Optional conditions to reduce the number of notifications to the device. For a notification to be fired, all conditions need to be true.
+The example reads as `fuelPrice < 1.3 && fuelType == "diesel"`. For or conditions use multiple subscriptions.
+*/
+type GetSubscriptionsContentConditions struct {
+	FuelPrice GetSubscriptionsContentConditionsFuelPrice `json:"fuelPrice,omitempty" jsonapi:"attr,fuelPrice,omitempty" valid:"optional"` // Condition on the fuelPrice of a gas station.
+	FuelType  GetSubscriptionsContentConditionsFuelType  `json:"fuelType,omitempty" jsonapi:"attr,fuelType,omitempty" valid:"optional"`   // Condition on the fuelType of a gas station
+}
+
+// GetSubscriptionsRequest ...
+type GetSubscriptionsRequest struct {
+	Request *http.Request           `valid:"-"`
+	Content GetSubscriptionsContent `valid:"-"`
+}
+
+/*
+DeleteSubscriptionResponseWriter is a standard http.ResponseWriter extended with methods
+to generate the respective responses easily
+*/
+type DeleteSubscriptionResponseWriter interface {
+	http.ResponseWriter
+	Deleted()
+	NotFound(error)
+}
+type deleteSubscriptionResponseWriter struct {
+	http.ResponseWriter
+}
+
+// NotFound responds with jsonapi error (HTTP code 404)
+func (w *deleteSubscriptionResponseWriter) NotFound(err error) {
+	runtime.WriteError(w, 404, err)
+}
+
+// Deleted responds with empty response (HTTP code 204)
+func (w *deleteSubscriptionResponseWriter) Deleted() {
+	w.Header().Set("Content-Type", "application/vnd.api+json")
+	w.WriteHeader(204)
+}
+
+/*
+DeleteSubscriptionRequest is a standard http.Request extended with the
+un-marshaled content object
+*/
+type DeleteSubscriptionRequest struct {
+	Request *http.Request `valid:"-"`
+}
+
+/*
+StoreSubscriptionResponseWriter is a standard http.ResponseWriter extended with methods
+to generate the respective responses easily
+*/
+type StoreSubscriptionResponseWriter interface {
+	http.ResponseWriter
+	Stored(*Subscription)
+	BadRequest(error)
+}
+type storeSubscriptionResponseWriter struct {
+	http.ResponseWriter
+}
+
+// BadRequest responds with jsonapi error (HTTP code 400)
+func (w *storeSubscriptionResponseWriter) BadRequest(err error) {
+	runtime.WriteError(w, 400, err)
+}
+
+// Stored responds with jsonapi marshaled data (HTTP code 200)
+func (w *storeSubscriptionResponseWriter) Stored(data *Subscription) {
+	runtime.Marshal(w, data, 200)
+}
+
+// StoreSubscriptionRequest ...
+type StoreSubscriptionRequest struct {
+	Request *http.Request `valid:"-"`
+	Content Subscription  `valid:"-"`
 }
 
 /*
@@ -2649,10 +3948,14 @@ type GetTilesRequest struct {
 
 // Service interface for all handlers
 type Service interface {
+	// DeduplicatePoi Specify if a list of POI are considered to be duplicates of a specific POI
+	DeduplicatePoi(context.Context, DeduplicatePoiResponseWriter, *DeduplicatePoiRequest) error
+	// MovePoiAtPosition Allows an admin to move a POI identified by its ID to a specific position
+	MovePoiAtPosition(context.Context, MovePoiAtPositionResponseWriter, *MovePoiAtPositionRequest) error
 	/*
 	   GetApps Returns a paginated list of apps
 
-	   Returns a paginated list of apps optionally filtered by type and/or query
+	   Returns a paginated list of apps optionally filtered by type and/or query.
 	*/
 	GetApps(context.Context, GetAppsResponseWriter, *GetAppsRequest) error
 	/*
@@ -2683,7 +3986,8 @@ type Service interface {
 	/*
 	   GetApp Returns App with specified id
 
-	   Returns App with specified id
+	   Returns App with specified id.
+	   In case the query returns a `404` (`Not Found`) the app was deleted and should be deleted from any caches.
 	*/
 	GetApp(context.Context, GetAppResponseWriter, *GetAppRequest) error
 	/*
@@ -2705,30 +4009,50 @@ type Service interface {
 	*/
 	UpdateAppPOIsRelationships(context.Context, UpdateAppPOIsRelationshipsResponseWriter, *UpdateAppPOIsRelationshipsRequest) error
 	/*
+	   GetDuplicatesKML Duplicate Map for country (KML)
+
+	   Generates a map of potential gas station duplicates (closer than 50m to eachother) for specified country.
+	*/
+	GetDuplicatesKML(context.Context, GetDuplicatesKMLResponseWriter, *GetDuplicatesKMLRequest) error
+	/*
+	   GetPoisDump Create a full POI dump
+
+
+	   Dump all POI data in XLSX format, along with full amenities.
+	*/
+	GetPoisDump(context.Context, GetPoisDumpResponseWriter, *GetPoisDumpRequest) error
+	/*
+	   DeleteGasStationReferenceStatus Deletes a reference status of a gas station
+
+	   Deletes a reference status of a gas station
+	*/
+	DeleteGasStationReferenceStatus(context.Context, DeleteGasStationReferenceStatusResponseWriter, *DeleteGasStationReferenceStatusRequest) error
+	/*
+	   PutGasStationReferenceStatus Creates or updates a reference status of a gas station
+
+	   Creates or updates a reference status of a gas station
+	*/
+	PutGasStationReferenceStatus(context.Context, PutGasStationReferenceStatusResponseWriter, *PutGasStationReferenceStatusRequest) error
+	/*
 	   GetEvents Returns a list of events
 
-	   Returns a list of eventsoptionally filtered by poi type and/or country id and/or user id
+	   Returns a list of events optionally filtered by poi type and/or country id and/or user id
 	*/
 	GetEvents(context.Context, GetEventsResponseWriter, *GetEventsRequest) error
 	/*
 	   GetGasStations Query for gas stations
 
-	   There are three possibilities to search for gas stations. If you want to search in a specific radius around a given longitude and latitude you have to provide the following query parameters:
+	   There are two ways to search for gas stations in a geo location. You can use either one, or none, but not both ways.
 
-	   * latitude (required)
-	   * longitude (required)
-	   * radius (required)
-	   * accuracy (optional)
+	   To search inside a specific radius around a given longitude and latitude provide the following query parameters:
 
-	   If you want to search in a given bounding box you have to provide the following query parameters:
+	   * latitude
+	   * longitude
+	   * radius
 
-	   * boundingBox (required)
+	   To search inside a bounding box provide the following query parameter:
 
-	   If you want to search along a given path you have to provide the following query parameters:
-	   * path (required)
-	   * radius (required)
-
-	   If you have map-matched GPS data you can also provide a `deviation` query parameter. By using this query type, the evaluation if the user is inside the polygon of a specific location-based PACE app needs to be done by the client.
+	   * boundingBox
 	*/
 	GetGasStations(context.Context, GetGasStationsResponseWriter, *GetGasStationsRequest) error
 	/*
@@ -2737,6 +4061,31 @@ type Service interface {
 	   Returns an individual gas station
 	*/
 	GetGasStation(context.Context, GetGasStationResponseWriter, *GetGasStationRequest) error
+	/*
+	   GetPriceHistory Get price history for a specific gas station
+
+	   Get the price history for a specific gas station and fuel type on a period of time which can begin no sooner than 37 days ago; the time interval between price changes can be set to minute, hour, day, week, month or year
+	*/
+	GetPriceHistory(context.Context, GetPriceHistoryResponseWriter, *GetPriceHistoryRequest) error
+	/*
+	   GetGasStationFuelTypeNameMapping Get a mapping from gas station specific fuel product name mapped to a normalized fuel type
+
+	   Every gas station potential has different names for the same fuel types. This endpoint accepts the gas station's specific name and return a mapping where the specific name is mapped to a normalized version which should be globally the same across gas stations.
+	*/
+	GetGasStationFuelTypeNameMapping(context.Context, GetGasStationFuelTypeNameMappingResponseWriter, *GetGasStationFuelTypeNameMappingRequest) error
+	/*
+	   GetMetadataFilters Query for filterable values inside a radius
+
+	   Returns filterable values around the current location on the map, within a certain radius.
+	   For the latitude and longitude values used in the request, returns the available and unavailable values for the following fields:
+
+	     * brand
+
+	     * payment methods
+
+	     * amenities
+	*/
+	GetMetadataFilters(context.Context, GetMetadataFiltersResponseWriter, *GetMetadataFiltersRequest) error
 	/*
 	   GetPois Returns a paginated list of POIs
 
@@ -2774,6 +4123,12 @@ type Service interface {
 	*/
 	GetPolicy(context.Context, GetPolicyResponseWriter, *GetPolicyRequest) error
 	/*
+	   GetRegionalPrices Search for regional prices in the area
+
+	   Search for regional prices in the area centered at input latitude/longitude. Lower/Upper limits are set for each fuel type returned.
+	*/
+	GetRegionalPrices(context.Context, GetRegionalPricesResponseWriter, *GetRegionalPricesRequest) error
+	/*
 	   GetSources Returns a paginated list of sources
 
 	   Returns a paginated list of sources optionally filtered by poi type and/or name
@@ -2804,25 +4159,36 @@ type Service interface {
 	*/
 	UpdateSource(context.Context, UpdateSourceResponseWriter, *UpdateSourceRequest) error
 	/*
-	   CreateSubscription Create a POI subscription
+	   GetSubscriptions Get the list of POI subscriptions for the user or device
 
 
-	   Create a POI subscription to send a push notification to the device with the specified `pushToken` once you enter the specified `area`, which is currently described by a polygon. If you specify `types`, you only get one of those POI types in the push notification. The notification contains (max 4kb)
+	   Returns a list of all current (not expired) subscriptions of the user.
+	*/
+	GetSubscriptions(context.Context, GetSubscriptionsResponseWriter, *GetSubscriptionsRequest) error
+	/*
+	   DeleteSubscription Deletes a previously created POI subscription
+	*/
+	DeleteSubscription(context.Context, DeleteSubscriptionResponseWriter, *DeleteSubscriptionRequest) error
+	/*
+	   StoreSubscription Stores a POI subscription
 
+
+	   Stores a POI subscription to send a push notification to the device with the specified `pushToken` once one of the pois change based on the change condition. The notification contains (max 4kb)
 	   ```
 	   {
-	     "target": "mapkit"
+	     "target": "..."
+	     "subscription": "706087b4-8bca-4db9-b037-8a7ff4ce5633",
 	     "poi": {
-	       "id": "B064797C-C644-4D48-8DDD-E2D6A7D86770", # poi ID
-	       "type": "movableCamera",
+	       "id": "4d6dd9db-b0ac-40e8-a099-b606cace6f72", # poi ID
+	       "type": "gasStation",
 	       "attributes": {
-	         "coordinates": [101.0, 0.0], # lat, long
-	         # ... potentially more data
+	         # ... more data of the type
 	       }
 	     }
-	   } ```
+	   }
+	   ```
 	*/
-	CreateSubscription(context.Context, CreateSubscriptionResponseWriter, *CreateSubscriptionRequest) error
+	StoreSubscription(context.Context, StoreSubscriptionResponseWriter, *StoreSubscriptionRequest) error
 	/*
 	   GetTiles Query for tiles
 
@@ -2839,32 +4205,46 @@ POI API
 */
 func Router(service Service, authBackend AuthorizationBackend) *mux.Router {
 	router := mux.NewRouter()
+	authBackend.InitDeviceID(cfgDeviceID)
 	authBackend.InitOAuth2(cfgOAuth2)
+	authBackend.InitOIDC(cfgOIDC)
 	// Subrouter s1 - Path: /poi
 	s1 := router.PathPrefix("/poi").Subrouter()
+	s1.Methods("PUT").Path("/beta/delivery/gas-stations/{gasStationId}/reference-status/{reference}").Handler(PutGasStationReferenceStatusHandler(service, authBackend)).Name("PutGasStationReferenceStatus")
+	s1.Methods("DELETE").Path("/beta/delivery/gas-stations/{gasStationId}/reference-status/{reference}").Handler(DeleteGasStationReferenceStatusHandler(service, authBackend)).Name("DeleteGasStationReferenceStatus")
 	s1.Methods("GET").Path("/beta/apps/{appID}/relationships/pois").Handler(GetAppPOIsRelationshipsHandler(service, authBackend)).Name("GetAppPOIsRelationships")
 	s1.Methods("PATCH").Path("/beta/apps/{appID}/relationships/pois").Handler(UpdateAppPOIsRelationshipsHandler(service, authBackend)).Name("UpdateAppPOIsRelationships")
+	s1.Methods("GET").Path("/beta/gas-stations/{id}/fuel-price-histories/{fuel_type}").Handler(GetPriceHistoryHandler(service, authBackend)).Name("GetPriceHistory")
+	s1.Methods("PATCH").Path("/beta/admin/poi/dedupe").Handler(DeduplicatePoiHandler(service, authBackend)).Name("DeduplicatePoi")
+	s1.Methods("PATCH").Path("/beta/admin/poi/move").Handler(MovePoiAtPositionHandler(service, authBackend)).Name("MovePoiAtPosition")
+	s1.Methods("GET").Path("/beta/datadumps/duplicatemap/{countryCode}").Handler(GetDuplicatesKMLHandler(service, authBackend)).Name("GetDuplicatesKML")
+	s1.Methods("GET").Path("/beta/gas-stations/{id}/fueltype").Handler(GetGasStationFuelTypeNameMappingHandler(service, authBackend)).Name("GetGasStationFuelTypeNameMapping")
 	s1.Methods("GET").Path("/beta/apps/query").Handler(CheckForPaceAppHandler(service, authBackend)).Name("CheckForPaceApp")
-	s1.Methods("POST").Path("/beta/tiles/query").Handler(GetTilesHandler(service, authBackend)).Name("GetTiles")
-	s1.Methods("GET").Path("/beta/apps/{appID}").Handler(GetAppHandler(service, authBackend)).Name("GetApp")
-	s1.Methods("PUT").Path("/beta/apps/{appID}").Handler(UpdateAppHandler(service, authBackend)).Name("UpdateApp")
+	s1.Methods("GET").Path("/beta/prices/regional").Handler(GetRegionalPricesHandler(service, authBackend)).Name("GetRegionalPrices")
+	s1.Methods("GET").Path("/beta/datadumps/pois").Handler(GetPoisDumpHandler(service, authBackend)).Name("GetPoisDump")
+	s1.Methods("POST").Path("/v1/tiles/query").Handler(GetTilesHandler(service, authBackend)).Name("GetTiles")
+	s1.Methods("GET").Path("/beta/gas-stations/{id}").Handler(GetGasStationHandler(service, authBackend)).Name("GetGasStation")
+	s1.Methods("PUT").Path("/beta/subscriptions/{id}").Handler(StoreSubscriptionHandler(service, authBackend)).Name("StoreSubscription")
+	s1.Methods("DELETE").Path("/beta/subscriptions/{id}").Handler(DeleteSubscriptionHandler(service, authBackend)).Name("DeleteSubscription")
 	s1.Methods("DELETE").Path("/beta/apps/{appID}").Handler(DeleteAppHandler(service, authBackend)).Name("DeleteApp")
 	s1.Methods("PUT").Path("/beta/sources/{sourceId}").Handler(UpdateSourceHandler(service, authBackend)).Name("UpdateSource")
 	s1.Methods("GET").Path("/beta/sources/{sourceId}").Handler(GetSourceHandler(service, authBackend)).Name("GetSource")
 	s1.Methods("DELETE").Path("/beta/sources/{sourceId}").Handler(DeleteSourceHandler(service, authBackend)).Name("DeleteSource")
-	s1.Methods("GET").Path("/beta/gas-stations/{id}").Handler(GetGasStationHandler(service, authBackend)).Name("GetGasStation")
+	s1.Methods("GET").Path("/beta/apps/{appID}").Handler(GetAppHandler(service, authBackend)).Name("GetApp")
+	s1.Methods("GET").Path("/beta/pois/{poiId}").Handler(GetPoiHandler(service, authBackend)).Name("GetPoi")
 	s1.Methods("GET").Path("/beta/policies/{policyId}").Handler(GetPolicyHandler(service, authBackend)).Name("GetPolicy")
 	s1.Methods("PATCH").Path("/beta/pois/{poiId}").Handler(ChangePoiHandler(service, authBackend)).Name("ChangePoi")
-	s1.Methods("GET").Path("/beta/pois/{poiId}").Handler(GetPoiHandler(service, authBackend)).Name("GetPoi")
-	s1.Methods("GET").Path("/beta/policies").Handler(GetPoliciesHandler(service, authBackend)).Name("GetPolicies")
+	s1.Methods("PUT").Path("/beta/apps/{appID}").Handler(UpdateAppHandler(service, authBackend)).Name("UpdateApp")
 	s1.Methods("POST").Path("/beta/policies").Handler(CreatePolicyHandler(service, authBackend)).Name("CreatePolicy")
+	s1.Methods("GET").Path("/beta/policies").Handler(GetPoliciesHandler(service, authBackend)).Name("GetPolicies")
 	s1.Methods("GET").Path("/beta/pois").Handler(GetPoisHandler(service, authBackend)).Name("GetPois")
 	s1.Methods("GET").Path("/beta/sources").Handler(GetSourcesHandler(service, authBackend)).Name("GetSources")
 	s1.Methods("POST").Path("/beta/sources").Handler(CreateSourceHandler(service, authBackend)).Name("CreateSource")
+	s1.Methods("GET").Path("/beta/apps").Handler(GetAppsHandler(service, authBackend)).Name("GetApps")
+	s1.Methods("POST").Path("/beta/apps").Handler(CreateAppHandler(service, authBackend)).Name("CreateApp")
+	s1.Methods("GET").Path("/beta/subscriptions").Handler(GetSubscriptionsHandler(service, authBackend)).Name("GetSubscriptions")
 	s1.Methods("GET").Path("/beta/gas-stations").Handler(GetGasStationsHandler(service, authBackend)).Name("GetGasStations")
 	s1.Methods("GET").Path("/beta/events").Handler(GetEventsHandler(service, authBackend)).Name("GetEvents")
-	s1.Methods("POST").Path("/beta/apps").Handler(CreateAppHandler(service, authBackend)).Name("CreateApp")
-	s1.Methods("POST").Path("/beta/subscriptions").Handler(CreateSubscriptionHandler(service, authBackend)).Name("CreateSubscription")
-	s1.Methods("GET").Path("/beta/apps").Handler(GetAppsHandler(service, authBackend)).Name("GetApps")
+	s1.Methods("GET").Path("/beta/meta").Handler(GetMetadataFiltersHandler(service, authBackend)).Name("GetMetadataFilters")
 	return router
 }

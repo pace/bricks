@@ -7,9 +7,25 @@ import (
 	"fmt"
 	"net/http"
 	"strings"
+	"time"
 
 	valid "github.com/asaskevich/govalidator"
+	"github.com/pace/bricks/pkg/isotime"
 )
+
+func init() {
+	valid.CustomTypeTagMap.Set("iso8601", valid.CustomTypeValidator(func(i interface{}, o interface{}) bool {
+		switch v := i.(type) {
+		case time.Time:
+			return true
+		case string:
+			_, err := isotime.ParseISO8601(v)
+			return err == nil
+		}
+
+		return false
+	}))
+}
 
 // ValidateParameters checks the given struct and returns true if the struct
 // is valid according to the specification (declared with go-validator struct tags)

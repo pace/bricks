@@ -7,6 +7,7 @@ import (
 	"encoding/json"
 	"net/http/httptest"
 	"testing"
+	"time"
 )
 
 func TestScanStringParametersInQuery(t *testing.T) {
@@ -31,6 +32,35 @@ func TestScanStringParametersInQuery(t *testing.T) {
 		}
 		// comparison
 		if param0 != tc.result {
+			t.Errorf("expected parsing result %q got: %q", tc.result, param0)
+		}
+	}
+}
+
+func TestScanTimeParametersInQuery(t *testing.T) {
+	tests := []struct {
+		path   string
+		result time.Time
+	}{
+		{"/?q=", time.Time{}},
+		{"/?q=2020-01-01T01%3A01%3A01", time.Date(2020, 1, 1, 1, 1, 1, 0, time.UTC)},
+		{"/?q=1993-12-30T06%3A23%3A12Z", time.Date(1993, 12, 30, 6, 23, 12, 0, time.UTC)},
+		{"/?q=1993-12-30T06%3A23%3A12%2B02%3A00", time.Date(1993, 12, 30, 6, 23, 12, 0, time.FixedZone("+0200", 2*60*60))},
+		{"/?q=1993-12-30T06%3A23%3A12%2E999999999", time.Date(1993, 12, 30, 6, 23, 12, 999999999, time.UTC)},
+		{"/?q=1993-12-30T06%3A23%3A12%2E999999999Z", time.Date(1993, 12, 30, 6, 23, 12, 999999999, time.UTC)},
+	}
+
+	for _, tc := range tests {
+		req := httptest.NewRequest("GET", tc.path, nil)
+		rec := httptest.NewRecorder()
+		var param0 time.Time
+		ok := ScanParameters(rec, req, &ScanParameter{&param0, ScanInQuery, "", "q"})
+		// Parsing
+		if !ok {
+			t.Errorf("expected the scanning of %q to be successful", tc.path)
+		}
+		// comparison
+		if !param0.Equal(tc.result) {
 			t.Errorf("expected parsing result %q got: %q", tc.result, param0)
 		}
 	}
