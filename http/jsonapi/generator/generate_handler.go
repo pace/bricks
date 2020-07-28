@@ -283,7 +283,10 @@ func (g *Generator) generateRequestStruct(route *route, schema *openapi3.Swagger
 		if param.Value.Schema.Ref != "" {
 			paramStmt.Id(goNameHelper(filepath.Base(param.Value.Schema.Ref)))
 		} else {
-			err := g.goType(paramStmt, param.Value.Schema.Value, tags)
+			tg := g.goType(paramStmt, param.Value.Schema.Value, tags)
+			tg.isParam = true
+
+			err := tg.invoke()
 			if err != nil {
 				return err
 			}

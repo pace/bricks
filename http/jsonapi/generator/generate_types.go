@@ -93,7 +93,7 @@ func (g *Generator) buildType(prefix string, stmt *jen.Statement, schema *openap
 				return nil
 			}
 			if val.AdditionalProperties.Value != nil {
-				err := g.goType(stmt, val.AdditionalProperties.Value, make(map[string]string))
+				err := g.goType(stmt, val.AdditionalProperties.Value, make(map[string]string)).invoke()
 				if err != nil {
 					return err
 				}
@@ -138,7 +138,7 @@ func (g *Generator) buildType(prefix string, stmt *jen.Statement, schema *openap
 			return nil
 		}
 
-		err := g.goType(stmt, val, tags)
+		err := g.goType(stmt, val, tags).invoke()
 		if err != nil {
 			return err
 		}
@@ -391,7 +391,7 @@ func (g *Generator) generateIDField(idType, objectType *openapi3.Schema) (*jen.S
 	tags := map[string]string{
 		"jsonapi": fmt.Sprintf("primary,%s,omitempty", objectType.Enum[0]),
 	}
-	err := g.goType(id, idType, tags)
+	err := g.goType(id, idType, tags).invoke()
 	if err != nil {
 		return nil, err
 	}

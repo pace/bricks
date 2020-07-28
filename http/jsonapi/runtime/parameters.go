@@ -8,8 +8,11 @@ import (
 	"net/http"
 	"reflect"
 	"strings"
+	"time"
 
 	"github.com/shopspring/decimal"
+
+	"github.com/pace/bricks/pkg/isotime"
 )
 
 // ScanIn help to avoid missuse using iota for the possible values
@@ -120,6 +123,17 @@ func Scan(str string, data interface{}) (int, error) {
 			return 0, err
 		}
 		*d = nd
+		return 1, nil
+	}
+
+	// handle time
+	if t, ok := data.(*time.Time); ok {
+		nt, err := isotime.ParseISO8601(str)
+		if err != nil {
+			return 0, err
+		}
+
+		*t = nt
 		return 1, nil
 	}
 
