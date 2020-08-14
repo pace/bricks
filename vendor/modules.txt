@@ -141,10 +141,11 @@ github.com/spf13/pflag
 # github.com/streadway/handy v0.0.0-20200128134331-0f66f006fb2e
 ## explicit
 github.com/streadway/handy/retry
-# github.com/stretchr/testify v1.5.1
+# github.com/stretchr/testify v1.6.1
 ## explicit
 github.com/stretchr/testify/assert
 github.com/stretchr/testify/require
+github.com/stretchr/testify/suite
 # github.com/uber-go/atomic v1.3.2
 ## explicit
 # github.com/uber/jaeger-client-go v2.14.0+incompatible
@@ -204,3 +205,5 @@ golang.org/x/xerrors/internal
 gopkg.in/ini.v1
 # gopkg.in/yaml.v2 v2.2.4
 gopkg.in/yaml.v2
+# gopkg.in/yaml.v3 v3.0.0-20200313102051-9f266ea9e77c
+gopkg.in/yaml.v3
