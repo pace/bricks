@@ -401,8 +401,9 @@ func unmarshalAttribute(
 	value = reflect.ValueOf(attribute)
 	fieldType := structField.Type
 
-	// decimal.Decimal
-	if fieldValue.Type() == reflect.TypeOf(decimal.Decimal{}) {
+	// decimal.Decimal and *decimal.Decimal
+	if fieldValue.Type() == reflect.TypeOf(decimal.Decimal{}) ||
+		fieldValue.Type() == reflect.TypeOf(new(decimal.Decimal)) {
 		value, err = handleDecimal(rawAttribute)
 		return
 	}
