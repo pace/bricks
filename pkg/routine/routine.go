@@ -13,10 +13,9 @@ import (
 	"sync/atomic"
 	"syscall"
 
-	"github.com/pace/bricks/http/oauth2"
-	"github.com/pace/bricks/locale"
 	"github.com/pace/bricks/maintenance/errors"
 	"github.com/pace/bricks/maintenance/log"
+	pkgcontext "github.com/pace/bricks/pkg/context"
 )
 
 type options struct {
@@ -89,12 +88,8 @@ func RunNamed(parentCtx context.Context, name string, routine func(context.Conte
 // canceled if the program receives a shutdown signal (SIGINT, SIGTERM), if the
 // returned CancelFunc is called, or if the routine returned.
 func Run(parentCtx context.Context, routine func(context.Context)) (cancel context.CancelFunc) {
-	// transfer logger, log.Sink, authentication and error info
-	ctx := log.Ctx(parentCtx).WithContext(context.Background())
-	ctx = log.SinkContextTransfer(parentCtx, ctx)
-	ctx = oauth2.ContextTransfer(parentCtx, ctx)
-	ctx = errors.ContextTransfer(parentCtx, ctx)
-	ctx = locale.ContextTransfer(parentCtx, ctx)
+	ctx := pkgcontext.Transfer(parentCtx)
+
 	// add routine number to context and logger
 	num := atomic.AddInt64(&ctr, 1)
 	ctx = context.WithValue(ctx, ctxNumKey{}, num)
