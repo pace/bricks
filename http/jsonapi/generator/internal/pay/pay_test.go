@@ -9,13 +9,14 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/shopspring/decimal"
+
 	"github.com/pace/bricks/http/jsonapi"
 	"github.com/pace/bricks/http/jsonapi/runtime"
 	"github.com/pace/bricks/http/oauth2"
 	oidc "github.com/pace/bricks/http/oidc"
 	"github.com/pace/bricks/http/security/apikey"
 	"github.com/pace/bricks/maintenance/log"
-	"github.com/shopspring/decimal"
 )
 
 type testService struct {
@@ -70,12 +71,15 @@ func (s *testService) ProcessPayment(ctx context.Context, w ProcessPaymentRespon
 	if r.Content.PriceIncludingVAT.String() != "69.34" {
 		s.t.Errorf(`expected priceIncludingVAT "69.34", got %q`, r.Content.PriceIncludingVAT)
 	}
-
+	amount := decimal.RequireFromString("11.07")
+	rate := decimal.RequireFromString("19.0")
+	priceWithVat := decimal.RequireFromString("69.34")
+	priceWithoutVat := decimal.RequireFromString("58.27")
 	w.Created(&ProcessPaymentCreated{
 		ID: "42",
 		VAT: ProcessPaymentCreatedVAT{
-			Amount: decimal.RequireFromString("11.07"),
-			Rate:   decimal.RequireFromString("19.0"),
+			Amount: &amount,
+			Rate:   &rate,
 		},
 		Currency: "EUR",
 		Fueling: ProcessPaymentCreatedFueling{
@@ -85,8 +89,8 @@ func (s *testService) ProcessPayment(ctx context.Context, w ProcessPaymentRespon
 			Mileage: 66435,
 		},
 		PaymentToken:      "f106ac99-213c-4cf7-8c1b-1e841516026b",
-		PriceIncludingVAT: decimal.RequireFromString("69.34"),
-		PriceWithoutVAT:   decimal.RequireFromString("58.27"),
+		PriceIncludingVAT: &priceWithVat,
+		PriceWithoutVAT:   &priceWithoutVat,
 	})
 
 	return nil
@@ -219,10 +223,10 @@ func TestHandlerDecimal(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	assertDecimal(t, pc.VAT.Amount, decimal.RequireFromString("11.07"))
-	assertDecimal(t, pc.VAT.Rate, decimal.RequireFromString("19.0"))
-	assertDecimal(t, pc.PriceIncludingVAT, decimal.RequireFromString("69.34"))
-	assertDecimal(t, pc.PriceWithoutVAT, decimal.RequireFromString("58.27"))
+	assertDecimal(t, *pc.VAT.Amount, decimal.RequireFromString("11.07"))
+	assertDecimal(t, *pc.VAT.Rate, decimal.RequireFromString("19.0"))
+	assertDecimal(t, *pc.PriceIncludingVAT, decimal.RequireFromString("69.34"))
+	assertDecimal(t, *pc.PriceWithoutVAT, decimal.RequireFromString("58.27"))
 }
 
 func assertDecimal(t *testing.T, got, want decimal.Decimal) {

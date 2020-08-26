@@ -113,12 +113,12 @@ type Fuel string
 
 // FuelPrice ...
 type FuelPrice struct {
-	ID          string          `jsonapi:"primary,fuelPrice,omitempty" valid:"uuid,optional"` // Fuel Price ID
-	Currency    Currency        `json:"currency,omitempty" jsonapi:"attr,currency,omitempty" valid:"optional"`
-	FuelType    Fuel            `json:"fuelType,omitempty" jsonapi:"attr,fuelType,omitempty" valid:"optional"`
-	Price       decimal.Decimal `json:"price,omitempty" jsonapi:"attr,price,omitempty" valid:"optional"`                 // per liter
-	ProductName string          `json:"productName,omitempty" jsonapi:"attr,productName,omitempty" valid:"optional"`     // Example: "Super E10"
-	UpdatedAt   *time.Time      `json:"updatedAt,omitempty" jsonapi:"attr,updatedAt,omitempty,iso8601" valid:"optional"` // Time of FuelPrices last update iso8601 with microseconds UTC
+	ID          string           `jsonapi:"primary,fuelPrice,omitempty" valid:"uuid,optional"` // Fuel Price ID
+	Currency    Currency         `json:"currency,omitempty" jsonapi:"attr,currency,omitempty" valid:"optional"`
+	FuelType    Fuel             `json:"fuelType,omitempty" jsonapi:"attr,fuelType,omitempty" valid:"optional"`
+	Price       *decimal.Decimal `json:"price,omitempty" jsonapi:"attr,price,omitempty" valid:"optional"`                 // per liter
+	ProductName string           `json:"productName,omitempty" jsonapi:"attr,productName,omitempty" valid:"optional"`     // Example: "Super E10"
+	UpdatedAt   *time.Time       `json:"updatedAt,omitempty" jsonapi:"attr,updatedAt,omitempty,iso8601" valid:"optional"` // Time of FuelPrices last update iso8601 with microseconds UTC
 }
 
 // FuelPriceResponse ...
@@ -280,8 +280,8 @@ type PolicyRulePriority struct {
 
 // PriceHistoryFuelPrices ...
 type PriceHistoryFuelPrices struct {
-	At    *time.Time      `json:"at,omitempty" jsonapi:"attr,at,omitempty,iso8601" valid:"optional"` // The datetime of the price value
-	Price decimal.Decimal `json:"price,omitempty" jsonapi:"attr,price,omitempty" valid:"optional"`   // The price at this point in time
+	At    *time.Time       `json:"at,omitempty" jsonapi:"attr,at,omitempty,iso8601" valid:"optional"` // The datetime of the price value
+	Price *decimal.Decimal `json:"price,omitempty" jsonapi:"attr,price,omitempty" valid:"optional"`   // The price at this point in time
 }
 
 // PriceHistory ...
@@ -305,11 +305,11 @@ type ReferenceStatuses []*ReferenceStatus
 
 // RegionalPricesItem Regional prices
 type RegionalPricesItem struct {
-	ID       string          `jsonapi:"primary,regionalPrices,omitempty" valid:"in(ron98|ron98e5|ron95e10|diesel|e85|ron91|ron95e5|ron100|dieselGtl|dieselB7|dieselPremium|lpg|cng|lng|h2|truckDiesel|adBlue|truckAdBlue|truckDieselPremium|truckLpg|heatingOil),optional"` // Fuel type for cars, based on the EU fuel marking
-	Average  decimal.Decimal `json:"average,omitempty" jsonapi:"attr,average,omitempty" valid:"optional"`                                                                                                                                                                   // Average price for this fuel type
-	Currency string          `json:"currency,omitempty" jsonapi:"attr,currency,omitempty" valid:"optional"`                                                                                                                                                                 // Currency based on country
-	Lower    decimal.Decimal `json:"lower,omitempty" jsonapi:"attr,lower,omitempty" valid:"optional"`                                                                                                                                                                       // Price value indicator below which a price is considered cheap
-	Upper    decimal.Decimal `json:"upper,omitempty" jsonapi:"attr,upper,omitempty" valid:"optional"`                                                                                                                                                                       // Price value indicator after which a price is considered expensive
+	ID       string           `jsonapi:"primary,regionalPrices,omitempty" valid:"in(ron98|ron98e5|ron95e10|diesel|e85|ron91|ron95e5|ron100|dieselGtl|dieselB7|dieselPremium|lpg|cng|lng|h2|truckDiesel|adBlue|truckAdBlue|truckDieselPremium|truckLpg|heatingOil),optional"` // Fuel type for cars, based on the EU fuel marking
+	Average  *decimal.Decimal `json:"average,omitempty" jsonapi:"attr,average,omitempty" valid:"optional"`                                                                                                                                                                   // Average price for this fuel type
+	Currency string           `json:"currency,omitempty" jsonapi:"attr,currency,omitempty" valid:"optional"`                                                                                                                                                                 // Currency based on country
+	Lower    *decimal.Decimal `json:"lower,omitempty" jsonapi:"attr,lower,omitempty" valid:"optional"`                                                                                                                                                                       // Price value indicator below which a price is considered cheap
+	Upper    *decimal.Decimal `json:"upper,omitempty" jsonapi:"attr,upper,omitempty" valid:"optional"`                                                                                                                                                                       // Price value indicator after which a price is considered expensive
 }
 
 // RegionalPrices ...

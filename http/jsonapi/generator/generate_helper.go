@@ -68,7 +68,11 @@ func (g *typeGenerator) invoke() error { // nolint: gocyclo
 			g.stmt.String()
 		case "decimal":
 			addValidator(g.tags, "matches(^(\\d*\\.)?\\d+$)")
-			g.stmt.Qual(pkgDecimal, "Decimal")
+			if g.isParam {
+				g.stmt.Qual(pkgDecimal, "Decimal")
+			} else {
+				g.stmt.Op("*").Qual(pkgDecimal, "Decimal")
+			}
 		default:
 			g.stmt.String()
 		}
@@ -82,7 +86,11 @@ func (g *typeGenerator) invoke() error { // nolint: gocyclo
 	case "number":
 		switch g.schema.Format {
 		case "decimal":
-			g.stmt.Qual(pkgDecimal, "Decimal")
+			if g.isParam {
+				g.stmt.Qual(pkgDecimal, "Decimal")
+			} else {
+				g.stmt.Op("*").Qual(pkgDecimal, "Decimal")
+			}
 		case "float":
 			g.stmt.Float32()
 		case "double":
