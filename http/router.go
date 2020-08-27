@@ -42,6 +42,9 @@ func Router() *mux.Router {
 
 	r.Use(locale.Handler())
 
+	// makes some infos about the request accessable from the context
+	r.Use(RequestInContextMiddleware)
+
 	// for prometheus
 	r.Handle("/metrics", metric.Handler())
 
