@@ -69,7 +69,7 @@ func ProxyAwareRemote(r *http.Request) string {
 		for i := len(addresses) - 1; i >= 0; i-- {
 			ip := strings.TrimSpace(addresses[i])
 			realIP := net.ParseIP(ip)
-			if !realIP.IsGlobalUnicast() {
+			if !realIP.IsGlobalUnicast() || isPrivate(realIP) {
 				continue // bad address, go to next
 			}
 			return ip
@@ -83,6 +83,21 @@ func ProxyAwareRemote(r *http.Request) string {
 		return ""
 	}
 	return host
+}
+
+// isPrivate reports whether `ip' is a local address, according to
+// RFC 1918 (IPv4 addresses) and RFC 4193 (IPv6 addresses).
+// Remove as soon as https://github.com/golang/go/issues/29146 is resolved
+func isPrivate(ip net.IP) bool {
+	if ip4 := ip.To4(); ip4 != nil {
+		// Local IPv4 addresses are defined in https://tools.ietf.org/html/rfc1918
+		return ip4[0] == 10 ||
+			(ip4[0] == 172 && ip4[1]&0xf0 == 16) ||
+			(ip4[0] == 192 && ip4[1] == 168)
+	}
+
+	// Local IPv6 addresses are defined in https://tools.ietf.org/html/rfc4193
+	return len(ip) == net.IPv6len && ip[0]&0xfe == 0xfc
 }
 
 var noXid = errors.New("no xid")
