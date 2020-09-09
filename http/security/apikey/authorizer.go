@@ -45,7 +45,7 @@ func NewAuthorizer(authConfig *Config, apiKey string) *Authorizer {
 // Success: A context with a token containing the api key and true
 // Error: the unchanged request context and false. the response already contains the error message
 func (a *Authorizer) Authorize(r *http.Request, w http.ResponseWriter) (context.Context, bool) {
-	key := security.GetBearerTokenFromHeader(r.Header.Get(a.authConfig.Name))
+	key := r.Header.Get(a.authConfig.Name)
 	if key == "" {
 		log.Req(r).Info().Msg("No Api Key present in field " + a.authConfig.Name)
 		http.Error(w, "Unauthorized", http.StatusUnauthorized)
