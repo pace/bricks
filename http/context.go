@@ -18,6 +18,7 @@ func RequestInContextMiddleware(next http.Handler) http.Handler {
 		ctxReq := ctxRequest{
 			RemoteAddr:    r.RemoteAddr,
 			XForwardedFor: r.Header.Get("X-Forwarded-For"),
+			UserAgent:     r.Header.Get("User-Agent"),
 		}
 		r = r.WithContext(contextWithRequest(r.Context(), &ctxReq))
 		next.ServeHTTP(w, r)
@@ -35,6 +36,7 @@ func ContextTransfer(ctx, targetCtx context.Context) context.Context {
 type ctxRequest struct {
 	RemoteAddr    string // requester IP:port
 	XForwardedFor string // X-Forwarded-For header
+	UserAgent     string // User-Agent header
 }
 
 func contextWithRequest(ctx context.Context, ctxReq *ctxRequest) context.Context {
@@ -82,4 +84,15 @@ func GetXForwardedForHeaderFromContext(ctx context.Context) (string, error) {
 		xForwardedFor += ", "
 	}
 	return xForwardedFor + ip, nil
+}
+
+// GetUserAgentFromContext returns the User-Agent header value from the request
+// that is stored in the context. Returns ErrNotFound if the context does not
+// have a request.
+func GetUserAgentFromContext(ctx context.Context) (string, error) {
+	ctxReq := requestFromContext(ctx)
+	if ctxReq == nil {
+		return "", fmt.Errorf("getting request from context: %w", ErrNotFound)
+	}
+	return ctxReq.UserAgent, nil
 }

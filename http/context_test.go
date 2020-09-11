@@ -4,6 +4,7 @@
 package http_test
 
 import (
+	"context"
 	"errors"
 	"net/http"
 	"testing"
@@ -12,6 +13,24 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
+
+func TestContextTransfer(t *testing.T) {
+	r, err := http.NewRequest("GET", "http://example.com/", nil)
+	require.NoError(t, err)
+	r.Header.Set("User-Agent", "Foobar")
+	RequestInContextMiddleware(http.HandlerFunc(func(_ http.ResponseWriter, r *http.Request) {
+		ctx := ContextTransfer(r.Context(), context.Background())
+		userAgent, err := GetUserAgentFromContext(ctx)
+		assert.NoError(t, err)
+		assert.Equal(t, "Foobar", userAgent)
+	})).ServeHTTP(nil, r)
+
+	// without request
+	ctx := ContextTransfer(context.Background(), context.Background())
+	userAgent, err := GetUserAgentFromContext(ctx)
+	assert.True(t, errors.Is(err, ErrNotFound), err)
+	assert.Empty(t, userAgent)
+}
 
 func TestGetXForwardedForHeaderFromContext(t *testing.T) {
 	cases := map[string]struct {
@@ -43,6 +62,10 @@ func TestGetXForwardedForHeaderFromContext(t *testing.T) {
 			RemoteAddr: "",
 			ExpectErr:  ErrInvalidRequest,
 		},
+		"missing remote ip": {
+			RemoteAddr: ":80",
+			ExpectErr:  ErrInvalidRequest,
+		},
 		"broken remote address": {
 			RemoteAddr: "1234567890ß",
 			ExpectErr:  ErrInvalidRequest,
@@ -68,4 +91,26 @@ func TestGetXForwardedForHeaderFromContext(t *testing.T) {
 			})).ServeHTTP(nil, r)
 		})
 	}
+
+	// no request in context
+	xForwardedFor, err := GetXForwardedForHeaderFromContext(context.Background())
+	assert.True(t, errors.Is(err, ErrNotFound), err)
+	assert.Empty(t, xForwardedFor)
+}
+
+func TestGetUserAgentFromContext(t *testing.T) {
+	r, err := http.NewRequest("GET", "http://example.com/", nil)
+	require.NoError(t, err)
+	r.Header.Set("User-Agent", "Foobar")
+	RequestInContextMiddleware(http.HandlerFunc(func(_ http.ResponseWriter, r *http.Request) {
+		ctx := r.Context()
+		userAgent, err := GetUserAgentFromContext(ctx)
+		assert.NoError(t, err)
+		assert.Equal(t, "Foobar", userAgent)
+	})).ServeHTTP(nil, r)
+
+	// no request in context
+	userAgent, err := GetUserAgentFromContext(context.Background())
+	assert.True(t, errors.Is(err, ErrNotFound), err)
+	assert.Empty(t, userAgent)
 }
