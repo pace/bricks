@@ -25,10 +25,11 @@ var ErrBadUpstreamResponse = errors.New("bad upstream response when introspectin
 // IntrospectResponse in case of a successful check of the
 // oauth2 request
 type IntrospectResponse struct {
-	Active   bool   `json:"active"`
-	Scope    string `json:"scope"`
-	ClientID string `json:"client_id"`
-	UserID   string `json:"user_id"`
+	Active   bool     `json:"active"`
+	Scope    string   `json:"scope"`
+	ClientID string   `json:"client_id"`
+	UserID   string   `json:"user_id"`
+	Roles    []string `json:"roles"`
 
 	// Backend identifies the backend used for introspection. This attribute
 	// exists as a convenience if you have more than one authorization backend
