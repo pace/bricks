@@ -34,7 +34,6 @@ func TestGenerator(t *testing.T) {
 			if err != nil {
 				t.Fatal(err)
 			}
-
 			if string(expected[:]) != result {
 				diff := difflib.UnifiedDiff{
 					A:        difflib.SplitLines(string(expected[:])),

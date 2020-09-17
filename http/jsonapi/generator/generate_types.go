@@ -9,6 +9,7 @@ import (
 
 	"github.com/dave/jennifer/jen"
 	"github.com/getkin/kin-openapi/openapi3"
+
 	"github.com/pace/bricks/maintenance/log"
 )
 
@@ -114,9 +115,14 @@ func (g *Generator) buildType(prefix string, stmt *jen.Statement, schema *openap
 				g.addGoDoc(item, data.Value.Description)
 				itemStmt := g.goSource.Type().Id(item)
 				return g.structJSONAPI(prefix, itemStmt, data.Value.Items.Value)
+			} else if data.Value.Type == "object" { // This ensures that the code does only treat objects with data properties that
+				// are objects themselves as legitimate JSONAPI struct, otherwise we want them to be treated as simple data objects.
+				// This only partially addresses the issue of why this check is being done. In essence, just having a property named "data"
+				// does not require treating the object with that entity as JSONAPI struct, however we do not know at this point where in the
+				// jsonapi-spec were are. Therefore it is not possible to determine whether the struct is considered to be just "data" or whether it
+				// is a JSONAPI struct that should have type and id.
+				return g.structJSONAPI(prefix, stmt, data.Value)
 			}
-
-			return g.structJSONAPI(prefix, stmt, data.Value)
 		} else if val.Properties["id"] != nil &&
 			val.Properties["type"] != nil &&
 			(val.Properties["attributes"] != nil ||
