@@ -931,6 +931,73 @@
           }
         }
       },
+      "PaymentTokenCreateApplePay": {
+        "type": "object",
+        "properties": {
+          "attributes": {
+            "type": "object",
+            "required": [
+              "applePay"
+            ],
+            "properties": {
+              "applePay": {
+                "type": "object",
+                "properties": {
+                  "version": {
+                    "type": "string",
+                    "example": "EC_v1"
+                  },
+                  "data": {
+                    "type": "string",
+                    "example": "xPE3fXmvym6529AxxQw2PN6czhxoXj2ylfHnJdiRdZktiMdDe2........."
+                  },
+                  "signature": {
+                    "type": "string",
+                    "example": "MIAGCSqGSIb3DQEHAqCAMIACAQExDzANBglghkgBZQMEAgEFADCAB......"
+                  },
+                  "header": {
+                    "type": "object",
+                    "properties": {
+                      "ephemeralPublicKey": {
+                        "type": "string",
+                        "example": "MFkwEw......."
+                      },
+                      "publicKeyHash": {
+                        "type": "string",
+                        "example": "qfj/gQGrF0K6y2EhKDoYUhdi84JEg....."
+                      },
+                      "transactionId": {
+                        "type": "string",
+                        "example": "58afcabaa130747ca92eeaff362......"
+                      }
+                    }
+                  },
+                  "paymentMethod": {
+                    "type": "object",
+                    "properties": {
+                      "displayName": {
+                        "type": "string",
+                        "example": "Visa 0492"
+                      },
+                      "network": {
+                        "type": "string",
+                        "example": "Visa"
+                      },
+                      "type": {
+                        "type": "string",
+                        "example": "debit"
+                      }
+                    }
+                  },
+                  "transactionIdentifier": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
       "PaymentMethodSEPA": {
         "type": "object",
         "properties": {

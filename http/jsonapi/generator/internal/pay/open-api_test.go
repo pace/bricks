@@ -61,6 +61,40 @@ type PaymentToken struct {
 	ID string `jsonapi:"primary,paymentToken,omitempty" valid:"optional"` // Payment Token ID (externally provided - by payment provider)
 }
 
+// PaymentTokenCreateApplePayAttributesApplePayHeader ...
+type PaymentTokenCreateApplePayAttributesApplePayHeader struct {
+	EphemeralPublicKey string `json:"ephemeralPublicKey,omitempty" jsonapi:"attr,ephemeralPublicKey,omitempty" valid:"optional"` // Example: "MFkwEw......."
+	PublicKeyHash      string `json:"publicKeyHash,omitempty" jsonapi:"attr,publicKeyHash,omitempty" valid:"optional"`           // Example: "qfj/gQGrF0K6y2EhKDoYUhdi84JEg....."
+	TransactionID      string `json:"transactionId,omitempty" jsonapi:"attr,transactionId,omitempty" valid:"optional"`           // Example: "58afcabaa130747ca92eeaff362......"
+}
+
+// PaymentTokenCreateApplePayAttributesApplePayPaymentMethod ...
+type PaymentTokenCreateApplePayAttributesApplePayPaymentMethod struct {
+	DisplayName string `json:"displayName,omitempty" jsonapi:"attr,displayName,omitempty" valid:"optional"` // Example: "Visa 0492"
+	Network     string `json:"network,omitempty" jsonapi:"attr,network,omitempty" valid:"optional"`         // Example: "Visa"
+	Type        string `json:"type,omitempty" jsonapi:"attr,type,omitempty" valid:"optional"`               // Example: "debit"
+}
+
+// PaymentTokenCreateApplePayAttributesApplePay ...
+type PaymentTokenCreateApplePayAttributesApplePay struct {
+	Data                  string                                                    `json:"data,omitempty" jsonapi:"attr,data,omitempty" valid:"optional"` // Example: "xPE3fXmvym6529AxxQw2PN6czhxoXj2ylfHnJdiRdZktiMdDe2........."
+	Header                PaymentTokenCreateApplePayAttributesApplePayHeader        `json:"header,omitempty" jsonapi:"attr,header,omitempty" valid:"optional"`
+	PaymentMethod         PaymentTokenCreateApplePayAttributesApplePayPaymentMethod `json:"paymentMethod,omitempty" jsonapi:"attr,paymentMethod,omitempty" valid:"optional"`
+	Signature             string                                                    `json:"signature,omitempty" jsonapi:"attr,signature,omitempty" valid:"optional"` // Example: "MIAGCSqGSIb3DQEHAqCAMIACAQExDzANBglghkgBZQMEAgEFADCAB......"
+	TransactionIdentifier string                                                    `json:"transactionIdentifier,omitempty" jsonapi:"attr,transactionIdentifier,omitempty" valid:"optional"`
+	Version               string                                                    `json:"version,omitempty" jsonapi:"attr,version,omitempty" valid:"optional"` // Example: "EC_v1"
+}
+
+// PaymentTokenCreateApplePayAttributes ...
+type PaymentTokenCreateApplePayAttributes struct {
+	ApplePay PaymentTokenCreateApplePayAttributesApplePay `json:"applePay,omitempty" jsonapi:"attr,applePay,omitempty" valid:"required"`
+}
+
+// PaymentTokenCreateApplePay ...
+type PaymentTokenCreateApplePay struct {
+	Attributes PaymentTokenCreateApplePayAttributes `json:"attributes,omitempty" jsonapi:"attr,attributes,omitempty" valid:"optional"`
+}
+
 // TransactionRequestFueling ...
 type TransactionRequestFueling struct {
 	AppID   string `json:"appId,omitempty" jsonapi:"attr,appId,omitempty" valid:"required,uuid"`   // Location-based App ID
