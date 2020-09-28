@@ -108,8 +108,8 @@ func TestMarshal_attrStringSlice(t *testing.T) {
 	}
 
 	// Sort both
-	sort.Strings(jsonTagsStrings)
-	sort.Strings(tags)
+	sort.Stable(sort.StringSlice(jsonTagsStrings))
+	sort.Stable(sort.StringSlice(tags))
 
 	for i, tag := range tags {
 		if e, a := tag, jsonTagsStrings[i]; e != a {

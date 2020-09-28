@@ -41,32 +41,32 @@ func TestSortableRouteList(t *testing.T) {
 		require.NoError(t, route.parseURL())
 		list[i] = route
 	}
-	sort.Sort(&list)
+	sort.Stable(&list)
 	actual := make([]string, len(paths))
 	for i, route := range list {
 		actual[i] = route.pattern
 	}
 	assert.Equal(t, []string{
 		"/beta/payment-method-kinds/applepay/authorize",
-		"/beta/transactions/{transactionId}/cancel",
 		"/beta/payment-methods/{paymentMethodId}/notification",
 		"/beta/payment-methods/confirm/{token}",
 		"/beta/payment-methods/{paymentMethodId}/authorize",
+		"/beta/transactions/{transactionId}/cancel",
 		"/beta/receipts/{transactionID}.{fileFormat}",
-		"/beta/payment-methods/hoyer",
-		"/beta/payment-methods/paydirekt",
-		"/beta/payment-methods/dkv",
-		"/beta/payment-methods/creditcard",
-		"/beta/payment-methods/sepa-direct-debit",
 		"/beta/payment-methods/paypal",
+		"/beta/payment-methods/dkv",
+		"/beta/payment-methods/paydirekt",
+		"/beta/payment-methods/creditcard",
+		"/beta/payment-methods/hoyer",
+		"/beta/payment-methods/sepa-direct-debit",
+		"/beta/receipts/{transactionID}",
 		"/beta/transactions/{transactionId}",
 		"/beta/payment-tokens/{paymentTokenId}",
 		"/beta/payment-methods/{paymentMethodId}",
-		"/beta/receipts/{transactionID}",
 		"/beta/payment-methods?filter[status]=valid",
+		"/beta/payment-method-kinds",
+		"/beta/payment-methods",
 		"/beta/payment-methods",
 		"/beta/transactions",
-		"/beta/payment-methods",
-		"/beta/payment-method-kinds",
 	}, actual)
 }

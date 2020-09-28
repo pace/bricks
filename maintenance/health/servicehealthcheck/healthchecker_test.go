@@ -253,8 +253,8 @@ func testListHealthChecks(expected []string, checkResult []string, t *testing.T)
 
 	// health check results are not ordered because ranging over a map is randomized,
 	// so the rows needs to be sorted for easy comprehension
-	sort.Strings(expected)
-	sort.Strings(checkResult)
+	sort.Stable(sort.StringSlice(expected))
+	sort.Stable(sort.StringSlice(checkResult))
 
 	for i := range expected {
 		require.Equal(t, expected[i], checkResult[i+1], "The entry of the health check table is wrong")

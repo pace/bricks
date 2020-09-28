@@ -985,8 +985,8 @@ func Router(service Service, authBackend AuthorizationBackend) *mux.Router {
 	s1.Methods("POST").Path("/beta/payment-methods/sepa-direct-debit").Handler(CreatePaymentMethodSEPAHandler(service, authBackend)).Name("CreatePaymentMethodSEPA")
 	s1.Methods("DELETE").Path("/beta/payment-methods/{paymentMethodId}").Handler(DeletePaymentMethodHandler(service, authBackend)).Name("DeletePaymentMethod")
 	s1.Methods("POST").Path("/beta/transaction/{pathDecimal}").Handler(ProcessPaymentHandler(service, authBackend)).Name("ProcessPayment")
-	s1.Methods("GET").Path("/beta/payment-methods").Handler(GetPaymentMethodsIncludingPaymentTokenHandler(service, authBackend)).Queries("include", "paymentToken").Name("GetPaymentMethodsIncludingPaymentToken")
 	s1.Methods("GET").Path("/beta/payment-methods").Handler(GetPaymentMethodsIncludingCreditCheckHandler(service, authBackend)).Queries("include", "creditCheck").Name("GetPaymentMethodsIncludingCreditCheck")
+	s1.Methods("GET").Path("/beta/payment-methods").Handler(GetPaymentMethodsIncludingPaymentTokenHandler(service, authBackend)).Queries("include", "paymentToken").Name("GetPaymentMethodsIncludingPaymentToken")
 	s1.Methods("GET").Path("/beta/payment-methods").Handler(GetPaymentMethodsHandler(service, authBackend)).Name("GetPaymentMethods")
 	return router
 }

@@ -44,8 +44,8 @@ func TestUnmarshall_attrStringSlice(t *testing.T) {
 		t.Fatalf("Was expecting %d tags, got %d", e, a)
 	}
 
-	sort.Strings(tags)
-	sort.Strings(out.Tags)
+	sort.Stable(sort.StringSlice(tags))
+	sort.Stable(sort.StringSlice(out.Tags))
 
 	if out.Decimal1.String() != "9.9999999999999999999" {
 		t.Fatalf("Expected json dec1 data to be %#v got: %#v", "9.9999999999999999999", out.Decimal1.String())
