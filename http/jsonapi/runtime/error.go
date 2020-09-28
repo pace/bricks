@@ -93,9 +93,7 @@ func WriteError(w http.ResponseWriter, code int, err error) {
 	case Errors:
 		errList.List = v
 	default:
-		errList.List = []*Error{
-			&Error{Title: err.Error()},
-		}
+		errList.List = []*Error{{Title: err.Error()}}
 	}
 
 	// update the http status code of the error
@@ -108,16 +106,7 @@ func WriteError(w http.ResponseWriter, code int, err error) {
 	enc.SetIndent("", "  ")
 	err = enc.Encode(errList)
 	if err != nil {
-		log.Logger().Info().Str("req_id", reqID).
-			Err(err).Msg("Unable to send error response to the client")
-	}
-
-	// log all errors send to the client
-	for _, ei := range errList.List {
-		ev := log.Logger().Info().Str("req_id", reqID)
-		if source := ei.Source; source != nil {
-			ev = ev.Fields(*source)
-		}
+		log.Logger().Info().Str("req_id", reqID).Err(err).Msg("Unable to send error response to the client")
 	}
 }
 

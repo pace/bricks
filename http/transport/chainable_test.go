@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/gorilla/mux"
+	"github.com/stretchr/testify/require"
 )
 
 // TestRoundTripperRace will detect race conditions
@@ -34,12 +35,14 @@ func TestRoundTripperRace(t *testing.T) {
 
 	go func() {
 		for i := 0; i < 10; i++ {
-			client.Get(server.URL + "/test001")
+			_, err := client.Get(server.URL + "/test001")
+			require.NoError(t, err)
 		}
 	}()
 
 	for i := 0; i < 10; i++ {
-		client.Get(server.URL + "/test002")
+		_, err := client.Get(server.URL + "/test002")
+		require.NoError(t, err)
 	}
 }
 

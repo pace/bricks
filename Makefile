@@ -37,11 +37,8 @@ jsonapi:
 		-path tools/testserver/simple/open-api.go \
 		-source tools/testserver/simple/open-api.json
 
-lint: $(GOPATH)/bin/golangci-lint
-	$(GOPATH)/bin/golangci-lint run
-
-$(GOPATH)/bin/golangci-lint:
-	curl -sfL https://install.goreleaser.com/github.com/golangci/golangci-lint.sh | sh -s -- -b $(GOPATH)/bin v1.21.0
+lint:
+	$(GO) run -mod=vendor github.com/golangci/golangci-lint/cmd/golangci-lint run
 
 test:
 	$(GO) test $(GO_TEST_FLAGS) -short ./...

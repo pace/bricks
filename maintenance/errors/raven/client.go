@@ -338,7 +338,6 @@ func (c *context) interfaces() []Interface {
 	}
 	if c.http != nil {
 		interfaces[i] = c.http
-		i++
 	}
 	return interfaces
 }
@@ -371,9 +370,14 @@ func newClient(tags map[string]string) *Client {
 		sampleRate: 1.0,
 		queue:      make(chan *outgoingPacket, MaxQueueBuffer),
 	}
-	client.SetDSN(os.Getenv("SENTRY_DSN"))
+
+	if err := client.SetDSN(os.Getenv("SENTRY_DSN")); err != nil {
+		panic(err)
+	}
+
 	client.SetRelease(os.Getenv("SENTRY_RELEASE"))
 	client.SetEnvironment(os.Getenv("SENTRY_ENVIRONMENT"))
+
 	return client
 }
 
@@ -953,7 +957,9 @@ func (t *HTTPTransport) Send(url, authHeader string, packet *Packet) error {
 	if err != nil {
 		return err
 	}
-	io.Copy(ioutil.Discard, res.Body)
+	if _, err := io.Copy(ioutil.Discard, res.Body); err != nil {
+		return err
+	}
 	res.Body.Close()
 	if res.StatusCode != 200 {
 		return fmt.Errorf("raven: got http status %d", res.StatusCode)
@@ -973,7 +979,9 @@ func serializedPacket(packet *Packet) (io.Reader, string, error) {
 		buf := &bytes.Buffer{}
 		b64 := base64.NewEncoder(base64.StdEncoding, buf)
 		deflate, _ := zlib.NewWriterLevel(b64, zlib.BestCompression)
-		deflate.Write(packetJSON)
+		if _, err := deflate.Write(packetJSON); err != nil {
+			return nil, "", err
+		}
 		deflate.Close()
 		b64.Close()
 		return buf, "application/octet-stream", nil

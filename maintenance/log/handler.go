@@ -4,7 +4,6 @@
 package log
 
 import (
-	"errors"
 	"net"
 	"net/http"
 	"strings"
@@ -99,8 +98,6 @@ func isPrivate(ip net.IP) bool {
 	// Local IPv6 addresses are defined in https://tools.ietf.org/html/rfc4193
 	return len(ip) == net.IPv6len && ip[0]&0xfe == 0xfc
 }
-
-var noXid = errors.New("no xid")
 
 func RequestIDHandler(fieldKey, headerName string) func(next http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {

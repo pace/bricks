@@ -10,6 +10,8 @@ import (
 	"io"
 	"reflect"
 	"testing"
+
+	"github.com/stretchr/testify/require"
 )
 
 func TestErrorObjectWritesExpectedErrorMessage(t *testing.T) {
@@ -50,7 +52,7 @@ func TestMarshalErrorsWritesTheExpectedPayload(t *testing.T) {
 			var writer io.Writer = buffer
 
 			_ = MarshalErrors(writer, testRow.In)
-			json.Unmarshal(buffer.Bytes(), &output)
+			require.NoError(t, json.Unmarshal(buffer.Bytes(), &output))
 
 			if !reflect.DeepEqual(output, testRow.Out) {
 				t.Fatalf("Expected: \n%#v \nto equal: \n%#v", output, testRow.Out)

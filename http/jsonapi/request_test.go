@@ -14,6 +14,8 @@ import (
 	"strings"
 	"testing"
 	"time"
+
+	"github.com/stretchr/testify/require"
 )
 
 func TestUnmarshall_attrStringSlice(t *testing.T) {
@@ -202,7 +204,6 @@ func TestUnmarshalToStructWithPointerAttr_BadType_Struct(t *testing.T) {
 
 func TestUnmarshalToStructWithPointerAttr_BadType_IntSlice(t *testing.T) {
 	out := new(WithPointer)
-	type FooStruct struct{ A, B int }
 	in := map[string]json.RawMessage{
 		"name": json.RawMessage(`[4, 5]`), // This is the wrong type.
 	}
@@ -361,7 +362,7 @@ func TestUnmarshalParsesISO8601(t *testing.T) {
 	}
 
 	in := bytes.NewBuffer(nil)
-	json.NewEncoder(in).Encode(payload)
+	require.NoError(t, json.NewEncoder(in).Encode(payload))
 
 	out := new(Timestamp)
 
@@ -387,7 +388,7 @@ func TestUnmarshalParsesISO8601TimePointer(t *testing.T) {
 	}
 
 	in := bytes.NewBuffer(nil)
-	json.NewEncoder(in).Encode(payload)
+	require.NoError(t, json.NewEncoder(in).Encode(payload))
 
 	out := new(Timestamp)
 
@@ -413,7 +414,7 @@ func TestUnmarshalInvalidISO8601(t *testing.T) {
 	}
 
 	in := bytes.NewBuffer(nil)
-	json.NewEncoder(in).Encode(payload)
+	require.NoError(t, json.NewEncoder(in).Encode(payload))
 
 	out := new(Timestamp)
 
@@ -969,7 +970,9 @@ func samplePayload() io.Reader {
 	}
 
 	out := bytes.NewBuffer(nil)
-	json.NewEncoder(out).Encode(payload)
+	if err := json.NewEncoder(out).Encode(payload); err != nil {
+		panic(err)
+	}
 
 	return out
 }
@@ -987,7 +990,9 @@ func samplePayloadWithID() io.Reader {
 	}
 
 	out := bytes.NewBuffer(nil)
-	json.NewEncoder(out).Encode(payload)
+	if err := json.NewEncoder(out).Encode(payload); err != nil {
+		panic(err)
+	}
 
 	return out
 }
@@ -1002,7 +1007,9 @@ func samplePayloadWithBadTypes(m map[string]json.RawMessage) io.Reader {
 	}
 
 	out := bytes.NewBuffer(nil)
-	json.NewEncoder(out).Encode(payload)
+	if err := json.NewEncoder(out).Encode(payload); err != nil {
+		panic(err)
+	}
 
 	return out
 }
@@ -1017,7 +1024,9 @@ func sampleWithPointerPayload(m map[string]json.RawMessage) io.Reader {
 	}
 
 	out := bytes.NewBuffer(nil)
-	json.NewEncoder(out).Encode(payload)
+	if err := json.NewEncoder(out).Encode(payload); err != nil {
+		panic(err)
+	}
 
 	return out
 }
@@ -1094,17 +1103,23 @@ func samplePayloadWithSideloaded() io.Reader {
 	testModel := testModel()
 
 	out := bytes.NewBuffer(nil)
-	MarshalPayload(out, testModel)
+	if err := MarshalPayload(out, testModel); err != nil {
+		panic(err)
+	}
 
 	return out
 }
 
 func sampleSerializedEmbeddedTestModel() *Blog {
 	out := bytes.NewBuffer(nil)
-	MarshalOnePayloadEmbedded(out, testModel())
+	if err := MarshalOnePayloadEmbedded(out, testModel()); err != nil {
+		panic(err)
+	}
 
 	blog := new(Blog)
-	UnmarshalPayload(out, blog)
+	if err := UnmarshalPayload(out, blog); err != nil {
+		panic(err)
+	}
 
 	return blog
 }

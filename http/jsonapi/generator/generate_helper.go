@@ -13,8 +13,6 @@ import (
 	"github.com/getkin/kin-openapi/openapi3"
 )
 
-const pkgRuntime = "github.com/pace/bricks/http/jsonapi/runtime"
-
 func (g *Generator) addGoDoc(typeName, description string) {
 	if description != "" {
 		g.goSource.Comment(fmt.Sprintf("%s %s", typeName, description))

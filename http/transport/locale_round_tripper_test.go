@@ -32,7 +32,8 @@ func TestLocaleRoundTrip(t *testing.T) {
 	r, err := http.NewRequest("GET", "http://example.com/test", nil)
 	require.NoError(t, err)
 
-	lrt.RoundTrip(r.WithContext(locale.WithLocale(context.Background(), l)))
+	_, err = lrt.RoundTrip(r.WithContext(locale.WithLocale(context.Background(), l)))
+	require.NoError(t, err)
 
 	lctx, ok := locale.FromCtx(mock.r.Context())
 	require.True(t, ok)

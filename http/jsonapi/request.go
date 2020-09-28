@@ -274,8 +274,14 @@ func unmarshalNode(data *Node, model reflect.Value, included *map[string]*Node) 
 
 				buf := bytes.NewBuffer(nil)
 
-				json.NewEncoder(buf).Encode(data.Relationships[args[1]])
-				json.NewDecoder(buf).Decode(relationship)
+				if err := json.NewEncoder(buf).Encode(data.Relationships[args[1]]); err != nil {
+
+					return err
+				}
+				if err := json.NewDecoder(buf).Decode(relationship); err != nil {
+
+					return err
+				}
 
 				data := relationship.Data
 				models := reflect.New(fieldValue.Type()).Elem()
@@ -302,10 +308,14 @@ func unmarshalNode(data *Node, model reflect.Value, included *map[string]*Node) 
 
 				buf := bytes.NewBuffer(nil)
 
-				json.NewEncoder(buf).Encode(
-					data.Relationships[args[1]],
-				)
-				json.NewDecoder(buf).Decode(relationship)
+				if err := json.NewEncoder(buf).Encode(data.Relationships[args[1]]); err != nil {
+
+					return err
+				}
+				if err := json.NewDecoder(buf).Decode(relationship); err != nil {
+
+					return err
+				}
 
 				/*
 					http://jsonapi.org/format/#document-resource-object-relationships

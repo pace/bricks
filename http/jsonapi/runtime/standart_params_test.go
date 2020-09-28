@@ -67,6 +67,7 @@ func TestIntegrationFilterParameter(t *testing.T) {
 	// Paging
 	r = httptest.NewRequest("GET", "http://abc.de/whatEver?page[number]=3&page[size]=2", nil)
 	urlParams, err = runtime.ReadURLQueryParameters(r, mapper, &testValueSanitizer{})
+	a.NoError(err)
 	var modelsPaging []TestModel
 	q = db.Model(&modelsPaging)
 	q = urlParams.AddToQuery(q)
@@ -77,6 +78,7 @@ func TestIntegrationFilterParameter(t *testing.T) {
 	// Sorting
 	r = httptest.NewRequest("GET", "http://abc.de/whatEver?sort=-test", nil)
 	urlParams, err = runtime.ReadURLQueryParameters(r, mapper, &testValueSanitizer{})
+	a.NoError(err)
 	var modelsSort []TestModel
 	q = db.Model(&modelsSort)
 	q = urlParams.AddToQuery(q)
@@ -90,16 +92,19 @@ func TestIntegrationFilterParameter(t *testing.T) {
 	// Combine all
 	r = httptest.NewRequest("GET", "http://abc.de/whatEver?sort=-test&filter[test]=a,b&page[number]=0&page[size]=1", nil)
 	urlParams, err = runtime.ReadURLQueryParameters(r, mapper, &testValueSanitizer{})
+	a.NoError(err)
 	var modelsCombined []TestModel
 	q = db.Model(&modelsCombined)
 	q = urlParams.AddToQuery(q)
 	err = q.Select()
+	a.NoError(err)
 	a.Equal(1, len(modelsCombined))
 	a.Equal("b", modelsCombined[0].FilterName)
 	// Tear Down
-	db.DropTable(&TestModel{}, &orm.DropTableOptions{
+	err = db.DropTable(&TestModel{}, &orm.DropTableOptions{
 		IfExists: true,
 	})
+	a.NoError(err)
 }
 
 func setupDatabase(a *assert.Assertions) *pg.DB {
