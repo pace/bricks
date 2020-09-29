@@ -26,7 +26,7 @@ func (g *Generator) BuildTypes(schema *openapi3.Swagger) error {
 	for k := range schemas {
 		keys = append(keys, k)
 	}
-	sort.Strings(keys)
+	sort.Stable(sort.StringSlice(keys))
 
 	for _, name := range keys {
 		schemaType := schemas[name]
@@ -301,7 +301,7 @@ func (g *Generator) generateStructFields(prefix string, schema *openapi3.Schema,
 	for k := range schema.Properties {
 		keys = append(keys, k)
 	}
-	sort.Strings(keys)
+	sort.Stable(sort.StringSlice(keys))
 
 	var fields []jen.Code
 	for _, attrName := range keys {
@@ -332,7 +332,7 @@ func (g *Generator) generateStructRelationships(prefix string, schema *openapi3.
 	for k := range schema.Properties {
 		keys = append(keys, k)
 	}
-	sort.Strings(keys)
+	sort.Stable(sort.StringSlice(keys))
 
 	var relationships []jen.Code
 	for _, relName := range keys {
@@ -380,7 +380,7 @@ func (g *Generator) generateJSONAPIMeta(typeName string, stmt *jen.Statement, sc
 			for k := range schema.Properties {
 				keys = append(keys, k)
 			}
-			sort.Strings(keys)
+			sort.Stable(sort.StringSlice(keys))
 
 			for _, attrName := range keys {
 				g.Id("meta").Index(jen.Lit(attrName)).Op("=").Id("r").Dot("Meta").Dot(generateMethodName(attrName))

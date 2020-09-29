@@ -58,7 +58,7 @@ func (g *Generator) BuildHandler(schema *openapi3.Swagger) error {
 	for k := range paths {
 		keys = append(keys, k)
 	}
-	sort.Strings(keys)
+	sort.Stable(sort.StringSlice(keys))
 
 	var routes []*route
 
@@ -150,7 +150,7 @@ func (g *Generator) generateResponseInterface(route *route, schema *openapi3.Swa
 	for k := range route.operation.Responses {
 		keys = append(keys, k)
 	}
-	sort.Strings(keys)
+	sort.Stable(sort.StringSlice(keys))
 
 	for _, code := range keys {
 		response := route.operation.Responses[code]
@@ -341,7 +341,7 @@ func (g *Generator) buildRouter(routes []*route, schema *openapi3.Swagger) error
 		for name := range schema.Components.SecuritySchemes {
 			names = append(names, name)
 		}
-		sort.Strings(names)
+		sort.Stable(sort.StringSlice(names))
 		for _, name := range names {
 			routeStmts = append(routeStmts, jen.Id("authBackend").Dot("Init"+strings.Title(name)).Call(jen.Id("cfg"+strings.Title(name))))
 		}
@@ -374,7 +374,7 @@ func (g *Generator) buildRouter(routes []*route, schema *openapi3.Swagger) error
 
 		// sort the routes with query parameter to the top
 		sortableRoutes := sortableRouteList(routes)
-		sort.Sort(&sortableRoutes)
+		sort.Stable(&sortableRoutes)
 
 		// add all route handlers
 		for i := 0; i < len(sortableRoutes); i++ {

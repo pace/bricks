@@ -35,7 +35,7 @@ func (g *Generator) buildSecurityBackendInterface(schema *openapi3.Swagger) erro
 	for k := range securitySchemes {
 		keys = append(keys, k)
 	}
-	sort.Strings(keys)
+	sort.Stable(sort.StringSlice(keys))
 	hasDuplicatedSecuritySchema := false
 	for _, pathItem := range schema.Paths {
 		for _, op := range pathItem.Operations() {
@@ -82,7 +82,7 @@ func (g *Generator) buildSecurityConfigs(schema *openapi3.Swagger) error {
 	for k := range securitySchemes {
 		keys = append(keys, k)
 	}
-	sort.Strings(keys)
+	sort.Stable(sort.StringSlice(keys))
 
 	for _, name := range keys {
 		value := securitySchemes[name]
