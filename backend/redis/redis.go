@@ -84,8 +84,8 @@ func init() {
 }
 
 // Client with environment based configuration
-func Client() *redis.Client {
-	return CustomClient(&redis.Options{
+func Client(overwriteOpts ...func(*redis.Options)) *redis.Client {
+	opts := &redis.Options{
 		Addr:               cfg.Addrs[0],
 		Password:           cfg.Password,
 		DB:                 cfg.DB,
@@ -101,7 +101,13 @@ func Client() *redis.Client {
 		PoolTimeout:        cfg.PoolTimeout,
 		IdleTimeout:        cfg.IdleTimeout,
 		IdleCheckFrequency: cfg.IdleCheckFrequency,
-	})
+	}
+
+	for _, o := range overwriteOpts {
+		o(opts)
+	}
+
+	return CustomClient(opts)
 }
 
 // CustomClient with passed configuration
