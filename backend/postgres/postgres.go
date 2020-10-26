@@ -17,13 +17,14 @@ import (
 	"github.com/go-pg/pg"
 	"github.com/opentracing/opentracing-go"
 	olog "github.com/opentracing/opentracing-go/log"
-	"github.com/pace/bricks/maintenance/health/servicehealthcheck"
-	"github.com/pace/bricks/maintenance/log"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/rs/zerolog"
+
+	"github.com/pace/bricks/maintenance/health/servicehealthcheck"
+	"github.com/pace/bricks/maintenance/log"
 )
 
-type config struct {
+type Config struct {
 	Port     int    `env:"POSTGRES_PORT" envDefault:"5432"`
 	Host     string `env:"POSTGRES_HOST" envDefault:"postgres"`
 	Password string `env:"POSTGRES_PASSWORD" envDefault:"mysecretpassword"`
@@ -116,7 +117,7 @@ var (
 	)
 )
 
-var cfg config
+var cfg Config
 
 func init() {
 	prometheus.MustRegister(metricQueryTotal)
@@ -125,7 +126,7 @@ func init() {
 	prometheus.MustRegister(metricQueryRowsTotal)
 	prometheus.MustRegister(metricQueryAffectedTotal)
 
-	// parse log config
+	// parse log Config
 	err := env.Parse(&cfg)
 	if err != nil {
 		log.Fatalf("Failed to parse postgres environment: %v", err)
@@ -153,24 +154,26 @@ func init() {
 }
 
 var (
-	defaultPool   *pg.DB
-	defaultPoolMx sync.Mutex
+	defaultPool     *pg.DB
+	defaultPoolOnce sync.Once
 )
 
 // DefaultConnectionPool returns a the default database connection pool that is
 // configured using the POSTGRES_* env vars and instrumented with tracing,
 // logging and metrics.
 func DefaultConnectionPool() *pg.DB {
-	defaultPoolMx.Lock()
-	defer defaultPoolMx.Unlock()
-	if defaultPool == nil {
-		defaultPool = ConnectionPool()
-		// add metrics
-		metrics := NewConnectionPoolMetrics()
-		prometheus.MustRegister(metrics)
-		if err := metrics.ObserveRegularly(context.Background(), defaultPool, "default"); err != nil {
-			panic(err)
+	var err error
+	defaultPoolOnce.Do(func() {
+		if defaultPool == nil {
+			defaultPool = ConnectionPool()
+			// add metrics
+			metrics := NewConnectionPoolMetrics()
+			prometheus.MustRegister(metrics)
+			err = metrics.ObserveRegularly(context.Background(), defaultPool, "default")
 		}
+	})
+	if err != nil {
+		panic(err)
 	}
 	return defaultPool
 }
