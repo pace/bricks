@@ -4,7 +4,8 @@ import (
 	"context"
 	"time"
 
-	"github.com/adjust/rmq/v2"
+	"github.com/adjust/rmq/v3"
+	pberrors "github.com/pace/bricks/maintenance/errors"
 	"github.com/pace/bricks/maintenance/log"
 	"github.com/pace/bricks/pkg/routine"
 	"github.com/prometheus/client_golang/prometheus"
@@ -20,10 +21,19 @@ type queueStatsGauges struct {
 
 func gatherMetrics(connection rmq.Connection) {
 	gauges := registerConnection(connection)
-	ctx := log.WithContext(context.Background())
+	ctx := log.ContextWithSink(log.WithContext(context.Background()), new(log.Sink))
 
 	routine.Run(ctx, func(_ context.Context) {
-		stats := connection.CollectStats(connection.GetOpenQueues())
+		queues, err := connection.GetOpenQueues()
+		if err != nil {
+			log.Ctx(ctx).Debug().Err(err).Msg("rmq metrics: could not get open queues")
+			pberrors.Handle(ctx, err)
+		}
+		stats, err := connection.CollectStats(queues)
+		if err != nil {
+			log.Ctx(ctx).Debug().Err(err).Msg("rmq metrics: could not collect stats")
+			pberrors.Handle(ctx, err)
+		}
 		for queue, queueStats := range stats.QueueStats {
 			labels := prometheus.Labels{
 				"queue": queue,

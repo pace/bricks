@@ -3,7 +3,7 @@ module github.com/pace/bricks
 go 1.14
 
 require (
-	github.com/adjust/rmq/v2 v2.0.0-20200523123200-98c5e969f342
+	github.com/adjust/rmq/v3 v3.0.0
 	github.com/asaskevich/govalidator v0.0.0-20180720115003-f9ffefc3facf
 	github.com/beorn7/perks v0.0.0-20180321164747-3a771d992973 // indirect
 	github.com/bsm/redislock v0.5.0
