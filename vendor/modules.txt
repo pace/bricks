@@ -1,8 +1,6 @@
-# github.com/adjust/rmq/v2 v2.0.0-20200523123200-98c5e969f342
+# github.com/adjust/rmq/v3 v3.0.0
 ## explicit
-github.com/adjust/rmq/v2
-# github.com/adjust/uniuri v0.0.0-20130923163420-498743145e60
-github.com/adjust/uniuri
+github.com/adjust/rmq/v3
 # github.com/asaskevich/govalidator v0.0.0-20180720115003-f9ffefc3facf
 ## explicit
 github.com/asaskevich/govalidator

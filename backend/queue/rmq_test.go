@@ -6,6 +6,7 @@ import (
 
 	"github.com/pace/bricks/backend/queue"
 	"github.com/pace/bricks/maintenance/log"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestIntegrationHealthCheck(t *testing.T) {
@@ -13,7 +14,8 @@ func TestIntegrationHealthCheck(t *testing.T) {
 		t.SkipNow()
 	}
 	ctx := log.WithContext(context.Background())
-	q1 := queue.NewQueue("integrationTestTasks", 1)
+	q1, err := queue.NewQueue("integrationTestTasks", 1)
+	assert.NoError(t, err)
 	q1.Publish("nothing here")
 
 	check := &queue.HealthCheck{IgnoreInterval: true}
