@@ -37,11 +37,7 @@ func initDefault() error {
 		for {
 			err := <-errChan
 			if err != nil {
-				log.Ctx(ctx).Debug().Err(err).Msg("rmq reported error in background task")
-				switch {
-				default:
-					pberrors.Handle(ctx, err)
-				}
+				pberrors.Handle(ctx, fmt.Errorf("rmq reported error in background task"))
 			}
 		}
 	})
