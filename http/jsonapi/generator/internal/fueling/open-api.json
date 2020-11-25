@@ -10,14 +10,17 @@
   },
   "servers": [
     {
-      "url": "https://api.pace.cloud/fueling"
+      "url": "https://api.pace.cloud/fueling/beta/"
     },
     {
-      "url": "https://localhost/fueling"
+      "url": "https://api.pace.cloud/fueling/v1/"
+    },
+    {
+      "url": "https://localhost/fueling/beta/"
     }
   ],
   "paths": {
-    "/beta/gas-stations/{gasStationId}/approaching": {
+    "/gas-stations/{gasStationId}/approaching": {
       "post": {
         "tags": [
           "Fueling"
@@ -258,7 +261,7 @@
         }
       }
     },
-    "/beta/gas-stations/{gasStationId}/pumps/{pumpId}": {
+    "/gas-stations/{gasStationId}/pumps/{pumpId}": {
       "get": {
         "tags": [
           "Fueling"
@@ -316,7 +319,7 @@
         }
       }
     },
-    "/beta/gas-stations/{gasStationId}/pumps/{pumpId}/wait-for-status-change": {
+    "/gas-stations/{gasStationId}/pumps/{pumpId}/wait-for-status-change": {
       "get": {
         "tags": [
           "Fueling"
@@ -412,7 +415,7 @@
         }
       }
     },
-    "/beta/gas-station/{gasStationId}/payment": {
+    "/gas-station/{gasStationId}/payment": {
       "post": {
         "tags": [
           "Fueling"

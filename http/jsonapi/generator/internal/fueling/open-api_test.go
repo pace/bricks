@@ -124,7 +124,7 @@ type Currency string
 
 /*
 ProcessPaymentHandler handles request/response marshaling and validation for
- Post /beta/gas-station/{gasStationId}/payment
+ Post /gas-station/{gasStationId}/payment
 */
 func ProcessPaymentHandler(service Service) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -136,7 +136,7 @@ func ProcessPaymentHandler(service Service) http.Handler {
 
 		// Setup context, response writer and request type
 		writer := processPaymentResponseWriter{
-			ResponseWriter: metrics.NewMetric("fueling", "/beta/gas-station/{gasStationId}/payment", w, r),
+			ResponseWriter: metrics.NewMetric("fueling", "/gas-station/{gasStationId}/payment", w, r),
 		}
 		request := ProcessPaymentRequest{
 			Request: r.WithContext(ctx),
@@ -181,7 +181,7 @@ func ProcessPaymentHandler(service Service) http.Handler {
 
 /*
 ApproachingAtTheForecourtHandler handles request/response marshaling and validation for
- Post /beta/gas-stations/{gasStationId}/approaching
+ Post /gas-stations/{gasStationId}/approaching
 */
 func ApproachingAtTheForecourtHandler(service Service) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -193,7 +193,7 @@ func ApproachingAtTheForecourtHandler(service Service) http.Handler {
 
 		// Setup context, response writer and request type
 		writer := approachingAtTheForecourtResponseWriter{
-			ResponseWriter: metrics.NewMetric("fueling", "/beta/gas-stations/{gasStationId}/approaching", w, r),
+			ResponseWriter: metrics.NewMetric("fueling", "/gas-stations/{gasStationId}/approaching", w, r),
 		}
 		request := ApproachingAtTheForecourtRequest{
 			Request: r.WithContext(ctx),
@@ -242,7 +242,7 @@ func ApproachingAtTheForecourtHandler(service Service) http.Handler {
 
 /*
 GetPumpHandler handles request/response marshaling and validation for
- Get /beta/gas-stations/{gasStationId}/pumps/{pumpId}
+ Get /gas-stations/{gasStationId}/pumps/{pumpId}
 */
 func GetPumpHandler(service Service) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -254,7 +254,7 @@ func GetPumpHandler(service Service) http.Handler {
 
 		// Setup context, response writer and request type
 		writer := getPumpResponseWriter{
-			ResponseWriter: metrics.NewMetric("fueling", "/beta/gas-stations/{gasStationId}/pumps/{pumpId}", w, r),
+			ResponseWriter: metrics.NewMetric("fueling", "/gas-stations/{gasStationId}/pumps/{pumpId}", w, r),
 		}
 		request := GetPumpRequest{
 			Request: r.WithContext(ctx),
@@ -301,7 +301,7 @@ func GetPumpHandler(service Service) http.Handler {
 
 /*
 WaitOnPumpStatusChangeHandler handles request/response marshaling and validation for
- Get /beta/gas-stations/{gasStationId}/pumps/{pumpId}/wait-for-status-change
+ Get /gas-stations/{gasStationId}/pumps/{pumpId}/wait-for-status-change
 */
 func WaitOnPumpStatusChangeHandler(service Service) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -313,7 +313,7 @@ func WaitOnPumpStatusChangeHandler(service Service) http.Handler {
 
 		// Setup context, response writer and request type
 		writer := waitOnPumpStatusChangeResponseWriter{
-			ResponseWriter: metrics.NewMetric("fueling", "/beta/gas-stations/{gasStationId}/pumps/{pumpId}/wait-for-status-change", w, r),
+			ResponseWriter: metrics.NewMetric("fueling", "/gas-stations/{gasStationId}/pumps/{pumpId}/wait-for-status-change", w, r),
 		}
 		request := WaitOnPumpStatusChangeRequest{
 			Request: r.WithContext(ctx),
@@ -591,11 +591,17 @@ Fueling API
 */
 func Router(service Service) *mux.Router {
 	router := mux.NewRouter()
-	// Subrouter s1 - Path: /fueling
-	s1 := router.PathPrefix("/fueling").Subrouter()
-	s1.Methods("GET").Path("/beta/gas-stations/{gasStationId}/pumps/{pumpId}/wait-for-status-change").Handler(WaitOnPumpStatusChangeHandler(service)).Name("WaitOnPumpStatusChange")
-	s1.Methods("GET").Path("/beta/gas-stations/{gasStationId}/pumps/{pumpId}").Handler(GetPumpHandler(service)).Name("GetPump")
-	s1.Methods("POST").Path("/beta/gas-station/{gasStationId}/payment").Handler(ProcessPaymentHandler(service)).Name("ProcessPayment")
-	s1.Methods("POST").Path("/beta/gas-stations/{gasStationId}/approaching").Handler(ApproachingAtTheForecourtHandler(service)).Name("ApproachingAtTheForecourt")
+	// Subrouter s1 - Path: /fueling/beta/
+	s1 := router.PathPrefix("/fueling/beta/").Subrouter()
+	s1.Methods("GET").Path("/gas-stations/{gasStationId}/pumps/{pumpId}/wait-for-status-change").Handler(WaitOnPumpStatusChangeHandler(service)).Name("WaitOnPumpStatusChange")
+	s1.Methods("GET").Path("/gas-stations/{gasStationId}/pumps/{pumpId}").Handler(GetPumpHandler(service)).Name("GetPump")
+	s1.Methods("POST").Path("/gas-station/{gasStationId}/payment").Handler(ProcessPaymentHandler(service)).Name("ProcessPayment")
+	s1.Methods("POST").Path("/gas-stations/{gasStationId}/approaching").Handler(ApproachingAtTheForecourtHandler(service)).Name("ApproachingAtTheForecourt")
+	// Subrouter s2 - Path: /fueling/v1/
+	s2 := router.PathPrefix("/fueling/v1/").Subrouter()
+	s2.Methods("GET").Path("/gas-stations/{gasStationId}/pumps/{pumpId}/wait-for-status-change").Handler(WaitOnPumpStatusChangeHandler(service)).Name("WaitOnPumpStatusChange")
+	s2.Methods("GET").Path("/gas-stations/{gasStationId}/pumps/{pumpId}").Handler(GetPumpHandler(service)).Name("GetPump")
+	s2.Methods("POST").Path("/gas-station/{gasStationId}/payment").Handler(ProcessPaymentHandler(service)).Name("ProcessPayment")
+	s2.Methods("POST").Path("/gas-stations/{gasStationId}/approaching").Handler(ApproachingAtTheForecourtHandler(service)).Name("ApproachingAtTheForecourt")
 	return router
 }
