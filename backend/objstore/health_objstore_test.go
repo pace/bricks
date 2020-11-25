@@ -26,6 +26,7 @@ func TestIntegrationHealthCheck(t *testing.T) {
 	if testing.Short() {
 		t.SkipNow()
 	}
+	RegisterHealthchecks()
 	resp := setup()
 	if resp.StatusCode != 200 {
 		t.Errorf("Expected /health/check to respond with 200, got: %d", resp.StatusCode)
