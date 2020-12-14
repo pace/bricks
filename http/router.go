@@ -43,6 +43,9 @@ func Router() *mux.Router {
 
 	r.Use(locale.Handler())
 
+	// report use of external dependencies
+	r.Use(middleware.ExternalDependency)
+
 	// makes some infos about the request accessable from the context
 	r.Use(middleware.RequestInContext)
 
