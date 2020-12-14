@@ -111,14 +111,6 @@ func WriteError(w http.ResponseWriter, code int, err error) {
 		log.Logger().Info().Str("req_id", reqID).
 			Err(err).Msg("Unable to send error response to the client")
 	}
-
-	// log all errors send to the client
-	for _, ei := range errList.List {
-		ev := log.Logger().Info().Str("req_id", reqID)
-		if source := ei.Source; source != nil {
-			ev = ev.Fields(*source)
-		}
-	}
 }
 
 // Error objects MUST be returned as an array keyed by errors in the top level of a JSON API document.

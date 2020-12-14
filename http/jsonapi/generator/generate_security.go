@@ -112,7 +112,10 @@ func (g *Generator) buildSecurityConfigs(schema *openapi3.Swagger) error {
 			if e, ok := value.Value.Extensions["openIdConnectUrl"]; ok {
 				var url string
 				if data, ok := e.(json.RawMessage); ok {
-					json.Unmarshal(data, &url)
+					err := json.Unmarshal(data, &url)
+					if err != nil {
+						return err
+					}
 					instanceVal[jen.Id("OpenIdConnectURL")] = jen.Lit(url)
 				}
 			}

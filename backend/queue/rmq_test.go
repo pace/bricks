@@ -16,7 +16,8 @@ func TestIntegrationHealthCheck(t *testing.T) {
 	ctx := log.WithContext(context.Background())
 	q1, err := queue.NewQueue("integrationTestTasks", 1)
 	assert.NoError(t, err)
-	q1.Publish("nothing here")
+	err = q1.Publish("nothing here")
+	assert.NoError(t, err)
 
 	check := &queue.HealthCheck{IgnoreInterval: true}
 	res := check.HealthCheck(ctx)
@@ -24,7 +25,8 @@ func TestIntegrationHealthCheck(t *testing.T) {
 		t.Errorf("Expected health check to be OK for a non-full queue")
 	}
 
-	q1.Publish("nothing here either")
+	err = q1.Publish("nothing here either")
+	assert.NoError(t, err)
 
 	res = check.HealthCheck(ctx)
 	if res.State == "OK" {

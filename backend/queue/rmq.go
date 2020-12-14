@@ -63,6 +63,9 @@ func NewQueue(name string, healthyLimit int) (rmq.Queue, error) {
 		return nil, err
 	}
 	queue, err := rmqConnection.OpenQueue(name)
+	if err != nil {
+		return nil, err
+	}
 	if _, ok := queueHealthLimits.Load(name); ok {
 		return queue, nil
 	}

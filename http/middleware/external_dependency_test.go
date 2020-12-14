@@ -23,7 +23,7 @@ func Test_ExternalDependency_Middleare(t *testing.T) {
 			w.WriteHeader(http.StatusOK)
 		}))
 		h.ServeHTTP(rec, req)
-		assert.Nil(t, rec.HeaderMap[ExternalDependencyHeaderName])
+		assert.Nil(t, rec.Result().Header[ExternalDependencyHeaderName])
 	})
 	t.Run("one dependency set", func(t *testing.T) {
 		rec := httptest.NewRecorder()
@@ -34,7 +34,7 @@ func Test_ExternalDependency_Middleare(t *testing.T) {
 			w.Write(nil) // nolint: errcheck
 		}))
 		h.ServeHTTP(rec, req)
-		assert.Equal(t, rec.HeaderMap[ExternalDependencyHeaderName][0], "test:1000")
+		assert.Equal(t, rec.Result().Header[ExternalDependencyHeaderName][0], "test:1000")
 	})
 }
 
