@@ -1,4 +1,4 @@
-package http
+package middleware
 
 import (
 	"encoding/json"
@@ -14,7 +14,7 @@ import (
 
 const payload = "dummy response data"
 
-func TestJsonApiErrorMiddleware(t *testing.T) {
+func TestErrorMiddleware(t *testing.T) {
 	for _, statusCode := range []int{200, 201, 400, 402, 500, 503} {
 		for _, responseContentType := range []string{"text/plain", "text/html", runtime.JSONAPIContentType} {
 			r := mux.NewRouter()
@@ -23,7 +23,7 @@ func TestJsonApiErrorMiddleware(t *testing.T) {
 				w.WriteHeader(statusCode)
 				_, _ = io.WriteString(w, payload)
 			}).Methods("GET")
-			r.Use(JsonApiErrorWriterMiddleware)
+			r.Use(Error)
 
 			rec := httptest.NewRecorder()
 			req := httptest.NewRequest("GET", "/foo", nil)
@@ -74,7 +74,7 @@ func TestJsonApiErrorMiddlewareMultipleErrorWrite(t *testing.T) {
 		if _, err := io.WriteString(w, payload); err != nil {
 			t.Fatal(err)
 		}
-		if jsonWriter, ok := w.(*jsonApiErrorWriter); ok && !jsonWriter.hasErr {
+		if jsonWriter, ok := w.(*errorMiddleware); ok && !jsonWriter.hasErr {
 			t.Fatal("expected hasErr flag to be set")
 		}
 		if _, err := io.WriteString(w, payload); err != nil {
@@ -84,7 +84,7 @@ func TestJsonApiErrorMiddlewareMultipleErrorWrite(t *testing.T) {
 			t.Fatal(err)
 		}
 	}).Methods("GET")
-	r.Use(JsonApiErrorWriterMiddleware)
+	r.Use(Error)
 
 	rec := httptest.NewRecorder()
 	req := httptest.NewRequest("GET", "/foo", nil)
@@ -117,7 +117,7 @@ func TestJsonApiErrorMiddlewareInvalidWriteOrder(t *testing.T) {
 		if _, err := io.WriteString(w, payload); err != nil {
 			t.Fatal(err)
 		}
-		jsonWriter, ok := w.(*jsonApiErrorWriter)
+		jsonWriter, ok := w.(*errorMiddleware)
 		if ok && !jsonWriter.hasBytes {
 			t.Fatal("expected hasBytes flag to be set")
 		}
@@ -125,7 +125,7 @@ func TestJsonApiErrorMiddlewareInvalidWriteOrder(t *testing.T) {
 		w.Header().Set("Content-Type", "text/plain")
 		_, _ = io.WriteString(w, payload) // will get discarded
 	}).Methods("GET")
-	r.Use(JsonApiErrorWriterMiddleware)
+	r.Use(Error)
 
 	rec := httptest.NewRecorder()
 	req := httptest.NewRequest("GET", "/foo", nil)

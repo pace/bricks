@@ -8,6 +8,7 @@ import (
 	"net/http/pprof"
 
 	"github.com/gorilla/mux"
+	"github.com/pace/bricks/http/middleware"
 	"github.com/pace/bricks/locale"
 	"github.com/pace/bricks/maintenance/errors"
 	"github.com/pace/bricks/maintenance/health"
@@ -22,7 +23,7 @@ import (
 func Router() *mux.Router {
 	r := mux.NewRouter()
 
-	r.Use(metricsMiddleware)
+	r.Use(middleware.Metrics)
 
 	// the logging middleware needs to be registered before the
 	// error middleware to make it possible to send panics to
@@ -42,8 +43,11 @@ func Router() *mux.Router {
 
 	r.Use(locale.Handler())
 
+	// report use of external dependencies
+	r.Use(middleware.ExternalDependency)
+
 	// makes some infos about the request accessable from the context
-	r.Use(RequestInContextMiddleware)
+	r.Use(middleware.RequestInContext)
 
 	// for prometheus
 	r.Handle("/metrics", metric.Handler())

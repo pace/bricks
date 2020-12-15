@@ -1,7 +1,7 @@
 // Copyright © 2020 by PACE Telematics GmbH. All rights reserved.
 // Created at 2020/08/27 by Marius Neugebauer
 
-package http
+package middleware
 
 import (
 	"context"
@@ -10,10 +10,10 @@ import (
 	"net/http"
 )
 
-// RequestInContextMiddleware stores a representation of the request in the
+// RequestInContext stores a representation of the request in the
 // context of said request. Some information of that request can then be
 // accessed through the context using functions of this package.
-func RequestInContextMiddleware(next http.Handler) http.Handler {
+func RequestInContext(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		ctxReq := ctxRequest{
 			RemoteAddr:    r.RemoteAddr,

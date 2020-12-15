@@ -34,12 +34,12 @@ func TestRoundTripperRace(t *testing.T) {
 
 	go func() {
 		for i := 0; i < 10; i++ {
-			client.Get(server.URL + "/test001")
+			client.Get(server.URL + "/test001") // nolint: errcheck
 		}
 	}()
 
 	for i := 0; i < 10; i++ {
-		client.Get(server.URL + "/test002")
+		client.Get(server.URL + "/test002") // nolint: errcheck
 	}
 }
 

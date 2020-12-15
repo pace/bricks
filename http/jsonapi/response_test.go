@@ -27,7 +27,10 @@ func TestMarshalPayload(t *testing.T) {
 
 	// One
 	out1 := bytes.NewBuffer(nil)
-	MarshalPayload(out1, book)
+	err := MarshalPayload(out1, book)
+	if err != nil {
+		t.Fatal(err)
+	}
 
 	if strings.Contains(out1.String(), `"9.9999999999999999999"`) {
 		t.Fatalf("decimals should be encoded as number, got: %q", out1.String())
@@ -39,11 +42,14 @@ func TestMarshalPayload(t *testing.T) {
 	if _, ok := jsonData["data"].(map[string]interface{}); !ok {
 		t.Fatalf("data key did not contain an Hash/Dict/Map")
 	}
-	fmt.Println(string(out1.Bytes()))
+	fmt.Println(out1.String())
 
 	// Many
 	out2 := bytes.NewBuffer(nil)
-	MarshalPayload(out2, books)
+	err = MarshalPayload(out2, books)
+	if err != nil {
+		t.Fatal(err)
+	}
 
 	if err := json.Unmarshal(out2.Bytes(), &jsonData); err != nil {
 		t.Fatal(err)

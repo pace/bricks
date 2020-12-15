@@ -1,7 +1,7 @@
 // Copyright © 2020 by PACE Telematics GmbH. All rights reserved.
 // Created at 2020/08/27 by Marius Neugebauer
 
-package http_test
+package middleware_test
 
 import (
 	"context"
@@ -9,7 +9,7 @@ import (
 	"net/http"
 	"testing"
 
-	. "github.com/pace/bricks/http"
+	. "github.com/pace/bricks/http/middleware"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -18,7 +18,7 @@ func TestContextTransfer(t *testing.T) {
 	r, err := http.NewRequest("GET", "http://example.com/", nil)
 	require.NoError(t, err)
 	r.Header.Set("User-Agent", "Foobar")
-	RequestInContextMiddleware(http.HandlerFunc(func(_ http.ResponseWriter, r *http.Request) {
+	RequestInContext(http.HandlerFunc(func(_ http.ResponseWriter, r *http.Request) {
 		ctx := ContextTransfer(r.Context(), context.Background())
 		userAgent, err := GetUserAgentFromContext(ctx)
 		assert.NoError(t, err)
@@ -79,7 +79,7 @@ func TestGetXForwardedForHeaderFromContext(t *testing.T) {
 			if c.XForwardedFor != "" {
 				r.Header.Set("X-Forwarded-For", c.XForwardedFor)
 			}
-			RequestInContextMiddleware(http.HandlerFunc(func(_ http.ResponseWriter, r *http.Request) {
+			RequestInContext(http.HandlerFunc(func(_ http.ResponseWriter, r *http.Request) {
 				ctx := r.Context()
 				xForwardedFor, err := GetXForwardedForHeaderFromContext(ctx)
 				if c.ExpectErr != nil {
@@ -102,7 +102,7 @@ func TestGetUserAgentFromContext(t *testing.T) {
 	r, err := http.NewRequest("GET", "http://example.com/", nil)
 	require.NoError(t, err)
 	r.Header.Set("User-Agent", "Foobar")
-	RequestInContextMiddleware(http.HandlerFunc(func(_ http.ResponseWriter, r *http.Request) {
+	RequestInContext(http.HandlerFunc(func(_ http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
 		userAgent, err := GetUserAgentFromContext(ctx)
 		assert.NoError(t, err)

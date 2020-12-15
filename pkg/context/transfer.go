@@ -3,7 +3,7 @@ package context
 import (
 	"context"
 
-	"github.com/pace/bricks/http"
+	http "github.com/pace/bricks/http/middleware"
 	"github.com/pace/bricks/http/oauth2"
 	"github.com/pace/bricks/locale"
 	"github.com/pace/bricks/maintenance/errors"
