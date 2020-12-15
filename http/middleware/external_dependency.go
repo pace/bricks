@@ -4,7 +4,6 @@
 package middleware
 
 import (
-	"bytes"
 	"context"
 	"fmt"
 	"net/http"
@@ -83,7 +82,7 @@ func ExternalDependencyContextFromContext(ctx context.Context) *ExternalDependen
 	return nil
 }
 
-// ExternalDependencyContext contains all dependencies that where seed
+// ExternalDependencyContext contains all dependencies that were seen
 // during the request livecycle
 type ExternalDependencyContext struct {
 	mu           sync.RWMutex
@@ -101,16 +100,16 @@ func (c *ExternalDependencyContext) AddDependency(name string, duration time.Dur
 
 // String formats all external dependencies
 func (c *ExternalDependencyContext) String() string {
-	var buf bytes.Buffer
+	var b strings.Builder
 	sep := len(c.dependencies) - 1
 	for _, dep := range c.dependencies {
-		buf.WriteString(dep.String())
+		b.WriteString(dep.String())
 		if sep > 0 {
-			buf.WriteByte(',')
+			b.WriteByte(',')
 			sep--
 		}
 	}
-	return buf.String()
+	return b.String()
 }
 
 // Parse a external dependency value
