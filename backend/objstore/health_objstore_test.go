@@ -6,9 +6,11 @@ import (
 	"net/http/httptest"
 	"strings"
 	"testing"
+	"time"
 
 	http2 "github.com/pace/bricks/http"
 	"github.com/pace/bricks/maintenance/log"
+	"github.com/stretchr/testify/assert"
 )
 
 func setup() *http.Response {
@@ -38,5 +40,45 @@ func TestIntegrationHealthCheck(t *testing.T) {
 	}
 	if !strings.Contains(string(data), "objstore               OK") {
 		t.Errorf("Expected /health/check to return OK, got: %q", string(data[:]))
+	}
+}
+
+func TestConcurrentHealth(t *testing.T) {
+	ct := time.Date(2020, 12, 16, 15, 30, 46, 0, time.UTC)
+	tests := []struct {
+		name      string
+		checkTime time.Time
+		content   string
+		want      bool
+	}{
+		{
+			name:      "after",
+			checkTime: ct,
+			content:   "2020-12-16T15:30:45Z",
+			want:      true,
+		},
+		{
+			name:      "before",
+			checkTime: ct,
+			content:   "2020-12-16T15:30:47Z",
+			want:      true,
+		},
+		{
+			name:      "far before",
+			checkTime: ct,
+			content:   "2020-12-16T15:29:45Z",
+			want:      false,
+		},
+		{
+			name:      "far after",
+			checkTime: ct,
+			content:   "2020-12-16T15:31:45Z",
+			want:      false,
+		},
+	}
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			assert.Equal(t, tc.want, wasConcurrentHealthCheck(tc.checkTime, tc.content))
+		})
 	}
 }

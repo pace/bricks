@@ -18,6 +18,11 @@ type HealthCheck struct {
 	Client *minio.Client
 }
 
+var (
+	healthCheckTimeFormat     = time.RFC3339
+	healthCheckConcurrentSpan = 10 * time.Second
+)
+
 // HealthCheck checks if the object storage client is healthy. If the last result is outdated,
 // object storage is checked for upload and download,
 // otherwise returns the old result
@@ -27,7 +32,8 @@ func (h *HealthCheck) HealthCheck(ctx context.Context) servicehealthcheck.Health
 		return h.state.GetState()
 	}
 
-	expContent := []byte(time.Now().Format(time.RFC3339))
+	checkTime := time.Now()
+	expContent := []byte(checkTime.Format(healthCheckTimeFormat))
 	expSize := int64(len(expContent))
 
 	_, err := h.Client.PutObjectWithContext(
@@ -66,11 +72,35 @@ func (h *HealthCheck) HealthCheck(ctx context.Context) servicehealthcheck.Health
 	}
 
 	if !bytes.Equal(buf, expContent) {
+		if wasConcurrentHealthCheck(checkTime, string(buf)) {
+			goto healthy
+		}
+
 		h.state.SetErrorState(fmt.Errorf("unexpected content: %q <-> %q", string(buf), string(expContent)))
 		return h.state.GetState()
 	}
 
+healthy:
 	// If uploading and downloading worked set the Health Check to healthy
 	h.state.SetHealthy()
 	return h.state.GetState()
+}
+
+// wasConcurrentHealthCheck checks if the time doesn't match in a certain
+// time span concurrent request to the objstore may break the assumption
+// that the value is the same, but in this case it would be acceptable.
+// Assumption all instances are created equal and one providing evidence
+// of a good write would be sufficient. See #244
+func wasConcurrentHealthCheck(checkTime time.Time, observedValue string) bool {
+	t, err := time.Parse(healthCheckTimeFormat, observedValue)
+	if err == nil {
+		allowedStart := checkTime.Add(-healthCheckConcurrentSpan)
+		allowedEnd := checkTime.Add(healthCheckConcurrentSpan)
+
+		// timestamp we got from the document is in allowed range
+		// concider it healthy
+		return t.After(allowedStart) && t.Before(allowedEnd)
+	}
+
+	return false
 }
