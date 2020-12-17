@@ -71,4 +71,3 @@ services:
       - minio
       - jaeger
       - prometheus
-    restart: always
