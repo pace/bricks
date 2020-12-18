@@ -1,4 +1,4 @@
-package http
+package middleware
 
 import (
 	"errors"
@@ -9,7 +9,7 @@ import (
 	"github.com/pace/bricks/maintenance/log"
 )
 
-type jsonApiErrorWriter struct {
+type errorMiddleware struct {
 	http.ResponseWriter
 	req        *http.Request
 	statusCode int
@@ -17,7 +17,7 @@ type jsonApiErrorWriter struct {
 	hasBytes   bool
 }
 
-func (e *jsonApiErrorWriter) Write(b []byte) (int, error) {
+func (e *errorMiddleware) Write(b []byte) (int, error) {
 	if e.hasErr {
 		log.Req(e.req).Warn().Msgf("Error already sent, ignoring: %q", string(b))
 		return 0, nil
@@ -41,16 +41,16 @@ func (e *jsonApiErrorWriter) Write(b []byte) (int, error) {
 	return n, err
 }
 
-func (e *jsonApiErrorWriter) WriteHeader(code int) {
+func (e *errorMiddleware) WriteHeader(code int) {
 	e.statusCode = code
 	e.ResponseWriter.WriteHeader(code)
 }
 
-// JsonApiErrorWriterMiddleware is a middleware that wraps http.ResponseWriter
+// ErrorMiddleware is a middleware that wraps http.ResponseWriter
 // such that it forces responses with status codes 4xx/5xx to have
 // Content-Type: application/vnd.api+json
-func JsonApiErrorWriterMiddleware(next http.Handler) http.Handler {
+func Error(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		next.ServeHTTP(&jsonApiErrorWriter{ResponseWriter: w, req: r}, r)
+		next.ServeHTTP(&errorMiddleware{ResponseWriter: w, req: r}, r)
 	})
 }

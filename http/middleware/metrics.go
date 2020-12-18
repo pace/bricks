@@ -1,4 +1,4 @@
-package http
+package middleware
 
 import (
 	"net/http"
@@ -59,7 +59,7 @@ func init() {
 	prometheus.MustRegister(paceHTTPInFlightGauge, paceHTTPCounter, paceHTTPDuration, paceHTTPResponseSize)
 }
 
-func metricsMiddleware(next http.Handler) http.Handler {
+func Metrics(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		paceHTTPInFlightGauge.Inc()
 		defer paceHTTPInFlightGauge.Dec()

@@ -79,13 +79,13 @@ func (r *Runtime) UnmarshalPayload(reader io.Reader, model interface{}) error {
 }
 
 // UnmarshalManyPayload has docs in request.go for UnmarshalManyPayload.
-func (r *Runtime) UnmarshalManyPayload(reader io.Reader, kind reflect.Type) (elems []interface{}, err error) {
-	r.instrumentCall(UnmarshalStart, UnmarshalStop, func() error {
-		elems, err = UnmarshalManyPayload(reader, kind)
+func (r *Runtime) UnmarshalManyPayload(reader io.Reader, kind reflect.Type) (elements []interface{}, err error) {
+	err2 := r.instrumentCall(UnmarshalStart, UnmarshalStop, func() error {
+		elements, err = UnmarshalManyPayload(reader, kind)
 		return err
 	})
 
-	return
+	return elements, err2
 }
 
 // MarshalPayload has docs in response.go for MarshalPayload.

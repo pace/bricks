@@ -14,7 +14,7 @@ func TestLongPollUntilBounds(t *testing.T) {
 	ok, err := Until(context.Background(), -1, func(ctx context.Context) (bool, error) {
 		budget, ok := ctx.Deadline()
 		assert.True(t, ok)
-		assert.Equal(t, time.Millisecond*999, budget.Sub(time.Now()).Truncate(time.Millisecond))
+		assert.Equal(t, time.Millisecond*999, budget.Sub(time.Now()).Truncate(time.Millisecond)) // nolint: gosimple
 		called++
 		return true, nil
 	})
@@ -26,7 +26,7 @@ func TestLongPollUntilBounds(t *testing.T) {
 	ok, err = Until(context.Background(), time.Hour, func(ctx context.Context) (bool, error) {
 		budget, ok := ctx.Deadline()
 		assert.True(t, ok)
-		assert.Equal(t, time.Second*59, budget.Sub(time.Now()).Truncate(time.Second))
+		assert.Equal(t, time.Second*59, budget.Sub(time.Now()).Truncate(time.Second)) // nolint: gosimple
 		called++
 		return true, nil
 	})

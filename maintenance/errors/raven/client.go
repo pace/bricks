@@ -13,7 +13,6 @@ import (
 	"fmt"
 	"io"
 	"io/ioutil"
-	"log"
 	mrand "math/rand"
 	"net/http"
 	"net/url"
@@ -25,6 +24,7 @@ import (
 	"time"
 
 	"github.com/certifi/gocertifi"
+	"github.com/pace/bricks/maintenance/log"
 	pkgErrors "github.com/pkg/errors"
 )
 
@@ -338,7 +338,6 @@ func (c *context) interfaces() []Interface {
 	}
 	if c.http != nil {
 		interfaces[i] = c.http
-		i++
 	}
 	return interfaces
 }
@@ -371,7 +370,11 @@ func newClient(tags map[string]string) *Client {
 		sampleRate: 1.0,
 		queue:      make(chan *outgoingPacket, MaxQueueBuffer),
 	}
-	client.SetDSN(os.Getenv("SENTRY_DSN"))
+	dsn := os.Getenv("SENTRY_DSN")
+	err := client.SetDSN(dsn)
+	if err != nil && dsn != "" {
+		log.Warnf("DSN environment was set to %q but failed: %v", dsn, err)
+	}
 	client.SetRelease(os.Getenv("SENTRY_RELEASE"))
 	client.SetEnvironment(os.Getenv("SENTRY_ENVIRONMENT"))
 	return client
@@ -953,7 +956,7 @@ func (t *HTTPTransport) Send(url, authHeader string, packet *Packet) error {
 	if err != nil {
 		return err
 	}
-	io.Copy(ioutil.Discard, res.Body)
+	io.Copy(ioutil.Discard, res.Body) // nolint: errcheck
 	res.Body.Close()
 	if res.StatusCode != 200 {
 		return fmt.Errorf("raven: got http status %d", res.StatusCode)
@@ -973,7 +976,7 @@ func serializedPacket(packet *Packet) (io.Reader, string, error) {
 		buf := &bytes.Buffer{}
 		b64 := base64.NewEncoder(base64.StdEncoding, buf)
 		deflate, _ := zlib.NewWriterLevel(b64, zlib.BestCompression)
-		deflate.Write(packetJSON)
+		deflate.Write(packetJSON) // nolint: errcheck
 		deflate.Close()
 		b64.Close()
 		return buf, "application/octet-stream", nil

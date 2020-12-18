@@ -9,6 +9,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"log"
 	"reflect"
 	"sort"
 	"strings"
@@ -202,7 +203,6 @@ func TestUnmarshalToStructWithPointerAttr_BadType_Struct(t *testing.T) {
 
 func TestUnmarshalToStructWithPointerAttr_BadType_IntSlice(t *testing.T) {
 	out := new(WithPointer)
-	type FooStruct struct{ A, B int }
 	in := map[string]json.RawMessage{
 		"name": json.RawMessage(`[4, 5]`), // This is the wrong type.
 	}
@@ -361,7 +361,10 @@ func TestUnmarshalParsesISO8601(t *testing.T) {
 	}
 
 	in := bytes.NewBuffer(nil)
-	json.NewEncoder(in).Encode(payload)
+	err := json.NewEncoder(in).Encode(payload)
+	if err != nil {
+		log.Fatal(err)
+	}
 
 	out := new(Timestamp)
 
@@ -387,7 +390,10 @@ func TestUnmarshalParsesISO8601TimePointer(t *testing.T) {
 	}
 
 	in := bytes.NewBuffer(nil)
-	json.NewEncoder(in).Encode(payload)
+	err := json.NewEncoder(in).Encode(payload)
+	if err != nil {
+		t.Fatal(err)
+	}
 
 	out := new(Timestamp)
 
@@ -413,7 +419,10 @@ func TestUnmarshalInvalidISO8601(t *testing.T) {
 	}
 
 	in := bytes.NewBuffer(nil)
-	json.NewEncoder(in).Encode(payload)
+	err := json.NewEncoder(in).Encode(payload)
+	if err != nil {
+		t.Fatal(err)
+	}
 
 	out := new(Timestamp)
 
@@ -969,7 +978,7 @@ func samplePayload() io.Reader {
 	}
 
 	out := bytes.NewBuffer(nil)
-	json.NewEncoder(out).Encode(payload)
+	json.NewEncoder(out).Encode(payload) // nolint: errcheck
 
 	return out
 }
@@ -987,7 +996,7 @@ func samplePayloadWithID() io.Reader {
 	}
 
 	out := bytes.NewBuffer(nil)
-	json.NewEncoder(out).Encode(payload)
+	json.NewEncoder(out).Encode(payload) // nolint: errcheck
 
 	return out
 }
@@ -1002,7 +1011,7 @@ func samplePayloadWithBadTypes(m map[string]json.RawMessage) io.Reader {
 	}
 
 	out := bytes.NewBuffer(nil)
-	json.NewEncoder(out).Encode(payload)
+	json.NewEncoder(out).Encode(payload) // nolint: errcheck
 
 	return out
 }
@@ -1017,7 +1026,7 @@ func sampleWithPointerPayload(m map[string]json.RawMessage) io.Reader {
 	}
 
 	out := bytes.NewBuffer(nil)
-	json.NewEncoder(out).Encode(payload)
+	json.NewEncoder(out).Encode(payload) // nolint: errcheck
 
 	return out
 }
@@ -1094,17 +1103,26 @@ func samplePayloadWithSideloaded() io.Reader {
 	testModel := testModel()
 
 	out := bytes.NewBuffer(nil)
-	MarshalPayload(out, testModel)
+	err := MarshalPayload(out, testModel)
+	if err != nil {
+		panic(err)
+	}
 
 	return out
 }
 
 func sampleSerializedEmbeddedTestModel() *Blog {
 	out := bytes.NewBuffer(nil)
-	MarshalOnePayloadEmbedded(out, testModel())
+	err := MarshalOnePayloadEmbedded(out, testModel())
+	if err != nil {
+		panic(err)
+	}
 
 	blog := new(Blog)
-	UnmarshalPayload(out, blog)
+	err = UnmarshalPayload(out, blog)
+	if err != nil {
+		panic(err)
+	}
 
 	return blog
 }

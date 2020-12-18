@@ -18,7 +18,8 @@ func TestHide(t *testing.T) {
 	canceledContext, cancel := context.WithCancel(backgroundContext)
 	cancel()
 
-	exceededContext, _ := context.WithTimeout(backgroundContext, time.Millisecond)
+	exceededContext, cancel2 := context.WithTimeout(backgroundContext, time.Millisecond)
+	defer cancel2()
 	time.Sleep(2 * time.Millisecond)
 
 	type args struct {
