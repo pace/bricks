@@ -16,6 +16,7 @@ import (
 	"github.com/pace/bricks/maintenance/log"
 	"github.com/pace/bricks/maintenance/metric"
 	"github.com/pace/bricks/maintenance/tracing"
+	redactMdw "github.com/pace/bricks/pkg/redact/middleware"
 )
 
 // Router returns the default microservice endpoints for
@@ -45,6 +46,9 @@ func Router() *mux.Router {
 
 	// report use of external dependencies
 	r.Use(middleware.ExternalDependency)
+
+	// support redacting of data accross the full request scope
+	r.Use(redactMdw.Redact)
 
 	// makes some infos about the request accessable from the context
 	r.Use(middleware.RequestInContext)
