@@ -50,19 +50,19 @@ func TestHandlerHealthCheck(t *testing.T) {
 			title:   "Test HealthCheck Error",
 			check:   &testHealthChecker{name: "TestHandlerHealthCheckErr", healthCheckErr: true},
 			expCode: http.StatusServiceUnavailable,
-			expBody: "ERR",
+			expBody: "ERR: 1 errors and 0 warnings",
 		},
 		{
 			title:   "Test HealthCheck init Error",
 			check:   &testHealthChecker{name: "TestHandlerInitErr", initErr: true},
 			expCode: http.StatusServiceUnavailable,
-			expBody: "ERR",
+			expBody: "ERR: 1 errors and 0 warnings",
 		},
 		{
 			title:   "Test HealthCheck init and check Error",
 			check:   &testHealthChecker{name: "TestHandlerInitErrHealthErr", initErr: true, healthCheckErr: true},
 			expCode: http.StatusServiceUnavailable,
-			expBody: "ERR",
+			expBody: "ERR: 1 errors and 0 warnings",
 		},
 		{
 			title:   "Test HealthCheck Ok",
@@ -110,7 +110,7 @@ func TestInitErrorRetry(t *testing.T) {
 	}
 	RegisterHealthCheck(checker.name, checker)
 
-	testRequest(t, http.StatusServiceUnavailable, "ERR")
+	testRequest(t, http.StatusServiceUnavailable, "ERR: 1 errors and 0 warnings")
 
 	// remove initErr
 	checker.initErr = false
@@ -147,15 +147,15 @@ func TestInitErrorCaching(t *testing.T) {
 	resetHealthChecks()
 	RegisterHealthCheck(hc.name, hc)
 
-	testRequest(t, http.StatusServiceUnavailable, "ERR")
+	testRequest(t, http.StatusServiceUnavailable, "ERR: 1 errors and 0 warnings")
 	hc.initErr = false
-	testRequest(t, http.StatusServiceUnavailable, "ERR")
+	testRequest(t, http.StatusServiceUnavailable, "ERR: 1 errors and 0 warnings")
 
 	cfg.HealthCheckInitResultErrorTTL = 0
 	resetHealthChecks()
 	hc.initErr = true
 	RegisterHealthCheck(hc.name, hc)
-	testRequest(t, http.StatusServiceUnavailable, "ERR")
+	testRequest(t, http.StatusServiceUnavailable, "ERR: 1 errors and 0 warnings")
 	hc.initErr = false
 	testRequest(t, http.StatusOK, "OK")
 
