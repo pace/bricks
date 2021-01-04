@@ -3,6 +3,8 @@
 
 package redact
 
+import "strings"
+
 type RedactionScheme func(string) string
 
 // RedactionSchemeDoNothing doesn't redact any values
@@ -28,6 +30,15 @@ func RedactionSchemeKeepLast(num int) func(string) string {
 // RedactionSchemeKeepLast replaces all runes in the string with an asterisk
 // except the last NUM runes
 func RedactionSchemeKeepLastJWTNoSignature(num int) func(string) string {
-	// WIP: implement removal of JWT signature, allows inspection but prevents stealing of jwt
-	return RedactionSchemeKeepLast(num)
+	defaultScheme := RedactionSchemeKeepLast(num)
+
+	return func(s string) string {
+		if PatternJWT.Match([]byte(s)) {
+			parts := strings.Split(s, ".")
+			parts[2] = defaultScheme(parts[2])
+			return strings.Join(parts, ".")
+		}
+
+		return defaultScheme(s)
+	}
 }

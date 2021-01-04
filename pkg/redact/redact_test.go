@@ -34,3 +34,24 @@ and a ********************ring, as well as ****************cret`
 	res = redactor.Mask(originalString)
 	assert.Equal(t, expectedString2, res)
 }
+
+func TestRedactionSchemeJWT(t *testing.T) {
+	redactor := redact.NewPatternRedactor(redact.RedactionSchemeKeepLastJWTNoSignature(4))
+	redactor.AddPatterns(redact.PatternJWT)
+	redactor.AddPatterns(redact.PatternIBAN)
+	redactor.AddPatterns(regexp.MustCompile("AnotherSpecialSecret"))
+
+	originalString := "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c"
+	expectedString := "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.***************************************sw5c"
+
+	res := redactor.Mask(originalString)
+	assert.Equal(t, expectedString, res)
+
+	originalString = `Here we have an IBAN: DE12345678909876543210
+and a SuperSecretSpecialString, as well as AnotherSpecialSecret`
+	expectedString = `Here we have an IBAN: ******************3210
+and a SuperSecretSpecialString, as well as ****************cret`
+
+	res = redactor.Mask(originalString)
+	assert.Equal(t, expectedString, res)
+}

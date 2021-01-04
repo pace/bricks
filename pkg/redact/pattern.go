@@ -5,8 +5,20 @@ package redact
 
 import "regexp"
 
-// Sources
+// Sources:
 // CreditCard: https://www.regular-expressions.info/creditcard.html
+
+// AllPatterns is a list of all default redaction patterns
+var AllPatterns = []*regexp.Regexp{
+	PatternIBAN,
+	PatternJWT,
+	PatternCCVisa,
+	PatternCCMasterCard,
+	PatternCCAmericanExpress,
+	PatternCCDinersClub,
+	PatternCCDiscover,
+	PatternCCJCB,
+}
 
 var (
 	PatternIBAN = regexp.MustCompile(

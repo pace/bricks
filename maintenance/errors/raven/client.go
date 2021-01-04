@@ -25,6 +25,7 @@ import (
 
 	"github.com/certifi/gocertifi"
 	"github.com/pace/bricks/maintenance/log"
+	"github.com/pace/bricks/pkg/redact"
 	pkgErrors "github.com/pkg/errors"
 )
 
@@ -969,6 +970,9 @@ func serializedPacket(packet *Packet) (io.Reader, string, error) {
 	if err != nil {
 		return nil, "", fmt.Errorf("error marshaling packet %+v to JSON: %v", packet, err)
 	}
+
+	// redact all data going out to sentry using the default redactor
+	packetJSON = []byte(redact.Default.Mask(string(packetJSON)))
 
 	// Only deflate/base64 the packet if it is bigger than 1KB, as there is
 	// overhead.

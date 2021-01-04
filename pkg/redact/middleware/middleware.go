@@ -9,21 +9,16 @@ import (
 	"github.com/pace/bricks/pkg/redact"
 )
 
-// redactionSafe last 4 digits are usually concidered safe (e.g. credit cards, iban, ...)
-const redactionSafe = 4
-
 // Redact provides a pattern redactor middleware to the request context
 func Redact(next http.Handler) http.Handler {
-	return RedactWithScheme(next, redact.RedactionSchemeKeepLast(redactionSafe))
+	return RedactWithScheme(next, redact.Default)
 }
 
 // RedactWithScheme provides a pattern redactor middleware to the request context
 // using the provided scheme
-func RedactWithScheme(next http.Handler, scheme redact.RedactionScheme) http.Handler {
+func RedactWithScheme(next http.Handler, redactor *redact.PatternRedactor) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		var pr redact.PatternRedactor
-		pr.SetScheme(scheme)
-		ctx := pr.WithContext(r.Context())
+		ctx := redactor.WithContext(r.Context())
 		next.ServeHTTP(w, r.WithContext(ctx))
 	})
 }

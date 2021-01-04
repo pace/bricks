@@ -8,16 +8,14 @@ import (
 )
 
 type PatternRedactor struct {
-	patterns map[string]*regexp.Regexp
+	patterns []*regexp.Regexp
 	scheme   RedactionScheme
 }
 
 // NewPatternRedactor creates a new redactor for masking certain patterns
 func NewPatternRedactor(scheme RedactionScheme) *PatternRedactor {
-	patterns := make(map[string]*regexp.Regexp)
 	return &PatternRedactor{
-		patterns: patterns,
-		scheme:   scheme,
+		scheme: scheme,
 	}
 }
 
@@ -33,14 +31,21 @@ func (r *PatternRedactor) Mask(data string) string {
 
 // AddPattern adds patterns to the redactor
 func (r *PatternRedactor) AddPatterns(patterns ...*regexp.Regexp) {
-	for _, pattern := range patterns {
-		r.patterns[pattern.String()] = pattern
-	}
+	r.patterns = append(r.patterns, patterns...)
 }
 
 // RemovePattern deletes a pattern from the redactor
 func (r *PatternRedactor) RemovePattern(pattern *regexp.Regexp) {
-	delete(r.patterns, pattern.String())
+	index := -1
+	for i, p := range r.patterns {
+		if p == pattern || p.String() == pattern.String() {
+			index = i
+			break
+		}
+	}
+	if index >= 0 {
+		r.patterns = append(r.patterns[:index], r.patterns[index+1:]...)
+	}
 }
 
 func (r *PatternRedactor) SetScheme(scheme RedactionScheme) {
@@ -49,8 +54,9 @@ func (r *PatternRedactor) SetScheme(scheme RedactionScheme) {
 
 func (r *PatternRedactor) Clone() *PatternRedactor {
 	rc := NewPatternRedactor(r.scheme)
-	for k, v := range r.patterns {
-		rc.patterns[k] = regexp.MustCompile(v.String())
+	rc.patterns = make([]*regexp.Regexp, len(r.patterns))
+	for i, p := range r.patterns {
+		rc.patterns[i] = p
 	}
 	return rc
 }
