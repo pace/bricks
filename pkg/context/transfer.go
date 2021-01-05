@@ -8,6 +8,7 @@ import (
 	"github.com/pace/bricks/locale"
 	"github.com/pace/bricks/maintenance/errors"
 	"github.com/pace/bricks/maintenance/log"
+	"github.com/pace/bricks/pkg/redact"
 )
 
 // Transfer takes the logger, log.Sink, authentication, request and
@@ -20,5 +21,6 @@ func Transfer(in context.Context) context.Context {
 	out = oauth2.ContextTransfer(in, out)
 	out = errors.ContextTransfer(in, out)
 	out = http.ContextTransfer(in, out)
+	out = redact.ContextTransfer(in, out)
 	return locale.ContextTransfer(in, out)
 }

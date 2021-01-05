@@ -10,6 +10,7 @@ import (
 
 	"github.com/caarlos0/env"
 	"github.com/pace/bricks/maintenance/log"
+	"github.com/pace/bricks/pkg/redact"
 )
 
 // DumpRoundTripper dumps requests and responses in one log event.
@@ -22,6 +23,7 @@ type DumpRoundTripper struct {
 	DumpRequestHEX  bool
 	DumpResponseHEX bool
 	DumpBody        bool
+	DumpNoRedact    bool
 }
 
 type DumpRoundTripperOption string
@@ -32,6 +34,7 @@ const (
 	DumpRoundTripperOptionRequestHEX  = "request-hex"
 	DumpRoundTripperOptionResponseHEX = "response-hex"
 	DumpRoundTripperOptionBody        = "body"
+	DumpRoundTripperOptionNoRedact    = "no-redact"
 )
 
 // NewDumpRoundTripperEnv creates a new RoundTripper based on the configuration
@@ -65,6 +68,8 @@ func NewDumpRoundTripper(options ...string) *DumpRoundTripper {
 			rt.DumpResponseHEX = true
 		case DumpRoundTripperOptionBody:
 			rt.DumpBody = true
+		case DumpRoundTripperOptionNoRedact:
+			rt.DumpNoRedact = true
 		default:
 			log.Fatalf("Failed to parse dump round tripper options from env: %v", option)
 		}
@@ -89,6 +94,13 @@ func (l DumpRoundTripper) AnyEnabled() bool {
 
 // RoundTrip executes a single HTTP transaction via Transport()
 func (l *DumpRoundTripper) RoundTrip(req *http.Request) (*http.Response, error) {
+	var redactor *redact.PatternRedactor
+
+	// check if the content redaction is enabled
+	if !l.DumpNoRedact {
+		redactor = redact.Ctx(req.Context())
+	}
+
 	// fast path if logging is disabled
 	if !l.AnyEnabled() {
 		return l.Transport().RoundTrip(req)
@@ -102,6 +114,12 @@ func (l *DumpRoundTripper) RoundTrip(req *http.Request) (*http.Response, error) 
 		if err != nil {
 			reqDump = []byte(err.Error())
 		}
+
+		// in case a redactor is present, redact the content before logging
+		if redactor != nil {
+			reqDump = []byte(redactor.Mask(string(reqDump)))
+		}
+
 		if l.DumpRequest {
 			dl = dl.Bytes(DumpRoundTripperOptionRequest, reqDump)
 		}
@@ -114,12 +132,19 @@ func (l *DumpRoundTripper) RoundTrip(req *http.Request) (*http.Response, error) 
 	if err != nil {
 		return resp, err
 	}
+
 	// response logging
 	if l.DumpResponse || l.DumpResponseHEX {
 		respDump, err := httputil.DumpResponse(resp, l.DumpBody)
 		if err != nil {
 			respDump = []byte(err.Error())
 		}
+
+		// in case a redactor is present, redact the content before logging
+		if redactor != nil {
+			respDump = []byte(redactor.Mask(string(respDump)))
+		}
+
 		if l.DumpResponse {
 			dl = dl.Bytes(DumpRoundTripperOptionResponse, respDump)
 		}
