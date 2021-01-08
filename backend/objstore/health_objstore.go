@@ -7,7 +7,7 @@ import (
 	"io/ioutil"
 	"time"
 
-	"github.com/minio/minio-go/v6"
+	"github.com/minio/minio-go/v7"
 	"github.com/pace/bricks/maintenance/health/servicehealthcheck"
 )
 
@@ -36,7 +36,7 @@ func (h *HealthCheck) HealthCheck(ctx context.Context) servicehealthcheck.Health
 	expContent := []byte(checkTime.Format(healthCheckTimeFormat))
 	expSize := int64(len(expContent))
 
-	_, err := h.Client.PutObjectWithContext(
+	_, err := h.Client.PutObject(
 		ctx,
 		cfg.HealthCheckBucketName,
 		cfg.HealthCheckObjectName,
@@ -52,7 +52,7 @@ func (h *HealthCheck) HealthCheck(ctx context.Context) servicehealthcheck.Health
 	}
 
 	// Try download
-	obj, err := h.Client.GetObjectWithContext(
+	obj, err := h.Client.GetObject(
 		ctx,
 		cfg.HealthCheckBucketName,
 		cfg.HealthCheckObjectName,

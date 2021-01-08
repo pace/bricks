@@ -1,13 +1,14 @@
 package objstore
 
 import (
+	"context"
 	"net/http"
 	"sync"
 	"time"
 
 	"github.com/caarlos0/env"
-	"github.com/minio/minio-go/v6"
-	"github.com/minio/minio-go/v6/pkg/credentials"
+	"github.com/minio/minio-go/v7"
+	"github.com/minio/minio-go/v7/pkg/credentials"
 
 	"github.com/pace/bricks/http/transport"
 	"github.com/pace/bricks/maintenance/health/servicehealthcheck"
@@ -51,7 +52,8 @@ func DefaultClientFromEnv() (*minio.Client, error) {
 
 // CustomClient with customized client
 func CustomClient(endpoint string, opts *minio.Options) (*minio.Client, error) {
-	client, err := minio.NewWithOptions(endpoint, opts)
+	opts.Transport = newCustomTransport(endpoint)
+	client, err := minio.New(endpoint, opts)
 	if err != nil {
 		return nil, err
 	}
@@ -59,7 +61,6 @@ func CustomClient(endpoint string, opts *minio.Options) (*minio.Client, error) {
 		Str("region", opts.Region).
 		Bool("ssl", opts.Secure).
 		Msg("S3 connection created")
-	client.SetCustomTransport(newCustomTransport(endpoint))
 	return client, nil
 }
 
@@ -90,12 +91,16 @@ func registerHealthchecks() {
 			Client: client,
 		})
 
-		ok, err := client.BucketExists(cfg.HealthCheckBucketName)
+		ctx := context.Background()
+
+		ok, err := client.BucketExists(ctx, cfg.HealthCheckBucketName)
 		if err != nil {
 			log.Warnf("Failed to create check for bucket: %v", err)
 		}
 		if !ok {
-			err := client.MakeBucket(cfg.HealthCheckBucketName, cfg.Region)
+			err := client.MakeBucket(ctx, cfg.HealthCheckBucketName, minio.MakeBucketOptions{
+				Region: cfg.Region,
+			})
 			if err != nil {
 				log.Warnf("Failed to create bucket: %v", err)
 			}
