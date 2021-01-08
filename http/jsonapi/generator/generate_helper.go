@@ -60,7 +60,11 @@ func (g *typeGenerator) invoke() error { // nolint: gocyclo
 			}
 		case "date":
 			addValidator(g.tags, "time(2006-01-02)")
-			g.stmt.Qual("time", "Time")
+			if g.isParam {
+				g.stmt.Qual("time", "Time")
+			} else {
+				g.stmt.Op("*").Qual("time", "Time") // time.Time can not be nil, so a pointer is needed for omitempty to work
+			}
 		case "uuid":
 			addValidator(g.tags, "uuid")
 			g.stmt.String()

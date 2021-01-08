@@ -14,6 +14,7 @@ import (
 	metrics "github.com/pace/bricks/maintenance/metric/jsonapi"
 	decimal "github.com/shopspring/decimal"
 	"net/http"
+	"time"
 )
 
 // AllPaymentMethodsItem ...
@@ -25,6 +26,12 @@ type AllPaymentMethodsItem struct {
 
 // AllPaymentMethods ...
 type AllPaymentMethods []*AllPaymentMethodsItem
+
+// PaymentMethod ...
+type PaymentMethod struct {
+	ID     string     `jsonapi:"primary,paymentMethod,omitempty" valid:"optional"`                                // Payment Method ID
+	Expiry *time.Time `json:"expiry,omitempty" jsonapi:"attr,expiry,omitempty" valid:"optional,time(2006-01-02)"` // Expiry date
+}
 
 // PaymentMethodSEPAAddress ...
 type PaymentMethodSEPAAddress struct {
