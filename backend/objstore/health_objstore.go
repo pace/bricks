@@ -7,8 +7,9 @@ import (
 	"io/ioutil"
 	"time"
 
-	"github.com/minio/minio-go/v6"
+	"github.com/minio/minio-go/v7"
 	"github.com/pace/bricks/maintenance/health/servicehealthcheck"
+	"github.com/pace/bricks/maintenance/log"
 )
 
 // HealthCheck checks the state of the object storage client. It must not be changed
@@ -36,7 +37,7 @@ func (h *HealthCheck) HealthCheck(ctx context.Context) servicehealthcheck.Health
 	expContent := []byte(checkTime.Format(healthCheckTimeFormat))
 	expSize := int64(len(expContent))
 
-	_, err := h.Client.PutObjectWithContext(
+	info, err := h.Client.PutObject(
 		ctx,
 		cfg.HealthCheckBucketName,
 		cfg.HealthCheckObjectName,
@@ -52,17 +53,37 @@ func (h *HealthCheck) HealthCheck(ctx context.Context) servicehealthcheck.Health
 	}
 
 	// Try download
-	obj, err := h.Client.GetObjectWithContext(
+	obj, err := h.Client.GetObject(
 		ctx,
 		cfg.HealthCheckBucketName,
 		cfg.HealthCheckObjectName,
-		minio.GetObjectOptions{},
+		minio.GetObjectOptions{
+			// if version is given, get the specific version
+			// otherwise version should be empty
+			VersionID: info.VersionID,
+		},
 	)
 	if err != nil {
 		h.state.SetErrorState(fmt.Errorf("failed to get object: %v", err))
 		return h.state.GetState()
 	}
 	defer obj.Close()
+
+	// in case the bucket is versioned, delete versions to not leak versions
+	if info.VersionID != "" {
+		err = h.Client.RemoveObject(
+			ctx,
+			cfg.HealthCheckBucketName,
+			cfg.HealthCheckObjectName,
+			minio.RemoveObjectOptions{
+				GovernanceBypass: true, // there is no reason to store health checks
+				VersionID:        info.VersionID,
+			})
+		if err != nil {
+			log.Ctx(ctx).Err(err).Msgf("failed to delete version %q of %q in bucket %q",
+				info.VersionID, cfg.HealthCheckObjectName, cfg.HealthCheckBucketName)
+		}
+	}
 
 	// Assert expectations
 	buf, err := ioutil.ReadAll(obj)

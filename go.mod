@@ -20,10 +20,10 @@ require (
 	github.com/inconshreveable/mousetrap v1.0.0 // indirect
 	github.com/jinzhu/inflection v0.0.0-20180308033659-04140366298a // indirect
 	github.com/jpillora/backoff v1.0.0
-	github.com/mattn/go-isatty v0.0.8
+	github.com/mattn/go-isatty v0.0.11
 	github.com/mattn/goveralls v0.0.5
 	github.com/matttproud/golang_protobuf_extensions v1.0.1 // indirect
-	github.com/minio/minio-go/v6 v6.0.44
+	github.com/minio/minio-go/v7 v7.0.7
 	github.com/opentracing/opentracing-go v1.0.2
 	github.com/pkg/errors v0.8.1
 	github.com/pmezard/go-difflib v1.0.0
