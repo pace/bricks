@@ -48,5 +48,5 @@ var (
 	PatternCCJCB = regexp.MustCompile(`(?:2131|1800|35\d{3})\d{11}`)
 
 	// PatternJWT JsonWebToken
-	PatternJWT = regexp.MustCompile(`(?:ey[a-zA-Z0-9=_-]+.){2}.[a-zA-Z0-9=_-]+`)
+	PatternJWT = regexp.MustCompile(`(?:ey[a-zA-Z0-9=_-]+\.){2}[a-zA-Z0-9=_-]+`)
 )
