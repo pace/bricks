@@ -69,22 +69,6 @@ func (h *HealthCheck) HealthCheck(ctx context.Context) servicehealthcheck.Health
 	}
 	defer obj.Close()
 
-	// in case the bucket is versioned, delete versions to not leak versions
-	if info.VersionID != "" {
-		err = h.Client.RemoveObject(
-			ctx,
-			cfg.HealthCheckBucketName,
-			cfg.HealthCheckObjectName,
-			minio.RemoveObjectOptions{
-				GovernanceBypass: true, // there is no reason to store health checks
-				VersionID:        info.VersionID,
-			})
-		if err != nil {
-			log.Ctx(ctx).Err(err).Msgf("failed to delete version %q of %q in bucket %q",
-				info.VersionID, cfg.HealthCheckObjectName, cfg.HealthCheckBucketName)
-		}
-	}
-
 	// Assert expectations
 	buf, err := ioutil.ReadAll(obj)
 	if err != nil {
@@ -99,6 +83,24 @@ func (h *HealthCheck) HealthCheck(ctx context.Context) servicehealthcheck.Health
 
 		h.state.SetErrorState(fmt.Errorf("unexpected content: %q <-> %q", string(buf), string(expContent)))
 		return h.state.GetState()
+	}
+
+	// in case the bucket is versioned, delete versions to not leak versions
+	if info.VersionID != "" {
+		go func() {
+			err = h.Client.RemoveObject(
+				ctx,
+				cfg.HealthCheckBucketName,
+				cfg.HealthCheckObjectName,
+				minio.RemoveObjectOptions{
+					GovernanceBypass: true, // there is no reason to store health checks
+					VersionID:        info.VersionID,
+				})
+			if err != nil {
+				log.Ctx(ctx).Err(err).Msgf("failed to delete version %q of %q in bucket %q",
+					info.VersionID, cfg.HealthCheckObjectName, cfg.HealthCheckBucketName)
+			}
+		}()
 	}
 
 healthy:
