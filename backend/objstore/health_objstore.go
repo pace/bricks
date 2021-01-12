@@ -53,6 +53,29 @@ func (h *HealthCheck) HealthCheck(ctx context.Context) servicehealthcheck.Health
 		return h.state.GetState()
 	}
 
+	// in case the bucket is versioned, delete versions to not leak versions
+	if info.VersionID != "" {
+		defer func() {
+			go func() {
+				defer errors.HandleWithCtx(ctx, "HealthCheck remove s3 object version")
+				ctx := log.WithContext(context.Background())
+
+				err = h.Client.RemoveObject(
+					ctx,
+					cfg.HealthCheckBucketName,
+					cfg.HealthCheckObjectName,
+					minio.RemoveObjectOptions{
+						GovernanceBypass: true, // there is no reason to store health checks
+						VersionID:        info.VersionID,
+					})
+				if err != nil {
+					log.Ctx(ctx).Err(err).Msgf("failed to delete version %q of %q in bucket %q",
+						info.VersionID, cfg.HealthCheckObjectName, cfg.HealthCheckBucketName)
+				}
+			}()
+		}()
+	}
+
 	// Try download
 	obj, err := h.Client.GetObject(
 		ctx,
@@ -84,27 +107,6 @@ func (h *HealthCheck) HealthCheck(ctx context.Context) servicehealthcheck.Health
 
 		h.state.SetErrorState(fmt.Errorf("unexpected content: %q <-> %q", string(buf), string(expContent)))
 		return h.state.GetState()
-	}
-
-	// in case the bucket is versioned, delete versions to not leak versions
-	if info.VersionID != "" {
-		go func() {
-			defer errors.HandleWithCtx(ctx, "HealthCheck remove s3 object version")
-			ctx := log.WithContext(context.Background())
-
-			err = h.Client.RemoveObject(
-				ctx,
-				cfg.HealthCheckBucketName,
-				cfg.HealthCheckObjectName,
-				minio.RemoveObjectOptions{
-					GovernanceBypass: true, // there is no reason to store health checks
-					VersionID:        info.VersionID,
-				})
-			if err != nil {
-				log.Ctx(ctx).Err(err).Msgf("failed to delete version %q of %q in bucket %q",
-					info.VersionID, cfg.HealthCheckObjectName, cfg.HealthCheckBucketName)
-			}
-		}()
 	}
 
 healthy:
