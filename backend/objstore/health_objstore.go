@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/minio/minio-go/v7"
+	"github.com/pace/bricks/maintenance/errors"
 	"github.com/pace/bricks/maintenance/health/servicehealthcheck"
 	"github.com/pace/bricks/maintenance/log"
 )
@@ -88,6 +89,9 @@ func (h *HealthCheck) HealthCheck(ctx context.Context) servicehealthcheck.Health
 	// in case the bucket is versioned, delete versions to not leak versions
 	if info.VersionID != "" {
 		go func() {
+			defer errors.HandleWithCtx(ctx, "HealthCheck remove s3 object version")
+			ctx := log.WithContext(context.Background())
+
 			err = h.Client.RemoveObject(
 				ctx,
 				cfg.HealthCheckBucketName,
