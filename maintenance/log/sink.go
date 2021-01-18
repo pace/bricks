@@ -15,6 +15,8 @@ import (
 
 type sinkKey struct{}
 
+const defaultSinkSize = 1000
+
 // ContextWithSink wraps the given context in a new context with
 // the given Sink stored as value.
 func ContextWithSink(ctx context.Context, sink *Sink) context.Context {
@@ -47,6 +49,7 @@ func SinkContextTransfer(sourceCtx, targetCtx context.Context) context.Context {
 type Sink struct {
 	Silent       bool
 	jsonLogLines []string
+	CustomSize   int
 
 	output  io.Writer
 	rwmutex sync.RWMutex
@@ -117,6 +120,7 @@ func (s *Sink) Write(b []byte) (int, error) {
 		s.output = logOutput
 	}
 
+	s.truncate()
 	s.jsonLogLines = append(s.jsonLogLines, string(b))
 	s.rwmutex.Unlock()
 
@@ -125,4 +129,16 @@ func (s *Sink) Write(b []byte) (int, error) {
 	}
 
 	return s.output.Write(b)
+}
+
+func (s *Sink) truncate() {
+	sinkSize := defaultSinkSize
+	if s.CustomSize > 0 {
+		sinkSize = s.CustomSize
+	}
+	if len(s.jsonLogLines) >= sinkSize {
+		last := len(s.jsonLogLines)
+		first := last - (sinkSize - 1)
+		s.jsonLogLines = s.jsonLogLines[first:last]
+	}
 }
