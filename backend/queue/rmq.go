@@ -2,6 +2,7 @@ package queue
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"sync"
 	"time"
@@ -32,12 +33,19 @@ func initDefault() error {
 
 	errChan := make(chan error)
 
-	ctx := log.ContextWithSink(log.WithContext(context.Background()), new(log.Sink))
+	ctx := log.WithContext(context.Background())
 	routine.Run(ctx, func(ctx context.Context) {
 		for {
+			ctx = log.ContextWithSink(ctx, &log.Sink{})
 			err := <-errChan
 			if err != nil {
-				pberrors.Handle(ctx, fmt.Errorf("rmq reported error in background task: %s", err))
+				var heartbeatError rmq.HeartbeatError
+				switch {
+				case errors.As(err, &heartbeatError):
+					log.Ctx(ctx).Debug().Err(err).Int("errorCount", heartbeatError.Count).Msg("rmq could not reach redis. Most likely temporary")
+				default:
+					pberrors.Handle(ctx, fmt.Errorf("rmq reported error in background task: %s", err))
+				}
 			}
 		}
 	})
