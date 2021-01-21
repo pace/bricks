@@ -46,7 +46,7 @@ func TestOverflowRing(t *testing.T) {
 	for i := 0; i < 2; i++ {
 		ring.writeString(fmt.Sprintf("%02d", i))
 	}
-	require.Equal(t, []string{"00", "01", ""}, ring.data)
+	require.Equal(t, []string{"00", "01"}, ring.data)
 	ring.writeString("02")
 	require.Equal(t, []string{"00", "01", "02"}, ring.data)
 	for i := 3; i < 5; i++ {

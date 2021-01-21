@@ -48,8 +48,8 @@ func SinkContextTransfer(sourceCtx, targetCtx context.Context) context.Context {
 // and use them at a later point in time
 type Sink struct {
 	Silent     bool
-	CustomSize int
-	ring       *stringRing
+	customSize int
+	ring       stringRing
 	init       sync.Once
 
 	output  io.Writer
@@ -63,7 +63,12 @@ func NewSink(opts ...SinkOption) *Sink {
 	for _, opt := range opts {
 		opt(sink)
 	}
-	sink.init.Do(sink.initialize)
+	// init ring buffer
+	sinkSize := defaultSinkSize
+	if sink.customSize > 0 {
+		sinkSize = sink.customSize
+	}
+	sink.ring = newStringRing(sinkSize)
 
 	return sink
 }
@@ -94,9 +99,6 @@ func handlerWithSink(silentPrefixes ...string) mux.MiddlewareFunc {
 // ToJSON returns a copy of the currently available
 // logs in the Sink as json formatted []byte.
 func (s *Sink) ToJSON() []byte {
-	// make sure the sink is initialized
-	s.init.Do(s.initialize)
-
 	s.rwmutex.RLock()
 	defer s.rwmutex.RUnlock()
 
@@ -107,9 +109,6 @@ func (s *Sink) ToJSON() []byte {
 // zerolog.ConsoleWriter to format them in a human
 // readable way
 func (s *Sink) Pretty() string {
-	// make sure the sink is initialized
-	s.init.Do(s.initialize)
-
 	buf := &bytes.Buffer{}
 	writer := &zerolog.ConsoleWriter{
 		Out:        buf,
@@ -136,8 +135,8 @@ func (s *Sink) Pretty() string {
 // func. Write stores all incoming logs in its internal store
 // and calls Write() on the default output writer.
 func (s *Sink) Write(b []byte) (int, error) {
-	// make sure the sink is initialized
-	s.init.Do(s.initialize)
+	// make sure the buffer is safe to write to
+	s.init.Do(s.initBuffer)
 
 	s.rwmutex.Lock()
 	if s.output == nil {
@@ -154,16 +153,13 @@ func (s *Sink) Write(b []byte) (int, error) {
 	return s.output.Write(b)
 }
 
-func (s *Sink) initialize() {
-	// make sure the sink is initialized
-	s.init.Do(s.initialize)
-
-	// init ring buffer
-	sinkSize := defaultSinkSize
-	if s.CustomSize > 0 {
-		sinkSize = s.CustomSize
+// this is required for cases where a sink is created directly
+// because then the ring will not be created via newStringRing
+// and its size may be 0 (causes div by zero error)
+func (s *Sink) initBuffer() {
+	if s.ring.size == 0 {
+		s.ring.size = defaultSinkSize
 	}
-	s.ring = newStringRing(sinkSize)
 }
 
 type stringRing struct {
@@ -173,19 +169,22 @@ type stringRing struct {
 	size    int
 }
 
-func newStringRing(size int) *stringRing {
-	return &stringRing{
+func newStringRing(size int) stringRing {
+	return stringRing{
 		size: size,
-		data: make([]string, size),
 	}
 }
 
 func (r *stringRing) writeString(c string) {
-	if r.maxPos < r.size-1 {
+	// until we hit the size limit, just append to grow the buffer
+	if len(r.data) < r.size {
+		r.data = append(r.data, c)
+		return
+	}
+	if len(r.data) < r.size-1 {
 		// default case: ring has not reached maximum size yet
 		// so just append and increase
 		r.data[r.nextPos] = c
-		r.maxPos = r.nextPos
 		r.nextPos++
 	} else {
 		// overflow case: start overwriting at the beginning
@@ -198,8 +197,8 @@ func (r *stringRing) writeString(c string) {
 // GetContent returns the content of the buffer in the order it was written
 func (r *stringRing) GetContent() []string {
 	// default case: write pointer has not started overflowing
-	if r.nextPos > r.maxPos {
-		return r.data[:r.maxPos+1]
+	if len(r.data) < r.size {
+		return r.data
 	} else {
 		out := r.data[r.nextPos:]
 		out = append(out, r.data[:r.nextPos]...)
@@ -217,6 +216,6 @@ func Silent() SinkOption {
 
 func CustomSize(size int) SinkOption {
 	return func(s *Sink) {
-		s.CustomSize = size
+		s.customSize = size
 	}
 }
