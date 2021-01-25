@@ -15,6 +15,8 @@ import (
 
 type sinkKey struct{}
 
+const defaultSinkSize = 1000
+
 // ContextWithSink wraps the given context in a new context with
 // the given Sink stored as value.
 func ContextWithSink(ctx context.Context, sink *Sink) context.Context {
@@ -45,11 +47,30 @@ func SinkContextTransfer(sourceCtx, targetCtx context.Context) context.Context {
 // logs, created with log.Ctx(ctx), inside the context
 // and use them at a later point in time
 type Sink struct {
-	Silent       bool
-	jsonLogLines []string
+	Silent     bool
+	customSize int
+	ring       stringRing
+	init       sync.Once
 
 	output  io.Writer
 	rwmutex sync.RWMutex
+}
+
+// NewSink initializes a new sink. This will deprecate the public properties
+// of the sink struct sometime in the future
+func NewSink(opts ...SinkOption) *Sink {
+	sink := &Sink{}
+	for _, opt := range opts {
+		opt(sink)
+	}
+	// init ring buffer
+	sinkSize := defaultSinkSize
+	if sink.customSize > 0 {
+		sinkSize = sink.customSize
+	}
+	sink.ring = newStringRing(sinkSize)
+
+	return sink
 }
 
 // handlerWithSink returns a mux.MiddlewareFunc which adds a Sink
@@ -81,7 +102,7 @@ func (s *Sink) ToJSON() []byte {
 	s.rwmutex.RLock()
 	defer s.rwmutex.RUnlock()
 
-	return []byte("[" + strings.Join(s.jsonLogLines, ",") + "]")
+	return []byte("[" + strings.Join(s.ring.GetContent(), ",") + "]")
 }
 
 // Pretty returns the logs as string while using the
@@ -95,7 +116,9 @@ func (s *Sink) Pretty() string {
 		TimeFormat: "2006-01-02 15:04:05",
 	}
 
-	for _, str := range s.jsonLogLines {
+	s.rwmutex.Lock()
+	defer s.rwmutex.Unlock()
+	for _, str := range s.ring.GetContent() {
 		n, err := strings.NewReader(str).WriteTo(writer)
 		if err != nil {
 			log.Warn().Err(err).Msg("log.Sink.Pretty failed")
@@ -112,12 +135,15 @@ func (s *Sink) Pretty() string {
 // func. Write stores all incoming logs in its internal store
 // and calls Write() on the default output writer.
 func (s *Sink) Write(b []byte) (int, error) {
+	// make sure the buffer is safe to write to
+	s.init.Do(s.initBuffer)
+
 	s.rwmutex.Lock()
 	if s.output == nil {
 		s.output = logOutput
 	}
 
-	s.jsonLogLines = append(s.jsonLogLines, string(b))
+	s.ring.writeString(string(b))
 	s.rwmutex.Unlock()
 
 	if s.Silent {
@@ -125,4 +151,71 @@ func (s *Sink) Write(b []byte) (int, error) {
 	}
 
 	return s.output.Write(b)
+}
+
+// this is required for cases where a sink is created directly
+// because then the ring will not be created via newStringRing
+// and its size may be 0 (causes div by zero error)
+func (s *Sink) initBuffer() {
+	if s.ring.size == 0 {
+		s.ring.size = defaultSinkSize
+	}
+}
+
+type stringRing struct {
+	data    []string
+	nextPos int
+	maxPos  int
+	size    int
+}
+
+func newStringRing(size int) stringRing {
+	return stringRing{
+		size: size,
+	}
+}
+
+func (r *stringRing) writeString(c string) {
+	// until we hit the size limit, just append to grow the buffer
+	if len(r.data) < r.size {
+		r.data = append(r.data, c)
+		return
+	}
+	if len(r.data) < r.size-1 {
+		// default case: ring has not reached maximum size yet
+		// so just append and increase
+		r.data[r.nextPos] = c
+		r.nextPos++
+	} else {
+		// overflow case: start overwriting at the beginning
+		r.nextPos = r.nextPos % r.size
+		r.data[r.nextPos] = c
+		r.nextPos++
+	}
+}
+
+// GetContent returns the content of the buffer in the order it was written
+func (r *stringRing) GetContent() []string {
+	// default case: write pointer has not started overflowing
+	if len(r.data) < r.size {
+		return r.data
+	} else {
+		out := r.data[r.nextPos:]
+		out = append(out, r.data[:r.nextPos]...)
+		return out
+	}
+}
+
+type SinkOption func(*Sink)
+
+func Silent() SinkOption {
+	return func(s *Sink) {
+		s.Silent = true
+	}
+}
+
+func CustomSize(size int) SinkOption {
+	return func(s *Sink) {
+		s.customSize = size
+	}
 }

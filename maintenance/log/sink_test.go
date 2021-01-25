@@ -2,6 +2,7 @@ package log
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -38,4 +39,32 @@ func Test_Sink(t *testing.T) {
 	require.NoError(t, json.Unmarshal(logs, &result), "could not unmarshal logs")
 
 	require.Len(t, result, 2, "expecting exactly one log, but got %d", len(result))
+}
+
+func TestOverflowRing(t *testing.T) {
+	ring := newStringRing(3)
+	for i := 0; i < 2; i++ {
+		ring.writeString(fmt.Sprintf("%02d", i))
+	}
+	require.Equal(t, []string{"00", "01"}, ring.data)
+	ring.writeString("02")
+	require.Equal(t, []string{"00", "01", "02"}, ring.data)
+	for i := 3; i < 5; i++ {
+		ring.writeString(fmt.Sprintf("%02d", i))
+	}
+	require.Equal(t, []string{"03", "04", "02"}, ring.data)
+}
+
+func TestRingGetContent(t *testing.T) {
+	ring := newStringRing(3)
+	for i := 0; i < 2; i++ {
+		ring.writeString(fmt.Sprintf("%02d", i))
+	}
+	require.Equal(t, []string{"00", "01"}, ring.GetContent())
+	ring.writeString("02")
+	require.Equal(t, []string{"00", "01", "02"}, ring.GetContent())
+	for i := 3; i < 5; i++ {
+		ring.writeString(fmt.Sprintf("%02d", i))
+	}
+	require.Equal(t, []string{"02", "03", "04"}, ring.GetContent())
 }
