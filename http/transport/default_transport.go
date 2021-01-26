@@ -10,10 +10,11 @@ func NewDefaultTransportChain() *RoundTripperChain {
 		&ExternalDependencyRoundTripper{},
 		NewDefaultRetryRoundTripper(),
 		&JaegerRoundTripper{},
-		NewDumpRoundTripperEnv(),
 		&LoggingRoundTripper{},
 		&LocaleRoundTripper{},
 		&RequestIDRoundTripper{},
+		// Ensure this is always last, in order to get the correct dump
+		NewDumpRoundTripperEnv(),
 	)
 }
 
@@ -25,9 +26,10 @@ func NewDefaultTransportChainWithExternalName(name string) *RoundTripperChain {
 		&ExternalDependencyRoundTripper{name: name},
 		NewDefaultRetryRoundTripper(),
 		&JaegerRoundTripper{},
-		NewDumpRoundTripperEnv(),
 		&LoggingRoundTripper{},
 		&LocaleRoundTripper{},
 		&RequestIDRoundTripper{},
+		// Ensure this is always last, in order to get the correct dump
+		NewDumpRoundTripperEnv(),
 	)
 }
