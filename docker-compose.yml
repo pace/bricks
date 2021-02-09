@@ -25,6 +25,18 @@ services:
       - MINIO_ACCESS_KEY=client
       - MINIO_SECRET_KEY=secret01
       - MINIO_REGION_NAME=us-east-1
+  
+  couchdb:
+    image: couchdb
+    volumes:
+      - ./tmp/couchdb:/opt/couchdb/data
+      - ./tmp/couchdb-etc:/opt/couchdb/etc/local.d
+    ports:
+      # HTTP UI
+      - "5984:5984"
+    environment:
+      - COUCHDB_USER=admin
+      - COUCHDB_PASSWORD=secret
 
   jaeger:
     image: jaegertracing/all-in-one:latest

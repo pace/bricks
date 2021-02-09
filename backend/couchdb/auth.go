@@ -1,0 +1,24 @@
+// Copyright © 2020 by PACE Telematics GmbH. All rights reserved.
+// Created at 2020/12/10 by Vincent Landgraf
+
+package couchdb
+
+import "net/http"
+
+type AuthTransport struct {
+	Username, Password string
+	transport          http.RoundTripper
+}
+
+func (l *AuthTransport) RoundTrip(req *http.Request) (*http.Response, error) {
+	req.SetBasicAuth(l.Username, l.Password)
+	return l.transport.RoundTrip(req)
+}
+
+func (rt *AuthTransport) Transport() http.RoundTripper {
+	return rt.transport
+}
+
+func (l *AuthTransport) SetTransport(rt http.RoundTripper) {
+	l.transport = rt
+}
