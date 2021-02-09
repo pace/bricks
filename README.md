@@ -17,11 +17,14 @@ A pace/bricks microservice is:
 * samples traces to **jaeger**
 * **logs** to stdout using json deployed **kubernetes** otherwise human readable
 * offers **health** endpoints
+* built-in redaction of JWTs and card schemes
 * connects to backend services
   * **postgres** (logging, metrics, tracing, health)
   * **redis** (logging, metrics, tracing, health)
-  * **s3** (logging, metrics, tracing, health)
+  * **queue** via redis (logging, metrics, tracing, health)
   * **http** (logging, metrics, tracing, retries)
+  * **s3** via http (logging, metrics, tracing, health)
+  * **couchdb** via http (logging, metrics, tracing, retries, health)
 * provides two commands **control** and **daemon**
 * provides a **RESTful** API
   * code is generated from the **OpenAPIv3** spec

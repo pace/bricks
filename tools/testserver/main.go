@@ -14,6 +14,7 @@ import (
 
 	"github.com/opentracing/opentracing-go"
 	olog "github.com/opentracing/opentracing-go/log"
+	"github.com/pace/bricks/backend/couchdb"
 	"github.com/pace/bricks/backend/objstore"
 	"github.com/pace/bricks/backend/postgres"
 	"github.com/pace/bricks/backend/redis"
@@ -61,7 +62,11 @@ func (*TestService) GetTest(ctx context.Context, w simple.GetTestResponseWriter,
 func main() {
 	db := postgres.DefaultConnectionPool()
 	rdb := redis.Client()
-	_, err := objstore.Client()
+	cdb, err := couchdb.DefaultDatabase()
+	if err != nil {
+		log.Fatal(err)
+	}
+	_, err = objstore.Client()
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -105,6 +110,20 @@ func main() {
 		log.Ctx(ctx).Debug().Msg("Test before JSON")
 		w.Header().Set("Content-Type", "application/json")
 		fmt.Fprintf(w, `{"street":"Haid-und-Neu-Straße 18, 76131 Karlsruhe", "sunset": "%s"}`, fetchSunsetandSunrise(ctx))
+	})
+
+	h.HandleFunc("/couch", func(w http.ResponseWriter, r *http.Request) {
+		row := cdb.Get(r.Context(), "$health_check")
+		if row.Err != nil {
+			log.Println(err)
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+		var doc interface{}
+		row.ScanDoc(&doc)
+
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(doc)
 	})
 
 	h.HandleFunc("/panic", func(w http.ResponseWriter, r *http.Request) {

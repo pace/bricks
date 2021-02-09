@@ -13,6 +13,8 @@ require (
 	github.com/dave/jennifer v1.0.2
 	github.com/getkin/kin-openapi v0.0.0-20180813063848-e1956e8013e5
 	github.com/ghodss/yaml v1.0.0 // indirect
+	github.com/go-kivik/couchdb/v3 v3.2.6
+	github.com/go-kivik/kivik/v3 v3.2.3
 	github.com/go-pg/pg v6.14.5+incompatible
 	github.com/go-redis/redis/v7 v7.2.0
 	github.com/gorilla/context v1.1.1 // indirect
@@ -25,7 +27,7 @@ require (
 	github.com/matttproud/golang_protobuf_extensions v1.0.1 // indirect
 	github.com/minio/minio-go/v7 v7.0.7
 	github.com/opentracing/opentracing-go v1.0.2
-	github.com/pkg/errors v0.8.1
+	github.com/pkg/errors v0.9.1
 	github.com/pmezard/go-difflib v1.0.0
 	github.com/prometheus/client_golang v0.8.0
 	github.com/prometheus/client_model v0.0.0-20180712105110-5c3871d89910 // indirect
@@ -45,5 +47,5 @@ require (
 	github.com/zenazn/goji v0.9.0
 	go.uber.org/atomic v1.3.2 // indirect
 	golang.org/x/tools v0.0.0-20200304024140-c4206d458c3f
-	golang.org/x/xerrors v0.0.0-20191204190536-9bdfabe68543
+	golang.org/x/xerrors v0.0.0-20200804184101-5ec99f83aff1
 )

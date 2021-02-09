@@ -31,6 +31,15 @@ github.com/getkin/kin-openapi/openapi3
 # github.com/ghodss/yaml v1.0.0
 ## explicit
 github.com/ghodss/yaml
+# github.com/go-kivik/couchdb/v3 v3.2.6
+## explicit
+github.com/go-kivik/couchdb/v3
+github.com/go-kivik/couchdb/v3/chttp
+# github.com/go-kivik/kivik/v3 v3.2.3
+## explicit
+github.com/go-kivik/kivik/v3
+github.com/go-kivik/kivik/v3/driver
+github.com/go-kivik/kivik/v3/internal/registry
 # github.com/go-pg/pg v6.14.5+incompatible
 ## explicit
 github.com/go-pg/pg
@@ -108,7 +117,7 @@ github.com/modern-go/reflect2
 github.com/opentracing/opentracing-go
 github.com/opentracing/opentracing-go/ext
 github.com/opentracing/opentracing-go/log
-# github.com/pkg/errors v0.8.1
+# github.com/pkg/errors v0.9.1
 ## explicit
 github.com/pkg/errors
 # github.com/pmezard/go-difflib v1.0.0
@@ -193,12 +202,12 @@ github.com/zenazn/goji/web/mutil
 # golang.org/x/crypto v0.0.0-20200709230013-948cd5f35899
 golang.org/x/crypto/argon2
 golang.org/x/crypto/blake2b
-# golang.org/x/net v0.0.0-20200707034311-ab3426394381
+# golang.org/x/net v0.0.0-20201110031124-69a78807bb2b
 golang.org/x/net/context
 golang.org/x/net/http/httpguts
 golang.org/x/net/idna
 golang.org/x/net/publicsuffix
-# golang.org/x/sys v0.0.0-20200625212154-ddb9806d33ae
+# golang.org/x/sys v0.0.0-20200930185726-fdedc70b468f
 golang.org/x/sys/cpu
 golang.org/x/sys/internal/unsafeheader
 golang.org/x/sys/unix
@@ -211,7 +220,7 @@ golang.org/x/text/unicode/norm
 ## explicit
 golang.org/x/tools/cmd/cover
 golang.org/x/tools/cover
-# golang.org/x/xerrors v0.0.0-20191204190536-9bdfabe68543
+# golang.org/x/xerrors v0.0.0-20200804184101-5ec99f83aff1
 ## explicit
 golang.org/x/xerrors
 golang.org/x/xerrors/internal
