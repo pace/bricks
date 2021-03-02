@@ -105,7 +105,7 @@ func WriteError(w http.ResponseWriter, code int, err error) {
 
 	// log all errors send to clients
 	log.Logger().Debug().Str("req_id", reqID).
-		Err(errList.List).Msg("error send to client")
+		Err(errList.List).Msg("error sent to client")
 	errList.List.setID(reqID)
 
 	// render the error to the client
