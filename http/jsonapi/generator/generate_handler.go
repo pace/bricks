@@ -329,6 +329,10 @@ func (g *Generator) buildServiceInterface(routes []*route, schema *openapi3.Swag
 	return nil
 }
 
+func (g *Generator) buildSingleServiceInterface(route *route) error {
+
+}
+
 func (g *Generator) buildRouter(routes []*route, schema *openapi3.Swagger) error {
 	needsSecurity := hasSecuritySchema(schema)
 	startInd := 0
