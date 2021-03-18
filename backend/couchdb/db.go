@@ -9,6 +9,7 @@ import (
 	"github.com/caarlos0/env"
 	"github.com/go-kivik/couchdb/v3"
 	kivik "github.com/go-kivik/kivik/v3"
+
 	"github.com/pace/bricks/http/transport"
 	"github.com/pace/bricks/maintenance/health/servicehealthcheck"
 	"github.com/pace/bricks/maintenance/log"
@@ -25,29 +26,44 @@ func Database(name string) (*kivik.DB, error) {
 	if err != nil {
 		return nil, err
 	}
-	client, err := Client(cfg)
+	// Primary client+db
+	_, db, err := clientAndDB(ctx, name, cfg)
 	if err != nil {
 		return nil, err
 	}
 
-	// use default db
-	if name == "" {
-		name = cfg.Database
-	}
-
-	db := client.DB(ctx, name, nil)
-	if db.Err() != nil {
-		return nil, db.Err()
+	// Secondary (healthcheck) client+db
+	healthCheckClient, healthCheckDB, err := clientAndDB(ctx, name, cfg)
+	if err != nil {
+		return nil, err
 	}
 
 	servicehealthcheck.RegisterHealthCheck("couchdb("+name+")", &HealthCheck{
 		Name:   name,
-		Client: client,
-		DB:     db,
+		Client: healthCheckClient,
+		DB:     healthCheckDB,
 		Config: cfg,
 	})
 
 	return db, nil
+}
+
+func clientAndDB(ctx context.Context, dbName string, cfg *Config) (*kivik.Client, *kivik.DB, error) {
+	client, err := Client(cfg)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	// use default db
+	if dbName == "" {
+		dbName = cfg.Database
+	}
+
+	db := client.DB(ctx, dbName, nil)
+	if db.Err() != nil {
+		return nil, nil, db.Err()
+	}
+	return client, db, err
 }
 
 func Client(cfg *Config) (*kivik.Client, error) {
