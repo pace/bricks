@@ -200,3 +200,10 @@ func HealthHandler() http.Handler {
 func ReadableHealthHandler() http.Handler {
 	return &readableHealthHandler{}
 }
+
+// JSONHealthHandler return health endpoint with all details about service health. This handler checks
+// all health checks. The response body contains a JSON formatted array with every service (required or optional)
+// and the detailed health checks about them.
+func JSONHealthHandler() http.Handler {
+	return &jsonHealthHandler{}
+}
