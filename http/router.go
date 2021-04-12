@@ -61,7 +61,8 @@ func Router() *mux.Router {
 	r.Handle("/health/readiness", health.HandlerReadiness())
 
 	r.Handle("/health", servicehealthcheck.HealthHandler())
-	r.Handle("/health/check", servicehealthcheck.JSONHealthHandler())
+	r.Handle("/health/check", servicehealthcheck.ReadableHealthHandler())
+	r.Handle("/health/check.json", servicehealthcheck.JSONHealthHandler())
 
 	// for debugging purposes (e.g. deadlock, ...)
 	p := r.PathPrefix("/debug/pprof").Subrouter()
