@@ -5,6 +5,7 @@ package servicehealthcheck
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"io/ioutil"
 	"net/http"
@@ -243,6 +244,109 @@ func TestHandlerReadableHealthCheck(t *testing.T) {
 			optRes := strings.Split(results[1], "\n")
 			testListHealthChecks(tc.expReq, reqRes, t)
 			testListHealthChecks(tc.expOpt, optRes, t)
+		})
+	}
+}
+
+func TestHandlerJSONHealthCheck(t *testing.T) {
+	warn := &testHealthChecker{name: "WithWarning", healthCheckWarn: true}
+	err := &testHealthChecker{name: "WithErr", healthCheckErr: true}
+	initErr := &testHealthChecker{name: "WithInitErr", initErr: true}
+
+	testcases := []struct {
+		title   string
+		req     []*testHealthChecker
+		opt     []*testHealthChecker
+		expCode int
+		expReq  []jsonHealthHandler
+	}{
+		{
+			title:   "Test health check json all required",
+			req:     []*testHealthChecker{warn, err, initErr},
+			opt:     []*testHealthChecker{},
+			expCode: http.StatusServiceUnavailable,
+			expReq: []jsonHealthHandler{
+				jsonHealthHandler{
+					Name:     err.name,
+					Status:   Err,
+					Required: true,
+					Error:    "healthCheckErr",
+				},
+				jsonHealthHandler{
+					Name:     initErr.name,
+					Status:   Err,
+					Required: true,
+					Error:    "initError",
+				},
+				jsonHealthHandler{
+					Name:     warn.name,
+					Status:   Ok,
+					Required: true,
+					Error:    "",
+				},
+			},
+		},
+		{
+			title:   "Test health check json some required, some optional",
+			req:     []*testHealthChecker{warn, err},
+			opt:     []*testHealthChecker{initErr},
+			expCode: http.StatusServiceUnavailable,
+			expReq: []jsonHealthHandler{
+				jsonHealthHandler{
+					Name:     err.name,
+					Status:   Err,
+					Required: true,
+					Error:    "healthCheckErr",
+				},
+				jsonHealthHandler{
+					Name:     initErr.name,
+					Status:   Err,
+					Required: false,
+					Error:    "initError",
+				},
+				jsonHealthHandler{
+					Name:     warn.name,
+					Status:   Ok,
+					Required: true,
+					Error:    "",
+				},
+			},
+		},
+	}
+	for _, tc := range testcases {
+		t.Run(tc.title, func(t *testing.T) {
+			resetHealthChecks()
+
+			rec := httptest.NewRecorder()
+			for _, hc := range tc.req {
+				RegisterHealthCheck(hc.name, hc)
+			}
+			for _, hc := range tc.opt {
+				RegisterOptionalHealthCheck(hc, hc.name)
+			}
+			req := httptest.NewRequest("GET", "/health/check", nil)
+			JSONHealthHandler().ServeHTTP(rec, req)
+			resp := rec.Result()
+
+			require.Equal(t, tc.expCode, resp.StatusCode)
+
+			var data []jsonHealthHandler
+			err := json.NewDecoder(resp.Body).Decode(&data)
+			require.NoError(t, err)
+
+			sort.Slice(data, func(i, j int) bool {
+				return data[i].Name < data[j].Name
+			})
+			sort.Slice(tc.expReq, func(i, j int) bool {
+				return tc.expReq[i].Name < tc.expReq[j].Name
+			})
+
+			for i := range tc.expReq {
+				require.Equal(t, tc.expReq[i].Name, data[i].Name)
+				require.Equal(t, tc.expReq[i].Status, data[i].Status)
+				require.Equal(t, tc.expReq[i].Required, data[i].Required)
+				require.Equal(t, tc.expReq[i].Error, data[i].Error)
+			}
 		})
 	}
 }
