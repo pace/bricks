@@ -18,11 +18,11 @@ func (h *healthHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	var errors []string
 	var warnings []string
-	for _, res := range check(ctx, &requiredChecks) {
+	for name, res := range check(ctx, &requiredChecks) {
 		if res.State == Err {
-			errors = append(errors, res.Msg)
+			errors = append(errors, fmt.Sprintf("%s: %s", name, res.Msg))
 		} else if res.State == Warn {
-			warnings = append(warnings, res.Msg)
+			warnings = append(warnings, fmt.Sprintf("%s: %s", name, res.Msg))
 		}
 	}
 	if len(errors) > 0 {
