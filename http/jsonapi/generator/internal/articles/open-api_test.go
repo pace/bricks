@@ -53,7 +53,7 @@ type MapTypeString map[string]string
 UpdateArticleCommentsHandler handles request/response marshaling and validation for
  Patch /api/articles/{uuid}/relationships/comments
 */
-func UpdateArticleCommentsHandler(service Service) http.Handler {
+func UpdateArticleCommentsHandler(service UpdateArticleCommentsHandlerService) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		defer errors.HandleRequest("UpdateArticleCommentsHandler", w, r)
 
@@ -115,7 +115,7 @@ func UpdateArticleCommentsHandler(service Service) http.Handler {
 UpdateArticleInlineTypeHandler handles request/response marshaling and validation for
  Patch /api/articles/{uuid}/relationships/inline
 */
-func UpdateArticleInlineTypeHandler(service Service) http.Handler {
+func UpdateArticleInlineTypeHandler(service UpdateArticleInlineTypeHandlerService) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		defer errors.HandleRequest("UpdateArticleInlineTypeHandler", w, r)
 
@@ -172,7 +172,7 @@ func UpdateArticleInlineTypeHandler(service Service) http.Handler {
 UpdateArticleInlineRefHandler handles request/response marshaling and validation for
  Patch /api/articles/{uuid}/relationships/inlineref
 */
-func UpdateArticleInlineRefHandler(service Service) http.Handler {
+func UpdateArticleInlineRefHandler(service UpdateArticleInlineRefHandlerService) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		defer errors.HandleRequest("UpdateArticleInlineRefHandler", w, r)
 
@@ -338,12 +338,20 @@ type UpdateArticleInlineRefRequest struct {
 	ParamUuid string                        `valid:"required"`
 }
 
-// Service interface for all handlers
-type Service interface {
+// Service interface for UpdateArticleCommentsHandler handler
+type UpdateArticleCommentsHandlerService interface {
 	// UpdateArticleComments Updates the Article with Comment relationships
 	UpdateArticleComments(context.Context, UpdateArticleCommentsResponseWriter, *UpdateArticleCommentsRequest) error
+}
+
+// Service interface for UpdateArticleInlineTypeHandler handler
+type UpdateArticleInlineTypeHandlerService interface {
 	// UpdateArticleInlineType
 	UpdateArticleInlineType(context.Context, UpdateArticleInlineTypeResponseWriter, *UpdateArticleInlineTypeRequest) error
+}
+
+// Service interface for UpdateArticleInlineRefHandler handler
+type UpdateArticleInlineRefHandlerService interface {
 	// UpdateArticleInlineRef
 	UpdateArticleInlineRef(context.Context, UpdateArticleInlineRefResponseWriter, *UpdateArticleInlineRefRequest) error
 }
@@ -353,12 +361,24 @@ Router implements: Articles Test Service
 
 Articles Test Service
 */
-func Router(service Service) *mux.Router {
+func Router(service interface{}) *mux.Router {
 	router := mux.NewRouter()
 	// Subrouter s1 - Path:
 	s1 := router.PathPrefix("").Subrouter()
-	s1.Methods("PATCH").Path("/api/articles/{uuid}/relationships/comments").Handler(UpdateArticleCommentsHandler(service)).Name("UpdateArticleComments")
-	s1.Methods("PATCH").Path("/api/articles/{uuid}/relationships/inline").Handler(UpdateArticleInlineTypeHandler(service)).Name("UpdateArticleInlineType")
-	s1.Methods("PATCH").Path("/api/articles/{uuid}/relationships/inlineref").Handler(UpdateArticleInlineRefHandler(service)).Name("UpdateArticleInlineRef")
+	if service, ok := service.(UpdateArticleCommentsHandlerService); ok {
+		s1.Methods("PATCH").Path("/api/articles/{uuid}/relationships/comments").Handler(UpdateArticleCommentsHandler(service)).Name("UpdateArticleComments")
+	} else {
+		s1.Methods("PATCH").Path("/api/articles/{uuid}/relationships/comments").Handler(router.NotFoundHandler).Name("UpdateArticleComments")
+	}
+	if service, ok := service.(UpdateArticleInlineTypeHandlerService); ok {
+		s1.Methods("PATCH").Path("/api/articles/{uuid}/relationships/inline").Handler(UpdateArticleInlineTypeHandler(service)).Name("UpdateArticleInlineType")
+	} else {
+		s1.Methods("PATCH").Path("/api/articles/{uuid}/relationships/inline").Handler(router.NotFoundHandler).Name("UpdateArticleInlineType")
+	}
+	if service, ok := service.(UpdateArticleInlineRefHandlerService); ok {
+		s1.Methods("PATCH").Path("/api/articles/{uuid}/relationships/inlineref").Handler(UpdateArticleInlineRefHandler(service)).Name("UpdateArticleInlineRef")
+	} else {
+		s1.Methods("PATCH").Path("/api/articles/{uuid}/relationships/inlineref").Handler(router.NotFoundHandler).Name("UpdateArticleInlineRef")
+	}
 	return router
 }

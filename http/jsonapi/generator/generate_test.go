@@ -36,14 +36,15 @@ func TestGenerator(t *testing.T) {
 			if err != nil {
 				t.Fatal(err)
 			}
-
-			f, err := os.Create(fmt.Sprintf("testout/test.%s.out.go", testCase.pkg))
-			if err != nil {
-				t.Fatal(err)
-			}
-			_, err = f.WriteString(result)
-			if err != nil {
-				t.Fatal(err)
+			if os.Getenv("PACE_TEST_GENERATOR_WRITE") != "" {
+				f, err := os.Create(fmt.Sprintf("testout/test.%s.out.go", testCase.pkg))
+				if err != nil {
+					t.Fatal(err)
+				}
+				_, err = f.WriteString(result)
+				if err != nil {
+					t.Fatal(err)
+				}
 			}
 			if string(expected[:]) != result {
 				diff := difflib.UnifiedDiff{

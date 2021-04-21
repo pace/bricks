@@ -41,7 +41,7 @@ var cfgProfileKey = &apikey.Config{
 GetTestHandler handles request/response marshaling and validation for
  Get /beta/test
 */
-func GetTestHandler(service Service, authBackend AuthorizationBackend) http.Handler {
+func GetTestHandler(service GetTestHandlerService, authBackend AuthorizationBackend) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		defer errors.HandleRequest("GetTestHandler", w, r)
 
@@ -125,8 +125,8 @@ type GetTestRequest struct {
 	Request *http.Request `valid:"-"`
 }
 
-// Service interface for all handlers
-type Service interface {
+// Service interface for GetTestHandler handler
+type GetTestHandlerService interface {
 	// GetTest Test
 	GetTest(context.Context, GetTestResponseWriter, *GetTestRequest) error
 }
@@ -137,12 +137,16 @@ Router implements: PACE Payment API
 Welcome to the PACE Payment API documentation.
 This API is responsible for managing payment methods for users as well as authorizing payments on behalf of PACE services.
 */
-func Router(service Service, authBackend AuthorizationBackend) *mux.Router {
+func Router(service interface{}, authBackend AuthorizationBackend) *mux.Router {
 	router := mux.NewRouter()
 	authBackend.InitOAuth2(cfgOAuth2)
 	authBackend.InitProfileKey(cfgProfileKey)
 	// Subrouter s1 - Path: /pay
 	s1 := router.PathPrefix("/pay").Subrouter()
-	s1.Methods("GET").Path("/beta/test").Handler(GetTestHandler(service, authBackend)).Name("GetTest")
+	if service, ok := service.(GetTestHandlerService); ok {
+		s1.Methods("GET").Path("/beta/test").Handler(GetTestHandler(service, authBackend)).Name("GetTest")
+	} else {
+		s1.Methods("GET").Path("/beta/test").Handler(router.NotFoundHandler).Name("GetTest")
+	}
 	return router
 }
