@@ -14,6 +14,7 @@ import (
 
 	"github.com/dave/jennifer/jen"
 	"github.com/getkin/kin-openapi/openapi3"
+
 	"github.com/pace/bricks/maintenance/log"
 )
 
@@ -308,23 +309,31 @@ func (g *Generator) generateRequestStruct(route *route, schema *openapi3.Swagger
 }
 
 func (g *Generator) buildServiceInterface(routes []*route, schema *openapi3.Swagger) error {
-	methods := make([]jen.Code, len(routes))
-
 	for _, route := range routes {
-		if route.operation.Description != "" {
-			methods = append(methods, jen.Comment(fmt.Sprintf("%s %s\n\n%s", route.serviceFunc, route.operation.Summary, route.operation.Description)))
-		} else {
-			methods = append(methods, jen.Comment(fmt.Sprintf("%s %s", route.serviceFunc, route.operation.Summary)))
+		if err := g.buildSubServiceInterface(route, schema); err != nil {
+			return err
 		}
-		methods = append(methods, jen.Id(route.serviceFunc).Params(
-			jen.Qual("context", "Context"),
-			jen.Id(route.responseType),
-			jen.Op("*").Id(route.requestType),
-		).Id("error"))
 	}
 
-	g.goSource.Line().Commentf("%s interface for all handlers", serviceInterface)
-	g.goSource.Type().Id(serviceInterface).Interface(methods...)
+	return nil
+}
+
+func (g *Generator) buildSubServiceInterface(route *route, schema *openapi3.Swagger) error {
+	methods := make([]jen.Code, 0)
+
+	if route.operation.Description != "" {
+		methods = append(methods, jen.Comment(fmt.Sprintf("%s %s\n\n%s", route.serviceFunc, route.operation.Summary, route.operation.Description)))
+	} else {
+		methods = append(methods, jen.Comment(fmt.Sprintf("%s %s", route.serviceFunc, route.operation.Summary)))
+	}
+	methods = append(methods, jen.Id(route.serviceFunc).Params(
+		jen.Qual("context", "Context"),
+		jen.Id(route.responseType),
+		jen.Op("*").Id(route.requestType),
+	).Id("error"))
+
+	g.goSource.Line().Commentf("%s interface for %s handler", serviceInterface, route.handler)
+	g.goSource.Type().Id(generateSubServiceName(route.handler)).Interface(methods...)
 
 	return nil
 }
@@ -350,7 +359,8 @@ func (g *Generator) buildRouter(routes []*route, schema *openapi3.Swagger) error
 
 	}
 	// create new router
-	routeStmts[startInd] = jen.Id("router").Op(":=").Qual(pkgGorillaMux, "NewRouter").Call()
+	rootRouterName := "router"
+	routeStmts[startInd] = jen.Id(rootRouterName).Op(":=").Qual(pkgGorillaMux, "NewRouter").Call()
 
 	// Note: we don't restrict host, scheme and port to ease development
 	pathsIdx := make(map[string]struct{})
@@ -382,39 +392,55 @@ func (g *Generator) buildRouter(routes []*route, schema *openapi3.Swagger) error
 		// add all route handlers
 		for i := 0; i < len(sortableRoutes); i++ {
 			route := sortableRoutes[i]
-
 			var routeCallParams *jen.Statement
-			// generic route
 			if needsSecurity {
 				routeCallParams = jen.List(jen.Id("service"), jen.Id("authBackend"))
 			} else {
 				routeCallParams = jen.List(jen.Id("service"))
 			}
-			routeStmt := jen.Id(subrouterID).Dot("Methods").Call(jen.Lit(route.method)).
-				Dot("Path").Call(jen.Lit(route.url.Path)).
-				Dot("Handler").Call(jen.Id(route.handler).Call(routeCallParams))
+			primaryHandler := jen.Id(route.handler).Call(routeCallParams)
+			notFoundHandler := jen.Id(rootRouterName).Dot("NotFoundHandler")
+			ifElse := make([]*jen.Statement, 0)
+			for _, handler := range []*jen.Statement{primaryHandler, notFoundHandler} {
+				// build single route
+				routeStmt := jen.Id(subrouterID).Dot("Methods").Call(jen.Lit(route.method)).
+					Dot("Path").Call(jen.Lit(route.url.Path)).
+					Dot("Handler").Call(handler)
 
-			// add query parameters for route matching
-			if len(route.queryValues) > 0 {
-				for key, value := range route.queryValues {
-					if len(value) != 1 {
-						panic("query paths can only handle one query parameter with the same name!")
+				// add query parameters for route matching
+				if len(route.queryValues) > 0 {
+					for key, value := range route.queryValues {
+						if len(value) != 1 {
+							panic("query paths can only handle one query parameter with the same name!")
+						}
+						routeStmt.Dot("Queries").Call(jen.Lit(key), jen.Lit(value[0]))
 					}
-					routeStmt.Dot("Queries").Call(jen.Lit(key), jen.Lit(value[0]))
 				}
+
+				// add the name to build routes
+				routeStmt.Dot("Name").Call(jen.Lit(route.serviceFunc))
+
+				// add to control-flow
+				ifElse = append(ifElse, routeStmt)
 			}
 
-			// add the name to build routes
-			routeStmt.Dot("Name").Call(jen.Lit(route.serviceFunc))
+			if len(ifElse) < 1 {
+				panic("if-else slice should contain two elements, one with the service interface being called and one passing the NotFoundHandler")
+			}
 
-			routeStmts = append(routeStmts, routeStmt)
+			implGuard := jen.If(
+				jen.List(jen.Id("service"), jen.Id("ok")).Op(":=").Id("service").Assert(jen.Id(generateSubServiceName(route.handler))),
+				jen.Id("ok")).Block(ifElse[0]).Else().Block(ifElse[1])
+
+			routeStmts = append(routeStmts, implGuard)
+
 		}
 	}
 
 	// return
 	routeStmts = append(routeStmts, jen.Return(jen.Id("router")))
 	g.addGoDoc("Router", "implements: "+schema.Info.Title+"\n\n"+schema.Info.Description)
-	serviceInterfaceVariable := jen.Id("service").Id(serviceInterface)
+	serviceInterfaceVariable := jen.Id("service").Interface()
 	if hasSecuritySchema(schema) {
 		g.goSource.Func().Id("Router").Params(
 			serviceInterfaceVariable, jen.Id("authBackend").Id(authBackendInterface)).Op("*").Qual(pkgGorillaMux, "Router").Block(routeStmts...)
@@ -477,9 +503,9 @@ func (g *Generator) buildHandler(method string, op *openapi3.Operation, pattern 
 		method, pattern))
 	var params *jen.Statement
 	if needsSecurity {
-		params = jen.List(jen.Id("service").Id(serviceInterface), jen.Id("authBackend").Id(authBackendInterface))
+		params = jen.List(jen.Id("service").Id(generateSubServiceName(route.handler)), jen.Id("authBackend").Id(authBackendInterface))
 	} else {
-		params = jen.List(jen.Id("service").Id(serviceInterface))
+		params = jen.List(jen.Id("service").Id(generateSubServiceName(route.handler)))
 	}
 	g.goSource.Func().Id(handler).Params(params).Qual("net/http", "Handler").Block(
 		jen.Return().Qual("net/http", "HandlerFunc").Call(
@@ -752,4 +778,8 @@ func generateMethodName(description string) string {
 
 func generateParamName(param *openapi3.ParameterRef) string {
 	return "Param" + generateMethodName(param.Value.Name)
+}
+
+func generateSubServiceName(handler string) string {
+	return fmt.Sprintf("%s%s", handler, serviceInterface)
 }
