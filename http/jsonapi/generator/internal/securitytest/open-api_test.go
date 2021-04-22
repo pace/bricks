@@ -131,6 +131,12 @@ type GetTestHandlerService interface {
 	GetTest(context.Context, GetTestResponseWriter, *GetTestRequest) error
 }
 
+// Legacy Interface.
+// Use this if you want to fully implement a service.
+type Service interface {
+	GetTestHandlerService
+}
+
 /*
 Router implements: PACE Payment API
 

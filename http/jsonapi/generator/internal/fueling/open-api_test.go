@@ -596,6 +596,15 @@ type WaitOnPumpStatusChangeHandlerService interface {
 	WaitOnPumpStatusChange(context.Context, WaitOnPumpStatusChangeResponseWriter, *WaitOnPumpStatusChangeRequest) error
 }
 
+// Legacy Interface.
+// Use this if you want to fully implement a service.
+type Service interface {
+	ProcessPaymentHandlerService
+	ApproachingAtTheForecourtHandlerService
+	GetPumpHandlerService
+	WaitOnPumpStatusChangeHandlerService
+}
+
 /*
 Router implements: PACE Fueling API
 

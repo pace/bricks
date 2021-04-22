@@ -356,6 +356,14 @@ type UpdateArticleInlineRefHandlerService interface {
 	UpdateArticleInlineRef(context.Context, UpdateArticleInlineRefResponseWriter, *UpdateArticleInlineRefRequest) error
 }
 
+// Legacy Interface.
+// Use this if you want to fully implement a service.
+type Service interface {
+	UpdateArticleCommentsHandlerService
+	UpdateArticleInlineTypeHandlerService
+	UpdateArticleInlineRefHandlerService
+}
+
 /*
 Router implements: Articles Test Service
 

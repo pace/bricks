@@ -1002,6 +1002,19 @@ type ProcessPaymentHandlerService interface {
 	ProcessPayment(context.Context, ProcessPaymentResponseWriter, *ProcessPaymentRequest) error
 }
 
+// Legacy Interface.
+// Use this if you want to fully implement a service.
+type Service interface {
+	GetPaymentMethodsHandlerService
+	CreatePaymentMethodSEPAHandlerService
+	DeletePaymentMethodHandlerService
+	AuthorizePaymentMethodHandlerService
+	DeletePaymentTokenHandlerService
+	GetPaymentMethodsIncludingCreditCheckHandlerService
+	GetPaymentMethodsIncludingPaymentTokenHandlerService
+	ProcessPaymentHandlerService
+}
+
 /*
 Router implements: PACE Payment API
 

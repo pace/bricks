@@ -4338,6 +4338,47 @@ type GetTilesHandlerService interface {
 	GetTiles(context.Context, GetTilesResponseWriter, *GetTilesRequest) error
 }
 
+// Legacy Interface.
+// Use this if you want to fully implement a service.
+type Service interface {
+	DeduplicatePoiHandlerService
+	MovePoiAtPositionHandlerService
+	GetAppsHandlerService
+	CreateAppHandlerService
+	CheckForPaceAppHandlerService
+	DeleteAppHandlerService
+	GetAppHandlerService
+	UpdateAppHandlerService
+	GetAppPOIsRelationshipsHandlerService
+	UpdateAppPOIsRelationshipsHandlerService
+	GetDuplicatesKMLHandlerService
+	GetPoisDumpHandlerService
+	DeleteGasStationReferenceStatusHandlerService
+	PutGasStationReferenceStatusHandlerService
+	GetEventsHandlerService
+	GetGasStationsHandlerService
+	GetGasStationHandlerService
+	GetPriceHistoryHandlerService
+	GetGasStationFuelTypeNameMappingHandlerService
+	GetMetadataFiltersHandlerService
+	GetPoisHandlerService
+	GetPoiHandlerService
+	ChangePoiHandlerService
+	GetPoliciesHandlerService
+	CreatePolicyHandlerService
+	GetPolicyHandlerService
+	GetRegionalPricesHandlerService
+	GetSourcesHandlerService
+	CreateSourceHandlerService
+	DeleteSourceHandlerService
+	GetSourceHandlerService
+	UpdateSourceHandlerService
+	GetSubscriptionsHandlerService
+	DeleteSubscriptionHandlerService
+	StoreSubscriptionHandlerService
+	GetTilesHandlerService
+}
+
 /*
 Router implements: PACE POI API
 

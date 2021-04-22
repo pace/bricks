@@ -315,6 +315,17 @@ func (g *Generator) buildServiceInterface(routes []*route, schema *openapi3.Swag
 		}
 	}
 
+	subServices := make([]jen.Code, 0)
+	for _, route := range routes {
+		subServices = append(subServices, jen.Id(generateSubServiceName(route.handler)))
+	}
+
+	g.goSource.Line()
+	g.goSource.Line()
+	g.goSource.Comment("Legacy Interface.")
+	g.goSource.Comment("Use this if you want to fully implement a service.")
+	g.goSource.Type().Id(serviceInterface).Interface(subServices...)
+
 	return nil
 }
 
