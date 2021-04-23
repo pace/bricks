@@ -1070,3 +1070,59 @@ func Router(service interface{}, authBackend AuthorizationBackend) *mux.Router {
 	}
 	return router
 }
+
+/*
+Router implements: PACE Payment API
+
+Welcome to the PACE Payment API documentation.
+This API is responsible for managing payment methods for users as well as authorizing payments on behalf of PACE services.
+*/
+func RouterWithFallback(service interface{}, authBackend AuthorizationBackend, fallback http.Handler) *mux.Router {
+	router := mux.NewRouter()
+	authBackend.InitOAuth2(cfgOAuth2)
+	authBackend.InitOpenID(cfgOpenID)
+	authBackend.InitProfileKey(cfgProfileKey)
+	// Subrouter s1 - Path: /pay
+	s1 := router.PathPrefix("/pay").Subrouter()
+	if service, ok := service.(DeletePaymentTokenHandlerService); ok {
+		s1.Methods("DELETE").Path("/beta/payment-methods/{paymentMethodId}/paymentTokens/{paymentTokenId}").Handler(DeletePaymentTokenHandler(service, authBackend)).Name("DeletePaymentToken")
+	} else {
+		s1.Methods("DELETE").Path("/beta/payment-methods/{paymentMethodId}/paymentTokens/{paymentTokenId}").Handler(fallback).Name("DeletePaymentToken")
+	}
+	if service, ok := service.(AuthorizePaymentMethodHandlerService); ok {
+		s1.Methods("POST").Path("/beta/payment-methods/{paymentMethodId}/authorize").Handler(AuthorizePaymentMethodHandler(service, authBackend)).Name("AuthorizePaymentMethod")
+	} else {
+		s1.Methods("POST").Path("/beta/payment-methods/{paymentMethodId}/authorize").Handler(fallback).Name("AuthorizePaymentMethod")
+	}
+	if service, ok := service.(CreatePaymentMethodSEPAHandlerService); ok {
+		s1.Methods("POST").Path("/beta/payment-methods/sepa-direct-debit").Handler(CreatePaymentMethodSEPAHandler(service, authBackend)).Name("CreatePaymentMethodSEPA")
+	} else {
+		s1.Methods("POST").Path("/beta/payment-methods/sepa-direct-debit").Handler(fallback).Name("CreatePaymentMethodSEPA")
+	}
+	if service, ok := service.(DeletePaymentMethodHandlerService); ok {
+		s1.Methods("DELETE").Path("/beta/payment-methods/{paymentMethodId}").Handler(DeletePaymentMethodHandler(service, authBackend)).Name("DeletePaymentMethod")
+	} else {
+		s1.Methods("DELETE").Path("/beta/payment-methods/{paymentMethodId}").Handler(fallback).Name("DeletePaymentMethod")
+	}
+	if service, ok := service.(ProcessPaymentHandlerService); ok {
+		s1.Methods("POST").Path("/beta/transaction/{pathDecimal}").Handler(ProcessPaymentHandler(service, authBackend)).Name("ProcessPayment")
+	} else {
+		s1.Methods("POST").Path("/beta/transaction/{pathDecimal}").Handler(fallback).Name("ProcessPayment")
+	}
+	if service, ok := service.(GetPaymentMethodsIncludingCreditCheckHandlerService); ok {
+		s1.Methods("GET").Path("/beta/payment-methods").Handler(GetPaymentMethodsIncludingCreditCheckHandler(service, authBackend)).Queries("include", "creditCheck").Name("GetPaymentMethodsIncludingCreditCheck")
+	} else {
+		s1.Methods("GET").Path("/beta/payment-methods").Handler(fallback).Queries("include", "creditCheck").Name("GetPaymentMethodsIncludingCreditCheck")
+	}
+	if service, ok := service.(GetPaymentMethodsIncludingPaymentTokenHandlerService); ok {
+		s1.Methods("GET").Path("/beta/payment-methods").Handler(GetPaymentMethodsIncludingPaymentTokenHandler(service, authBackend)).Queries("include", "paymentToken").Name("GetPaymentMethodsIncludingPaymentToken")
+	} else {
+		s1.Methods("GET").Path("/beta/payment-methods").Handler(fallback).Queries("include", "paymentToken").Name("GetPaymentMethodsIncludingPaymentToken")
+	}
+	if service, ok := service.(GetPaymentMethodsHandlerService); ok {
+		s1.Methods("GET").Path("/beta/payment-methods").Handler(GetPaymentMethodsHandler(service, authBackend)).Name("GetPaymentMethods")
+	} else {
+		s1.Methods("GET").Path("/beta/payment-methods").Handler(fallback).Name("GetPaymentMethods")
+	}
+	return router
+}

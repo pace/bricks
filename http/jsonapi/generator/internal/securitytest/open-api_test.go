@@ -156,3 +156,23 @@ func Router(service interface{}, authBackend AuthorizationBackend) *mux.Router {
 	}
 	return router
 }
+
+/*
+Router implements: PACE Payment API
+
+Welcome to the PACE Payment API documentation.
+This API is responsible for managing payment methods for users as well as authorizing payments on behalf of PACE services.
+*/
+func RouterWithFallback(service interface{}, authBackend AuthorizationBackend, fallback http.Handler) *mux.Router {
+	router := mux.NewRouter()
+	authBackend.InitOAuth2(cfgOAuth2)
+	authBackend.InitProfileKey(cfgProfileKey)
+	// Subrouter s1 - Path: /pay
+	s1 := router.PathPrefix("/pay").Subrouter()
+	if service, ok := service.(GetTestHandlerService); ok {
+		s1.Methods("GET").Path("/beta/test").Handler(GetTestHandler(service, authBackend)).Name("GetTest")
+	} else {
+		s1.Methods("GET").Path("/beta/test").Handler(fallback).Name("GetTest")
+	}
+	return router
+}

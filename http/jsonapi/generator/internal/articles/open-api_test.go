@@ -390,3 +390,30 @@ func Router(service interface{}) *mux.Router {
 	}
 	return router
 }
+
+/*
+Router implements: Articles Test Service
+
+Articles Test Service
+*/
+func RouterWithFallback(service interface{}) *mux.Router {
+	router := mux.NewRouter()
+	// Subrouter s1 - Path:
+	s1 := router.PathPrefix("").Subrouter()
+	if service, ok := service.(UpdateArticleCommentsHandlerService); ok {
+		s1.Methods("PATCH").Path("/api/articles/{uuid}/relationships/comments").Handler(UpdateArticleCommentsHandler(service)).Name("UpdateArticleComments")
+	} else {
+		s1.Methods("PATCH").Path("/api/articles/{uuid}/relationships/comments").Handler(fallback).Name("UpdateArticleComments")
+	}
+	if service, ok := service.(UpdateArticleInlineTypeHandlerService); ok {
+		s1.Methods("PATCH").Path("/api/articles/{uuid}/relationships/inline").Handler(UpdateArticleInlineTypeHandler(service)).Name("UpdateArticleInlineType")
+	} else {
+		s1.Methods("PATCH").Path("/api/articles/{uuid}/relationships/inline").Handler(fallback).Name("UpdateArticleInlineType")
+	}
+	if service, ok := service.(UpdateArticleInlineRefHandlerService); ok {
+		s1.Methods("PATCH").Path("/api/articles/{uuid}/relationships/inlineref").Handler(UpdateArticleInlineRefHandler(service)).Name("UpdateArticleInlineRef")
+	} else {
+		s1.Methods("PATCH").Path("/api/articles/{uuid}/relationships/inlineref").Handler(fallback).Name("UpdateArticleInlineRef")
+	}
+	return router
+}

@@ -658,3 +658,57 @@ func Router(service interface{}) *mux.Router {
 	}
 	return router
 }
+
+/*
+Router implements: PACE Fueling API
+
+Fueling API
+*/
+func RouterWithFallback(service interface{}) *mux.Router {
+	router := mux.NewRouter()
+	// Subrouter s1 - Path: /fueling/beta/
+	s1 := router.PathPrefix("/fueling/beta/").Subrouter()
+	if service, ok := service.(WaitOnPumpStatusChangeHandlerService); ok {
+		s1.Methods("GET").Path("/gas-stations/{gasStationId}/pumps/{pumpId}/wait-for-status-change").Handler(WaitOnPumpStatusChangeHandler(service)).Name("WaitOnPumpStatusChange")
+	} else {
+		s1.Methods("GET").Path("/gas-stations/{gasStationId}/pumps/{pumpId}/wait-for-status-change").Handler(fallback).Name("WaitOnPumpStatusChange")
+	}
+	if service, ok := service.(GetPumpHandlerService); ok {
+		s1.Methods("GET").Path("/gas-stations/{gasStationId}/pumps/{pumpId}").Handler(GetPumpHandler(service)).Name("GetPump")
+	} else {
+		s1.Methods("GET").Path("/gas-stations/{gasStationId}/pumps/{pumpId}").Handler(fallback).Name("GetPump")
+	}
+	if service, ok := service.(ProcessPaymentHandlerService); ok {
+		s1.Methods("POST").Path("/gas-station/{gasStationId}/payment").Handler(ProcessPaymentHandler(service)).Name("ProcessPayment")
+	} else {
+		s1.Methods("POST").Path("/gas-station/{gasStationId}/payment").Handler(fallback).Name("ProcessPayment")
+	}
+	if service, ok := service.(ApproachingAtTheForecourtHandlerService); ok {
+		s1.Methods("POST").Path("/gas-stations/{gasStationId}/approaching").Handler(ApproachingAtTheForecourtHandler(service)).Name("ApproachingAtTheForecourt")
+	} else {
+		s1.Methods("POST").Path("/gas-stations/{gasStationId}/approaching").Handler(fallback).Name("ApproachingAtTheForecourt")
+	}
+	// Subrouter s2 - Path: /fueling/v1/
+	s2 := router.PathPrefix("/fueling/v1/").Subrouter()
+	if service, ok := service.(WaitOnPumpStatusChangeHandlerService); ok {
+		s2.Methods("GET").Path("/gas-stations/{gasStationId}/pumps/{pumpId}/wait-for-status-change").Handler(WaitOnPumpStatusChangeHandler(service)).Name("WaitOnPumpStatusChange")
+	} else {
+		s2.Methods("GET").Path("/gas-stations/{gasStationId}/pumps/{pumpId}/wait-for-status-change").Handler(fallback).Name("WaitOnPumpStatusChange")
+	}
+	if service, ok := service.(GetPumpHandlerService); ok {
+		s2.Methods("GET").Path("/gas-stations/{gasStationId}/pumps/{pumpId}").Handler(GetPumpHandler(service)).Name("GetPump")
+	} else {
+		s2.Methods("GET").Path("/gas-stations/{gasStationId}/pumps/{pumpId}").Handler(fallback).Name("GetPump")
+	}
+	if service, ok := service.(ProcessPaymentHandlerService); ok {
+		s2.Methods("POST").Path("/gas-station/{gasStationId}/payment").Handler(ProcessPaymentHandler(service)).Name("ProcessPayment")
+	} else {
+		s2.Methods("POST").Path("/gas-station/{gasStationId}/payment").Handler(fallback).Name("ProcessPayment")
+	}
+	if service, ok := service.(ApproachingAtTheForecourtHandlerService); ok {
+		s2.Methods("POST").Path("/gas-stations/{gasStationId}/approaching").Handler(ApproachingAtTheForecourtHandler(service)).Name("ApproachingAtTheForecourt")
+	} else {
+		s2.Methods("POST").Path("/gas-stations/{gasStationId}/approaching").Handler(fallback).Name("ApproachingAtTheForecourt")
+	}
+	return router
+}

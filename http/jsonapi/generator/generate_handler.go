@@ -31,6 +31,7 @@ const (
 )
 
 const serviceInterface = "Service"
+const rootRouterName = "router"
 const jsonapiContent = "application/vnd.api+json"
 
 var noValidation = map[string]string{"valid": "-"}
@@ -75,6 +76,7 @@ func (g *Generator) BuildHandler(schema *openapi3.Swagger) error {
 		g.generateRequestResponseTypes,
 		g.buildServiceInterface,
 		g.buildRouter,
+		g.buildRouterWithFallbackAsArg,
 	}
 	for _, fn := range funcs {
 		err := fn(routes, schema)
@@ -350,6 +352,42 @@ func (g *Generator) buildSubServiceInterface(route *route, schema *openapi3.Swag
 }
 
 func (g *Generator) buildRouter(routes []*route, schema *openapi3.Swagger) error {
+	routerBody, err := g.buildRouterBodyWithFallback(routes, schema, jen.Id(rootRouterName).Dot("NotFoundHandler"))
+	if err != nil {
+		return nil
+	}
+	g.addGoDoc("Router", "implements: "+schema.Info.Title+"\n\n"+schema.Info.Description)
+	serviceInterfaceVariable := jen.Id("service").Interface()
+	if hasSecuritySchema(schema) {
+		g.goSource.Func().Id("Router").Params(
+			serviceInterfaceVariable, jen.Id("authBackend").Id(authBackendInterface)).Op("*").Qual(pkgGorillaMux, "Router").Block(routerBody...)
+
+	} else {
+		g.goSource.Func().Id("Router").Params(
+			serviceInterfaceVariable).Op("*").Qual(pkgGorillaMux, "Router").Block(routerBody...)
+	}
+	return nil
+}
+
+func (g *Generator) buildRouterWithFallbackAsArg(routes []*route, schema *openapi3.Swagger) error {
+	routerBody, err := g.buildRouterBodyWithFallback(routes, schema, jen.Id("fallback"))
+	if err != nil {
+		return nil
+	}
+	g.addGoDoc("Router", "implements: "+schema.Info.Title+"\n\n"+schema.Info.Description)
+	serviceInterfaceVariable := jen.Id("service").Interface()
+	if hasSecuritySchema(schema) {
+		g.goSource.Func().Id("RouterWithFallback").Params(
+			serviceInterfaceVariable, jen.Id("authBackend").Id(authBackendInterface), jen.Id("fallback").Qual("net/http", "Handler")).Op("*").Qual(pkgGorillaMux, "Router").Block(routerBody...)
+
+	} else {
+		g.goSource.Func().Id("RouterWithFallback").Params(
+			serviceInterfaceVariable).Op("*").Qual(pkgGorillaMux, "Router").Block(routerBody...)
+	}
+	return nil
+}
+
+func (g *Generator) buildRouterBodyWithFallback(routes []*route, schema *openapi3.Swagger, fallback jen.Code) ([]jen.Code, error) {
 	needsSecurity := hasSecuritySchema(schema)
 	startInd := 0
 	var routeStmts []jen.Code
@@ -370,7 +408,6 @@ func (g *Generator) buildRouter(routes []*route, schema *openapi3.Swagger) error
 
 	}
 	// create new router
-	rootRouterName := "router"
 	routeStmts[startInd] = jen.Id(rootRouterName).Op(":=").Qual(pkgGorillaMux, "NewRouter").Call()
 
 	// Note: we don't restrict host, scheme and port to ease development
@@ -379,7 +416,7 @@ func (g *Generator) buildRouter(routes []*route, schema *openapi3.Swagger) error
 	for _, server := range schema.Servers {
 		serverUrl, err := url.Parse(server.URL)
 		if err != nil {
-			return err
+			return nil, err
 		}
 		if _, ok := pathsIdx[serverUrl.Path]; !ok {
 			paths = append(paths, serverUrl.Path)
@@ -410,9 +447,9 @@ func (g *Generator) buildRouter(routes []*route, schema *openapi3.Swagger) error
 				routeCallParams = jen.List(jen.Id("service"))
 			}
 			primaryHandler := jen.Id(route.handler).Call(routeCallParams)
-			notFoundHandler := jen.Id(rootRouterName).Dot("NotFoundHandler")
-			ifElse := make([]*jen.Statement, 0)
-			for _, handler := range []*jen.Statement{primaryHandler, notFoundHandler} {
+			fallbackHandler := fallback
+			ifElse := make([]jen.Code, 0)
+			for _, handler := range []jen.Code{primaryHandler, fallbackHandler} {
 				// build single route
 				routeStmt := jen.Id(subrouterID).Dot("Methods").Call(jen.Lit(route.method)).
 					Dot("Path").Call(jen.Lit(route.url.Path)).
@@ -450,18 +487,8 @@ func (g *Generator) buildRouter(routes []*route, schema *openapi3.Swagger) error
 
 	// return
 	routeStmts = append(routeStmts, jen.Return(jen.Id("router")))
-	g.addGoDoc("Router", "implements: "+schema.Info.Title+"\n\n"+schema.Info.Description)
-	serviceInterfaceVariable := jen.Id("service").Interface()
-	if hasSecuritySchema(schema) {
-		g.goSource.Func().Id("Router").Params(
-			serviceInterfaceVariable, jen.Id("authBackend").Id(authBackendInterface)).Op("*").Qual(pkgGorillaMux, "Router").Block(routeStmts...)
 
-	} else {
-		g.goSource.Func().Id("Router").Params(
-			serviceInterfaceVariable).Op("*").Qual(pkgGorillaMux, "Router").Block(routeStmts...)
-	}
-
-	return nil
+	return routeStmts, nil
 }
 
 func (g *Generator) buildHandler(method string, op *openapi3.Operation, pattern string, pathItem *openapi3.PathItem, secSchemes map[string]*openapi3.SecuritySchemeRef) (*route, error) {
