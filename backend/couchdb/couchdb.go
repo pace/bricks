@@ -13,4 +13,5 @@ type Config struct {
 	DatabaseAutoCreate   bool          `env:"COUCHDB_DB_AUTO_CREATE" envDefault:"true"`
 	HealthCheckKey       string        `env:"COUCHDB_HEALTH_CHECK_KEY" envDefault:"$health_check"`
 	HealthCheckResultTTL time.Duration `env:"COUCHDB_HEALTH_CHECK_RESULT_TTL" envDefault:"10s"`
+	DisableHealthCheck   bool          `env:"COUCHDB_DISABLE_HEALTH_CHECK" envDefault:"false"`
 }
