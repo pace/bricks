@@ -52,6 +52,10 @@ var requiredChecks sync.Map
 // optionalChecks contains all optional registered Health Checks - key:Name
 var optionalChecks sync.Map
 
+type initError struct {
+	state ConnectionState
+}
+
 // initErrors map with all err ConnectionState that happened in the initialization of any health check - key:Name
 var initErrors sync.Map
 
@@ -132,7 +136,6 @@ func reInitHealthCheck(ctx context.Context, conState *ConnectionState, name stri
 		conState.SetErrorState(err)
 		return true
 	}
-	initErrors.Delete(name)
 	return false
 }
 
@@ -196,6 +199,12 @@ func registerHealthCheck(checks *sync.Map, hc HealthCheck, name string) {
 	checks.Store(name, hc)
 	// start doing the check in background
 	startBackgroundHealthCheck(ctx, name, hc, cfg.HealthCheckBackgroundInterval)
+}
+
+func deleteHealthCheck(name string) {
+	cancelBackgroundHealthCheck(name)
+	requiredChecks.Delete(name)
+	optionalChecks.Delete(name)
 }
 
 // HealthHandler returns the health endpoint for transactional processing. This Handler only checks
