@@ -137,6 +137,15 @@ type Service interface {
 	GetTestHandlerService
 }
 
+// GetTestHandlerWithFallbackHelper helper that checks if the given service fulfills the interface. Returns fallback handler if not, otherwise returns matching handler.
+func GetTestHandlerWithFallbackHelper(service interface{}, fallback http.Handler, authBackend AuthorizationBackend) http.Handler {
+	if service, ok := service.(GetTestHandlerService); ok {
+		return GetTestHandler(service, authBackend)
+	} else {
+		return fallback
+	}
+}
+
 /*
 Router implements: PACE Payment API
 
@@ -149,11 +158,7 @@ func Router(service interface{}, authBackend AuthorizationBackend) *mux.Router {
 	authBackend.InitProfileKey(cfgProfileKey)
 	// Subrouter s1 - Path: /pay
 	s1 := router.PathPrefix("/pay").Subrouter()
-	if service, ok := service.(GetTestHandlerService); ok {
-		s1.Methods("GET").Path("/beta/test").Handler(GetTestHandler(service, authBackend)).Name("GetTest")
-	} else {
-		s1.Methods("GET").Path("/beta/test").Handler(router.NotFoundHandler).Name("GetTest")
-	}
+	s1.Methods("GET").Path("/beta/test").Name("GetTest").Handler(GetTestHandlerWithFallbackHelper(service, router.NotFoundHandler, authBackend))
 	return router
 }
 
@@ -169,10 +174,6 @@ func RouterWithFallback(service interface{}, authBackend AuthorizationBackend, f
 	authBackend.InitProfileKey(cfgProfileKey)
 	// Subrouter s1 - Path: /pay
 	s1 := router.PathPrefix("/pay").Subrouter()
-	if service, ok := service.(GetTestHandlerService); ok {
-		s1.Methods("GET").Path("/beta/test").Handler(GetTestHandler(service, authBackend)).Name("GetTest")
-	} else {
-		s1.Methods("GET").Path("/beta/test").Handler(fallback).Name("GetTest")
-	}
+	s1.Methods("GET").Path("/beta/test").Name("GetTest").Handler(GetTestHandlerWithFallbackHelper(service, fallback, authBackend))
 	return router
 }

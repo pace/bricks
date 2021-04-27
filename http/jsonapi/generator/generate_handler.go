@@ -75,6 +75,7 @@ func (g *Generator) BuildHandler(schema *openapi3.Swagger) error {
 	funcs := []routeGeneratorFunc{
 		g.generateRequestResponseTypes,
 		g.buildServiceInterface,
+		g.buildRouterHelpers,
 		g.buildRouter,
 		g.buildRouterWithFallbackAsArg,
 	}
@@ -382,8 +383,60 @@ func (g *Generator) buildRouterWithFallbackAsArg(routes []*route, schema *openap
 
 	} else {
 		g.goSource.Func().Id("RouterWithFallback").Params(
-			serviceInterfaceVariable).Op("*").Qual(pkgGorillaMux, "Router").Block(routerBody...)
+			serviceInterfaceVariable, jen.Id("fallback").Qual("net/http", "Handler")).Op("*").Qual(pkgGorillaMux, "Router").Block(routerBody...)
 	}
+	return nil
+}
+
+func (g *Generator) buildRouterHelpers(routes []*route, schema *openapi3.Swagger) error {
+	needsSecurity := hasSecuritySchema(schema)
+
+	// sort the routes with query parameter to the top
+	sortableRoutes := sortableRouteList(routes)
+	sort.Stable(&sortableRoutes)
+
+	fallbackName := "fallback"
+	fallback := jen.Id(fallbackName).Qual("net/http", "Handler")
+	// add all route handlers
+	for i := 0; i < len(sortableRoutes); i++ {
+		route := sortableRoutes[i]
+		var routeCallParams *jen.Statement
+		if needsSecurity {
+			routeCallParams = jen.List(jen.Id("service"), jen.Id("authBackend"))
+		} else {
+			routeCallParams = jen.List(jen.Id("service"))
+		}
+		primaryHandler := jen.Id(route.handler).Call(routeCallParams)
+		fallbackHandler := jen.Id(fallbackName)
+		ifElse := make([]jen.Code, 0)
+		for _, handler := range []jen.Code{primaryHandler, fallbackHandler} {
+			block := jen.Return(handler)
+			ifElse = append(ifElse, block)
+		}
+
+		if len(ifElse) < 1 {
+			panic("if-else slice should contain two elements, one with the service interface being called and one passing the NotFoundHandler")
+		}
+
+		implGuard := jen.If(
+			jen.List(jen.Id("service"), jen.Id("ok")).Op(":=").Id("service").Assert(jen.Id(generateSubServiceName(route.handler))),
+			jen.Id("ok")).Block(ifElse[0]).Else().Block(ifElse[1])
+
+		comment := jen.Commentf("%s helper that checks if the given service fulfills the interface. Returns fallback handler if not, otherwise returns matching handler.", generateHandlerTypeAssertionHelperName(route.handler))
+
+		var callParams *jen.Statement
+		if needsSecurity {
+			callParams = jen.List(jen.Id("service").Id("interface{}"), fallback, jen.Id("authBackend").Id(authBackendInterface))
+		} else {
+			callParams = jen.List(jen.Id("service").Id("interface{}"), fallback)
+		}
+		helper := jen.Func().Id(generateHandlerTypeAssertionHelperName(route.handler)).
+			Params(callParams).Qual("net/http", "Handler").Block(implGuard).Line().Line()
+
+		g.goSource.Line().Add(comment)
+		g.goSource.Add(helper)
+	}
+
 	return nil
 }
 
@@ -442,45 +495,30 @@ func (g *Generator) buildRouterBodyWithFallback(routes []*route, schema *openapi
 			route := sortableRoutes[i]
 			var routeCallParams *jen.Statement
 			if needsSecurity {
-				routeCallParams = jen.List(jen.Id("service"), jen.Id("authBackend"))
+				routeCallParams = jen.List(jen.Id("service"), fallback, jen.Id("authBackend"))
 			} else {
-				routeCallParams = jen.List(jen.Id("service"))
+				routeCallParams = jen.List(jen.Id("service"), fallback)
 			}
-			primaryHandler := jen.Id(route.handler).Call(routeCallParams)
-			fallbackHandler := fallback
-			ifElse := make([]jen.Code, 0)
-			for _, handler := range []jen.Code{primaryHandler, fallbackHandler} {
-				// build single route
-				routeStmt := jen.Id(subrouterID).Dot("Methods").Call(jen.Lit(route.method)).
-					Dot("Path").Call(jen.Lit(route.url.Path)).
-					Dot("Handler").Call(handler)
+			helper := jen.Id(generateHandlerTypeAssertionHelperName(route.handler)).Call(routeCallParams)
+			routeStmt := jen.Id(subrouterID).Dot("Methods").Call(jen.Lit(route.method)).
+				Dot("Path").Call(jen.Lit(route.url.Path))
 
-				// add query parameters for route matching
-				if len(route.queryValues) > 0 {
-					for key, value := range route.queryValues {
-						if len(value) != 1 {
-							panic("query paths can only handle one query parameter with the same name!")
-						}
-						routeStmt.Dot("Queries").Call(jen.Lit(key), jen.Lit(value[0]))
+			// add query parameters for route matching
+			if len(route.queryValues) > 0 {
+				for key, value := range route.queryValues {
+					if len(value) != 1 {
+						panic("query paths can only handle one query parameter with the same name!")
 					}
+					routeStmt.Dot("Queries").Call(jen.Lit(key), jen.Lit(value[0]))
 				}
-
-				// add the name to build routes
-				routeStmt.Dot("Name").Call(jen.Lit(route.serviceFunc))
-
-				// add to control-flow
-				ifElse = append(ifElse, routeStmt)
 			}
 
-			if len(ifElse) < 1 {
-				panic("if-else slice should contain two elements, one with the service interface being called and one passing the NotFoundHandler")
-			}
+			// add the name to build routes
+			routeStmt.Dot("Name").Call(jen.Lit(route.serviceFunc))
 
-			implGuard := jen.If(
-				jen.List(jen.Id("service"), jen.Id("ok")).Op(":=").Id("service").Assert(jen.Id(generateSubServiceName(route.handler))),
-				jen.Id("ok")).Block(ifElse[0]).Else().Block(ifElse[1])
+			routeStmt.Dot("Handler").Call(helper)
 
-			routeStmts = append(routeStmts, implGuard)
+			routeStmts = append(routeStmts, routeStmt)
 
 		}
 	}
@@ -820,4 +858,8 @@ func generateParamName(param *openapi3.ParameterRef) string {
 
 func generateSubServiceName(handler string) string {
 	return fmt.Sprintf("%s%s", handler, serviceInterface)
+}
+
+func generateHandlerTypeAssertionHelperName(handler string) string {
+	return fmt.Sprintf("%sWithFallbackHelper", handler)
 }

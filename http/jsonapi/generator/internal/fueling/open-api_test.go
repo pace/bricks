@@ -605,6 +605,42 @@ type Service interface {
 	WaitOnPumpStatusChangeHandlerService
 }
 
+// WaitOnPumpStatusChangeHandlerWithFallbackHelper helper that checks if the given service fulfills the interface. Returns fallback handler if not, otherwise returns matching handler.
+func WaitOnPumpStatusChangeHandlerWithFallbackHelper(service interface{}, fallback http.Handler) http.Handler {
+	if service, ok := service.(WaitOnPumpStatusChangeHandlerService); ok {
+		return WaitOnPumpStatusChangeHandler(service)
+	} else {
+		return fallback
+	}
+}
+
+// GetPumpHandlerWithFallbackHelper helper that checks if the given service fulfills the interface. Returns fallback handler if not, otherwise returns matching handler.
+func GetPumpHandlerWithFallbackHelper(service interface{}, fallback http.Handler) http.Handler {
+	if service, ok := service.(GetPumpHandlerService); ok {
+		return GetPumpHandler(service)
+	} else {
+		return fallback
+	}
+}
+
+// ProcessPaymentHandlerWithFallbackHelper helper that checks if the given service fulfills the interface. Returns fallback handler if not, otherwise returns matching handler.
+func ProcessPaymentHandlerWithFallbackHelper(service interface{}, fallback http.Handler) http.Handler {
+	if service, ok := service.(ProcessPaymentHandlerService); ok {
+		return ProcessPaymentHandler(service)
+	} else {
+		return fallback
+	}
+}
+
+// ApproachingAtTheForecourtHandlerWithFallbackHelper helper that checks if the given service fulfills the interface. Returns fallback handler if not, otherwise returns matching handler.
+func ApproachingAtTheForecourtHandlerWithFallbackHelper(service interface{}, fallback http.Handler) http.Handler {
+	if service, ok := service.(ApproachingAtTheForecourtHandlerService); ok {
+		return ApproachingAtTheForecourtHandler(service)
+	} else {
+		return fallback
+	}
+}
+
 /*
 Router implements: PACE Fueling API
 
@@ -614,48 +650,16 @@ func Router(service interface{}) *mux.Router {
 	router := mux.NewRouter()
 	// Subrouter s1 - Path: /fueling/beta/
 	s1 := router.PathPrefix("/fueling/beta/").Subrouter()
-	if service, ok := service.(WaitOnPumpStatusChangeHandlerService); ok {
-		s1.Methods("GET").Path("/gas-stations/{gasStationId}/pumps/{pumpId}/wait-for-status-change").Handler(WaitOnPumpStatusChangeHandler(service)).Name("WaitOnPumpStatusChange")
-	} else {
-		s1.Methods("GET").Path("/gas-stations/{gasStationId}/pumps/{pumpId}/wait-for-status-change").Handler(router.NotFoundHandler).Name("WaitOnPumpStatusChange")
-	}
-	if service, ok := service.(GetPumpHandlerService); ok {
-		s1.Methods("GET").Path("/gas-stations/{gasStationId}/pumps/{pumpId}").Handler(GetPumpHandler(service)).Name("GetPump")
-	} else {
-		s1.Methods("GET").Path("/gas-stations/{gasStationId}/pumps/{pumpId}").Handler(router.NotFoundHandler).Name("GetPump")
-	}
-	if service, ok := service.(ProcessPaymentHandlerService); ok {
-		s1.Methods("POST").Path("/gas-station/{gasStationId}/payment").Handler(ProcessPaymentHandler(service)).Name("ProcessPayment")
-	} else {
-		s1.Methods("POST").Path("/gas-station/{gasStationId}/payment").Handler(router.NotFoundHandler).Name("ProcessPayment")
-	}
-	if service, ok := service.(ApproachingAtTheForecourtHandlerService); ok {
-		s1.Methods("POST").Path("/gas-stations/{gasStationId}/approaching").Handler(ApproachingAtTheForecourtHandler(service)).Name("ApproachingAtTheForecourt")
-	} else {
-		s1.Methods("POST").Path("/gas-stations/{gasStationId}/approaching").Handler(router.NotFoundHandler).Name("ApproachingAtTheForecourt")
-	}
+	s1.Methods("GET").Path("/gas-stations/{gasStationId}/pumps/{pumpId}/wait-for-status-change").Name("WaitOnPumpStatusChange").Handler(WaitOnPumpStatusChangeHandlerWithFallbackHelper(service, router.NotFoundHandler))
+	s1.Methods("GET").Path("/gas-stations/{gasStationId}/pumps/{pumpId}").Name("GetPump").Handler(GetPumpHandlerWithFallbackHelper(service, router.NotFoundHandler))
+	s1.Methods("POST").Path("/gas-station/{gasStationId}/payment").Name("ProcessPayment").Handler(ProcessPaymentHandlerWithFallbackHelper(service, router.NotFoundHandler))
+	s1.Methods("POST").Path("/gas-stations/{gasStationId}/approaching").Name("ApproachingAtTheForecourt").Handler(ApproachingAtTheForecourtHandlerWithFallbackHelper(service, router.NotFoundHandler))
 	// Subrouter s2 - Path: /fueling/v1/
 	s2 := router.PathPrefix("/fueling/v1/").Subrouter()
-	if service, ok := service.(WaitOnPumpStatusChangeHandlerService); ok {
-		s2.Methods("GET").Path("/gas-stations/{gasStationId}/pumps/{pumpId}/wait-for-status-change").Handler(WaitOnPumpStatusChangeHandler(service)).Name("WaitOnPumpStatusChange")
-	} else {
-		s2.Methods("GET").Path("/gas-stations/{gasStationId}/pumps/{pumpId}/wait-for-status-change").Handler(router.NotFoundHandler).Name("WaitOnPumpStatusChange")
-	}
-	if service, ok := service.(GetPumpHandlerService); ok {
-		s2.Methods("GET").Path("/gas-stations/{gasStationId}/pumps/{pumpId}").Handler(GetPumpHandler(service)).Name("GetPump")
-	} else {
-		s2.Methods("GET").Path("/gas-stations/{gasStationId}/pumps/{pumpId}").Handler(router.NotFoundHandler).Name("GetPump")
-	}
-	if service, ok := service.(ProcessPaymentHandlerService); ok {
-		s2.Methods("POST").Path("/gas-station/{gasStationId}/payment").Handler(ProcessPaymentHandler(service)).Name("ProcessPayment")
-	} else {
-		s2.Methods("POST").Path("/gas-station/{gasStationId}/payment").Handler(router.NotFoundHandler).Name("ProcessPayment")
-	}
-	if service, ok := service.(ApproachingAtTheForecourtHandlerService); ok {
-		s2.Methods("POST").Path("/gas-stations/{gasStationId}/approaching").Handler(ApproachingAtTheForecourtHandler(service)).Name("ApproachingAtTheForecourt")
-	} else {
-		s2.Methods("POST").Path("/gas-stations/{gasStationId}/approaching").Handler(router.NotFoundHandler).Name("ApproachingAtTheForecourt")
-	}
+	s2.Methods("GET").Path("/gas-stations/{gasStationId}/pumps/{pumpId}/wait-for-status-change").Name("WaitOnPumpStatusChange").Handler(WaitOnPumpStatusChangeHandlerWithFallbackHelper(service, router.NotFoundHandler))
+	s2.Methods("GET").Path("/gas-stations/{gasStationId}/pumps/{pumpId}").Name("GetPump").Handler(GetPumpHandlerWithFallbackHelper(service, router.NotFoundHandler))
+	s2.Methods("POST").Path("/gas-station/{gasStationId}/payment").Name("ProcessPayment").Handler(ProcessPaymentHandlerWithFallbackHelper(service, router.NotFoundHandler))
+	s2.Methods("POST").Path("/gas-stations/{gasStationId}/approaching").Name("ApproachingAtTheForecourt").Handler(ApproachingAtTheForecourtHandlerWithFallbackHelper(service, router.NotFoundHandler))
 	return router
 }
 
@@ -664,51 +668,19 @@ Router implements: PACE Fueling API
 
 Fueling API
 */
-func RouterWithFallback(service interface{}) *mux.Router {
+func RouterWithFallback(service interface{}, fallback http.Handler) *mux.Router {
 	router := mux.NewRouter()
 	// Subrouter s1 - Path: /fueling/beta/
 	s1 := router.PathPrefix("/fueling/beta/").Subrouter()
-	if service, ok := service.(WaitOnPumpStatusChangeHandlerService); ok {
-		s1.Methods("GET").Path("/gas-stations/{gasStationId}/pumps/{pumpId}/wait-for-status-change").Handler(WaitOnPumpStatusChangeHandler(service)).Name("WaitOnPumpStatusChange")
-	} else {
-		s1.Methods("GET").Path("/gas-stations/{gasStationId}/pumps/{pumpId}/wait-for-status-change").Handler(fallback).Name("WaitOnPumpStatusChange")
-	}
-	if service, ok := service.(GetPumpHandlerService); ok {
-		s1.Methods("GET").Path("/gas-stations/{gasStationId}/pumps/{pumpId}").Handler(GetPumpHandler(service)).Name("GetPump")
-	} else {
-		s1.Methods("GET").Path("/gas-stations/{gasStationId}/pumps/{pumpId}").Handler(fallback).Name("GetPump")
-	}
-	if service, ok := service.(ProcessPaymentHandlerService); ok {
-		s1.Methods("POST").Path("/gas-station/{gasStationId}/payment").Handler(ProcessPaymentHandler(service)).Name("ProcessPayment")
-	} else {
-		s1.Methods("POST").Path("/gas-station/{gasStationId}/payment").Handler(fallback).Name("ProcessPayment")
-	}
-	if service, ok := service.(ApproachingAtTheForecourtHandlerService); ok {
-		s1.Methods("POST").Path("/gas-stations/{gasStationId}/approaching").Handler(ApproachingAtTheForecourtHandler(service)).Name("ApproachingAtTheForecourt")
-	} else {
-		s1.Methods("POST").Path("/gas-stations/{gasStationId}/approaching").Handler(fallback).Name("ApproachingAtTheForecourt")
-	}
+	s1.Methods("GET").Path("/gas-stations/{gasStationId}/pumps/{pumpId}/wait-for-status-change").Name("WaitOnPumpStatusChange").Handler(WaitOnPumpStatusChangeHandlerWithFallbackHelper(service, fallback))
+	s1.Methods("GET").Path("/gas-stations/{gasStationId}/pumps/{pumpId}").Name("GetPump").Handler(GetPumpHandlerWithFallbackHelper(service, fallback))
+	s1.Methods("POST").Path("/gas-station/{gasStationId}/payment").Name("ProcessPayment").Handler(ProcessPaymentHandlerWithFallbackHelper(service, fallback))
+	s1.Methods("POST").Path("/gas-stations/{gasStationId}/approaching").Name("ApproachingAtTheForecourt").Handler(ApproachingAtTheForecourtHandlerWithFallbackHelper(service, fallback))
 	// Subrouter s2 - Path: /fueling/v1/
 	s2 := router.PathPrefix("/fueling/v1/").Subrouter()
-	if service, ok := service.(WaitOnPumpStatusChangeHandlerService); ok {
-		s2.Methods("GET").Path("/gas-stations/{gasStationId}/pumps/{pumpId}/wait-for-status-change").Handler(WaitOnPumpStatusChangeHandler(service)).Name("WaitOnPumpStatusChange")
-	} else {
-		s2.Methods("GET").Path("/gas-stations/{gasStationId}/pumps/{pumpId}/wait-for-status-change").Handler(fallback).Name("WaitOnPumpStatusChange")
-	}
-	if service, ok := service.(GetPumpHandlerService); ok {
-		s2.Methods("GET").Path("/gas-stations/{gasStationId}/pumps/{pumpId}").Handler(GetPumpHandler(service)).Name("GetPump")
-	} else {
-		s2.Methods("GET").Path("/gas-stations/{gasStationId}/pumps/{pumpId}").Handler(fallback).Name("GetPump")
-	}
-	if service, ok := service.(ProcessPaymentHandlerService); ok {
-		s2.Methods("POST").Path("/gas-station/{gasStationId}/payment").Handler(ProcessPaymentHandler(service)).Name("ProcessPayment")
-	} else {
-		s2.Methods("POST").Path("/gas-station/{gasStationId}/payment").Handler(fallback).Name("ProcessPayment")
-	}
-	if service, ok := service.(ApproachingAtTheForecourtHandlerService); ok {
-		s2.Methods("POST").Path("/gas-stations/{gasStationId}/approaching").Handler(ApproachingAtTheForecourtHandler(service)).Name("ApproachingAtTheForecourt")
-	} else {
-		s2.Methods("POST").Path("/gas-stations/{gasStationId}/approaching").Handler(fallback).Name("ApproachingAtTheForecourt")
-	}
+	s2.Methods("GET").Path("/gas-stations/{gasStationId}/pumps/{pumpId}/wait-for-status-change").Name("WaitOnPumpStatusChange").Handler(WaitOnPumpStatusChangeHandlerWithFallbackHelper(service, fallback))
+	s2.Methods("GET").Path("/gas-stations/{gasStationId}/pumps/{pumpId}").Name("GetPump").Handler(GetPumpHandlerWithFallbackHelper(service, fallback))
+	s2.Methods("POST").Path("/gas-station/{gasStationId}/payment").Name("ProcessPayment").Handler(ProcessPaymentHandlerWithFallbackHelper(service, fallback))
+	s2.Methods("POST").Path("/gas-stations/{gasStationId}/approaching").Name("ApproachingAtTheForecourt").Handler(ApproachingAtTheForecourtHandlerWithFallbackHelper(service, fallback))
 	return router
 }

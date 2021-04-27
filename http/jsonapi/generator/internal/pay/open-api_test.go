@@ -1015,6 +1015,78 @@ type Service interface {
 	ProcessPaymentHandlerService
 }
 
+// DeletePaymentTokenHandlerWithFallbackHelper helper that checks if the given service fulfills the interface. Returns fallback handler if not, otherwise returns matching handler.
+func DeletePaymentTokenHandlerWithFallbackHelper(service interface{}, fallback http.Handler, authBackend AuthorizationBackend) http.Handler {
+	if service, ok := service.(DeletePaymentTokenHandlerService); ok {
+		return DeletePaymentTokenHandler(service, authBackend)
+	} else {
+		return fallback
+	}
+}
+
+// AuthorizePaymentMethodHandlerWithFallbackHelper helper that checks if the given service fulfills the interface. Returns fallback handler if not, otherwise returns matching handler.
+func AuthorizePaymentMethodHandlerWithFallbackHelper(service interface{}, fallback http.Handler, authBackend AuthorizationBackend) http.Handler {
+	if service, ok := service.(AuthorizePaymentMethodHandlerService); ok {
+		return AuthorizePaymentMethodHandler(service, authBackend)
+	} else {
+		return fallback
+	}
+}
+
+// CreatePaymentMethodSEPAHandlerWithFallbackHelper helper that checks if the given service fulfills the interface. Returns fallback handler if not, otherwise returns matching handler.
+func CreatePaymentMethodSEPAHandlerWithFallbackHelper(service interface{}, fallback http.Handler, authBackend AuthorizationBackend) http.Handler {
+	if service, ok := service.(CreatePaymentMethodSEPAHandlerService); ok {
+		return CreatePaymentMethodSEPAHandler(service, authBackend)
+	} else {
+		return fallback
+	}
+}
+
+// DeletePaymentMethodHandlerWithFallbackHelper helper that checks if the given service fulfills the interface. Returns fallback handler if not, otherwise returns matching handler.
+func DeletePaymentMethodHandlerWithFallbackHelper(service interface{}, fallback http.Handler, authBackend AuthorizationBackend) http.Handler {
+	if service, ok := service.(DeletePaymentMethodHandlerService); ok {
+		return DeletePaymentMethodHandler(service, authBackend)
+	} else {
+		return fallback
+	}
+}
+
+// ProcessPaymentHandlerWithFallbackHelper helper that checks if the given service fulfills the interface. Returns fallback handler if not, otherwise returns matching handler.
+func ProcessPaymentHandlerWithFallbackHelper(service interface{}, fallback http.Handler, authBackend AuthorizationBackend) http.Handler {
+	if service, ok := service.(ProcessPaymentHandlerService); ok {
+		return ProcessPaymentHandler(service, authBackend)
+	} else {
+		return fallback
+	}
+}
+
+// GetPaymentMethodsIncludingCreditCheckHandlerWithFallbackHelper helper that checks if the given service fulfills the interface. Returns fallback handler if not, otherwise returns matching handler.
+func GetPaymentMethodsIncludingCreditCheckHandlerWithFallbackHelper(service interface{}, fallback http.Handler, authBackend AuthorizationBackend) http.Handler {
+	if service, ok := service.(GetPaymentMethodsIncludingCreditCheckHandlerService); ok {
+		return GetPaymentMethodsIncludingCreditCheckHandler(service, authBackend)
+	} else {
+		return fallback
+	}
+}
+
+// GetPaymentMethodsIncludingPaymentTokenHandlerWithFallbackHelper helper that checks if the given service fulfills the interface. Returns fallback handler if not, otherwise returns matching handler.
+func GetPaymentMethodsIncludingPaymentTokenHandlerWithFallbackHelper(service interface{}, fallback http.Handler, authBackend AuthorizationBackend) http.Handler {
+	if service, ok := service.(GetPaymentMethodsIncludingPaymentTokenHandlerService); ok {
+		return GetPaymentMethodsIncludingPaymentTokenHandler(service, authBackend)
+	} else {
+		return fallback
+	}
+}
+
+// GetPaymentMethodsHandlerWithFallbackHelper helper that checks if the given service fulfills the interface. Returns fallback handler if not, otherwise returns matching handler.
+func GetPaymentMethodsHandlerWithFallbackHelper(service interface{}, fallback http.Handler, authBackend AuthorizationBackend) http.Handler {
+	if service, ok := service.(GetPaymentMethodsHandlerService); ok {
+		return GetPaymentMethodsHandler(service, authBackend)
+	} else {
+		return fallback
+	}
+}
+
 /*
 Router implements: PACE Payment API
 
@@ -1028,46 +1100,14 @@ func Router(service interface{}, authBackend AuthorizationBackend) *mux.Router {
 	authBackend.InitProfileKey(cfgProfileKey)
 	// Subrouter s1 - Path: /pay
 	s1 := router.PathPrefix("/pay").Subrouter()
-	if service, ok := service.(DeletePaymentTokenHandlerService); ok {
-		s1.Methods("DELETE").Path("/beta/payment-methods/{paymentMethodId}/paymentTokens/{paymentTokenId}").Handler(DeletePaymentTokenHandler(service, authBackend)).Name("DeletePaymentToken")
-	} else {
-		s1.Methods("DELETE").Path("/beta/payment-methods/{paymentMethodId}/paymentTokens/{paymentTokenId}").Handler(router.NotFoundHandler).Name("DeletePaymentToken")
-	}
-	if service, ok := service.(AuthorizePaymentMethodHandlerService); ok {
-		s1.Methods("POST").Path("/beta/payment-methods/{paymentMethodId}/authorize").Handler(AuthorizePaymentMethodHandler(service, authBackend)).Name("AuthorizePaymentMethod")
-	} else {
-		s1.Methods("POST").Path("/beta/payment-methods/{paymentMethodId}/authorize").Handler(router.NotFoundHandler).Name("AuthorizePaymentMethod")
-	}
-	if service, ok := service.(CreatePaymentMethodSEPAHandlerService); ok {
-		s1.Methods("POST").Path("/beta/payment-methods/sepa-direct-debit").Handler(CreatePaymentMethodSEPAHandler(service, authBackend)).Name("CreatePaymentMethodSEPA")
-	} else {
-		s1.Methods("POST").Path("/beta/payment-methods/sepa-direct-debit").Handler(router.NotFoundHandler).Name("CreatePaymentMethodSEPA")
-	}
-	if service, ok := service.(DeletePaymentMethodHandlerService); ok {
-		s1.Methods("DELETE").Path("/beta/payment-methods/{paymentMethodId}").Handler(DeletePaymentMethodHandler(service, authBackend)).Name("DeletePaymentMethod")
-	} else {
-		s1.Methods("DELETE").Path("/beta/payment-methods/{paymentMethodId}").Handler(router.NotFoundHandler).Name("DeletePaymentMethod")
-	}
-	if service, ok := service.(ProcessPaymentHandlerService); ok {
-		s1.Methods("POST").Path("/beta/transaction/{pathDecimal}").Handler(ProcessPaymentHandler(service, authBackend)).Name("ProcessPayment")
-	} else {
-		s1.Methods("POST").Path("/beta/transaction/{pathDecimal}").Handler(router.NotFoundHandler).Name("ProcessPayment")
-	}
-	if service, ok := service.(GetPaymentMethodsIncludingCreditCheckHandlerService); ok {
-		s1.Methods("GET").Path("/beta/payment-methods").Handler(GetPaymentMethodsIncludingCreditCheckHandler(service, authBackend)).Queries("include", "creditCheck").Name("GetPaymentMethodsIncludingCreditCheck")
-	} else {
-		s1.Methods("GET").Path("/beta/payment-methods").Handler(router.NotFoundHandler).Queries("include", "creditCheck").Name("GetPaymentMethodsIncludingCreditCheck")
-	}
-	if service, ok := service.(GetPaymentMethodsIncludingPaymentTokenHandlerService); ok {
-		s1.Methods("GET").Path("/beta/payment-methods").Handler(GetPaymentMethodsIncludingPaymentTokenHandler(service, authBackend)).Queries("include", "paymentToken").Name("GetPaymentMethodsIncludingPaymentToken")
-	} else {
-		s1.Methods("GET").Path("/beta/payment-methods").Handler(router.NotFoundHandler).Queries("include", "paymentToken").Name("GetPaymentMethodsIncludingPaymentToken")
-	}
-	if service, ok := service.(GetPaymentMethodsHandlerService); ok {
-		s1.Methods("GET").Path("/beta/payment-methods").Handler(GetPaymentMethodsHandler(service, authBackend)).Name("GetPaymentMethods")
-	} else {
-		s1.Methods("GET").Path("/beta/payment-methods").Handler(router.NotFoundHandler).Name("GetPaymentMethods")
-	}
+	s1.Methods("DELETE").Path("/beta/payment-methods/{paymentMethodId}/paymentTokens/{paymentTokenId}").Name("DeletePaymentToken").Handler(DeletePaymentTokenHandlerWithFallbackHelper(service, router.NotFoundHandler, authBackend))
+	s1.Methods("POST").Path("/beta/payment-methods/{paymentMethodId}/authorize").Name("AuthorizePaymentMethod").Handler(AuthorizePaymentMethodHandlerWithFallbackHelper(service, router.NotFoundHandler, authBackend))
+	s1.Methods("POST").Path("/beta/payment-methods/sepa-direct-debit").Name("CreatePaymentMethodSEPA").Handler(CreatePaymentMethodSEPAHandlerWithFallbackHelper(service, router.NotFoundHandler, authBackend))
+	s1.Methods("DELETE").Path("/beta/payment-methods/{paymentMethodId}").Name("DeletePaymentMethod").Handler(DeletePaymentMethodHandlerWithFallbackHelper(service, router.NotFoundHandler, authBackend))
+	s1.Methods("POST").Path("/beta/transaction/{pathDecimal}").Name("ProcessPayment").Handler(ProcessPaymentHandlerWithFallbackHelper(service, router.NotFoundHandler, authBackend))
+	s1.Methods("GET").Path("/beta/payment-methods").Queries("include", "creditCheck").Name("GetPaymentMethodsIncludingCreditCheck").Handler(GetPaymentMethodsIncludingCreditCheckHandlerWithFallbackHelper(service, router.NotFoundHandler, authBackend))
+	s1.Methods("GET").Path("/beta/payment-methods").Queries("include", "paymentToken").Name("GetPaymentMethodsIncludingPaymentToken").Handler(GetPaymentMethodsIncludingPaymentTokenHandlerWithFallbackHelper(service, router.NotFoundHandler, authBackend))
+	s1.Methods("GET").Path("/beta/payment-methods").Name("GetPaymentMethods").Handler(GetPaymentMethodsHandlerWithFallbackHelper(service, router.NotFoundHandler, authBackend))
 	return router
 }
 
@@ -1084,45 +1124,13 @@ func RouterWithFallback(service interface{}, authBackend AuthorizationBackend, f
 	authBackend.InitProfileKey(cfgProfileKey)
 	// Subrouter s1 - Path: /pay
 	s1 := router.PathPrefix("/pay").Subrouter()
-	if service, ok := service.(DeletePaymentTokenHandlerService); ok {
-		s1.Methods("DELETE").Path("/beta/payment-methods/{paymentMethodId}/paymentTokens/{paymentTokenId}").Handler(DeletePaymentTokenHandler(service, authBackend)).Name("DeletePaymentToken")
-	} else {
-		s1.Methods("DELETE").Path("/beta/payment-methods/{paymentMethodId}/paymentTokens/{paymentTokenId}").Handler(fallback).Name("DeletePaymentToken")
-	}
-	if service, ok := service.(AuthorizePaymentMethodHandlerService); ok {
-		s1.Methods("POST").Path("/beta/payment-methods/{paymentMethodId}/authorize").Handler(AuthorizePaymentMethodHandler(service, authBackend)).Name("AuthorizePaymentMethod")
-	} else {
-		s1.Methods("POST").Path("/beta/payment-methods/{paymentMethodId}/authorize").Handler(fallback).Name("AuthorizePaymentMethod")
-	}
-	if service, ok := service.(CreatePaymentMethodSEPAHandlerService); ok {
-		s1.Methods("POST").Path("/beta/payment-methods/sepa-direct-debit").Handler(CreatePaymentMethodSEPAHandler(service, authBackend)).Name("CreatePaymentMethodSEPA")
-	} else {
-		s1.Methods("POST").Path("/beta/payment-methods/sepa-direct-debit").Handler(fallback).Name("CreatePaymentMethodSEPA")
-	}
-	if service, ok := service.(DeletePaymentMethodHandlerService); ok {
-		s1.Methods("DELETE").Path("/beta/payment-methods/{paymentMethodId}").Handler(DeletePaymentMethodHandler(service, authBackend)).Name("DeletePaymentMethod")
-	} else {
-		s1.Methods("DELETE").Path("/beta/payment-methods/{paymentMethodId}").Handler(fallback).Name("DeletePaymentMethod")
-	}
-	if service, ok := service.(ProcessPaymentHandlerService); ok {
-		s1.Methods("POST").Path("/beta/transaction/{pathDecimal}").Handler(ProcessPaymentHandler(service, authBackend)).Name("ProcessPayment")
-	} else {
-		s1.Methods("POST").Path("/beta/transaction/{pathDecimal}").Handler(fallback).Name("ProcessPayment")
-	}
-	if service, ok := service.(GetPaymentMethodsIncludingCreditCheckHandlerService); ok {
-		s1.Methods("GET").Path("/beta/payment-methods").Handler(GetPaymentMethodsIncludingCreditCheckHandler(service, authBackend)).Queries("include", "creditCheck").Name("GetPaymentMethodsIncludingCreditCheck")
-	} else {
-		s1.Methods("GET").Path("/beta/payment-methods").Handler(fallback).Queries("include", "creditCheck").Name("GetPaymentMethodsIncludingCreditCheck")
-	}
-	if service, ok := service.(GetPaymentMethodsIncludingPaymentTokenHandlerService); ok {
-		s1.Methods("GET").Path("/beta/payment-methods").Handler(GetPaymentMethodsIncludingPaymentTokenHandler(service, authBackend)).Queries("include", "paymentToken").Name("GetPaymentMethodsIncludingPaymentToken")
-	} else {
-		s1.Methods("GET").Path("/beta/payment-methods").Handler(fallback).Queries("include", "paymentToken").Name("GetPaymentMethodsIncludingPaymentToken")
-	}
-	if service, ok := service.(GetPaymentMethodsHandlerService); ok {
-		s1.Methods("GET").Path("/beta/payment-methods").Handler(GetPaymentMethodsHandler(service, authBackend)).Name("GetPaymentMethods")
-	} else {
-		s1.Methods("GET").Path("/beta/payment-methods").Handler(fallback).Name("GetPaymentMethods")
-	}
+	s1.Methods("DELETE").Path("/beta/payment-methods/{paymentMethodId}/paymentTokens/{paymentTokenId}").Name("DeletePaymentToken").Handler(DeletePaymentTokenHandlerWithFallbackHelper(service, fallback, authBackend))
+	s1.Methods("POST").Path("/beta/payment-methods/{paymentMethodId}/authorize").Name("AuthorizePaymentMethod").Handler(AuthorizePaymentMethodHandlerWithFallbackHelper(service, fallback, authBackend))
+	s1.Methods("POST").Path("/beta/payment-methods/sepa-direct-debit").Name("CreatePaymentMethodSEPA").Handler(CreatePaymentMethodSEPAHandlerWithFallbackHelper(service, fallback, authBackend))
+	s1.Methods("DELETE").Path("/beta/payment-methods/{paymentMethodId}").Name("DeletePaymentMethod").Handler(DeletePaymentMethodHandlerWithFallbackHelper(service, fallback, authBackend))
+	s1.Methods("POST").Path("/beta/transaction/{pathDecimal}").Name("ProcessPayment").Handler(ProcessPaymentHandlerWithFallbackHelper(service, fallback, authBackend))
+	s1.Methods("GET").Path("/beta/payment-methods").Queries("include", "creditCheck").Name("GetPaymentMethodsIncludingCreditCheck").Handler(GetPaymentMethodsIncludingCreditCheckHandlerWithFallbackHelper(service, fallback, authBackend))
+	s1.Methods("GET").Path("/beta/payment-methods").Queries("include", "paymentToken").Name("GetPaymentMethodsIncludingPaymentToken").Handler(GetPaymentMethodsIncludingPaymentTokenHandlerWithFallbackHelper(service, fallback, authBackend))
+	s1.Methods("GET").Path("/beta/payment-methods").Name("GetPaymentMethods").Handler(GetPaymentMethodsHandlerWithFallbackHelper(service, fallback, authBackend))
 	return router
 }

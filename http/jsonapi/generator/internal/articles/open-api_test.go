@@ -364,6 +364,33 @@ type Service interface {
 	UpdateArticleInlineRefHandlerService
 }
 
+// UpdateArticleCommentsHandlerWithFallbackHelper helper that checks if the given service fulfills the interface. Returns fallback handler if not, otherwise returns matching handler.
+func UpdateArticleCommentsHandlerWithFallbackHelper(service interface{}, fallback http.Handler) http.Handler {
+	if service, ok := service.(UpdateArticleCommentsHandlerService); ok {
+		return UpdateArticleCommentsHandler(service)
+	} else {
+		return fallback
+	}
+}
+
+// UpdateArticleInlineTypeHandlerWithFallbackHelper helper that checks if the given service fulfills the interface. Returns fallback handler if not, otherwise returns matching handler.
+func UpdateArticleInlineTypeHandlerWithFallbackHelper(service interface{}, fallback http.Handler) http.Handler {
+	if service, ok := service.(UpdateArticleInlineTypeHandlerService); ok {
+		return UpdateArticleInlineTypeHandler(service)
+	} else {
+		return fallback
+	}
+}
+
+// UpdateArticleInlineRefHandlerWithFallbackHelper helper that checks if the given service fulfills the interface. Returns fallback handler if not, otherwise returns matching handler.
+func UpdateArticleInlineRefHandlerWithFallbackHelper(service interface{}, fallback http.Handler) http.Handler {
+	if service, ok := service.(UpdateArticleInlineRefHandlerService); ok {
+		return UpdateArticleInlineRefHandler(service)
+	} else {
+		return fallback
+	}
+}
+
 /*
 Router implements: Articles Test Service
 
@@ -373,21 +400,9 @@ func Router(service interface{}) *mux.Router {
 	router := mux.NewRouter()
 	// Subrouter s1 - Path:
 	s1 := router.PathPrefix("").Subrouter()
-	if service, ok := service.(UpdateArticleCommentsHandlerService); ok {
-		s1.Methods("PATCH").Path("/api/articles/{uuid}/relationships/comments").Handler(UpdateArticleCommentsHandler(service)).Name("UpdateArticleComments")
-	} else {
-		s1.Methods("PATCH").Path("/api/articles/{uuid}/relationships/comments").Handler(router.NotFoundHandler).Name("UpdateArticleComments")
-	}
-	if service, ok := service.(UpdateArticleInlineTypeHandlerService); ok {
-		s1.Methods("PATCH").Path("/api/articles/{uuid}/relationships/inline").Handler(UpdateArticleInlineTypeHandler(service)).Name("UpdateArticleInlineType")
-	} else {
-		s1.Methods("PATCH").Path("/api/articles/{uuid}/relationships/inline").Handler(router.NotFoundHandler).Name("UpdateArticleInlineType")
-	}
-	if service, ok := service.(UpdateArticleInlineRefHandlerService); ok {
-		s1.Methods("PATCH").Path("/api/articles/{uuid}/relationships/inlineref").Handler(UpdateArticleInlineRefHandler(service)).Name("UpdateArticleInlineRef")
-	} else {
-		s1.Methods("PATCH").Path("/api/articles/{uuid}/relationships/inlineref").Handler(router.NotFoundHandler).Name("UpdateArticleInlineRef")
-	}
+	s1.Methods("PATCH").Path("/api/articles/{uuid}/relationships/comments").Name("UpdateArticleComments").Handler(UpdateArticleCommentsHandlerWithFallbackHelper(service, router.NotFoundHandler))
+	s1.Methods("PATCH").Path("/api/articles/{uuid}/relationships/inline").Name("UpdateArticleInlineType").Handler(UpdateArticleInlineTypeHandlerWithFallbackHelper(service, router.NotFoundHandler))
+	s1.Methods("PATCH").Path("/api/articles/{uuid}/relationships/inlineref").Name("UpdateArticleInlineRef").Handler(UpdateArticleInlineRefHandlerWithFallbackHelper(service, router.NotFoundHandler))
 	return router
 }
 
@@ -396,24 +411,12 @@ Router implements: Articles Test Service
 
 Articles Test Service
 */
-func RouterWithFallback(service interface{}) *mux.Router {
+func RouterWithFallback(service interface{}, fallback http.Handler) *mux.Router {
 	router := mux.NewRouter()
 	// Subrouter s1 - Path:
 	s1 := router.PathPrefix("").Subrouter()
-	if service, ok := service.(UpdateArticleCommentsHandlerService); ok {
-		s1.Methods("PATCH").Path("/api/articles/{uuid}/relationships/comments").Handler(UpdateArticleCommentsHandler(service)).Name("UpdateArticleComments")
-	} else {
-		s1.Methods("PATCH").Path("/api/articles/{uuid}/relationships/comments").Handler(fallback).Name("UpdateArticleComments")
-	}
-	if service, ok := service.(UpdateArticleInlineTypeHandlerService); ok {
-		s1.Methods("PATCH").Path("/api/articles/{uuid}/relationships/inline").Handler(UpdateArticleInlineTypeHandler(service)).Name("UpdateArticleInlineType")
-	} else {
-		s1.Methods("PATCH").Path("/api/articles/{uuid}/relationships/inline").Handler(fallback).Name("UpdateArticleInlineType")
-	}
-	if service, ok := service.(UpdateArticleInlineRefHandlerService); ok {
-		s1.Methods("PATCH").Path("/api/articles/{uuid}/relationships/inlineref").Handler(UpdateArticleInlineRefHandler(service)).Name("UpdateArticleInlineRef")
-	} else {
-		s1.Methods("PATCH").Path("/api/articles/{uuid}/relationships/inlineref").Handler(fallback).Name("UpdateArticleInlineRef")
-	}
+	s1.Methods("PATCH").Path("/api/articles/{uuid}/relationships/comments").Name("UpdateArticleComments").Handler(UpdateArticleCommentsHandlerWithFallbackHelper(service, fallback))
+	s1.Methods("PATCH").Path("/api/articles/{uuid}/relationships/inline").Name("UpdateArticleInlineType").Handler(UpdateArticleInlineTypeHandlerWithFallbackHelper(service, fallback))
+	s1.Methods("PATCH").Path("/api/articles/{uuid}/relationships/inlineref").Name("UpdateArticleInlineRef").Handler(UpdateArticleInlineRefHandlerWithFallbackHelper(service, fallback))
 	return router
 }
