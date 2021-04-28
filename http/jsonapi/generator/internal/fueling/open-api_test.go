@@ -126,7 +126,7 @@ type Currency string
 ProcessPaymentHandler handles request/response marshaling and validation for
  Post /gas-station/{gasStationId}/payment
 */
-func ProcessPaymentHandler(service Service) http.Handler {
+func ProcessPaymentHandler(service ProcessPaymentHandlerService) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		defer errors.HandleRequest("ProcessPaymentHandler", w, r)
 
@@ -183,7 +183,7 @@ func ProcessPaymentHandler(service Service) http.Handler {
 ApproachingAtTheForecourtHandler handles request/response marshaling and validation for
  Post /gas-stations/{gasStationId}/approaching
 */
-func ApproachingAtTheForecourtHandler(service Service) http.Handler {
+func ApproachingAtTheForecourtHandler(service ApproachingAtTheForecourtHandlerService) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		defer errors.HandleRequest("ApproachingAtTheForecourtHandler", w, r)
 
@@ -244,7 +244,7 @@ func ApproachingAtTheForecourtHandler(service Service) http.Handler {
 GetPumpHandler handles request/response marshaling and validation for
  Get /gas-stations/{gasStationId}/pumps/{pumpId}
 */
-func GetPumpHandler(service Service) http.Handler {
+func GetPumpHandler(service GetPumpHandlerService) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		defer errors.HandleRequest("GetPumpHandler", w, r)
 
@@ -303,7 +303,7 @@ func GetPumpHandler(service Service) http.Handler {
 WaitOnPumpStatusChangeHandler handles request/response marshaling and validation for
  Get /gas-stations/{gasStationId}/pumps/{pumpId}/wait-for-status-change
 */
-func WaitOnPumpStatusChangeHandler(service Service) http.Handler {
+func WaitOnPumpStatusChangeHandler(service WaitOnPumpStatusChangeHandlerService) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		defer errors.HandleRequest("WaitOnPumpStatusChangeHandler", w, r)
 
@@ -551,14 +551,18 @@ type WaitOnPumpStatusChangeRequest struct {
 	ParamTimeout      int64         `valid:"optional"`
 }
 
-// Service interface for all handlers
-type Service interface {
+// Service interface for ProcessPaymentHandler handler
+type ProcessPaymentHandlerService interface {
 	/*
 	   ProcessPayment Process payment
 
 	   Process payment and notify user if transaction is finished successfully. You can optionally provide `priceIncludingVAT`and `currency` in the request body to check if the price the user has seen is still correct.
 	*/
 	ProcessPayment(context.Context, ProcessPaymentResponseWriter, *ProcessPaymentRequest) error
+}
+
+// Service interface for ApproachingAtTheForecourtHandler handler
+type ApproachingAtTheForecourtHandlerService interface {
 	/*
 	   ApproachingAtTheForecourt Gather information when approaching at the forecourt
 
@@ -570,12 +574,20 @@ type Service interface {
 	   * Create payment tokens for all paymentMethods of the user and pre-authorise the calculated maximum amount of money (background task)
 	*/
 	ApproachingAtTheForecourt(context.Context, ApproachingAtTheForecourtResponseWriter, *ApproachingAtTheForecourtRequest) error
+}
+
+// Service interface for GetPumpHandler handler
+type GetPumpHandlerService interface {
 	/*
 	   GetPump Return current pump information
 
 	   Returns the current pump status (free, inUse, readyToPay, outOfOrder) and identifier. If the status is readyToPay, the result also contains fuelType, productName, fuelAmount, VAT (amount & rate), priceWithoutVAT, priceIncludingVAT, currency.
 	*/
 	GetPump(context.Context, GetPumpResponseWriter, *GetPumpRequest) error
+}
+
+// Service interface for WaitOnPumpStatusChangeHandler handler
+type WaitOnPumpStatusChangeHandlerService interface {
 	/*
 	   WaitOnPumpStatusChange Wait for a status change on a given pump
 
@@ -584,24 +596,91 @@ type Service interface {
 	WaitOnPumpStatusChange(context.Context, WaitOnPumpStatusChangeResponseWriter, *WaitOnPumpStatusChangeRequest) error
 }
 
+// Legacy Interface.
+// Use this if you want to fully implement a service.
+type Service interface {
+	ProcessPaymentHandlerService
+	ApproachingAtTheForecourtHandlerService
+	GetPumpHandlerService
+	WaitOnPumpStatusChangeHandlerService
+}
+
+// WaitOnPumpStatusChangeHandlerWithFallbackHelper helper that checks if the given service fulfills the interface. Returns fallback handler if not, otherwise returns matching handler.
+func WaitOnPumpStatusChangeHandlerWithFallbackHelper(service interface{}, fallback http.Handler) http.Handler {
+	if service, ok := service.(WaitOnPumpStatusChangeHandlerService); ok {
+		return WaitOnPumpStatusChangeHandler(service)
+	} else {
+		return fallback
+	}
+}
+
+// GetPumpHandlerWithFallbackHelper helper that checks if the given service fulfills the interface. Returns fallback handler if not, otherwise returns matching handler.
+func GetPumpHandlerWithFallbackHelper(service interface{}, fallback http.Handler) http.Handler {
+	if service, ok := service.(GetPumpHandlerService); ok {
+		return GetPumpHandler(service)
+	} else {
+		return fallback
+	}
+}
+
+// ProcessPaymentHandlerWithFallbackHelper helper that checks if the given service fulfills the interface. Returns fallback handler if not, otherwise returns matching handler.
+func ProcessPaymentHandlerWithFallbackHelper(service interface{}, fallback http.Handler) http.Handler {
+	if service, ok := service.(ProcessPaymentHandlerService); ok {
+		return ProcessPaymentHandler(service)
+	} else {
+		return fallback
+	}
+}
+
+// ApproachingAtTheForecourtHandlerWithFallbackHelper helper that checks if the given service fulfills the interface. Returns fallback handler if not, otherwise returns matching handler.
+func ApproachingAtTheForecourtHandlerWithFallbackHelper(service interface{}, fallback http.Handler) http.Handler {
+	if service, ok := service.(ApproachingAtTheForecourtHandlerService); ok {
+		return ApproachingAtTheForecourtHandler(service)
+	} else {
+		return fallback
+	}
+}
+
 /*
 Router implements: PACE Fueling API
 
 Fueling API
 */
-func Router(service Service) *mux.Router {
+func Router(service interface{}) *mux.Router {
 	router := mux.NewRouter()
 	// Subrouter s1 - Path: /fueling/beta/
 	s1 := router.PathPrefix("/fueling/beta/").Subrouter()
-	s1.Methods("GET").Path("/gas-stations/{gasStationId}/pumps/{pumpId}/wait-for-status-change").Handler(WaitOnPumpStatusChangeHandler(service)).Name("WaitOnPumpStatusChange")
-	s1.Methods("GET").Path("/gas-stations/{gasStationId}/pumps/{pumpId}").Handler(GetPumpHandler(service)).Name("GetPump")
-	s1.Methods("POST").Path("/gas-station/{gasStationId}/payment").Handler(ProcessPaymentHandler(service)).Name("ProcessPayment")
-	s1.Methods("POST").Path("/gas-stations/{gasStationId}/approaching").Handler(ApproachingAtTheForecourtHandler(service)).Name("ApproachingAtTheForecourt")
+	s1.Methods("GET").Path("/gas-stations/{gasStationId}/pumps/{pumpId}/wait-for-status-change").Name("WaitOnPumpStatusChange").Handler(WaitOnPumpStatusChangeHandlerWithFallbackHelper(service, router.NotFoundHandler))
+	s1.Methods("GET").Path("/gas-stations/{gasStationId}/pumps/{pumpId}").Name("GetPump").Handler(GetPumpHandlerWithFallbackHelper(service, router.NotFoundHandler))
+	s1.Methods("POST").Path("/gas-station/{gasStationId}/payment").Name("ProcessPayment").Handler(ProcessPaymentHandlerWithFallbackHelper(service, router.NotFoundHandler))
+	s1.Methods("POST").Path("/gas-stations/{gasStationId}/approaching").Name("ApproachingAtTheForecourt").Handler(ApproachingAtTheForecourtHandlerWithFallbackHelper(service, router.NotFoundHandler))
 	// Subrouter s2 - Path: /fueling/v1/
 	s2 := router.PathPrefix("/fueling/v1/").Subrouter()
-	s2.Methods("GET").Path("/gas-stations/{gasStationId}/pumps/{pumpId}/wait-for-status-change").Handler(WaitOnPumpStatusChangeHandler(service)).Name("WaitOnPumpStatusChange")
-	s2.Methods("GET").Path("/gas-stations/{gasStationId}/pumps/{pumpId}").Handler(GetPumpHandler(service)).Name("GetPump")
-	s2.Methods("POST").Path("/gas-station/{gasStationId}/payment").Handler(ProcessPaymentHandler(service)).Name("ProcessPayment")
-	s2.Methods("POST").Path("/gas-stations/{gasStationId}/approaching").Handler(ApproachingAtTheForecourtHandler(service)).Name("ApproachingAtTheForecourt")
+	s2.Methods("GET").Path("/gas-stations/{gasStationId}/pumps/{pumpId}/wait-for-status-change").Name("WaitOnPumpStatusChange").Handler(WaitOnPumpStatusChangeHandlerWithFallbackHelper(service, router.NotFoundHandler))
+	s2.Methods("GET").Path("/gas-stations/{gasStationId}/pumps/{pumpId}").Name("GetPump").Handler(GetPumpHandlerWithFallbackHelper(service, router.NotFoundHandler))
+	s2.Methods("POST").Path("/gas-station/{gasStationId}/payment").Name("ProcessPayment").Handler(ProcessPaymentHandlerWithFallbackHelper(service, router.NotFoundHandler))
+	s2.Methods("POST").Path("/gas-stations/{gasStationId}/approaching").Name("ApproachingAtTheForecourt").Handler(ApproachingAtTheForecourtHandlerWithFallbackHelper(service, router.NotFoundHandler))
+	return router
+}
+
+/*
+Router implements: PACE Fueling API
+
+Fueling API
+*/
+func RouterWithFallback(service interface{}, fallback http.Handler) *mux.Router {
+	router := mux.NewRouter()
+	// Subrouter s1 - Path: /fueling/beta/
+	s1 := router.PathPrefix("/fueling/beta/").Subrouter()
+	s1.Methods("GET").Path("/gas-stations/{gasStationId}/pumps/{pumpId}/wait-for-status-change").Name("WaitOnPumpStatusChange").Handler(WaitOnPumpStatusChangeHandlerWithFallbackHelper(service, fallback))
+	s1.Methods("GET").Path("/gas-stations/{gasStationId}/pumps/{pumpId}").Name("GetPump").Handler(GetPumpHandlerWithFallbackHelper(service, fallback))
+	s1.Methods("POST").Path("/gas-station/{gasStationId}/payment").Name("ProcessPayment").Handler(ProcessPaymentHandlerWithFallbackHelper(service, fallback))
+	s1.Methods("POST").Path("/gas-stations/{gasStationId}/approaching").Name("ApproachingAtTheForecourt").Handler(ApproachingAtTheForecourtHandlerWithFallbackHelper(service, fallback))
+	// Subrouter s2 - Path: /fueling/v1/
+	s2 := router.PathPrefix("/fueling/v1/").Subrouter()
+	s2.Methods("GET").Path("/gas-stations/{gasStationId}/pumps/{pumpId}/wait-for-status-change").Name("WaitOnPumpStatusChange").Handler(WaitOnPumpStatusChangeHandlerWithFallbackHelper(service, fallback))
+	s2.Methods("GET").Path("/gas-stations/{gasStationId}/pumps/{pumpId}").Name("GetPump").Handler(GetPumpHandlerWithFallbackHelper(service, fallback))
+	s2.Methods("POST").Path("/gas-station/{gasStationId}/payment").Name("ProcessPayment").Handler(ProcessPaymentHandlerWithFallbackHelper(service, fallback))
+	s2.Methods("POST").Path("/gas-stations/{gasStationId}/approaching").Name("ApproachingAtTheForecourt").Handler(ApproachingAtTheForecourtHandlerWithFallbackHelper(service, fallback))
 	return router
 }

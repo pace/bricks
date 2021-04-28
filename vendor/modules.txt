@@ -197,8 +197,6 @@ github.com/uber/jaeger-lib/metrics/prometheus
 # github.com/zenazn/goji v0.9.0
 ## explicit
 github.com/zenazn/goji/web/mutil
-# go.uber.org/atomic v1.3.2
-## explicit
 # golang.org/x/crypto v0.0.0-20200709230013-948cd5f35899
 golang.org/x/crypto/argon2
 golang.org/x/crypto/blake2b

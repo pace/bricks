@@ -1,6 +1,6 @@
 module github.com/pace/bricks
 
-go 1.14
+go 1.16
 
 require (
 	github.com/adjust/rmq/v3 v3.0.0
@@ -45,7 +45,6 @@ require (
 	github.com/uber/jaeger-client-go v2.14.0+incompatible
 	github.com/uber/jaeger-lib v1.5.0
 	github.com/zenazn/goji v0.9.0
-	go.uber.org/atomic v1.3.2 // indirect
 	golang.org/x/tools v0.0.0-20200304024140-c4206d458c3f
 	golang.org/x/xerrors v0.0.0-20200804184101-5ec99f83aff1
 )

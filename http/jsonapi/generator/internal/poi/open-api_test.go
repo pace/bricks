@@ -424,7 +424,7 @@ var cfgOIDC = &oidc.Config{
 DeduplicatePoiHandler handles request/response marshaling and validation for
  Patch /beta/admin/poi/dedupe
 */
-func DeduplicatePoiHandler(service Service, authBackend AuthorizationBackend) http.Handler {
+func DeduplicatePoiHandler(service DeduplicatePoiHandlerService, authBackend AuthorizationBackend) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		defer errors.HandleRequest("DeduplicatePoiHandler", w, r)
 
@@ -478,7 +478,7 @@ func DeduplicatePoiHandler(service Service, authBackend AuthorizationBackend) ht
 MovePoiAtPositionHandler handles request/response marshaling and validation for
  Patch /beta/admin/poi/move
 */
-func MovePoiAtPositionHandler(service Service, authBackend AuthorizationBackend) http.Handler {
+func MovePoiAtPositionHandler(service MovePoiAtPositionHandlerService, authBackend AuthorizationBackend) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		defer errors.HandleRequest("MovePoiAtPositionHandler", w, r)
 
@@ -532,7 +532,7 @@ func MovePoiAtPositionHandler(service Service, authBackend AuthorizationBackend)
 GetAppsHandler handles request/response marshaling and validation for
  Get /beta/apps
 */
-func GetAppsHandler(service Service, authBackend AuthorizationBackend) http.Handler {
+func GetAppsHandler(service GetAppsHandlerService, authBackend AuthorizationBackend) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		defer errors.HandleRequest("GetAppsHandler", w, r)
 
@@ -606,7 +606,7 @@ func GetAppsHandler(service Service, authBackend AuthorizationBackend) http.Hand
 CreateAppHandler handles request/response marshaling and validation for
  Post /beta/apps
 */
-func CreateAppHandler(service Service, authBackend AuthorizationBackend) http.Handler {
+func CreateAppHandler(service CreateAppHandlerService, authBackend AuthorizationBackend) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		defer errors.HandleRequest("CreateAppHandler", w, r)
 
@@ -660,7 +660,7 @@ func CreateAppHandler(service Service, authBackend AuthorizationBackend) http.Ha
 CheckForPaceAppHandler handles request/response marshaling and validation for
  Get /beta/apps/query
 */
-func CheckForPaceAppHandler(service Service, authBackend AuthorizationBackend) http.Handler {
+func CheckForPaceAppHandler(service CheckForPaceAppHandlerService, authBackend AuthorizationBackend) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		defer errors.HandleRequest("CheckForPaceAppHandler", w, r)
 
@@ -726,7 +726,7 @@ func CheckForPaceAppHandler(service Service, authBackend AuthorizationBackend) h
 DeleteAppHandler handles request/response marshaling and validation for
  Delete /beta/apps/{appID}
 */
-func DeleteAppHandler(service Service, authBackend AuthorizationBackend) http.Handler {
+func DeleteAppHandler(service DeleteAppHandlerService, authBackend AuthorizationBackend) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		defer errors.HandleRequest("DeleteAppHandler", w, r)
 
@@ -786,7 +786,7 @@ func DeleteAppHandler(service Service, authBackend AuthorizationBackend) http.Ha
 GetAppHandler handles request/response marshaling and validation for
  Get /beta/apps/{appID}
 */
-func GetAppHandler(service Service, authBackend AuthorizationBackend) http.Handler {
+func GetAppHandler(service GetAppHandlerService, authBackend AuthorizationBackend) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		defer errors.HandleRequest("GetAppHandler", w, r)
 
@@ -846,7 +846,7 @@ func GetAppHandler(service Service, authBackend AuthorizationBackend) http.Handl
 UpdateAppHandler handles request/response marshaling and validation for
  Put /beta/apps/{appID}
 */
-func UpdateAppHandler(service Service, authBackend AuthorizationBackend) http.Handler {
+func UpdateAppHandler(service UpdateAppHandlerService, authBackend AuthorizationBackend) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		defer errors.HandleRequest("UpdateAppHandler", w, r)
 
@@ -909,7 +909,7 @@ func UpdateAppHandler(service Service, authBackend AuthorizationBackend) http.Ha
 GetAppPOIsRelationshipsHandler handles request/response marshaling and validation for
  Get /beta/apps/{appID}/relationships/pois
 */
-func GetAppPOIsRelationshipsHandler(service Service, authBackend AuthorizationBackend) http.Handler {
+func GetAppPOIsRelationshipsHandler(service GetAppPOIsRelationshipsHandlerService, authBackend AuthorizationBackend) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		defer errors.HandleRequest("GetAppPOIsRelationshipsHandler", w, r)
 
@@ -969,7 +969,7 @@ func GetAppPOIsRelationshipsHandler(service Service, authBackend AuthorizationBa
 UpdateAppPOIsRelationshipsHandler handles request/response marshaling and validation for
  Patch /beta/apps/{appID}/relationships/pois
 */
-func UpdateAppPOIsRelationshipsHandler(service Service, authBackend AuthorizationBackend) http.Handler {
+func UpdateAppPOIsRelationshipsHandler(service UpdateAppPOIsRelationshipsHandlerService, authBackend AuthorizationBackend) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		defer errors.HandleRequest("UpdateAppPOIsRelationshipsHandler", w, r)
 
@@ -1032,7 +1032,7 @@ func UpdateAppPOIsRelationshipsHandler(service Service, authBackend Authorizatio
 GetDuplicatesKMLHandler handles request/response marshaling and validation for
  Get /beta/datadumps/duplicatemap/{countryCode}
 */
-func GetDuplicatesKMLHandler(service Service, authBackend AuthorizationBackend) http.Handler {
+func GetDuplicatesKMLHandler(service GetDuplicatesKMLHandlerService, authBackend AuthorizationBackend) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		defer errors.HandleRequest("GetDuplicatesKMLHandler", w, r)
 
@@ -1092,7 +1092,7 @@ func GetDuplicatesKMLHandler(service Service, authBackend AuthorizationBackend) 
 GetPoisDumpHandler handles request/response marshaling and validation for
  Get /beta/datadumps/pois
 */
-func GetPoisDumpHandler(service Service, authBackend AuthorizationBackend) http.Handler {
+func GetPoisDumpHandler(service GetPoisDumpHandlerService, authBackend AuthorizationBackend) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		defer errors.HandleRequest("GetPoisDumpHandler", w, r)
 
@@ -1150,7 +1150,7 @@ func GetPoisDumpHandler(service Service, authBackend AuthorizationBackend) http.
 DeleteGasStationReferenceStatusHandler handles request/response marshaling and validation for
  Delete /beta/delivery/gas-stations/{gasStationId}/reference-status/{reference}
 */
-func DeleteGasStationReferenceStatusHandler(service Service, authBackend AuthorizationBackend) http.Handler {
+func DeleteGasStationReferenceStatusHandler(service DeleteGasStationReferenceStatusHandlerService, authBackend AuthorizationBackend) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		defer errors.HandleRequest("DeleteGasStationReferenceStatusHandler", w, r)
 
@@ -1215,7 +1215,7 @@ func DeleteGasStationReferenceStatusHandler(service Service, authBackend Authori
 PutGasStationReferenceStatusHandler handles request/response marshaling and validation for
  Put /beta/delivery/gas-stations/{gasStationId}/reference-status/{reference}
 */
-func PutGasStationReferenceStatusHandler(service Service, authBackend AuthorizationBackend) http.Handler {
+func PutGasStationReferenceStatusHandler(service PutGasStationReferenceStatusHandlerService, authBackend AuthorizationBackend) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		defer errors.HandleRequest("PutGasStationReferenceStatusHandler", w, r)
 
@@ -1283,7 +1283,7 @@ func PutGasStationReferenceStatusHandler(service Service, authBackend Authorizat
 GetEventsHandler handles request/response marshaling and validation for
  Get /beta/events
 */
-func GetEventsHandler(service Service, authBackend AuthorizationBackend) http.Handler {
+func GetEventsHandler(service GetEventsHandlerService, authBackend AuthorizationBackend) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		defer errors.HandleRequest("GetEventsHandler", w, r)
 
@@ -1353,7 +1353,7 @@ func GetEventsHandler(service Service, authBackend AuthorizationBackend) http.Ha
 GetGasStationsHandler handles request/response marshaling and validation for
  Get /beta/gas-stations
 */
-func GetGasStationsHandler(service Service, authBackend AuthorizationBackend) http.Handler {
+func GetGasStationsHandler(service GetGasStationsHandlerService, authBackend AuthorizationBackend) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		defer errors.HandleRequest("GetGasStationsHandler", w, r)
 
@@ -1447,7 +1447,7 @@ func GetGasStationsHandler(service Service, authBackend AuthorizationBackend) ht
 GetGasStationHandler handles request/response marshaling and validation for
  Get /beta/gas-stations/{id}
 */
-func GetGasStationHandler(service Service, authBackend AuthorizationBackend) http.Handler {
+func GetGasStationHandler(service GetGasStationHandlerService, authBackend AuthorizationBackend) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		defer errors.HandleRequest("GetGasStationHandler", w, r)
 
@@ -1511,7 +1511,7 @@ func GetGasStationHandler(service Service, authBackend AuthorizationBackend) htt
 GetPriceHistoryHandler handles request/response marshaling and validation for
  Get /beta/gas-stations/{id}/fuel-price-histories/{fuel_type}
 */
-func GetPriceHistoryHandler(service Service, authBackend AuthorizationBackend) http.Handler {
+func GetPriceHistoryHandler(service GetPriceHistoryHandlerService, authBackend AuthorizationBackend) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		defer errors.HandleRequest("GetPriceHistoryHandler", w, r)
 
@@ -1588,7 +1588,7 @@ func GetPriceHistoryHandler(service Service, authBackend AuthorizationBackend) h
 GetGasStationFuelTypeNameMappingHandler handles request/response marshaling and validation for
  Get /beta/gas-stations/{id}/fueltype
 */
-func GetGasStationFuelTypeNameMappingHandler(service Service, authBackend AuthorizationBackend) http.Handler {
+func GetGasStationFuelTypeNameMappingHandler(service GetGasStationFuelTypeNameMappingHandlerService, authBackend AuthorizationBackend) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		defer errors.HandleRequest("GetGasStationFuelTypeNameMappingHandler", w, r)
 
@@ -1652,7 +1652,7 @@ func GetGasStationFuelTypeNameMappingHandler(service Service, authBackend Author
 GetMetadataFiltersHandler handles request/response marshaling and validation for
  Get /beta/meta
 */
-func GetMetadataFiltersHandler(service Service, authBackend AuthorizationBackend) http.Handler {
+func GetMetadataFiltersHandler(service GetMetadataFiltersHandlerService, authBackend AuthorizationBackend) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		defer errors.HandleRequest("GetMetadataFiltersHandler", w, r)
 
@@ -1714,7 +1714,7 @@ func GetMetadataFiltersHandler(service Service, authBackend AuthorizationBackend
 GetPoisHandler handles request/response marshaling and validation for
  Get /beta/pois
 */
-func GetPoisHandler(service Service, authBackend AuthorizationBackend) http.Handler {
+func GetPoisHandler(service GetPoisHandlerService, authBackend AuthorizationBackend) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		defer errors.HandleRequest("GetPoisHandler", w, r)
 
@@ -1784,7 +1784,7 @@ func GetPoisHandler(service Service, authBackend AuthorizationBackend) http.Hand
 GetPoiHandler handles request/response marshaling and validation for
  Get /beta/pois/{poiId}
 */
-func GetPoiHandler(service Service, authBackend AuthorizationBackend) http.Handler {
+func GetPoiHandler(service GetPoiHandlerService, authBackend AuthorizationBackend) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		defer errors.HandleRequest("GetPoiHandler", w, r)
 
@@ -1844,7 +1844,7 @@ func GetPoiHandler(service Service, authBackend AuthorizationBackend) http.Handl
 ChangePoiHandler handles request/response marshaling and validation for
  Patch /beta/pois/{poiId}
 */
-func ChangePoiHandler(service Service, authBackend AuthorizationBackend) http.Handler {
+func ChangePoiHandler(service ChangePoiHandlerService, authBackend AuthorizationBackend) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		defer errors.HandleRequest("ChangePoiHandler", w, r)
 
@@ -1907,7 +1907,7 @@ func ChangePoiHandler(service Service, authBackend AuthorizationBackend) http.Ha
 GetPoliciesHandler handles request/response marshaling and validation for
  Get /beta/policies
 */
-func GetPoliciesHandler(service Service, authBackend AuthorizationBackend) http.Handler {
+func GetPoliciesHandler(service GetPoliciesHandlerService, authBackend AuthorizationBackend) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		defer errors.HandleRequest("GetPoliciesHandler", w, r)
 
@@ -1981,7 +1981,7 @@ func GetPoliciesHandler(service Service, authBackend AuthorizationBackend) http.
 CreatePolicyHandler handles request/response marshaling and validation for
  Post /beta/policies
 */
-func CreatePolicyHandler(service Service, authBackend AuthorizationBackend) http.Handler {
+func CreatePolicyHandler(service CreatePolicyHandlerService, authBackend AuthorizationBackend) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		defer errors.HandleRequest("CreatePolicyHandler", w, r)
 
@@ -2035,7 +2035,7 @@ func CreatePolicyHandler(service Service, authBackend AuthorizationBackend) http
 GetPolicyHandler handles request/response marshaling and validation for
  Get /beta/policies/{policyId}
 */
-func GetPolicyHandler(service Service, authBackend AuthorizationBackend) http.Handler {
+func GetPolicyHandler(service GetPolicyHandlerService, authBackend AuthorizationBackend) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		defer errors.HandleRequest("GetPolicyHandler", w, r)
 
@@ -2095,7 +2095,7 @@ func GetPolicyHandler(service Service, authBackend AuthorizationBackend) http.Ha
 GetRegionalPricesHandler handles request/response marshaling and validation for
  Get /beta/prices/regional
 */
-func GetRegionalPricesHandler(service Service, authBackend AuthorizationBackend) http.Handler {
+func GetRegionalPricesHandler(service GetRegionalPricesHandlerService, authBackend AuthorizationBackend) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		defer errors.HandleRequest("GetRegionalPricesHandler", w, r)
 
@@ -2151,7 +2151,7 @@ func GetRegionalPricesHandler(service Service, authBackend AuthorizationBackend)
 GetSourcesHandler handles request/response marshaling and validation for
  Get /beta/sources
 */
-func GetSourcesHandler(service Service, authBackend AuthorizationBackend) http.Handler {
+func GetSourcesHandler(service GetSourcesHandlerService, authBackend AuthorizationBackend) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		defer errors.HandleRequest("GetSourcesHandler", w, r)
 
@@ -2221,7 +2221,7 @@ func GetSourcesHandler(service Service, authBackend AuthorizationBackend) http.H
 CreateSourceHandler handles request/response marshaling and validation for
  Post /beta/sources
 */
-func CreateSourceHandler(service Service, authBackend AuthorizationBackend) http.Handler {
+func CreateSourceHandler(service CreateSourceHandlerService, authBackend AuthorizationBackend) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		defer errors.HandleRequest("CreateSourceHandler", w, r)
 
@@ -2275,7 +2275,7 @@ func CreateSourceHandler(service Service, authBackend AuthorizationBackend) http
 DeleteSourceHandler handles request/response marshaling and validation for
  Delete /beta/sources/{sourceId}
 */
-func DeleteSourceHandler(service Service, authBackend AuthorizationBackend) http.Handler {
+func DeleteSourceHandler(service DeleteSourceHandlerService, authBackend AuthorizationBackend) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		defer errors.HandleRequest("DeleteSourceHandler", w, r)
 
@@ -2335,7 +2335,7 @@ func DeleteSourceHandler(service Service, authBackend AuthorizationBackend) http
 GetSourceHandler handles request/response marshaling and validation for
  Get /beta/sources/{sourceId}
 */
-func GetSourceHandler(service Service, authBackend AuthorizationBackend) http.Handler {
+func GetSourceHandler(service GetSourceHandlerService, authBackend AuthorizationBackend) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		defer errors.HandleRequest("GetSourceHandler", w, r)
 
@@ -2395,7 +2395,7 @@ func GetSourceHandler(service Service, authBackend AuthorizationBackend) http.Ha
 UpdateSourceHandler handles request/response marshaling and validation for
  Put /beta/sources/{sourceId}
 */
-func UpdateSourceHandler(service Service, authBackend AuthorizationBackend) http.Handler {
+func UpdateSourceHandler(service UpdateSourceHandlerService, authBackend AuthorizationBackend) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		defer errors.HandleRequest("UpdateSourceHandler", w, r)
 
@@ -2458,7 +2458,7 @@ func UpdateSourceHandler(service Service, authBackend AuthorizationBackend) http
 GetSubscriptionsHandler handles request/response marshaling and validation for
  Get /beta/subscriptions
 */
-func GetSubscriptionsHandler(service Service, authBackend AuthorizationBackend) http.Handler {
+func GetSubscriptionsHandler(service GetSubscriptionsHandlerService, authBackend AuthorizationBackend) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		defer errors.HandleRequest("GetSubscriptionsHandler", w, r)
 
@@ -2512,7 +2512,7 @@ func GetSubscriptionsHandler(service Service, authBackend AuthorizationBackend) 
 DeleteSubscriptionHandler handles request/response marshaling and validation for
  Delete /beta/subscriptions/{id}
 */
-func DeleteSubscriptionHandler(service Service, authBackend AuthorizationBackend) http.Handler {
+func DeleteSubscriptionHandler(service DeleteSubscriptionHandlerService, authBackend AuthorizationBackend) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		defer errors.HandleRequest("DeleteSubscriptionHandler", w, r)
 
@@ -2560,7 +2560,7 @@ func DeleteSubscriptionHandler(service Service, authBackend AuthorizationBackend
 StoreSubscriptionHandler handles request/response marshaling and validation for
  Put /beta/subscriptions/{id}
 */
-func StoreSubscriptionHandler(service Service, authBackend AuthorizationBackend) http.Handler {
+func StoreSubscriptionHandler(service StoreSubscriptionHandlerService, authBackend AuthorizationBackend) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		defer errors.HandleRequest("StoreSubscriptionHandler", w, r)
 
@@ -2614,7 +2614,7 @@ func StoreSubscriptionHandler(service Service, authBackend AuthorizationBackend)
 GetTilesHandler handles request/response marshaling and validation for
  Post /v1/tiles/query
 */
-func GetTilesHandler(service Service, authBackend AuthorizationBackend) http.Handler {
+func GetTilesHandler(service GetTilesHandlerService, authBackend AuthorizationBackend) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		defer errors.HandleRequest("GetTilesHandler", w, r)
 
@@ -3946,24 +3946,40 @@ type GetTilesRequest struct {
 	Request *http.Request `valid:"-"`
 }
 
-// Service interface for all handlers
-type Service interface {
+// Service interface for DeduplicatePoiHandler handler
+type DeduplicatePoiHandlerService interface {
 	// DeduplicatePoi Specify if a list of POI are considered to be duplicates of a specific POI
 	DeduplicatePoi(context.Context, DeduplicatePoiResponseWriter, *DeduplicatePoiRequest) error
+}
+
+// Service interface for MovePoiAtPositionHandler handler
+type MovePoiAtPositionHandlerService interface {
 	// MovePoiAtPosition Allows an admin to move a POI identified by its ID to a specific position
 	MovePoiAtPosition(context.Context, MovePoiAtPositionResponseWriter, *MovePoiAtPositionRequest) error
+}
+
+// Service interface for GetAppsHandler handler
+type GetAppsHandlerService interface {
 	/*
 	   GetApps Returns a paginated list of apps
 
 	   Returns a paginated list of apps optionally filtered by type and/or query.
 	*/
 	GetApps(context.Context, GetAppsResponseWriter, *GetAppsRequest) error
+}
+
+// Service interface for CreateAppHandler handler
+type CreateAppHandlerService interface {
 	/*
 	   CreateApp Creates a new application
 
 	   Creates a new application
 	*/
 	CreateApp(context.Context, CreateAppResponseWriter, *CreateAppRequest) error
+}
+
+// Service interface for CheckForPaceAppHandler handler
+type CheckForPaceAppHandlerService interface {
 	/*
 	   CheckForPaceApp Query for location-based apps
 
@@ -3977,12 +3993,20 @@ type Service interface {
 	   Please note that calling this API is very cheap and can be done regularly.
 	*/
 	CheckForPaceApp(context.Context, CheckForPaceAppResponseWriter, *CheckForPaceAppRequest) error
+}
+
+// Service interface for DeleteAppHandler handler
+type DeleteAppHandlerService interface {
 	/*
 	   DeleteApp Deletes App with specified id
 
 	   Deletes App with specified id
 	*/
 	DeleteApp(context.Context, DeleteAppResponseWriter, *DeleteAppRequest) error
+}
+
+// Service interface for GetAppHandler handler
+type GetAppHandlerService interface {
 	/*
 	   GetApp Returns App with specified id
 
@@ -3990,30 +4014,50 @@ type Service interface {
 	   In case the query returns a `404` (`Not Found`) the app was deleted and should be deleted from any caches.
 	*/
 	GetApp(context.Context, GetAppResponseWriter, *GetAppRequest) error
+}
+
+// Service interface for UpdateAppHandler handler
+type UpdateAppHandlerService interface {
 	/*
 	   UpdateApp Updates App with specified id
 
 	   Updates App with specified id
 	*/
 	UpdateApp(context.Context, UpdateAppResponseWriter, *UpdateAppRequest) error
+}
+
+// Service interface for GetAppPOIsRelationshipsHandler handler
+type GetAppPOIsRelationshipsHandlerService interface {
 	/*
 	   GetAppPOIsRelationships Returns all POI relations for specified app id
 
 	   Returns all POI relations for specified app id
 	*/
 	GetAppPOIsRelationships(context.Context, GetAppPOIsRelationshipsResponseWriter, *GetAppPOIsRelationshipsRequest) error
+}
+
+// Service interface for UpdateAppPOIsRelationshipsHandler handler
+type UpdateAppPOIsRelationshipsHandlerService interface {
 	/*
 	   UpdateAppPOIsRelationships Update all POI relations for specified app id
 
 	   Update all POI relations for specified app id
 	*/
 	UpdateAppPOIsRelationships(context.Context, UpdateAppPOIsRelationshipsResponseWriter, *UpdateAppPOIsRelationshipsRequest) error
+}
+
+// Service interface for GetDuplicatesKMLHandler handler
+type GetDuplicatesKMLHandlerService interface {
 	/*
 	   GetDuplicatesKML Duplicate Map for country (KML)
 
 	   Generates a map of potential gas station duplicates (closer than 50m to eachother) for specified country.
 	*/
 	GetDuplicatesKML(context.Context, GetDuplicatesKMLResponseWriter, *GetDuplicatesKMLRequest) error
+}
+
+// Service interface for GetPoisDumpHandler handler
+type GetPoisDumpHandlerService interface {
 	/*
 	   GetPoisDump Create a full POI dump
 
@@ -4021,24 +4065,40 @@ type Service interface {
 	   Dump all POI data in XLSX format, along with full amenities.
 	*/
 	GetPoisDump(context.Context, GetPoisDumpResponseWriter, *GetPoisDumpRequest) error
+}
+
+// Service interface for DeleteGasStationReferenceStatusHandler handler
+type DeleteGasStationReferenceStatusHandlerService interface {
 	/*
 	   DeleteGasStationReferenceStatus Deletes a reference status of a gas station
 
 	   Deletes a reference status of a gas station
 	*/
 	DeleteGasStationReferenceStatus(context.Context, DeleteGasStationReferenceStatusResponseWriter, *DeleteGasStationReferenceStatusRequest) error
+}
+
+// Service interface for PutGasStationReferenceStatusHandler handler
+type PutGasStationReferenceStatusHandlerService interface {
 	/*
 	   PutGasStationReferenceStatus Creates or updates a reference status of a gas station
 
 	   Creates or updates a reference status of a gas station
 	*/
 	PutGasStationReferenceStatus(context.Context, PutGasStationReferenceStatusResponseWriter, *PutGasStationReferenceStatusRequest) error
+}
+
+// Service interface for GetEventsHandler handler
+type GetEventsHandlerService interface {
 	/*
 	   GetEvents Returns a list of events
 
 	   Returns a list of events optionally filtered by poi type and/or country id and/or user id
 	*/
 	GetEvents(context.Context, GetEventsResponseWriter, *GetEventsRequest) error
+}
+
+// Service interface for GetGasStationsHandler handler
+type GetGasStationsHandlerService interface {
 	/*
 	   GetGasStations Query for gas stations
 
@@ -4055,24 +4115,40 @@ type Service interface {
 	   * boundingBox
 	*/
 	GetGasStations(context.Context, GetGasStationsResponseWriter, *GetGasStationsRequest) error
+}
+
+// Service interface for GetGasStationHandler handler
+type GetGasStationHandlerService interface {
 	/*
 	   GetGasStation Get a specific gas station
 
 	   Returns an individual gas station
 	*/
 	GetGasStation(context.Context, GetGasStationResponseWriter, *GetGasStationRequest) error
+}
+
+// Service interface for GetPriceHistoryHandler handler
+type GetPriceHistoryHandlerService interface {
 	/*
 	   GetPriceHistory Get price history for a specific gas station
 
 	   Get the price history for a specific gas station and fuel type on a period of time which can begin no sooner than 37 days ago; the time interval between price changes can be set to minute, hour, day, week, month or year
 	*/
 	GetPriceHistory(context.Context, GetPriceHistoryResponseWriter, *GetPriceHistoryRequest) error
+}
+
+// Service interface for GetGasStationFuelTypeNameMappingHandler handler
+type GetGasStationFuelTypeNameMappingHandlerService interface {
 	/*
 	   GetGasStationFuelTypeNameMapping Get a mapping from gas station specific fuel product name mapped to a normalized fuel type
 
 	   Every gas station potential has different names for the same fuel types. This endpoint accepts the gas station's specific name and return a mapping where the specific name is mapped to a normalized version which should be globally the same across gas stations.
 	*/
 	GetGasStationFuelTypeNameMapping(context.Context, GetGasStationFuelTypeNameMappingResponseWriter, *GetGasStationFuelTypeNameMappingRequest) error
+}
+
+// Service interface for GetMetadataFiltersHandler handler
+type GetMetadataFiltersHandlerService interface {
 	/*
 	   GetMetadataFilters Query for filterable values inside a radius
 
@@ -4086,78 +4162,130 @@ type Service interface {
 	     * amenities
 	*/
 	GetMetadataFilters(context.Context, GetMetadataFiltersResponseWriter, *GetMetadataFiltersRequest) error
+}
+
+// Service interface for GetPoisHandler handler
+type GetPoisHandlerService interface {
 	/*
 	   GetPois Returns a paginated list of POIs
 
 	   Returns a paginated list of POIs optionally filtered by type, appId and/or query
 	*/
 	GetPois(context.Context, GetPoisResponseWriter, *GetPoisRequest) error
+}
+
+// Service interface for GetPoiHandler handler
+type GetPoiHandlerService interface {
 	/*
 	   GetPoi Returns POI with specified id
 
 	   Returns POI with specified id
 	*/
 	GetPoi(context.Context, GetPoiResponseWriter, *GetPoiRequest) error
+}
+
+// Service interface for ChangePoiHandler handler
+type ChangePoiHandlerService interface {
 	/*
 	   ChangePoi Updates POI with specified id (only passed attributes will be updated)
 
 	   Returns POI with specified id (only passed attributes will be updated)
 	*/
 	ChangePoi(context.Context, ChangePoiResponseWriter, *ChangePoiRequest) error
+}
+
+// Service interface for GetPoliciesHandler handler
+type GetPoliciesHandlerService interface {
 	/*
 	   GetPolicies Returns a paginated list of policies
 
 	   Returns a paginated list of policies optionally filtered by poi type and/or country id and/or user id
 	*/
 	GetPolicies(context.Context, GetPoliciesResponseWriter, *GetPoliciesRequest) error
+}
+
+// Service interface for CreatePolicyHandler handler
+type CreatePolicyHandlerService interface {
 	/*
 	   CreatePolicy Creates a new policy
 
 	   Creates a new policy
 	*/
 	CreatePolicy(context.Context, CreatePolicyResponseWriter, *CreatePolicyRequest) error
+}
+
+// Service interface for GetPolicyHandler handler
+type GetPolicyHandlerService interface {
 	/*
 	   GetPolicy Returns policy with specified id
 
 	   Returns policy with specified id
 	*/
 	GetPolicy(context.Context, GetPolicyResponseWriter, *GetPolicyRequest) error
+}
+
+// Service interface for GetRegionalPricesHandler handler
+type GetRegionalPricesHandlerService interface {
 	/*
 	   GetRegionalPrices Search for regional prices in the area
 
 	   Search for regional prices in the area centered at input latitude/longitude. Lower/Upper limits are set for each fuel type returned.
 	*/
 	GetRegionalPrices(context.Context, GetRegionalPricesResponseWriter, *GetRegionalPricesRequest) error
+}
+
+// Service interface for GetSourcesHandler handler
+type GetSourcesHandlerService interface {
 	/*
 	   GetSources Returns a paginated list of sources
 
 	   Returns a paginated list of sources optionally filtered by poi type and/or name
 	*/
 	GetSources(context.Context, GetSourcesResponseWriter, *GetSourcesRequest) error
+}
+
+// Service interface for CreateSourceHandler handler
+type CreateSourceHandlerService interface {
 	/*
 	   CreateSource Creates a new source
 
 	   Creates a new source
 	*/
 	CreateSource(context.Context, CreateSourceResponseWriter, *CreateSourceRequest) error
+}
+
+// Service interface for DeleteSourceHandler handler
+type DeleteSourceHandlerService interface {
 	/*
 	   DeleteSource Deletes source with specified id
 
 	   Deletes source with specified id
 	*/
 	DeleteSource(context.Context, DeleteSourceResponseWriter, *DeleteSourceRequest) error
+}
+
+// Service interface for GetSourceHandler handler
+type GetSourceHandlerService interface {
 	/*
 	   GetSource Returns source with specified id
 
 	   Returns source with specified id
 	*/
 	GetSource(context.Context, GetSourceResponseWriter, *GetSourceRequest) error
+}
+
+// Service interface for UpdateSourceHandler handler
+type UpdateSourceHandlerService interface {
 	/*
 	   UpdateSource Updates source with specified id
 
 	   Updates source with specified id
 	*/
 	UpdateSource(context.Context, UpdateSourceResponseWriter, *UpdateSourceRequest) error
+}
+
+// Service interface for GetSubscriptionsHandler handler
+type GetSubscriptionsHandlerService interface {
 	/*
 	   GetSubscriptions Get the list of POI subscriptions for the user or device
 
@@ -4165,10 +4293,18 @@ type Service interface {
 	   Returns a list of all current (not expired) subscriptions of the user.
 	*/
 	GetSubscriptions(context.Context, GetSubscriptionsResponseWriter, *GetSubscriptionsRequest) error
+}
+
+// Service interface for DeleteSubscriptionHandler handler
+type DeleteSubscriptionHandlerService interface {
 	/*
 	   DeleteSubscription Deletes a previously created POI subscription
 	*/
 	DeleteSubscription(context.Context, DeleteSubscriptionResponseWriter, *DeleteSubscriptionRequest) error
+}
+
+// Service interface for StoreSubscriptionHandler handler
+type StoreSubscriptionHandlerService interface {
 	/*
 	   StoreSubscription Stores a POI subscription
 
@@ -4189,6 +4325,10 @@ type Service interface {
 	   ```
 	*/
 	StoreSubscription(context.Context, StoreSubscriptionResponseWriter, *StoreSubscriptionRequest) error
+}
+
+// Service interface for GetTilesHandler handler
+type GetTilesHandlerService interface {
 	/*
 	   GetTiles Query for tiles
 
@@ -4198,53 +4338,469 @@ type Service interface {
 	GetTiles(context.Context, GetTilesResponseWriter, *GetTilesRequest) error
 }
 
+// Legacy Interface.
+// Use this if you want to fully implement a service.
+type Service interface {
+	DeduplicatePoiHandlerService
+	MovePoiAtPositionHandlerService
+	GetAppsHandlerService
+	CreateAppHandlerService
+	CheckForPaceAppHandlerService
+	DeleteAppHandlerService
+	GetAppHandlerService
+	UpdateAppHandlerService
+	GetAppPOIsRelationshipsHandlerService
+	UpdateAppPOIsRelationshipsHandlerService
+	GetDuplicatesKMLHandlerService
+	GetPoisDumpHandlerService
+	DeleteGasStationReferenceStatusHandlerService
+	PutGasStationReferenceStatusHandlerService
+	GetEventsHandlerService
+	GetGasStationsHandlerService
+	GetGasStationHandlerService
+	GetPriceHistoryHandlerService
+	GetGasStationFuelTypeNameMappingHandlerService
+	GetMetadataFiltersHandlerService
+	GetPoisHandlerService
+	GetPoiHandlerService
+	ChangePoiHandlerService
+	GetPoliciesHandlerService
+	CreatePolicyHandlerService
+	GetPolicyHandlerService
+	GetRegionalPricesHandlerService
+	GetSourcesHandlerService
+	CreateSourceHandlerService
+	DeleteSourceHandlerService
+	GetSourceHandlerService
+	UpdateSourceHandlerService
+	GetSubscriptionsHandlerService
+	DeleteSubscriptionHandlerService
+	StoreSubscriptionHandlerService
+	GetTilesHandlerService
+}
+
+// DeleteGasStationReferenceStatusHandlerWithFallbackHelper helper that checks if the given service fulfills the interface. Returns fallback handler if not, otherwise returns matching handler.
+func DeleteGasStationReferenceStatusHandlerWithFallbackHelper(service interface{}, fallback http.Handler, authBackend AuthorizationBackend) http.Handler {
+	if service, ok := service.(DeleteGasStationReferenceStatusHandlerService); ok {
+		return DeleteGasStationReferenceStatusHandler(service, authBackend)
+	} else {
+		return fallback
+	}
+}
+
+// PutGasStationReferenceStatusHandlerWithFallbackHelper helper that checks if the given service fulfills the interface. Returns fallback handler if not, otherwise returns matching handler.
+func PutGasStationReferenceStatusHandlerWithFallbackHelper(service interface{}, fallback http.Handler, authBackend AuthorizationBackend) http.Handler {
+	if service, ok := service.(PutGasStationReferenceStatusHandlerService); ok {
+		return PutGasStationReferenceStatusHandler(service, authBackend)
+	} else {
+		return fallback
+	}
+}
+
+// GetAppPOIsRelationshipsHandlerWithFallbackHelper helper that checks if the given service fulfills the interface. Returns fallback handler if not, otherwise returns matching handler.
+func GetAppPOIsRelationshipsHandlerWithFallbackHelper(service interface{}, fallback http.Handler, authBackend AuthorizationBackend) http.Handler {
+	if service, ok := service.(GetAppPOIsRelationshipsHandlerService); ok {
+		return GetAppPOIsRelationshipsHandler(service, authBackend)
+	} else {
+		return fallback
+	}
+}
+
+// UpdateAppPOIsRelationshipsHandlerWithFallbackHelper helper that checks if the given service fulfills the interface. Returns fallback handler if not, otherwise returns matching handler.
+func UpdateAppPOIsRelationshipsHandlerWithFallbackHelper(service interface{}, fallback http.Handler, authBackend AuthorizationBackend) http.Handler {
+	if service, ok := service.(UpdateAppPOIsRelationshipsHandlerService); ok {
+		return UpdateAppPOIsRelationshipsHandler(service, authBackend)
+	} else {
+		return fallback
+	}
+}
+
+// GetPriceHistoryHandlerWithFallbackHelper helper that checks if the given service fulfills the interface. Returns fallback handler if not, otherwise returns matching handler.
+func GetPriceHistoryHandlerWithFallbackHelper(service interface{}, fallback http.Handler, authBackend AuthorizationBackend) http.Handler {
+	if service, ok := service.(GetPriceHistoryHandlerService); ok {
+		return GetPriceHistoryHandler(service, authBackend)
+	} else {
+		return fallback
+	}
+}
+
+// DeduplicatePoiHandlerWithFallbackHelper helper that checks if the given service fulfills the interface. Returns fallback handler if not, otherwise returns matching handler.
+func DeduplicatePoiHandlerWithFallbackHelper(service interface{}, fallback http.Handler, authBackend AuthorizationBackend) http.Handler {
+	if service, ok := service.(DeduplicatePoiHandlerService); ok {
+		return DeduplicatePoiHandler(service, authBackend)
+	} else {
+		return fallback
+	}
+}
+
+// MovePoiAtPositionHandlerWithFallbackHelper helper that checks if the given service fulfills the interface. Returns fallback handler if not, otherwise returns matching handler.
+func MovePoiAtPositionHandlerWithFallbackHelper(service interface{}, fallback http.Handler, authBackend AuthorizationBackend) http.Handler {
+	if service, ok := service.(MovePoiAtPositionHandlerService); ok {
+		return MovePoiAtPositionHandler(service, authBackend)
+	} else {
+		return fallback
+	}
+}
+
+// GetDuplicatesKMLHandlerWithFallbackHelper helper that checks if the given service fulfills the interface. Returns fallback handler if not, otherwise returns matching handler.
+func GetDuplicatesKMLHandlerWithFallbackHelper(service interface{}, fallback http.Handler, authBackend AuthorizationBackend) http.Handler {
+	if service, ok := service.(GetDuplicatesKMLHandlerService); ok {
+		return GetDuplicatesKMLHandler(service, authBackend)
+	} else {
+		return fallback
+	}
+}
+
+// GetGasStationFuelTypeNameMappingHandlerWithFallbackHelper helper that checks if the given service fulfills the interface. Returns fallback handler if not, otherwise returns matching handler.
+func GetGasStationFuelTypeNameMappingHandlerWithFallbackHelper(service interface{}, fallback http.Handler, authBackend AuthorizationBackend) http.Handler {
+	if service, ok := service.(GetGasStationFuelTypeNameMappingHandlerService); ok {
+		return GetGasStationFuelTypeNameMappingHandler(service, authBackend)
+	} else {
+		return fallback
+	}
+}
+
+// CheckForPaceAppHandlerWithFallbackHelper helper that checks if the given service fulfills the interface. Returns fallback handler if not, otherwise returns matching handler.
+func CheckForPaceAppHandlerWithFallbackHelper(service interface{}, fallback http.Handler, authBackend AuthorizationBackend) http.Handler {
+	if service, ok := service.(CheckForPaceAppHandlerService); ok {
+		return CheckForPaceAppHandler(service, authBackend)
+	} else {
+		return fallback
+	}
+}
+
+// GetPoisDumpHandlerWithFallbackHelper helper that checks if the given service fulfills the interface. Returns fallback handler if not, otherwise returns matching handler.
+func GetPoisDumpHandlerWithFallbackHelper(service interface{}, fallback http.Handler, authBackend AuthorizationBackend) http.Handler {
+	if service, ok := service.(GetPoisDumpHandlerService); ok {
+		return GetPoisDumpHandler(service, authBackend)
+	} else {
+		return fallback
+	}
+}
+
+// GetRegionalPricesHandlerWithFallbackHelper helper that checks if the given service fulfills the interface. Returns fallback handler if not, otherwise returns matching handler.
+func GetRegionalPricesHandlerWithFallbackHelper(service interface{}, fallback http.Handler, authBackend AuthorizationBackend) http.Handler {
+	if service, ok := service.(GetRegionalPricesHandlerService); ok {
+		return GetRegionalPricesHandler(service, authBackend)
+	} else {
+		return fallback
+	}
+}
+
+// GetTilesHandlerWithFallbackHelper helper that checks if the given service fulfills the interface. Returns fallback handler if not, otherwise returns matching handler.
+func GetTilesHandlerWithFallbackHelper(service interface{}, fallback http.Handler, authBackend AuthorizationBackend) http.Handler {
+	if service, ok := service.(GetTilesHandlerService); ok {
+		return GetTilesHandler(service, authBackend)
+	} else {
+		return fallback
+	}
+}
+
+// DeleteAppHandlerWithFallbackHelper helper that checks if the given service fulfills the interface. Returns fallback handler if not, otherwise returns matching handler.
+func DeleteAppHandlerWithFallbackHelper(service interface{}, fallback http.Handler, authBackend AuthorizationBackend) http.Handler {
+	if service, ok := service.(DeleteAppHandlerService); ok {
+		return DeleteAppHandler(service, authBackend)
+	} else {
+		return fallback
+	}
+}
+
+// GetAppHandlerWithFallbackHelper helper that checks if the given service fulfills the interface. Returns fallback handler if not, otherwise returns matching handler.
+func GetAppHandlerWithFallbackHelper(service interface{}, fallback http.Handler, authBackend AuthorizationBackend) http.Handler {
+	if service, ok := service.(GetAppHandlerService); ok {
+		return GetAppHandler(service, authBackend)
+	} else {
+		return fallback
+	}
+}
+
+// UpdateAppHandlerWithFallbackHelper helper that checks if the given service fulfills the interface. Returns fallback handler if not, otherwise returns matching handler.
+func UpdateAppHandlerWithFallbackHelper(service interface{}, fallback http.Handler, authBackend AuthorizationBackend) http.Handler {
+	if service, ok := service.(UpdateAppHandlerService); ok {
+		return UpdateAppHandler(service, authBackend)
+	} else {
+		return fallback
+	}
+}
+
+// GetGasStationHandlerWithFallbackHelper helper that checks if the given service fulfills the interface. Returns fallback handler if not, otherwise returns matching handler.
+func GetGasStationHandlerWithFallbackHelper(service interface{}, fallback http.Handler, authBackend AuthorizationBackend) http.Handler {
+	if service, ok := service.(GetGasStationHandlerService); ok {
+		return GetGasStationHandler(service, authBackend)
+	} else {
+		return fallback
+	}
+}
+
+// GetPoiHandlerWithFallbackHelper helper that checks if the given service fulfills the interface. Returns fallback handler if not, otherwise returns matching handler.
+func GetPoiHandlerWithFallbackHelper(service interface{}, fallback http.Handler, authBackend AuthorizationBackend) http.Handler {
+	if service, ok := service.(GetPoiHandlerService); ok {
+		return GetPoiHandler(service, authBackend)
+	} else {
+		return fallback
+	}
+}
+
+// ChangePoiHandlerWithFallbackHelper helper that checks if the given service fulfills the interface. Returns fallback handler if not, otherwise returns matching handler.
+func ChangePoiHandlerWithFallbackHelper(service interface{}, fallback http.Handler, authBackend AuthorizationBackend) http.Handler {
+	if service, ok := service.(ChangePoiHandlerService); ok {
+		return ChangePoiHandler(service, authBackend)
+	} else {
+		return fallback
+	}
+}
+
+// GetPolicyHandlerWithFallbackHelper helper that checks if the given service fulfills the interface. Returns fallback handler if not, otherwise returns matching handler.
+func GetPolicyHandlerWithFallbackHelper(service interface{}, fallback http.Handler, authBackend AuthorizationBackend) http.Handler {
+	if service, ok := service.(GetPolicyHandlerService); ok {
+		return GetPolicyHandler(service, authBackend)
+	} else {
+		return fallback
+	}
+}
+
+// DeleteSourceHandlerWithFallbackHelper helper that checks if the given service fulfills the interface. Returns fallback handler if not, otherwise returns matching handler.
+func DeleteSourceHandlerWithFallbackHelper(service interface{}, fallback http.Handler, authBackend AuthorizationBackend) http.Handler {
+	if service, ok := service.(DeleteSourceHandlerService); ok {
+		return DeleteSourceHandler(service, authBackend)
+	} else {
+		return fallback
+	}
+}
+
+// GetSourceHandlerWithFallbackHelper helper that checks if the given service fulfills the interface. Returns fallback handler if not, otherwise returns matching handler.
+func GetSourceHandlerWithFallbackHelper(service interface{}, fallback http.Handler, authBackend AuthorizationBackend) http.Handler {
+	if service, ok := service.(GetSourceHandlerService); ok {
+		return GetSourceHandler(service, authBackend)
+	} else {
+		return fallback
+	}
+}
+
+// UpdateSourceHandlerWithFallbackHelper helper that checks if the given service fulfills the interface. Returns fallback handler if not, otherwise returns matching handler.
+func UpdateSourceHandlerWithFallbackHelper(service interface{}, fallback http.Handler, authBackend AuthorizationBackend) http.Handler {
+	if service, ok := service.(UpdateSourceHandlerService); ok {
+		return UpdateSourceHandler(service, authBackend)
+	} else {
+		return fallback
+	}
+}
+
+// DeleteSubscriptionHandlerWithFallbackHelper helper that checks if the given service fulfills the interface. Returns fallback handler if not, otherwise returns matching handler.
+func DeleteSubscriptionHandlerWithFallbackHelper(service interface{}, fallback http.Handler, authBackend AuthorizationBackend) http.Handler {
+	if service, ok := service.(DeleteSubscriptionHandlerService); ok {
+		return DeleteSubscriptionHandler(service, authBackend)
+	} else {
+		return fallback
+	}
+}
+
+// StoreSubscriptionHandlerWithFallbackHelper helper that checks if the given service fulfills the interface. Returns fallback handler if not, otherwise returns matching handler.
+func StoreSubscriptionHandlerWithFallbackHelper(service interface{}, fallback http.Handler, authBackend AuthorizationBackend) http.Handler {
+	if service, ok := service.(StoreSubscriptionHandlerService); ok {
+		return StoreSubscriptionHandler(service, authBackend)
+	} else {
+		return fallback
+	}
+}
+
+// GetAppsHandlerWithFallbackHelper helper that checks if the given service fulfills the interface. Returns fallback handler if not, otherwise returns matching handler.
+func GetAppsHandlerWithFallbackHelper(service interface{}, fallback http.Handler, authBackend AuthorizationBackend) http.Handler {
+	if service, ok := service.(GetAppsHandlerService); ok {
+		return GetAppsHandler(service, authBackend)
+	} else {
+		return fallback
+	}
+}
+
+// CreateAppHandlerWithFallbackHelper helper that checks if the given service fulfills the interface. Returns fallback handler if not, otherwise returns matching handler.
+func CreateAppHandlerWithFallbackHelper(service interface{}, fallback http.Handler, authBackend AuthorizationBackend) http.Handler {
+	if service, ok := service.(CreateAppHandlerService); ok {
+		return CreateAppHandler(service, authBackend)
+	} else {
+		return fallback
+	}
+}
+
+// GetEventsHandlerWithFallbackHelper helper that checks if the given service fulfills the interface. Returns fallback handler if not, otherwise returns matching handler.
+func GetEventsHandlerWithFallbackHelper(service interface{}, fallback http.Handler, authBackend AuthorizationBackend) http.Handler {
+	if service, ok := service.(GetEventsHandlerService); ok {
+		return GetEventsHandler(service, authBackend)
+	} else {
+		return fallback
+	}
+}
+
+// GetGasStationsHandlerWithFallbackHelper helper that checks if the given service fulfills the interface. Returns fallback handler if not, otherwise returns matching handler.
+func GetGasStationsHandlerWithFallbackHelper(service interface{}, fallback http.Handler, authBackend AuthorizationBackend) http.Handler {
+	if service, ok := service.(GetGasStationsHandlerService); ok {
+		return GetGasStationsHandler(service, authBackend)
+	} else {
+		return fallback
+	}
+}
+
+// GetMetadataFiltersHandlerWithFallbackHelper helper that checks if the given service fulfills the interface. Returns fallback handler if not, otherwise returns matching handler.
+func GetMetadataFiltersHandlerWithFallbackHelper(service interface{}, fallback http.Handler, authBackend AuthorizationBackend) http.Handler {
+	if service, ok := service.(GetMetadataFiltersHandlerService); ok {
+		return GetMetadataFiltersHandler(service, authBackend)
+	} else {
+		return fallback
+	}
+}
+
+// GetPoisHandlerWithFallbackHelper helper that checks if the given service fulfills the interface. Returns fallback handler if not, otherwise returns matching handler.
+func GetPoisHandlerWithFallbackHelper(service interface{}, fallback http.Handler, authBackend AuthorizationBackend) http.Handler {
+	if service, ok := service.(GetPoisHandlerService); ok {
+		return GetPoisHandler(service, authBackend)
+	} else {
+		return fallback
+	}
+}
+
+// GetPoliciesHandlerWithFallbackHelper helper that checks if the given service fulfills the interface. Returns fallback handler if not, otherwise returns matching handler.
+func GetPoliciesHandlerWithFallbackHelper(service interface{}, fallback http.Handler, authBackend AuthorizationBackend) http.Handler {
+	if service, ok := service.(GetPoliciesHandlerService); ok {
+		return GetPoliciesHandler(service, authBackend)
+	} else {
+		return fallback
+	}
+}
+
+// CreatePolicyHandlerWithFallbackHelper helper that checks if the given service fulfills the interface. Returns fallback handler if not, otherwise returns matching handler.
+func CreatePolicyHandlerWithFallbackHelper(service interface{}, fallback http.Handler, authBackend AuthorizationBackend) http.Handler {
+	if service, ok := service.(CreatePolicyHandlerService); ok {
+		return CreatePolicyHandler(service, authBackend)
+	} else {
+		return fallback
+	}
+}
+
+// GetSourcesHandlerWithFallbackHelper helper that checks if the given service fulfills the interface. Returns fallback handler if not, otherwise returns matching handler.
+func GetSourcesHandlerWithFallbackHelper(service interface{}, fallback http.Handler, authBackend AuthorizationBackend) http.Handler {
+	if service, ok := service.(GetSourcesHandlerService); ok {
+		return GetSourcesHandler(service, authBackend)
+	} else {
+		return fallback
+	}
+}
+
+// CreateSourceHandlerWithFallbackHelper helper that checks if the given service fulfills the interface. Returns fallback handler if not, otherwise returns matching handler.
+func CreateSourceHandlerWithFallbackHelper(service interface{}, fallback http.Handler, authBackend AuthorizationBackend) http.Handler {
+	if service, ok := service.(CreateSourceHandlerService); ok {
+		return CreateSourceHandler(service, authBackend)
+	} else {
+		return fallback
+	}
+}
+
+// GetSubscriptionsHandlerWithFallbackHelper helper that checks if the given service fulfills the interface. Returns fallback handler if not, otherwise returns matching handler.
+func GetSubscriptionsHandlerWithFallbackHelper(service interface{}, fallback http.Handler, authBackend AuthorizationBackend) http.Handler {
+	if service, ok := service.(GetSubscriptionsHandlerService); ok {
+		return GetSubscriptionsHandler(service, authBackend)
+	} else {
+		return fallback
+	}
+}
+
 /*
 Router implements: PACE POI API
 
 POI API
 */
-func Router(service Service, authBackend AuthorizationBackend) *mux.Router {
+func Router(service interface{}, authBackend AuthorizationBackend) *mux.Router {
 	router := mux.NewRouter()
 	authBackend.InitDeviceID(cfgDeviceID)
 	authBackend.InitOAuth2(cfgOAuth2)
 	authBackend.InitOIDC(cfgOIDC)
 	// Subrouter s1 - Path: /poi
 	s1 := router.PathPrefix("/poi").Subrouter()
-	s1.Methods("DELETE").Path("/beta/delivery/gas-stations/{gasStationId}/reference-status/{reference}").Handler(DeleteGasStationReferenceStatusHandler(service, authBackend)).Name("DeleteGasStationReferenceStatus")
-	s1.Methods("PUT").Path("/beta/delivery/gas-stations/{gasStationId}/reference-status/{reference}").Handler(PutGasStationReferenceStatusHandler(service, authBackend)).Name("PutGasStationReferenceStatus")
-	s1.Methods("GET").Path("/beta/apps/{appID}/relationships/pois").Handler(GetAppPOIsRelationshipsHandler(service, authBackend)).Name("GetAppPOIsRelationships")
-	s1.Methods("PATCH").Path("/beta/apps/{appID}/relationships/pois").Handler(UpdateAppPOIsRelationshipsHandler(service, authBackend)).Name("UpdateAppPOIsRelationships")
-	s1.Methods("GET").Path("/beta/gas-stations/{id}/fuel-price-histories/{fuel_type}").Handler(GetPriceHistoryHandler(service, authBackend)).Name("GetPriceHistory")
-	s1.Methods("PATCH").Path("/beta/admin/poi/dedupe").Handler(DeduplicatePoiHandler(service, authBackend)).Name("DeduplicatePoi")
-	s1.Methods("PATCH").Path("/beta/admin/poi/move").Handler(MovePoiAtPositionHandler(service, authBackend)).Name("MovePoiAtPosition")
-	s1.Methods("GET").Path("/beta/datadumps/duplicatemap/{countryCode}").Handler(GetDuplicatesKMLHandler(service, authBackend)).Name("GetDuplicatesKML")
-	s1.Methods("GET").Path("/beta/gas-stations/{id}/fueltype").Handler(GetGasStationFuelTypeNameMappingHandler(service, authBackend)).Name("GetGasStationFuelTypeNameMapping")
-	s1.Methods("GET").Path("/beta/apps/query").Handler(CheckForPaceAppHandler(service, authBackend)).Name("CheckForPaceApp")
-	s1.Methods("GET").Path("/beta/datadumps/pois").Handler(GetPoisDumpHandler(service, authBackend)).Name("GetPoisDump")
-	s1.Methods("GET").Path("/beta/prices/regional").Handler(GetRegionalPricesHandler(service, authBackend)).Name("GetRegionalPrices")
-	s1.Methods("POST").Path("/v1/tiles/query").Handler(GetTilesHandler(service, authBackend)).Name("GetTiles")
-	s1.Methods("DELETE").Path("/beta/apps/{appID}").Handler(DeleteAppHandler(service, authBackend)).Name("DeleteApp")
-	s1.Methods("GET").Path("/beta/apps/{appID}").Handler(GetAppHandler(service, authBackend)).Name("GetApp")
-	s1.Methods("PUT").Path("/beta/apps/{appID}").Handler(UpdateAppHandler(service, authBackend)).Name("UpdateApp")
-	s1.Methods("GET").Path("/beta/gas-stations/{id}").Handler(GetGasStationHandler(service, authBackend)).Name("GetGasStation")
-	s1.Methods("GET").Path("/beta/pois/{poiId}").Handler(GetPoiHandler(service, authBackend)).Name("GetPoi")
-	s1.Methods("PATCH").Path("/beta/pois/{poiId}").Handler(ChangePoiHandler(service, authBackend)).Name("ChangePoi")
-	s1.Methods("GET").Path("/beta/policies/{policyId}").Handler(GetPolicyHandler(service, authBackend)).Name("GetPolicy")
-	s1.Methods("DELETE").Path("/beta/sources/{sourceId}").Handler(DeleteSourceHandler(service, authBackend)).Name("DeleteSource")
-	s1.Methods("GET").Path("/beta/sources/{sourceId}").Handler(GetSourceHandler(service, authBackend)).Name("GetSource")
-	s1.Methods("PUT").Path("/beta/sources/{sourceId}").Handler(UpdateSourceHandler(service, authBackend)).Name("UpdateSource")
-	s1.Methods("DELETE").Path("/beta/subscriptions/{id}").Handler(DeleteSubscriptionHandler(service, authBackend)).Name("DeleteSubscription")
-	s1.Methods("PUT").Path("/beta/subscriptions/{id}").Handler(StoreSubscriptionHandler(service, authBackend)).Name("StoreSubscription")
-	s1.Methods("GET").Path("/beta/apps").Handler(GetAppsHandler(service, authBackend)).Name("GetApps")
-	s1.Methods("POST").Path("/beta/apps").Handler(CreateAppHandler(service, authBackend)).Name("CreateApp")
-	s1.Methods("GET").Path("/beta/events").Handler(GetEventsHandler(service, authBackend)).Name("GetEvents")
-	s1.Methods("GET").Path("/beta/gas-stations").Handler(GetGasStationsHandler(service, authBackend)).Name("GetGasStations")
-	s1.Methods("GET").Path("/beta/meta").Handler(GetMetadataFiltersHandler(service, authBackend)).Name("GetMetadataFilters")
-	s1.Methods("GET").Path("/beta/pois").Handler(GetPoisHandler(service, authBackend)).Name("GetPois")
-	s1.Methods("GET").Path("/beta/policies").Handler(GetPoliciesHandler(service, authBackend)).Name("GetPolicies")
-	s1.Methods("POST").Path("/beta/policies").Handler(CreatePolicyHandler(service, authBackend)).Name("CreatePolicy")
-	s1.Methods("GET").Path("/beta/sources").Handler(GetSourcesHandler(service, authBackend)).Name("GetSources")
-	s1.Methods("POST").Path("/beta/sources").Handler(CreateSourceHandler(service, authBackend)).Name("CreateSource")
-	s1.Methods("GET").Path("/beta/subscriptions").Handler(GetSubscriptionsHandler(service, authBackend)).Name("GetSubscriptions")
+	s1.Methods("DELETE").Path("/beta/delivery/gas-stations/{gasStationId}/reference-status/{reference}").Name("DeleteGasStationReferenceStatus").Handler(DeleteGasStationReferenceStatusHandlerWithFallbackHelper(service, router.NotFoundHandler, authBackend))
+	s1.Methods("PUT").Path("/beta/delivery/gas-stations/{gasStationId}/reference-status/{reference}").Name("PutGasStationReferenceStatus").Handler(PutGasStationReferenceStatusHandlerWithFallbackHelper(service, router.NotFoundHandler, authBackend))
+	s1.Methods("GET").Path("/beta/apps/{appID}/relationships/pois").Name("GetAppPOIsRelationships").Handler(GetAppPOIsRelationshipsHandlerWithFallbackHelper(service, router.NotFoundHandler, authBackend))
+	s1.Methods("PATCH").Path("/beta/apps/{appID}/relationships/pois").Name("UpdateAppPOIsRelationships").Handler(UpdateAppPOIsRelationshipsHandlerWithFallbackHelper(service, router.NotFoundHandler, authBackend))
+	s1.Methods("GET").Path("/beta/gas-stations/{id}/fuel-price-histories/{fuel_type}").Name("GetPriceHistory").Handler(GetPriceHistoryHandlerWithFallbackHelper(service, router.NotFoundHandler, authBackend))
+	s1.Methods("PATCH").Path("/beta/admin/poi/dedupe").Name("DeduplicatePoi").Handler(DeduplicatePoiHandlerWithFallbackHelper(service, router.NotFoundHandler, authBackend))
+	s1.Methods("PATCH").Path("/beta/admin/poi/move").Name("MovePoiAtPosition").Handler(MovePoiAtPositionHandlerWithFallbackHelper(service, router.NotFoundHandler, authBackend))
+	s1.Methods("GET").Path("/beta/datadumps/duplicatemap/{countryCode}").Name("GetDuplicatesKML").Handler(GetDuplicatesKMLHandlerWithFallbackHelper(service, router.NotFoundHandler, authBackend))
+	s1.Methods("GET").Path("/beta/gas-stations/{id}/fueltype").Name("GetGasStationFuelTypeNameMapping").Handler(GetGasStationFuelTypeNameMappingHandlerWithFallbackHelper(service, router.NotFoundHandler, authBackend))
+	s1.Methods("GET").Path("/beta/apps/query").Name("CheckForPaceApp").Handler(CheckForPaceAppHandlerWithFallbackHelper(service, router.NotFoundHandler, authBackend))
+	s1.Methods("GET").Path("/beta/datadumps/pois").Name("GetPoisDump").Handler(GetPoisDumpHandlerWithFallbackHelper(service, router.NotFoundHandler, authBackend))
+	s1.Methods("GET").Path("/beta/prices/regional").Name("GetRegionalPrices").Handler(GetRegionalPricesHandlerWithFallbackHelper(service, router.NotFoundHandler, authBackend))
+	s1.Methods("POST").Path("/v1/tiles/query").Name("GetTiles").Handler(GetTilesHandlerWithFallbackHelper(service, router.NotFoundHandler, authBackend))
+	s1.Methods("DELETE").Path("/beta/apps/{appID}").Name("DeleteApp").Handler(DeleteAppHandlerWithFallbackHelper(service, router.NotFoundHandler, authBackend))
+	s1.Methods("GET").Path("/beta/apps/{appID}").Name("GetApp").Handler(GetAppHandlerWithFallbackHelper(service, router.NotFoundHandler, authBackend))
+	s1.Methods("PUT").Path("/beta/apps/{appID}").Name("UpdateApp").Handler(UpdateAppHandlerWithFallbackHelper(service, router.NotFoundHandler, authBackend))
+	s1.Methods("GET").Path("/beta/gas-stations/{id}").Name("GetGasStation").Handler(GetGasStationHandlerWithFallbackHelper(service, router.NotFoundHandler, authBackend))
+	s1.Methods("GET").Path("/beta/pois/{poiId}").Name("GetPoi").Handler(GetPoiHandlerWithFallbackHelper(service, router.NotFoundHandler, authBackend))
+	s1.Methods("PATCH").Path("/beta/pois/{poiId}").Name("ChangePoi").Handler(ChangePoiHandlerWithFallbackHelper(service, router.NotFoundHandler, authBackend))
+	s1.Methods("GET").Path("/beta/policies/{policyId}").Name("GetPolicy").Handler(GetPolicyHandlerWithFallbackHelper(service, router.NotFoundHandler, authBackend))
+	s1.Methods("DELETE").Path("/beta/sources/{sourceId}").Name("DeleteSource").Handler(DeleteSourceHandlerWithFallbackHelper(service, router.NotFoundHandler, authBackend))
+	s1.Methods("GET").Path("/beta/sources/{sourceId}").Name("GetSource").Handler(GetSourceHandlerWithFallbackHelper(service, router.NotFoundHandler, authBackend))
+	s1.Methods("PUT").Path("/beta/sources/{sourceId}").Name("UpdateSource").Handler(UpdateSourceHandlerWithFallbackHelper(service, router.NotFoundHandler, authBackend))
+	s1.Methods("DELETE").Path("/beta/subscriptions/{id}").Name("DeleteSubscription").Handler(DeleteSubscriptionHandlerWithFallbackHelper(service, router.NotFoundHandler, authBackend))
+	s1.Methods("PUT").Path("/beta/subscriptions/{id}").Name("StoreSubscription").Handler(StoreSubscriptionHandlerWithFallbackHelper(service, router.NotFoundHandler, authBackend))
+	s1.Methods("GET").Path("/beta/apps").Name("GetApps").Handler(GetAppsHandlerWithFallbackHelper(service, router.NotFoundHandler, authBackend))
+	s1.Methods("POST").Path("/beta/apps").Name("CreateApp").Handler(CreateAppHandlerWithFallbackHelper(service, router.NotFoundHandler, authBackend))
+	s1.Methods("GET").Path("/beta/events").Name("GetEvents").Handler(GetEventsHandlerWithFallbackHelper(service, router.NotFoundHandler, authBackend))
+	s1.Methods("GET").Path("/beta/gas-stations").Name("GetGasStations").Handler(GetGasStationsHandlerWithFallbackHelper(service, router.NotFoundHandler, authBackend))
+	s1.Methods("GET").Path("/beta/meta").Name("GetMetadataFilters").Handler(GetMetadataFiltersHandlerWithFallbackHelper(service, router.NotFoundHandler, authBackend))
+	s1.Methods("GET").Path("/beta/pois").Name("GetPois").Handler(GetPoisHandlerWithFallbackHelper(service, router.NotFoundHandler, authBackend))
+	s1.Methods("GET").Path("/beta/policies").Name("GetPolicies").Handler(GetPoliciesHandlerWithFallbackHelper(service, router.NotFoundHandler, authBackend))
+	s1.Methods("POST").Path("/beta/policies").Name("CreatePolicy").Handler(CreatePolicyHandlerWithFallbackHelper(service, router.NotFoundHandler, authBackend))
+	s1.Methods("GET").Path("/beta/sources").Name("GetSources").Handler(GetSourcesHandlerWithFallbackHelper(service, router.NotFoundHandler, authBackend))
+	s1.Methods("POST").Path("/beta/sources").Name("CreateSource").Handler(CreateSourceHandlerWithFallbackHelper(service, router.NotFoundHandler, authBackend))
+	s1.Methods("GET").Path("/beta/subscriptions").Name("GetSubscriptions").Handler(GetSubscriptionsHandlerWithFallbackHelper(service, router.NotFoundHandler, authBackend))
+	return router
+}
+
+/*
+Router implements: PACE POI API
+
+POI API
+*/
+func RouterWithFallback(service interface{}, authBackend AuthorizationBackend, fallback http.Handler) *mux.Router {
+	router := mux.NewRouter()
+	authBackend.InitDeviceID(cfgDeviceID)
+	authBackend.InitOAuth2(cfgOAuth2)
+	authBackend.InitOIDC(cfgOIDC)
+	// Subrouter s1 - Path: /poi
+	s1 := router.PathPrefix("/poi").Subrouter()
+	s1.Methods("DELETE").Path("/beta/delivery/gas-stations/{gasStationId}/reference-status/{reference}").Name("DeleteGasStationReferenceStatus").Handler(DeleteGasStationReferenceStatusHandlerWithFallbackHelper(service, fallback, authBackend))
+	s1.Methods("PUT").Path("/beta/delivery/gas-stations/{gasStationId}/reference-status/{reference}").Name("PutGasStationReferenceStatus").Handler(PutGasStationReferenceStatusHandlerWithFallbackHelper(service, fallback, authBackend))
+	s1.Methods("GET").Path("/beta/apps/{appID}/relationships/pois").Name("GetAppPOIsRelationships").Handler(GetAppPOIsRelationshipsHandlerWithFallbackHelper(service, fallback, authBackend))
+	s1.Methods("PATCH").Path("/beta/apps/{appID}/relationships/pois").Name("UpdateAppPOIsRelationships").Handler(UpdateAppPOIsRelationshipsHandlerWithFallbackHelper(service, fallback, authBackend))
+	s1.Methods("GET").Path("/beta/gas-stations/{id}/fuel-price-histories/{fuel_type}").Name("GetPriceHistory").Handler(GetPriceHistoryHandlerWithFallbackHelper(service, fallback, authBackend))
+	s1.Methods("PATCH").Path("/beta/admin/poi/dedupe").Name("DeduplicatePoi").Handler(DeduplicatePoiHandlerWithFallbackHelper(service, fallback, authBackend))
+	s1.Methods("PATCH").Path("/beta/admin/poi/move").Name("MovePoiAtPosition").Handler(MovePoiAtPositionHandlerWithFallbackHelper(service, fallback, authBackend))
+	s1.Methods("GET").Path("/beta/datadumps/duplicatemap/{countryCode}").Name("GetDuplicatesKML").Handler(GetDuplicatesKMLHandlerWithFallbackHelper(service, fallback, authBackend))
+	s1.Methods("GET").Path("/beta/gas-stations/{id}/fueltype").Name("GetGasStationFuelTypeNameMapping").Handler(GetGasStationFuelTypeNameMappingHandlerWithFallbackHelper(service, fallback, authBackend))
+	s1.Methods("GET").Path("/beta/apps/query").Name("CheckForPaceApp").Handler(CheckForPaceAppHandlerWithFallbackHelper(service, fallback, authBackend))
+	s1.Methods("GET").Path("/beta/datadumps/pois").Name("GetPoisDump").Handler(GetPoisDumpHandlerWithFallbackHelper(service, fallback, authBackend))
+	s1.Methods("GET").Path("/beta/prices/regional").Name("GetRegionalPrices").Handler(GetRegionalPricesHandlerWithFallbackHelper(service, fallback, authBackend))
+	s1.Methods("POST").Path("/v1/tiles/query").Name("GetTiles").Handler(GetTilesHandlerWithFallbackHelper(service, fallback, authBackend))
+	s1.Methods("DELETE").Path("/beta/apps/{appID}").Name("DeleteApp").Handler(DeleteAppHandlerWithFallbackHelper(service, fallback, authBackend))
+	s1.Methods("GET").Path("/beta/apps/{appID}").Name("GetApp").Handler(GetAppHandlerWithFallbackHelper(service, fallback, authBackend))
+	s1.Methods("PUT").Path("/beta/apps/{appID}").Name("UpdateApp").Handler(UpdateAppHandlerWithFallbackHelper(service, fallback, authBackend))
+	s1.Methods("GET").Path("/beta/gas-stations/{id}").Name("GetGasStation").Handler(GetGasStationHandlerWithFallbackHelper(service, fallback, authBackend))
+	s1.Methods("GET").Path("/beta/pois/{poiId}").Name("GetPoi").Handler(GetPoiHandlerWithFallbackHelper(service, fallback, authBackend))
+	s1.Methods("PATCH").Path("/beta/pois/{poiId}").Name("ChangePoi").Handler(ChangePoiHandlerWithFallbackHelper(service, fallback, authBackend))
+	s1.Methods("GET").Path("/beta/policies/{policyId}").Name("GetPolicy").Handler(GetPolicyHandlerWithFallbackHelper(service, fallback, authBackend))
+	s1.Methods("DELETE").Path("/beta/sources/{sourceId}").Name("DeleteSource").Handler(DeleteSourceHandlerWithFallbackHelper(service, fallback, authBackend))
+	s1.Methods("GET").Path("/beta/sources/{sourceId}").Name("GetSource").Handler(GetSourceHandlerWithFallbackHelper(service, fallback, authBackend))
+	s1.Methods("PUT").Path("/beta/sources/{sourceId}").Name("UpdateSource").Handler(UpdateSourceHandlerWithFallbackHelper(service, fallback, authBackend))
+	s1.Methods("DELETE").Path("/beta/subscriptions/{id}").Name("DeleteSubscription").Handler(DeleteSubscriptionHandlerWithFallbackHelper(service, fallback, authBackend))
+	s1.Methods("PUT").Path("/beta/subscriptions/{id}").Name("StoreSubscription").Handler(StoreSubscriptionHandlerWithFallbackHelper(service, fallback, authBackend))
+	s1.Methods("GET").Path("/beta/apps").Name("GetApps").Handler(GetAppsHandlerWithFallbackHelper(service, fallback, authBackend))
+	s1.Methods("POST").Path("/beta/apps").Name("CreateApp").Handler(CreateAppHandlerWithFallbackHelper(service, fallback, authBackend))
+	s1.Methods("GET").Path("/beta/events").Name("GetEvents").Handler(GetEventsHandlerWithFallbackHelper(service, fallback, authBackend))
+	s1.Methods("GET").Path("/beta/gas-stations").Name("GetGasStations").Handler(GetGasStationsHandlerWithFallbackHelper(service, fallback, authBackend))
+	s1.Methods("GET").Path("/beta/meta").Name("GetMetadataFilters").Handler(GetMetadataFiltersHandlerWithFallbackHelper(service, fallback, authBackend))
+	s1.Methods("GET").Path("/beta/pois").Name("GetPois").Handler(GetPoisHandlerWithFallbackHelper(service, fallback, authBackend))
+	s1.Methods("GET").Path("/beta/policies").Name("GetPolicies").Handler(GetPoliciesHandlerWithFallbackHelper(service, fallback, authBackend))
+	s1.Methods("POST").Path("/beta/policies").Name("CreatePolicy").Handler(CreatePolicyHandlerWithFallbackHelper(service, fallback, authBackend))
+	s1.Methods("GET").Path("/beta/sources").Name("GetSources").Handler(GetSourcesHandlerWithFallbackHelper(service, fallback, authBackend))
+	s1.Methods("POST").Path("/beta/sources").Name("CreateSource").Handler(CreateSourceHandlerWithFallbackHelper(service, fallback, authBackend))
+	s1.Methods("GET").Path("/beta/subscriptions").Name("GetSubscriptions").Handler(GetSubscriptionsHandlerWithFallbackHelper(service, fallback, authBackend))
 	return router
 }

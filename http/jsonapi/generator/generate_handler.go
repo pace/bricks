@@ -14,6 +14,7 @@ import (
 
 	"github.com/dave/jennifer/jen"
 	"github.com/getkin/kin-openapi/openapi3"
+
 	"github.com/pace/bricks/maintenance/log"
 )
 
@@ -30,6 +31,7 @@ const (
 )
 
 const serviceInterface = "Service"
+const rootRouterName = "router"
 const jsonapiContent = "application/vnd.api+json"
 
 var noValidation = map[string]string{"valid": "-"}
@@ -73,7 +75,9 @@ func (g *Generator) BuildHandler(schema *openapi3.Swagger) error {
 	funcs := []routeGeneratorFunc{
 		g.generateRequestResponseTypes,
 		g.buildServiceInterface,
+		g.buildRouterHelpers,
 		g.buildRouter,
+		g.buildRouterWithFallbackAsArg,
 	}
 	for _, fn := range funcs {
 		err := fn(routes, schema)
@@ -308,28 +312,135 @@ func (g *Generator) generateRequestStruct(route *route, schema *openapi3.Swagger
 }
 
 func (g *Generator) buildServiceInterface(routes []*route, schema *openapi3.Swagger) error {
-	methods := make([]jen.Code, len(routes))
-
 	for _, route := range routes {
-		if route.operation.Description != "" {
-			methods = append(methods, jen.Comment(fmt.Sprintf("%s %s\n\n%s", route.serviceFunc, route.operation.Summary, route.operation.Description)))
-		} else {
-			methods = append(methods, jen.Comment(fmt.Sprintf("%s %s", route.serviceFunc, route.operation.Summary)))
+		if err := g.buildSubServiceInterface(route, schema); err != nil {
+			return err
 		}
-		methods = append(methods, jen.Id(route.serviceFunc).Params(
-			jen.Qual("context", "Context"),
-			jen.Id(route.responseType),
-			jen.Op("*").Id(route.requestType),
-		).Id("error"))
 	}
 
-	g.goSource.Line().Commentf("%s interface for all handlers", serviceInterface)
-	g.goSource.Type().Id(serviceInterface).Interface(methods...)
+	subServices := make([]jen.Code, 0)
+	for _, route := range routes {
+		subServices = append(subServices, jen.Id(generateSubServiceName(route.handler)))
+	}
+
+	g.goSource.Line()
+	g.goSource.Line()
+	g.goSource.Comment("Legacy Interface.")
+	g.goSource.Comment("Use this if you want to fully implement a service.")
+	g.goSource.Type().Id(serviceInterface).Interface(subServices...)
+
+	return nil
+}
+
+func (g *Generator) buildSubServiceInterface(route *route, schema *openapi3.Swagger) error {
+	methods := make([]jen.Code, 0)
+
+	if route.operation.Description != "" {
+		methods = append(methods, jen.Comment(fmt.Sprintf("%s %s\n\n%s", route.serviceFunc, route.operation.Summary, route.operation.Description)))
+	} else {
+		methods = append(methods, jen.Comment(fmt.Sprintf("%s %s", route.serviceFunc, route.operation.Summary)))
+	}
+	methods = append(methods, jen.Id(route.serviceFunc).Params(
+		jen.Qual("context", "Context"),
+		jen.Id(route.responseType),
+		jen.Op("*").Id(route.requestType),
+	).Id("error"))
+
+	g.goSource.Line().Commentf("%s interface for %s handler", serviceInterface, route.handler)
+	g.goSource.Type().Id(generateSubServiceName(route.handler)).Interface(methods...)
 
 	return nil
 }
 
 func (g *Generator) buildRouter(routes []*route, schema *openapi3.Swagger) error {
+	routerBody, err := g.buildRouterBodyWithFallback(routes, schema, jen.Id(rootRouterName).Dot("NotFoundHandler"))
+	if err != nil {
+		return nil
+	}
+	g.addGoDoc("Router", "implements: "+schema.Info.Title+"\n\n"+schema.Info.Description)
+	serviceInterfaceVariable := jen.Id("service").Interface()
+	if hasSecuritySchema(schema) {
+		g.goSource.Func().Id("Router").Params(
+			serviceInterfaceVariable, jen.Id("authBackend").Id(authBackendInterface)).Op("*").Qual(pkgGorillaMux, "Router").Block(routerBody...)
+
+	} else {
+		g.goSource.Func().Id("Router").Params(
+			serviceInterfaceVariable).Op("*").Qual(pkgGorillaMux, "Router").Block(routerBody...)
+	}
+	return nil
+}
+
+func (g *Generator) buildRouterWithFallbackAsArg(routes []*route, schema *openapi3.Swagger) error {
+	routerBody, err := g.buildRouterBodyWithFallback(routes, schema, jen.Id("fallback"))
+	if err != nil {
+		return nil
+	}
+	g.addGoDoc("Router", "implements: "+schema.Info.Title+"\n\n"+schema.Info.Description)
+	serviceInterfaceVariable := jen.Id("service").Interface()
+	if hasSecuritySchema(schema) {
+		g.goSource.Func().Id("RouterWithFallback").Params(
+			serviceInterfaceVariable, jen.Id("authBackend").Id(authBackendInterface), jen.Id("fallback").Qual("net/http", "Handler")).Op("*").Qual(pkgGorillaMux, "Router").Block(routerBody...)
+
+	} else {
+		g.goSource.Func().Id("RouterWithFallback").Params(
+			serviceInterfaceVariable, jen.Id("fallback").Qual("net/http", "Handler")).Op("*").Qual(pkgGorillaMux, "Router").Block(routerBody...)
+	}
+	return nil
+}
+
+func (g *Generator) buildRouterHelpers(routes []*route, schema *openapi3.Swagger) error {
+	needsSecurity := hasSecuritySchema(schema)
+
+	// sort the routes with query parameter to the top
+	sortableRoutes := sortableRouteList(routes)
+	sort.Stable(&sortableRoutes)
+
+	fallbackName := "fallback"
+	fallback := jen.Id(fallbackName).Qual("net/http", "Handler")
+	// add all route handlers
+	for i := 0; i < len(sortableRoutes); i++ {
+		route := sortableRoutes[i]
+		var routeCallParams *jen.Statement
+		if needsSecurity {
+			routeCallParams = jen.List(jen.Id("service"), jen.Id("authBackend"))
+		} else {
+			routeCallParams = jen.List(jen.Id("service"))
+		}
+		primaryHandler := jen.Id(route.handler).Call(routeCallParams)
+		fallbackHandler := jen.Id(fallbackName)
+		ifElse := make([]jen.Code, 0)
+		for _, handler := range []jen.Code{primaryHandler, fallbackHandler} {
+			block := jen.Return(handler)
+			ifElse = append(ifElse, block)
+		}
+
+		if len(ifElse) < 1 {
+			panic("if-else slice should contain two elements, one with the service interface being called and one passing the NotFoundHandler")
+		}
+
+		implGuard := jen.If(
+			jen.List(jen.Id("service"), jen.Id("ok")).Op(":=").Id("service").Assert(jen.Id(generateSubServiceName(route.handler))),
+			jen.Id("ok")).Block(ifElse[0]).Else().Block(ifElse[1])
+
+		comment := jen.Commentf("%s helper that checks if the given service fulfills the interface. Returns fallback handler if not, otherwise returns matching handler.", generateHandlerTypeAssertionHelperName(route.handler))
+
+		var callParams *jen.Statement
+		if needsSecurity {
+			callParams = jen.List(jen.Id("service").Id("interface{}"), fallback, jen.Id("authBackend").Id(authBackendInterface))
+		} else {
+			callParams = jen.List(jen.Id("service").Id("interface{}"), fallback)
+		}
+		helper := jen.Func().Id(generateHandlerTypeAssertionHelperName(route.handler)).
+			Params(callParams).Qual("net/http", "Handler").Block(implGuard).Line().Line()
+
+		g.goSource.Line().Add(comment)
+		g.goSource.Add(helper)
+	}
+
+	return nil
+}
+
+func (g *Generator) buildRouterBodyWithFallback(routes []*route, schema *openapi3.Swagger, fallback jen.Code) ([]jen.Code, error) {
 	needsSecurity := hasSecuritySchema(schema)
 	startInd := 0
 	var routeStmts []jen.Code
@@ -350,7 +461,7 @@ func (g *Generator) buildRouter(routes []*route, schema *openapi3.Swagger) error
 
 	}
 	// create new router
-	routeStmts[startInd] = jen.Id("router").Op(":=").Qual(pkgGorillaMux, "NewRouter").Call()
+	routeStmts[startInd] = jen.Id(rootRouterName).Op(":=").Qual(pkgGorillaMux, "NewRouter").Call()
 
 	// Note: we don't restrict host, scheme and port to ease development
 	pathsIdx := make(map[string]struct{})
@@ -358,7 +469,7 @@ func (g *Generator) buildRouter(routes []*route, schema *openapi3.Swagger) error
 	for _, server := range schema.Servers {
 		serverUrl, err := url.Parse(server.URL)
 		if err != nil {
-			return err
+			return nil, err
 		}
 		if _, ok := pathsIdx[serverUrl.Path]; !ok {
 			paths = append(paths, serverUrl.Path)
@@ -382,17 +493,15 @@ func (g *Generator) buildRouter(routes []*route, schema *openapi3.Swagger) error
 		// add all route handlers
 		for i := 0; i < len(sortableRoutes); i++ {
 			route := sortableRoutes[i]
-
 			var routeCallParams *jen.Statement
-			// generic route
 			if needsSecurity {
-				routeCallParams = jen.List(jen.Id("service"), jen.Id("authBackend"))
+				routeCallParams = jen.List(jen.Id("service"), fallback, jen.Id("authBackend"))
 			} else {
-				routeCallParams = jen.List(jen.Id("service"))
+				routeCallParams = jen.List(jen.Id("service"), fallback)
 			}
+			helper := jen.Id(generateHandlerTypeAssertionHelperName(route.handler)).Call(routeCallParams)
 			routeStmt := jen.Id(subrouterID).Dot("Methods").Call(jen.Lit(route.method)).
-				Dot("Path").Call(jen.Lit(route.url.Path)).
-				Dot("Handler").Call(jen.Id(route.handler).Call(routeCallParams))
+				Dot("Path").Call(jen.Lit(route.url.Path))
 
 			// add query parameters for route matching
 			if len(route.queryValues) > 0 {
@@ -407,24 +516,17 @@ func (g *Generator) buildRouter(routes []*route, schema *openapi3.Swagger) error
 			// add the name to build routes
 			routeStmt.Dot("Name").Call(jen.Lit(route.serviceFunc))
 
+			routeStmt.Dot("Handler").Call(helper)
+
 			routeStmts = append(routeStmts, routeStmt)
+
 		}
 	}
 
 	// return
 	routeStmts = append(routeStmts, jen.Return(jen.Id("router")))
-	g.addGoDoc("Router", "implements: "+schema.Info.Title+"\n\n"+schema.Info.Description)
-	serviceInterfaceVariable := jen.Id("service").Id(serviceInterface)
-	if hasSecuritySchema(schema) {
-		g.goSource.Func().Id("Router").Params(
-			serviceInterfaceVariable, jen.Id("authBackend").Id(authBackendInterface)).Op("*").Qual(pkgGorillaMux, "Router").Block(routeStmts...)
 
-	} else {
-		g.goSource.Func().Id("Router").Params(
-			serviceInterfaceVariable).Op("*").Qual(pkgGorillaMux, "Router").Block(routeStmts...)
-	}
-
-	return nil
+	return routeStmts, nil
 }
 
 func (g *Generator) buildHandler(method string, op *openapi3.Operation, pattern string, pathItem *openapi3.PathItem, secSchemes map[string]*openapi3.SecuritySchemeRef) (*route, error) {
@@ -477,9 +579,9 @@ func (g *Generator) buildHandler(method string, op *openapi3.Operation, pattern 
 		method, pattern))
 	var params *jen.Statement
 	if needsSecurity {
-		params = jen.List(jen.Id("service").Id(serviceInterface), jen.Id("authBackend").Id(authBackendInterface))
+		params = jen.List(jen.Id("service").Id(generateSubServiceName(route.handler)), jen.Id("authBackend").Id(authBackendInterface))
 	} else {
-		params = jen.List(jen.Id("service").Id(serviceInterface))
+		params = jen.List(jen.Id("service").Id(generateSubServiceName(route.handler)))
 	}
 	g.goSource.Func().Id(handler).Params(params).Qual("net/http", "Handler").Block(
 		jen.Return().Qual("net/http", "HandlerFunc").Call(
@@ -752,4 +854,12 @@ func generateMethodName(description string) string {
 
 func generateParamName(param *openapi3.ParameterRef) string {
 	return "Param" + generateMethodName(param.Value.Name)
+}
+
+func generateSubServiceName(handler string) string {
+	return fmt.Sprintf("%s%s", handler, serviceInterface)
+}
+
+func generateHandlerTypeAssertionHelperName(handler string) string {
+	return fmt.Sprintf("%sWithFallbackHelper", handler)
 }
