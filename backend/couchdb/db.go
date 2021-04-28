@@ -38,7 +38,7 @@ func Database(name string) (*kivik.DB, error) {
 		return nil, err
 	}
 
-	if cfg.DisableHealthCheck {
+	if !cfg.DisableHealthCheck {
 		servicehealthcheck.RegisterHealthCheck("couchdb("+name+")", &HealthCheck{
 			Name:   name,
 			Client: healthCheckClient,
