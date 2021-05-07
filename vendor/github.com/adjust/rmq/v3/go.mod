@@ -1,6 +1,6 @@
-module github.com/adjust/rmq/v3
+module github.com/daemonfire300/rmq/v3
 
-go 1.13
+go 1.16
 
 require (
 	github.com/go-redis/redis/v7 v7.2.0

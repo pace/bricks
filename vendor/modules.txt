@@ -1,4 +1,4 @@
-# github.com/adjust/rmq/v3 v3.0.0
+# github.com/adjust/rmq/v3 v3.0.0 => github.com/daemonfire300/rmq/v3 v3.0.2
 ## explicit
 github.com/adjust/rmq/v3
 # github.com/asaskevich/govalidator v0.0.0-20180720115003-f9ffefc3facf
@@ -228,3 +228,4 @@ gopkg.in/ini.v1
 gopkg.in/yaml.v2
 # gopkg.in/yaml.v3 v3.0.0-20200313102051-9f266ea9e77c
 gopkg.in/yaml.v3
+# github.com/adjust/rmq/v3 => github.com/daemonfire300/rmq/v3 v3.0.2

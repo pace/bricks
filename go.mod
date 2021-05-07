@@ -2,6 +2,8 @@ module github.com/pace/bricks
 
 go 1.16
 
+replace github.com/adjust/rmq/v3 => github.com/daemonfire300/rmq/v3 v3.0.2
+
 require (
 	github.com/adjust/rmq/v3 v3.0.0
 	github.com/asaskevich/govalidator v0.0.0-20180720115003-f9ffefc3facf
