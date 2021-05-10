@@ -1,7 +1,6 @@
 // Copyright © 2021 by PACE Telematics GmbH. All rights reserved.
 // Created at 2021/05/10 by Alessandro Miceli
 
-
 package middleware
 
 import (
@@ -10,6 +9,7 @@ import (
 	"strings"
 	"sync"
 
+	"github.com/pace/bricks/http/oauth2"
 	"github.com/pace/bricks/maintenance/log"
 )
 
@@ -30,7 +30,8 @@ func ResponseClientID(next http.Handler) http.Handler {
 	})
 }
 
-func AddResponseClientID(ctx context.Context, clientID string) {
+func AddResponseClientID(ctx context.Context) {
+	clientID, _ := oauth2.ClientID(ctx)
 	cIDc := ResponseClientIDContextFromContext(ctx)
 	if cIDc == nil {
 		log.Ctx(ctx).Warn().Msgf("can't add client %s, because context is missing", clientID)

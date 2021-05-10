@@ -13,7 +13,8 @@ import (
 )
 
 func Test_ResponseClientID_Middleare(t *testing.T) {
-	AddResponseClientID(context.TODO(), "test") // should not fail
+	AddResponseClientID(context.TODO()) // should not fail
+
 	t.Run("empty set", func(t *testing.T) {
 		rec := httptest.NewRecorder()
 		req := httptest.NewRequest(http.MethodGet, "/", nil)
@@ -22,17 +23,6 @@ func Test_ResponseClientID_Middleare(t *testing.T) {
 		}))
 		h.ServeHTTP(rec, req)
 		assert.Nil(t, rec.Result().Header[http.CanonicalHeaderKey(ClientIDHeaderName)])
-	})
-	t.Run("one client set", func(t *testing.T) {
-		rec := httptest.NewRecorder()
-		req := httptest.NewRequest(http.MethodGet, "/", nil)
-
-		h := ResponseClientID(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			AddResponseClientID(r.Context(), "test")
-			w.Write(nil) // nolint: errcheck
-		}))
-		h.ServeHTTP(rec, req)
-		assert.Equal(t, rec.Result().Header[http.CanonicalHeaderKey(ClientIDHeaderName)][0], "test")
 	})
 }
 
@@ -43,16 +33,16 @@ func Test_ResponseClientIDContext_String(t *testing.T) {
 	assert.Empty(t, rcc.String())
 
 	// one dependency
-	rcc.AddResponseClientID("test1")
-	assert.EqualValues(t, "test1", rcc.String())
+	rcc.AddResponseClientID("client1")
+	assert.EqualValues(t, "client1", rcc.String())
 
 	// multiple dependencies
-	rcc.AddResponseClientID("test2")
-	assert.EqualValues(t, "test1,test2", rcc.String())
+	rcc.AddResponseClientID("client2")
+	assert.EqualValues(t, "client1,client2", rcc.String())
 
-	rcc.AddResponseClientID("test3")
-	assert.EqualValues(t, "test1,test2,test3", rcc.String())
+	rcc.AddResponseClientID("client3")
+	assert.EqualValues(t, "client1,client2,client3", rcc.String())
 
-	rcc.AddResponseClientID("test4")
-	assert.EqualValues(t, "test1,test2,test3,test4", rcc.String())
+	rcc.AddResponseClientID("client4")
+	assert.EqualValues(t, "client1,client2,client3,client4", rcc.String())
 }
