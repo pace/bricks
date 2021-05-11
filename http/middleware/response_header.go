@@ -10,7 +10,6 @@ import (
 	"sync"
 
 	"github.com/pace/bricks/http/oauth2"
-	"github.com/pace/bricks/maintenance/log"
 )
 
 // ClientIDHeaderName name of the HTTP header that is used for reporting
@@ -34,8 +33,9 @@ func AddResponseClientID(ctx context.Context) {
 	clientID, _ := oauth2.ClientID(ctx)
 	cIDc := ResponseClientIDContextFromContext(ctx)
 	if cIDc == nil {
-		log.Ctx(ctx).Warn().Msgf("can't add client %s, because context is missing", clientID)
-		return
+		//log.Ctx(ctx).Warn().Msgf("can't add client %s, because context is missing", clientID)
+		cIDc = &ResponseClientIDContext{}
+		//return
 	}
 	cIDc.AddResponseClientID(clientID)
 }
