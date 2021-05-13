@@ -5,13 +5,13 @@ go 1.16
 replace github.com/adjust/rmq/v3 => github.com/daemonfire300/rmq/v3 v3.0.2
 
 require (
+	github.com/HdrHistogram/hdrhistogram-go v1.1.0 // indirect
 	github.com/adjust/rmq/v3 v3.0.0
 	github.com/asaskevich/govalidator v0.0.0-20180720115003-f9ffefc3facf
 	github.com/beorn7/perks v0.0.0-20180321164747-3a771d992973 // indirect
 	github.com/bsm/redislock v0.5.0
 	github.com/caarlos0/env v3.3.0+incompatible
 	github.com/certifi/gocertifi v0.0.0-20180118203423-deb3ae2ef261
-	github.com/codahale/hdrhistogram v0.0.0-20161010025455-3a0bb77429bd // indirect
 	github.com/dave/jennifer v1.0.2
 	github.com/getkin/kin-openapi v0.0.0-20180813063848-e1956e8013e5
 	github.com/ghodss/yaml v1.0.0 // indirect
@@ -28,7 +28,7 @@ require (
 	github.com/mattn/goveralls v0.0.5
 	github.com/matttproud/golang_protobuf_extensions v1.0.1 // indirect
 	github.com/minio/minio-go/v7 v7.0.7
-	github.com/opentracing/opentracing-go v1.0.2
+	github.com/opentracing/opentracing-go v1.2.0
 	github.com/pkg/errors v0.9.1
 	github.com/pmezard/go-difflib v1.0.0
 	github.com/prometheus/client_golang v0.8.0
@@ -42,11 +42,11 @@ require (
 	github.com/spf13/cobra v0.0.3
 	github.com/spf13/pflag v1.0.2 // indirect
 	github.com/streadway/handy v0.0.0-20200128134331-0f66f006fb2e
-	github.com/stretchr/testify v1.6.1
-	github.com/uber-go/atomic v1.3.2 // indirect
-	github.com/uber/jaeger-client-go v2.14.0+incompatible
-	github.com/uber/jaeger-lib v1.5.0
+	github.com/stretchr/testify v1.7.0
+	github.com/uber/jaeger-client-go v2.28.0+incompatible
+	github.com/uber/jaeger-lib v2.4.1+incompatible
 	github.com/zenazn/goji v0.9.0
+	go.uber.org/atomic v1.7.0 // indirect
 	golang.org/x/tools v0.0.0-20200304024140-c4206d458c3f
 	golang.org/x/xerrors v0.0.0-20200804184101-5ec99f83aff1
 )
