@@ -124,6 +124,7 @@ func RefererHandler(fieldKey string) func(next http.Handler) http.Handler {
 }
 
 type idKey struct{}
+type traceIdKey struct{}
 
 // IDFromRequest returns the unique id associated to the request if any.
 func IDFromRequest(r *http.Request) (id xid.ID, ok bool) {
@@ -138,6 +139,21 @@ func IDFromCtx(ctx context.Context) (id xid.ID, ok bool) {
 	id, ok = ctx.Value(idKey{}).(xid.ID)
 	return
 }
+
+// TraceIDFromRequest returns the trace id associated to the request if any.
+func TraceIDFromRequest(r *http.Request) (id string, ok bool) {
+	if r == nil {
+		return
+	}
+	return TraceIDFromCtx(r.Context())
+}
+
+// TraceIDFromCtx returns the trace id associated to the context if any.
+func TraceIDFromCtx(ctx context.Context) (id string, ok bool) {
+	id, ok = ctx.Value(traceIdKey{}).(string)
+	return
+}
+
 
 // RequestIDHandler returns a handler setting a unique id to the request which can
 // be gathered using IDFromRequest(req). This generated id is added as a field to the
@@ -202,4 +218,8 @@ func AccessHandler(f func(r *http.Request, status, size int, duration time.Durat
 
 func WithValue(ctx context.Context, reqID xid.ID) context.Context {
 	return context.WithValue(ctx, idKey{}, reqID)
+}
+
+func WithTrace(ctx context.Context, traceId string) context.Context {
+	return context.WithValue(ctx, traceIdKey{}, traceId)
 }

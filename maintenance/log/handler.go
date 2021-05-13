@@ -18,6 +18,7 @@ import (
 
 // RequestIDHeader name of the header that can contain a request ID
 const RequestIDHeader = "Request-Id"
+const TraceIDHeader = "Uber-Trace-Id"
 
 // Handler returns a middleware that handles all of the logging aspects of
 // any incoming http request. Optionally several path prefixes like "/health"
@@ -29,7 +30,8 @@ func Handler(silentPrefixes ...string) func(http.Handler) http.Handler {
 		return hlog.NewHandler(log.Logger)(
 			handlerWithSink(silentPrefixes...)(
 				hlog.AccessHandler(requestCompleted)(
-					RequestIDHandler("req_id", RequestIDHeader)(next))))
+					RequestIDHandler("req_id", RequestIDHeader)(
+						TraceIDHandler("uber_trace_id", TraceIDHeader)(next)))))
 	}
 }
 
@@ -134,6 +136,30 @@ func RequestIDHandler(fieldKey, headerName string) func(next http.Handler) http.
 
 			// return the request id as a header to the client
 			w.Header().Set(headerName, id.String())
+			next.ServeHTTP(w, r)
+		})
+	}
+}
+
+func TraceIDHandler(fieldKey, headerName string) func(next http.Handler) http.Handler {
+	return func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			ctx := r.Context()
+
+			// try extract of trace id from header
+			traceId := r.Header.Get(headerName)
+
+			ctx = hlog.WithTrace(ctx, traceId)
+			r = r.WithContext(ctx)
+
+			// log requests with trace id
+			log := zerolog.Ctx(ctx)
+			log.UpdateContext(func(c zerolog.Context) zerolog.Context {
+				return c.Str(fieldKey, traceId)
+			})
+
+			// return the trace id as a header to the client
+			w.Header().Set(headerName, traceId)
 			next.ServeHTTP(w, r)
 		})
 	}

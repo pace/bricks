@@ -55,6 +55,7 @@ func (h *traceHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	wireContext, err := wire.FromWire(r)
 	handlerSpan, ctx = opentracing.StartSpanFromContext(ctx, "ServeHTTP", opentracing.ChildOf(wireContext))
 	handlerSpan.LogFields(olog.String("req_id", log.RequestID(r)),
+		olog.String("uber_trace_id", log.TraceID(r)),
 		olog.String("path", r.URL.Path),
 		olog.String("method", r.Method))
 	if err != nil {
