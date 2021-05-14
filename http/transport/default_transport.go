@@ -13,7 +13,6 @@ func NewDefaultTransportChain() *RoundTripperChain {
 		&LoggingRoundTripper{},
 		&LocaleRoundTripper{},
 		&RequestIDRoundTripper{},
-		&TraceIDRoundTripper{},
 		// Ensure this is always last, in order to get the correct dump
 		NewDumpRoundTripperEnv(),
 	)
@@ -30,7 +29,6 @@ func NewDefaultTransportChainWithExternalName(name string) *RoundTripperChain {
 		&LoggingRoundTripper{},
 		&LocaleRoundTripper{},
 		&RequestIDRoundTripper{},
-		&TraceIDRoundTripper{},
 		// Ensure this is always last, in order to get the correct dump
 		NewDumpRoundTripperEnv(),
 	)

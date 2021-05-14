@@ -99,15 +99,6 @@ func RequestIDFromContext(ctx context.Context) string {
 	return ""
 }
 
-// TraceID returns a unique tracing id or an empty string if there is none
-func TraceID(r *http.Request) string {
-	id, ok := hlog.TraceIDFromRequest(r)
-	if ok {
-		return id
-	}
-	return ""
-}
-
 // TraceIDFromContext returns a unique request id or an empty string if there is none
 func TraceIDFromContext(ctx context.Context) string {
 	id, ok := hlog.TraceIDFromCtx(ctx)

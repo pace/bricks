@@ -4,6 +4,7 @@
 package tracing
 
 import (
+	"fmt"
 	"io"
 	"net/http"
 
@@ -52,7 +53,8 @@ type traceHandler struct {
 func (h *traceHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	wireContext, _ := wire.FromWire(r)
-	_, ctx = opentracing.StartSpanFromContext(ctx, "ServeHTTP", opentracing.ChildOf(wireContext))
+	_, ctx = opentracing.StartSpanFromContext(ctx, fmt.Sprintf("ServeHTTP Method: %s Path: %s", r.Method, r.URL.Path),
+		opentracing.ChildOf(wireContext))
 	ww := mutil.WrapWriter(w)
 	h.next.ServeHTTP(ww, r.WithContext(ctx))
 }
@@ -67,12 +69,12 @@ func Handler(ignoredPrefixes ...string) func(http.Handler) http.Handler {
 	}, ignoredPrefixes...)
 }
 
-type startTraceHandler struct {
+type traceLogHandler struct {
 	next http.Handler
 }
 
 // Trace the service function handler execution
-func (h *startTraceHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+func (h *traceLogHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	var handlerSpan opentracing.Span
 
@@ -80,23 +82,17 @@ func (h *startTraceHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	handlerSpan.LogFields(olog.String("req_id", log.RequestID(r)),
 		olog.String("path", r.URL.Path),
 		olog.String("method", r.Method))
-	// This happened when FromWire errored
-	//if err != nil {
-	//	handlerSpan.LogFields(olog.String("span", "new"), olog.String("spanerr", err.Error()))
-	//} else {
-	//	handlerSpan.LogFields(olog.String("span", "wire"))
-	//}
 	ww := mutil.WrapWriter(w)
 	h.next.ServeHTTP(ww, r.WithContext(ctx))
 	handlerSpan.LogFields(olog.Int("bytes", ww.BytesWritten()), olog.Int("status_code", ww.Status()))
 	handlerSpan.Finish()
 }
 
-// StartTraceHandler generates a tracing handler that decodes the current trace from the wire.
+// TraceLogHandler generates a tracing handler that adds logging data to existing handler.
 // The tracing handler will not start traces for the list of ignoredPrefixes.
-func StartTraceHandler(ignoredPrefixes ...string) func(http.Handler) http.Handler {
+func TraceLogHandler(ignoredPrefixes ...string) func(http.Handler) http.Handler {
 	return util.NewIgnorePrefixMiddleware(func(next http.Handler) http.Handler {
-		return &startTraceHandler{
+		return &traceLogHandler{
 			next: next,
 		}
 	}, ignoredPrefixes...)

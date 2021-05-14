@@ -11,6 +11,7 @@ func FromWire(r *http.Request) (opentracing.SpanContext, error) {
 	return opentracing.GlobalTracer().Extract(opentracing.HTTPHeaders, opentracing.HTTPHeadersCarrier(r.Header))
 }
 
+// ToWire adds tracing information to context based on request headers
 func ToWire(spanCtx opentracing.SpanContext, r *http.Request) error {
 	carrier := opentracing.HTTPHeadersCarrier(r.Header)
 	err := opentracing.GlobalTracer().Inject(

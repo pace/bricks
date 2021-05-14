@@ -140,14 +140,6 @@ func IDFromCtx(ctx context.Context) (id xid.ID, ok bool) {
 	return
 }
 
-// TraceIDFromRequest returns the trace id associated to the request if any.
-func TraceIDFromRequest(r *http.Request) (id string, ok bool) {
-	if r == nil {
-		return
-	}
-	return TraceIDFromCtx(r.Context())
-}
-
 // TraceIDFromCtx returns the trace id associated to the context if any.
 func TraceIDFromCtx(ctx context.Context) (id string, ok bool) {
 	id, ok = ctx.Value(traceIdKey{}).(string)
@@ -218,8 +210,4 @@ func AccessHandler(f func(r *http.Request, status, size int, duration time.Durat
 
 func WithValue(ctx context.Context, reqID xid.ID) context.Context {
 	return context.WithValue(ctx, idKey{}, reqID)
-}
-
-func WithTrace(ctx context.Context, traceId string) context.Context {
-	return context.WithValue(ctx, traceIdKey{}, traceId)
 }

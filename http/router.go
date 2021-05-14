@@ -26,6 +26,9 @@ func Router() *mux.Router {
 
 	r.Use(middleware.Metrics)
 
+	// this tracing handler must be registered before the
+	// logging middleware in order to have a span context
+	// initialized so that we can further log tracing data
 	r.Use(tracing.Handler(
 		// no tracing for these prefixes
 		"/metrics",
@@ -42,7 +45,8 @@ func Router() *mux.Router {
 	// last resort error handler
 	r.Use(errors.Handler())
 
-	r.Use(tracing.StartTraceHandler(
+	// this second handler is needed in order to have access to data managed by the log handler from above
+	r.Use(tracing.TraceLogHandler(
 		// no tracing for these prefixes
 		"/metrics",
 		"/health",
