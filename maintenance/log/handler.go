@@ -4,13 +4,14 @@
 package log
 
 import (
+	"github.com/opentracing/opentracing-go"
+	"github.com/uber/jaeger-client-go"
 	"net"
 	"net/http"
 	"strings"
 	"time"
 
 	"github.com/pace/bricks/maintenance/log/hlog"
-	"github.com/pace/bricks/maintenance/tracing/wire"
 	"github.com/rs/xid"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
@@ -18,7 +19,6 @@ import (
 
 // RequestIDHeader name of the header that can contain a request ID
 const RequestIDHeader = "Request-Id"
-const TraceIDHeader = "Uber-Trace-Id"
 
 // Handler returns a middleware that handles all of the logging aspects of
 // any incoming http request. Optionally several path prefixes like "/health"
@@ -30,21 +30,19 @@ func Handler(silentPrefixes ...string) func(http.Handler) http.Handler {
 		return hlog.NewHandler(log.Logger)(
 			handlerWithSink(silentPrefixes...)(
 				hlog.AccessHandler(requestCompleted)(
-					RequestIDHandler("req_id", RequestIDHeader)(
-						TraceIDHandler("uber_trace_id", TraceIDHeader)(next)))))
+					RequestIDHandler("req_id", RequestIDHeader)(next))))
 	}
 }
 
 // requestCompleted logs all request related information once
 // at the end of the request
 var requestCompleted = func(r *http.Request, status, size int, duration time.Duration) {
-	// log if the tracing id came from the wire
-	_, err := wire.FromWire(r)
-	var val string
-	if err != nil {
-		val = "new"
-	} else {
-		val = "wire"
+	span := opentracing.SpanFromContext(r.Context())
+	var traceId string
+	if span != nil {
+		if sc, ok := span.Context().(jaeger.SpanContext); ok {
+			traceId = sc.TraceID().String()
+		}
 	}
 
 	hlog.FromRequest(r).Info().
@@ -57,7 +55,7 @@ var requestCompleted = func(r *http.Request, status, size int, duration time.Dur
 		Str("ip", ProxyAwareRemote(r)).
 		Str("referer", r.Header.Get("Referer")).
 		Str("user_agent", r.Header.Get("User-Agent")).
-		Str("span", val).
+		Str("trace_id", traceId).
 		Msg("Request Completed")
 }
 
@@ -136,30 +134,6 @@ func RequestIDHandler(fieldKey, headerName string) func(next http.Handler) http.
 
 			// return the request id as a header to the client
 			w.Header().Set(headerName, id.String())
-			next.ServeHTTP(w, r)
-		})
-	}
-}
-
-func TraceIDHandler(fieldKey, headerName string) func(next http.Handler) http.Handler {
-	return func(next http.Handler) http.Handler {
-		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			ctx := r.Context()
-
-			// try extract of trace id from header
-			traceId := r.Header.Get(headerName)
-
-			ctx = hlog.WithTrace(ctx, traceId)
-			r = r.WithContext(ctx)
-
-			// log requests with trace id
-			log := zerolog.Ctx(ctx)
-			log.UpdateContext(func(c zerolog.Context) zerolog.Context {
-				return c.Str(fieldKey, traceId)
-			})
-
-			// return the trace id as a header to the client
-			w.Header().Set(headerName, traceId)
 			next.ServeHTTP(w, r)
 		})
 	}

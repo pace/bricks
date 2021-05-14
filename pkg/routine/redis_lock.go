@@ -6,6 +6,7 @@ package routine
 import (
 	"context"
 	"fmt"
+	"github.com/opentracing/opentracing-go"
 	"sync"
 	"time"
 
@@ -64,6 +65,9 @@ func (r *routineThatKeepsRunningOneInstance) Run(ctx context.Context) {
 // until it returns. Return the backoff duration after which another single run
 // should be performed.
 func (r *routineThatKeepsRunningOneInstance) singleRun(ctx context.Context) time.Duration {
+	span, ctx := opentracing.StartSpanFromContext(ctx, fmt.Sprintf("Routine %s", r.Name))
+	defer span.Finish()
+	
 	lockCtx, err := obtainLock(ctx, r.locker, "routine:lock:"+r.Name, r.lockTTL)
 	if err != nil {
 		go errors.Handle(ctx, err) // report error to Sentry, non-blocking

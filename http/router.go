@@ -4,6 +4,7 @@
 package http
 
 import (
+	"github.com/pace/bricks/maintenance/tracing"
 	"net/http"
 	"net/http/pprof"
 
@@ -15,7 +16,6 @@ import (
 	"github.com/pace/bricks/maintenance/health/servicehealthcheck"
 	"github.com/pace/bricks/maintenance/log"
 	"github.com/pace/bricks/maintenance/metric"
-	"github.com/pace/bricks/maintenance/tracing"
 	redactMdw "github.com/pace/bricks/pkg/redact/middleware"
 )
 
@@ -26,6 +26,13 @@ func Router() *mux.Router {
 
 	r.Use(middleware.Metrics)
 
+	r.Use(tracing.Handler(
+		// no tracing for these prefixes
+		"/metrics",
+		"/health",
+		"/debug",
+	))
+
 	// the logging middleware needs to be registered before the
 	// error middleware to make it possible to send panics to
 	// sentry. "/health" and "/metrics" are only logged to the
@@ -35,7 +42,7 @@ func Router() *mux.Router {
 	// last resort error handler
 	r.Use(errors.Handler())
 
-	r.Use(tracing.Handler(
+	r.Use(tracing.StartTraceHandler(
 		// no tracing for these prefixes
 		"/metrics",
 		"/health",
