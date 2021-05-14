@@ -21,7 +21,6 @@ import (
 
 	"github.com/uber/jaeger-client-go/internal/baggage"
 	"github.com/uber/jaeger-client-go/internal/throttler"
-	"github.com/uber/jaeger-client-go/log"
 )
 
 // TracerOption is a function that sets some option on the tracer
@@ -43,7 +42,7 @@ func (tracerOptions) Metrics(m *Metrics) TracerOption {
 // Logger creates a TracerOption that gives the tracer a Logger.
 func (tracerOptions) Logger(logger Logger) TracerOption {
 	return func(tracer *Tracer) {
-		tracer.logger = log.DebugLogAdapter(logger)
+		tracer.logger = logger
 	}
 }
 
@@ -52,10 +51,10 @@ func (tracerOptions) CustomHeaderKeys(headerKeys *HeadersConfig) TracerOption {
 		if headerKeys == nil {
 			return
 		}
-		textPropagator := NewTextMapPropagator(headerKeys.ApplyDefaults(), tracer.metrics)
+		textPropagator := newTextMapPropagator(headerKeys.applyDefaults(), tracer.metrics)
 		tracer.addCodec(opentracing.TextMap, textPropagator, textPropagator)
 
-		httpHeaderPropagator := NewHTTPHeaderPropagator(headerKeys.ApplyDefaults(), tracer.metrics)
+		httpHeaderPropagator := newHTTPHeaderPropagator(headerKeys.applyDefaults(), tracer.metrics)
 		tracer.addCodec(opentracing.HTTPHeaders, httpHeaderPropagator, httpHeaderPropagator)
 	}
 }
@@ -82,11 +81,7 @@ func (tracerOptions) RandomNumber(randomNumber func() uint64) TracerOption {
 // that can access parent spans after those spans have been finished.
 func (tracerOptions) PoolSpans(poolSpans bool) TracerOption {
 	return func(tracer *Tracer) {
-		if poolSpans {
-			tracer.spanAllocator = newSyncPollSpanAllocator()
-		} else {
-			tracer.spanAllocator = simpleSpanAllocator{}
-		}
+		tracer.options.poolSpans = poolSpans
 	}
 }
 
@@ -127,33 +122,9 @@ func (tracerOptions) Gen128Bit(gen128Bit bool) TracerOption {
 	}
 }
 
-func (tracerOptions) NoDebugFlagOnForcedSampling(noDebugFlagOnForcedSampling bool) TracerOption {
-	return func(tracer *Tracer) {
-		tracer.options.noDebugFlagOnForcedSampling = noDebugFlagOnForcedSampling
-	}
-}
-
 func (tracerOptions) HighTraceIDGenerator(highTraceIDGenerator func() uint64) TracerOption {
 	return func(tracer *Tracer) {
 		tracer.options.highTraceIDGenerator = highTraceIDGenerator
-	}
-}
-
-func (tracerOptions) MaxTagValueLength(maxTagValueLength int) TracerOption {
-	return func(tracer *Tracer) {
-		tracer.options.maxTagValueLength = maxTagValueLength
-	}
-}
-
-// MaxLogsPerSpan limits the number of Logs in a span (if set to a nonzero
-// value). If a span has more logs than this value, logs are dropped as
-// necessary (and replaced with a log describing how many were dropped).
-//
-// About half of the MaxLogsPerSpan logs kept are the oldest logs, and about
-// half are the newest logs.
-func (tracerOptions) MaxLogsPerSpan(maxLogsPerSpan int) TracerOption {
-	return func(tracer *Tracer) {
-		tracer.options.maxLogsPerSpan = maxLogsPerSpan
 	}
 }
 

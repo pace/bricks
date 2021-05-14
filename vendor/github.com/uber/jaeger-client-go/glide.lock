@@ -1,11 +1,11 @@
-hash: 63bec420a22b7e5abac8c602c5cc9b66a33d6a1bfec8918eecc77fd344b759ed
-updated: 2020-07-31T13:30:37.242608-04:00
+hash: 3accf84f97bff4a91162736104c0e9b9790820712bd86db6fec5e665f7196a82
+updated: 2018-04-30T11:46:43.804556-04:00
 imports:
 - name: github.com/beorn7/perks
   version: 3a771d992973f24aa725d07868b467d1ddfceafb
   subpackages:
   - quantile
-- name: github.com/HdrHistogram/hdrhistogram-go
+- name: github.com/codahale/hdrhistogram
   version: 3a0bb77429bd3a61596f5e8a3172445844342120
 - name: github.com/crossdock/crossdock-go
   version: 049aabb0122b03bc9bd30cab8f3f91fb60166361
@@ -16,90 +16,74 @@ imports:
   version: 8991bc29aa16c548c550c7ff78260e27b9ab7c73
   subpackages:
   - spew
-- name: github.com/golang/mock
-  version: 51421b967af1f557f93a59e0057aaf15ca02e29c
-  subpackages:
-  - gomock
 - name: github.com/golang/protobuf
-  version: b5d812f8a3706043e23a9cd5babf2e5423744d30
+  version: bbd03ef6da3a115852eaf24c8a1c46aeb39aa175
   subpackages:
   - proto
 - name: github.com/matttproud/golang_protobuf_extensions
-  version: c182affec369e30f25d3eb8cd8a478dee585ae7d
+  version: c12348ce28de40eed0136aa2b644d0ee0650e56c
   subpackages:
   - pbutil
 - name: github.com/opentracing/opentracing-go
-  version: d34af3eaa63c4d08ab54863a4bdd0daa45212e12
+  version: 1949ddbfd147afd4d964a9f00b24eb291e0e7c38
   subpackages:
   - ext
-  - harness
   - log
 - name: github.com/pkg/errors
-  version: ba968bfe8b2f7e042a574c888954fccecfa385b4
+  version: 645ef00459ed84a119197bfb8d8205042c6df63d
 - name: github.com/pmezard/go-difflib
-  version: 5d4384ee4fb2527b0a1256a821ebfc92f91efefc
+  version: 792786c7400a136282c1664665ae0a8db921c6c2
   subpackages:
   - difflib
 - name: github.com/prometheus/client_golang
-  version: 170205fb58decfd011f1550d4cfb737230d7ae4f
+  version: c5b7fccd204277076155f10851dad72b76a49317
   subpackages:
   - prometheus
-  - prometheus/internal
 - name: github.com/prometheus/client_model
-  version: fd36f4220a901265f90734c3183c5f0c91daa0b8
+  version: 99fa1f4be8e564e8a6b613da7fa6f46c9edafc6c
   subpackages:
   - go
 - name: github.com/prometheus/common
-  version: 1ab4d74fc89940cfbc3c2b3a89821336cdefa119
+  version: 38c53a9f4bfcd932d1b00bfc65e256a7fba6b37a
   subpackages:
   - expfmt
   - internal/bitbucket.org/ww/goautoneg
   - model
 - name: github.com/prometheus/procfs
-  version: 8a055596020d692cf491851e47ba3e302d9f90ce
+  version: 780932d4fbbe0e69b84c34c20f5c8d0981e109ea
   subpackages:
-  - internal/fs
   - internal/util
+  - nfs
+  - xfs
 - name: github.com/stretchr/testify
-  version: f654a9112bbeac49ca2cd45bfbe11533c4666cf8
+  version: 12b6f73e6084dad08a7c6e575284b177ecafbc71
   subpackages:
   - assert
-  - mock
   - require
   - suite
-- name: github.com/uber-go/atomic
-  version: 845920076a298bdb984fb0f1b86052e4ca0a281c
 - name: github.com/uber/jaeger-lib
-  version: 48cc1df63e6be0d63b95677f0d22beb880bce1e4
+  version: 4267858c0679cd4e47cefed8d7f70fd386cfb567
   subpackages:
   - metrics
-  - metrics/metricstest
   - metrics/prometheus
+  - metrics/testutils
 - name: go.uber.org/atomic
-  version: 845920076a298bdb984fb0f1b86052e4ca0a281c
+  version: 8474b86a5a6f79c443ce4b2992817ff32cf208b8
 - name: go.uber.org/multierr
-  version: b587143a48b62b01d337824eab43700af6ffe222
+  version: 3c4937480c32f4c13a875a1829af76c98ca3d40a
 - name: go.uber.org/zap
-  version: feeb9a050b31b40eec6f2470e7599eeeadfe5bdd
+  version: eeedf312bc6c57391d84767a4cd413f02a917974
   subpackages:
   - buffer
   - internal/bufferpool
   - internal/color
   - internal/exit
   - zapcore
-  - zaptest/observer
 - name: golang.org/x/net
-  version: addf6b3196f61cd44ce5a76657913698c73479d0
+  version: 6078986fec03a1dcc236c34816c71b0e05018fda
   subpackages:
   - context
   - context/ctxhttp
-- name: golang.org/x/sys
-  version: 3e129f6d46b10b0e1da36b3deffcb55e09631b64
-  subpackages:
-  - internal/unsafeheader
-  - windows
-- name: gopkg.in/yaml.v3
-  version: eeeca48fe7764f320e4870d231902bf9c1be2c08
 testImports:
-- name: github.com/stretchr/objx
-  version: 35313a95ee26395aa17d366c71a2ccf788fa69b6
+- name: github.com/uber-go/atomic
+  version: 8474b86a5a6f79c443ce4b2992817ff32cf208b8

@@ -3,7 +3,7 @@
 # Jaeger Bindings for Go OpenTracing API
 
 Instrumentation library that implements an
-[OpenTracing Go](https://github.com/opentracing/opentracing-go) Tracer for Jaeger (https://jaegertracing.io).
+[OpenTracing](http://opentracing.io) Tracer for Jaeger (https://jaegertracing.io).
 
 **IMPORTANT**: The library's import path is based on its original location under `github.com/uber`. Do not try to import it as `github.com/jaegertracing`, it will not compile. We might revisit this in the next major release.
   * :white_check_mark: `import "github.com/uber/jaeger-client-go"`
@@ -15,20 +15,19 @@ Please see [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ## Installation
 
-We recommended using a dependency manager like [dep](https://golang.github.io/dep/)
+We recommended using a dependency manager like [glide](https://github.com/Masterminds/glide)
 and [semantic versioning](http://semver.org/) when including this library into an application.
 For example, Jaeger backend imports this library like this:
 
-```toml
-[[constraint]]
-  name = "github.com/uber/jaeger-client-go"
-  version = "2.17"
+```yaml
+- package: github.com/uber/jaeger-client-go
+  version: ^2.7.0
 ```
 
 If you instead want to use the latest version in `master`, you can pull it via `go get`.
 Note that during `go get` you may see build errors due to incompatible dependencies, which is why
 we recommend using semantic versions for dependencies.  The error  may be fixed by running
-`make install` (it will install `dep` if you don't have it):
+`make install` (it will install `glide` if you don't have it):
 
 ```shell
 go get -u github.com/uber/jaeger-client-go/
@@ -44,40 +43,25 @@ and [config/example_test.go](./config/example_test.go).
 
 ### Environment variables
 
-The tracer can be initialized with values coming from environment variables, if it is
-[built from a config](https://pkg.go.dev/github.com/uber/jaeger-client-go/config?tab=doc#Configuration.NewTracer)
-that was created via [FromEnv()](https://pkg.go.dev/github.com/uber/jaeger-client-go/config?tab=doc#FromEnv).
-None of the env vars are required and all of them can be overridden via direct setting 
-of the property on the configuration object.
+The tracer can be initialized with values coming from environment variables. None of the env vars are required
+and all of them can be overriden via direct setting of the property on the configuration object.
 
 Property| Description
 --- | ---
-JAEGER_SERVICE_NAME | The service name.
-JAEGER_AGENT_HOST | The hostname for communicating with agent via UDP (default `localhost`).
-JAEGER_AGENT_PORT | The port for communicating with agent via UDP (default `6831`).
-JAEGER_ENDPOINT | The HTTP endpoint for sending spans directly to a collector, i.e. http://jaeger-collector:14268/api/traces. If specified, the agent host/port are ignored.
-JAEGER_USER | Username to send as part of "Basic" authentication to the collector endpoint.
-JAEGER_PASSWORD | Password to send as part of "Basic" authentication to the collector endpoint.
-JAEGER_REPORTER_LOG_SPANS | Whether the reporter should also log the spans" `true` or `false` (default `false`).
-JAEGER_REPORTER_MAX_QUEUE_SIZE | The reporter's maximum queue size (default `100`).
-JAEGER_REPORTER_FLUSH_INTERVAL | The reporter's flush interval, with units, e.g. `500ms` or `2s` ([valid units][timeunits]; default `1s`).
-JAEGER_REPORTER_ATTEMPT_RECONNECTING_DISABLED | When true, disables udp connection helper that periodically re-resolves the agent's hostname and reconnects if there was a change (default `false`).
-JAEGER_REPORTER_ATTEMPT_RECONNECT_INTERVAL | Controls how often the agent client re-resolves the provided hostname in order to detect address changes ([valid units][timeunits]; default `30s`).
-JAEGER_SAMPLER_TYPE | The sampler type: `remote`, `const`, `probabilistic`, `ratelimiting` (default `remote`). See also https://www.jaegertracing.io/docs/latest/sampling/.
-JAEGER_SAMPLER_PARAM | The sampler parameter (number).
-JAEGER_SAMPLER_MANAGER_HOST_PORT | (deprecated) The HTTP endpoint when using the `remote` sampler.
-JAEGER_SAMPLING_ENDPOINT | The URL for the sampling configuration server when using sampler type `remote` (default `http://127.0.0.1:5778/sampling`).
-JAEGER_SAMPLER_MAX_OPERATIONS | The maximum number of operations that the sampler will keep track of (default `2000`).
-JAEGER_SAMPLER_REFRESH_INTERVAL | How often the `remote` sampler should poll the configuration server for the appropriate sampling strategy, e.g. "1m" or "30s" ([valid units][timeunits]; default `1m`).
-JAEGER_TAGS | A comma separated list of `name=value` tracer-level tags, which get added to all reported spans. The value can also refer to an environment variable using the format `${envVarName:defaultValue}`.
-JAEGER_DISABLED | Whether the tracer is disabled or not. If `true`, the `opentracing.NoopTracer` is used (default `false`).
-JAEGER_RPC_METRICS | Whether to store RPC metrics, `true` or `false` (default `false`).
-
-By default, the client sends traces via UDP to the agent at `localhost:6831`. Use `JAEGER_AGENT_HOST` and
-`JAEGER_AGENT_PORT` to send UDP traces to a different `host:port`. If `JAEGER_ENDPOINT` is set, the client sends traces
-to the endpoint via `HTTP`, making the `JAEGER_AGENT_HOST` and `JAEGER_AGENT_PORT` unused. If `JAEGER_ENDPOINT` is
-secured, HTTP basic authentication can be performed by setting the `JAEGER_USER` and `JAEGER_PASSWORD` environment
-variables.
+JAEGER_SERVICE_NAME | The service name
+JAEGER_AGENT_HOST | The hostname for communicating with agent via UDP
+JAEGER_AGENT_PORT | The port for communicating with agent via UDP
+JAEGER_REPORTER_LOG_SPANS | Whether the reporter should also log the spans
+JAEGER_REPORTER_MAX_QUEUE_SIZE | The reporter's maximum queue size
+JAEGER_REPORTER_FLUSH_INTERVAL | The reporter's flush interval (ms)
+JAEGER_SAMPLER_TYPE | The sampler type
+JAEGER_SAMPLER_PARAM | The sampler parameter (number)
+JAEGER_SAMPLER_MANAGER_HOST_PORT | The host name and port when using the remote controlled sampler
+JAEGER_SAMPLER_MAX_OPERATIONS | The maximum number of operations that the sampler will keep track of
+JAEGER_SAMPLER_REFRESH_INTERVAL | How often the remotely controlled sampler will poll jaeger-agent for the appropriate sampling strategy
+JAEGER_TAGS | A comma separated list of `name = value` tracer level tags, which get added to all reported spans. The value can also refer to an environment variable using the format `${envVarName:default}`, where the `:default` is optional, and identifies a value to be used if the environment variable cannot be found
+JAEGER_DISABLED | Whether the tracer is disabled or not. If true, the default `opentracing.NoopTracer` is used.
+JAEGER_RPC_METRICS | Whether to store RPC metrics
 
 ### Closing the tracer via `io.Closer`
 
@@ -93,7 +77,7 @@ defer closer.Close()
 This is especially useful for command-line tools that enable tracing, as well as
 for the long-running apps that support graceful shutdown. For example, if your deployment
 system sends SIGTERM instead of killing the process and you trap that signal to do a graceful
-exit, then having `defer closer.Close()` ensures that all buffered spans are flushed.
+exit, then having `defer closer.Closer()` ensures that all buffered spans are flushed.
 
 ### Metrics & Monitoring
 
@@ -188,29 +172,6 @@ are available:
   1. `RateLimitingSampler` can be used to allow only a certain fixed
      number of traces to be sampled per second.
 
-#### Delayed sampling
-
-Version 2.20 introduced the ability to delay sampling decisions in the life cycle
-of the root span. It involves several features and architectural changes:
-  * **Shared sampling state**: the sampling state is shared across all local
-    (i.e. in-process) spans for a given trace.
-  * **New `SamplerV2` API** allows the sampler to be called at multiple points 
-    in the life cycle of a span:
-    * on span creation
-    * on overwriting span operation name
-    * on setting span tags
-    * on finishing the span
-  * **Final/non-final sampling state**: the new `SamplerV2` API allows the sampler
-    to indicate if the negative sampling decision is final or not (positive sampling
-    decisions are always final). If the decision is not final, the sampler will be
-    called again on further span life cycle events, like setting tags.
-
-These new features are used in the experimental `x.TagMatchingSampler`, which
-can sample a trace based on a certain tag added to the root
-span or one of its local (in-process) children. The sampler can be used with
-another experimental `x.PrioritySampler` that allows multiple samplers to try
-to make a sampling decision, in a certain priority order.
-
 ### Baggage Injection
 
 The OpenTracing spec allows for [baggage][baggage], which are key value pairs that are added
@@ -252,7 +213,7 @@ import (
 )
 
 span := opentracing.SpanFromContext(ctx)
-ext.SamplingPriority.Set(span, 1)
+ext.SamplingPriority.Set(span, 1)    
 ```
 
 #### Via HTTP Headers
@@ -283,29 +244,6 @@ by a lot of Zipkin tracers. This means that you can use Jaeger in conjunction wi
 
 However it is not the default propagation format, see [here](zipkin/README.md#NewZipkinB3HTTPHeaderPropagator) how to set it up.
 
-## SelfRef
-
-Jaeger Tracer supports an additional [span reference][] type call `Self`, which was proposed
-to the OpenTracing Specification (https://github.com/opentracing/specification/issues/81)
-but not yet accepted. This allows the caller to provide an already created `SpanContext`
-when starting a new span. The `Self` reference bypasses trace and span id generation,
-as well as sampling decisions (i.e. the sampling bit in the `SpanContext.flags` must be
-set appropriately by the caller).
-
-The `Self` reference supports the following use cases:
-  * the ability to provide externally generated trace and span IDs
-  * appending data to the same span from different processes, such as loading and continuing spans/traces from offline (ie log-based) storage
-
-Usage requires passing in a `SpanContext` and the `jaeger.Self` reference type:
-```
-span := tracer.StartSpan(
-    "continued_span",
-    jaeger.SelfRef(yourSpanContext),
-)
-...
-defer span.Finish()
-```
-
 ## License
 
 [Apache 2.0 License](LICENSE).
@@ -320,5 +258,3 @@ defer span.Finish()
 [ot-img]: https://img.shields.io/badge/OpenTracing--1.0-enabled-blue.svg
 [ot-url]: http://opentracing.io
 [baggage]: https://github.com/opentracing/specification/blob/master/specification.md#set-a-baggage-item
-[timeunits]: https://golang.org/pkg/time/#ParseDuration
-[span reference]: https://github.com/opentracing/specification/blob/1.1/specification.md#references-between-spans
