@@ -94,7 +94,7 @@ func check(ctx context.Context, hcs *sync.Map) map[string]HealthCheckResult {
 		go func() {
 			defer wg.Done()
 			defer errors.HandleWithCtx(ctx, fmt.Sprintf("HealthCheck %s", name))
-			span, ctx = opentracing.StartSpanFromContext(ctx, fmt.Sprintf("HealthCheck %s", name))
+			span, ctx := opentracing.StartSpanFromContext(ctx, fmt.Sprintf("HealthCheck %s", name))
 			defer span.Finish()
 
 			// If it was not possible to initialize this health check, then show the initialization error message
