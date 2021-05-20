@@ -7,6 +7,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"github.com/pace/bricks/http/transport"
 	"net/http"
 	"time"
 
@@ -186,12 +187,15 @@ func fetchSunsetandSunrise(ctx context.Context) string {
 	span.LogFields(olog.Float64("lat", lat), olog.Float64("lon", lon))
 
 	url := fmt.Sprintf("https://api.sunrise-sunset.org/json?lat=%f&lng=%f&date=today", lat, lon)
-	req, err := http.NewRequest("GET", url, nil)
+	req, err := http.NewRequestWithContext(ctx,"GET", url, nil)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	resp, err := http.DefaultClient.Do(req)
+	c := &http.Client{
+		Transport:     transport.NewDefaultTransportChain(),
+	}
+	resp, err := c.Do(req)
 	if err != nil {
 		log.Fatal(err)
 	}

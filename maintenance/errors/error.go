@@ -207,6 +207,10 @@ func (e sentryEvent) build() *raven.Packet {
 		packet.Extra["req_id"] = reqID
 		packet.Tags = append(packet.Tags, raven.Tag{Key: "req_id", Value: reqID})
 	}
+	if traceID := log.TraceIDFromContext(ctx); traceID != "" {
+		packet.Extra["uber_trace_id"] = traceID
+		packet.Tags = append(packet.Tags, raven.Tag{Key: "trace_id", Value: traceID})
+	}
 	packet.Extra["handler"] = handlerName
 	if clientID, ok := oauth2.ClientID(ctx); ok {
 		packet.Extra["oauth2_client_id"] = clientID
