@@ -47,9 +47,6 @@ func Router() *mux.Router {
 	// report use of external dependencies
 	r.Use(middleware.ExternalDependency)
 
-	// report use of client headers
-	r.Use(middleware.ResponseClientID)
-
 	// support redacting of data accross the full request scope
 	r.Use(redactMdw.Redact)
 
