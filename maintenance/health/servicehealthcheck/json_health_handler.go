@@ -9,8 +9,9 @@ import (
 	"github.com/pace/bricks/maintenance/log"
 )
 
-type jsonHealthHandler struct {
-	Name     string      `json:"name"`
+type jsonHealthHandler map[string]ServiceStats
+
+type ServiceStats struct {
 	Status   HealthState `json:"status"`
 	Required bool        `json:"required"`
 	Error    string      `json:"error"`
@@ -23,15 +24,13 @@ func (h *jsonHealthHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	reqChecks := check(ctx, &requiredChecks)
 	optChecks := check(ctx, &optionalChecks)
 
-	checkResponse := make([]jsonHealthHandler, len(reqChecks)+len(optChecks))
-	index := 0
+	checkResponse := make(jsonHealthHandler)
 
 	var errors []string
 	var warnings []string
 	status := http.StatusOK
 	for name, res := range reqChecks {
-		scr := jsonHealthHandler{
-			Name:     name,
+		scr := ServiceStats{
 			Status:   res.State,
 			Required: true,
 			Error:    "",
@@ -43,13 +42,11 @@ func (h *jsonHealthHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		} else if res.State == Warn {
 			warnings = append(warnings, fmt.Sprintf("%s: %s", name, res.Msg))
 		}
-		checkResponse[index] = scr
-		index++
+		checkResponse[name] = scr
 	}
 
 	for name, res := range optChecks {
-		scr := jsonHealthHandler{
-			Name:     name,
+		scr := ServiceStats{
 			Status:   res.State,
 			Required: false,
 			Error:    "",
@@ -58,8 +55,7 @@ func (h *jsonHealthHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			scr.Error = res.Msg
 			status = http.StatusServiceUnavailable
 		}
-		checkResponse[index] = scr
-		index++
+		checkResponse[name] = scr
 	}
 
 	if len(errors) > 0 {
