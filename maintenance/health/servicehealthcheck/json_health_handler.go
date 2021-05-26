@@ -9,9 +9,9 @@ import (
 	"github.com/pace/bricks/maintenance/log"
 )
 
-type jsonHealthHandler map[string]ServiceStats
+type jsonHealthHandler map[string]serviceStats
 
-type ServiceStats struct {
+type serviceStats struct {
 	Status   HealthState `json:"status"`
 	Required bool        `json:"required"`
 	Error    string      `json:"error"`
@@ -30,7 +30,7 @@ func (h *jsonHealthHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	var warnings []string
 	status := http.StatusOK
 	for name, res := range reqChecks {
-		scr := ServiceStats{
+		scr := serviceStats{
 			Status:   res.State,
 			Required: true,
 			Error:    "",
@@ -46,7 +46,7 @@ func (h *jsonHealthHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 
 	for name, res := range optChecks {
-		scr := ServiceStats{
+		scr := serviceStats{
 			Status:   res.State,
 			Required: false,
 			Error:    "",

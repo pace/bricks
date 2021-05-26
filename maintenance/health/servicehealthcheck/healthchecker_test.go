@@ -266,17 +266,17 @@ func TestHandlerJSONHealthCheck(t *testing.T) {
 			opt:     []*testHealthChecker{},
 			expCode: http.StatusServiceUnavailable,
 			expReq: jsonHealthHandler{
-				err.name: ServiceStats{
+				err.name: serviceStats{
 					Status:   Err,
 					Required: true,
 					Error:    "healthCheckErr",
 				},
-				initErr.name: ServiceStats{
+				initErr.name: serviceStats{
 					Status:   Err,
 					Required: true,
 					Error:    "initError",
 				},
-				warn.name: ServiceStats{
+				warn.name: serviceStats{
 					Status:   Ok,
 					Required: true,
 					Error:    "",
@@ -289,17 +289,17 @@ func TestHandlerJSONHealthCheck(t *testing.T) {
 			opt:     []*testHealthChecker{initErr},
 			expCode: http.StatusServiceUnavailable,
 			expReq: jsonHealthHandler{
-				err.name: ServiceStats{
+				err.name: serviceStats{
 					Status:   Err,
 					Required: true,
 					Error:    "healthCheckErr",
 				},
-				initErr.name: ServiceStats{
+				initErr.name: serviceStats{
 					Status:   Err,
 					Required: false,
 					Error:    "initError",
 				},
-				warn.name: ServiceStats{
+				warn.name: serviceStats{
 					Status:   Ok,
 					Required: true,
 					Error:    "",
