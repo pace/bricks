@@ -4,67 +4,42 @@
 package middleware
 
 import (
-	"context"
+	"errors"
 	"net/http"
-	"sync"
+	"strings"
 
-	"github.com/pace/bricks/http/oauth2"
-	"github.com/pace/bricks/maintenance/log"
+	jwt "github.com/dgrijalva/jwt-go"
 )
 
 // ClientIDHeaderName name of the HTTP header that is used for reporting
-const ClientIDHeaderName = "Jwt-Client-ID"
+const (
+	ClientIDHeaderName = "Client-ID"
+)
 
-// ResponseClientID to report jwt client id
-func ResponseClientID(next http.Handler) http.Handler {
+var ErrEmptyAuthorizedParty = errors.New("authorized party is empty")
+
+func ClientID(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		var rcID ResponseClientIDContext
-		rcw := responseClientIDWriter{
-			ResponseWriter: w,
-			rcID:           &rcID,
+		value := r.Header.Get("Authorization")
+		if strings.HasPrefix(value, "Bearer ") {
+			var claim clientIDClaim
+
+			_, _, err := new(jwt.Parser).ParseUnverified(value[7:], &claim)
+			if err == nil {
+				w.Header().Add(ClientIDHeaderName, claim.AuthorizedParty)
+			}
 		}
-		r = r.WithContext(ContextWithResponseClientID(r.Context(), &rcID))
-		next.ServeHTTP(&rcw, r)
+		next.ServeHTTP(w, r)
 	})
 }
 
-func AddClientIDToResponse(ctx context.Context) {
-	clientID, _ := oauth2.ClientID(ctx)
-	rcID := ClientIDContextFromContext(ctx)
-	if rcID == nil {
-		log.Ctx(ctx).Warn().Msgf("can't add request client ID dependency %s, because context is missing", clientID)
-		return
-	}
-
-	rcID.AddClientID(clientID)
+type clientIDClaim struct {
+	AuthorizedParty string `json:"azp"`
 }
 
-type responseClientIDWriter struct {
-	http.ResponseWriter
-	rcID *ResponseClientIDContext
-}
-
-// ContextWithResponseClientID creates a contex with the provided dependencies
-func ContextWithResponseClientID(ctx context.Context, rcID *ResponseClientIDContext) context.Context {
-	return context.WithValue(ctx, (*ResponseClientIDContext)(nil), rcID)
-}
-
-// ClientIDContextFromContext returns the jwt-client-id dependency context or nil
-func ClientIDContextFromContext(ctx context.Context) *ResponseClientIDContext {
-	if v := ctx.Value((*ResponseClientIDContext)(nil)); v != nil {
-		return v.(*ResponseClientIDContext)
+func (c clientIDClaim) Valid() error {
+	if c.AuthorizedParty == "" {
+		return ErrEmptyAuthorizedParty
 	}
 	return nil
-}
-
-// ResponseClientIDContext contains the clientID
-type ResponseClientIDContext struct {
-	mu       sync.RWMutex
-	clientID string
-}
-
-func (rcID *ResponseClientIDContext) AddClientID(clientID string) {
-	rcID.mu.Lock()
-	rcID.clientID = clientID
-	rcID.mu.Unlock()
 }

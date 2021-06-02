@@ -13,6 +13,7 @@ require (
 	github.com/certifi/gocertifi v0.0.0-20180118203423-deb3ae2ef261
 	github.com/codahale/hdrhistogram v0.0.0-20161010025455-3a0bb77429bd // indirect
 	github.com/dave/jennifer v1.0.2
+	github.com/dgrijalva/jwt-go v3.2.0+incompatible
 	github.com/getkin/kin-openapi v0.0.0-20180813063848-e1956e8013e5
 	github.com/ghodss/yaml v1.0.0 // indirect
 	github.com/go-kivik/couchdb/v3 v3.2.6

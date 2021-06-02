@@ -4,7 +4,7 @@
 package middleware
 
 import (
-	"context"
+	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -12,27 +12,32 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func Test_ResponseClientID_Middleare(t *testing.T) {
-	AddClientIDToResponse(context.TODO()) // should not fail
+const (
+	emptyToken = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c"
+	token      = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyLCJhenAiOiJjbGllbnRUZXN0In0.eAUlRLw2R2LEvI9TdaD9P6zGQyz-oF7V-Omm2x00iQk"
+)
 
-	t.Run("empty set", func(t *testing.T) {
+func TestClientID(t *testing.T) {
+
+	t.Run("empty", func(t *testing.T) {
 		rec := httptest.NewRecorder()
 		req := httptest.NewRequest(http.MethodGet, "/", nil)
+		req.Header.Set("Authorization", fmt.Sprintf("Bearer %v", emptyToken))
 
-		h := ResponseClientID(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		h := ClientID(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		}))
 		h.ServeHTTP(rec, req)
-		assert.Nil(t, rec.Result().Header[http.CanonicalHeaderKey(ClientIDHeaderName)])
+		assert.Empty(t, rec.Header().Get(ClientIDHeaderName))
 	})
-}
 
-func Test_ResponseClientIDContext_String(t *testing.T) {
-	var rcc ResponseClientIDContext
+	t.Run("clientID", func(t *testing.T) {
+		rec := httptest.NewRecorder()
+		req := httptest.NewRequest(http.MethodGet, "/", nil)
+		req.Header.Set("Authorization", fmt.Sprintf("Bearer %v", token))
 
-	// empty
-	assert.Empty(t, rcc.clientID)
-
-	// add client
-	rcc.AddClientID("clientID")
-	assert.EqualValues(t, "clientID", rcc.clientID)
+		h := ClientID(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		}))
+		h.ServeHTTP(rec, req)
+		assert.NotNil(t, rec.Header().Get(ClientIDHeaderName))
+	})
 }
