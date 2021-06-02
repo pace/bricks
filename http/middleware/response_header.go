@@ -6,7 +6,6 @@ package middleware
 import (
 	"context"
 	"net/http"
-	"strings"
 	"sync"
 
 	"github.com/pace/bricks/http/oauth2"
@@ -14,100 +13,58 @@ import (
 )
 
 // ClientIDHeaderName name of the HTTP header that is used for reporting
-const ClientIDHeaderName = "Client-ID"
+const ClientIDHeaderName = "Jwt-Client-ID"
 
-// ResponseClientID middleware to report client ID
+// ResponseClientID to report jwt client id
 func ResponseClientID(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		var rcc ResponseClientIDContext
+		var rcID ResponseClientIDContext
 		rcw := responseClientIDWriter{
 			ResponseWriter: w,
-			rcc:            &rcc,
+			rcID:           &rcID,
 		}
-
-		r = r.WithContext(ContextWithResponseClientID(r.Context(), &rcc))
+		r = r.WithContext(ContextWithResponseClientID(r.Context(), &rcID))
 		next.ServeHTTP(&rcw, r)
 	})
 }
 
-func AddResponseClientID(ctx context.Context) {
+func AddClientIDToResponse(ctx context.Context) {
 	clientID, _ := oauth2.ClientID(ctx)
-	cIDc := ResponseClientIDContextFromContext(ctx)
-	if cIDc == nil {
-		log.Ctx(ctx).Warn().Msgf("can't add client %s, because context is missing", clientID)
+	rcID := ClientIDContextFromContext(ctx)
+	if rcID == nil {
+		log.Ctx(ctx).Warn().Msgf("can't add request client ID dependency %s, because context is missing", clientID)
 		return
 	}
-	cIDc.AddResponseClientID(clientID)
+
+	rcID.AddClientID(clientID)
 }
 
 type responseClientIDWriter struct {
 	http.ResponseWriter
-	header bool
-	rcc    *ResponseClientIDContext
+	rcID *ResponseClientIDContext
 }
 
-// addHeader adds the clientID header if not done already
-func (w *responseClientIDWriter) addHeader() {
-	if len(w.rcc.clientIDs) > 0 {
-		w.ResponseWriter.Header().Add(ClientIDHeaderName, w.rcc.String())
-	}
-	w.header = true
+// ContextWithResponseClientID creates a contex with the provided dependencies
+func ContextWithResponseClientID(ctx context.Context, rcID *ResponseClientIDContext) context.Context {
+	return context.WithValue(ctx, (*ResponseClientIDContext)(nil), rcID)
 }
 
-func (w *responseClientIDWriter) Write(data []byte) (int, error) {
-	w.addHeader()
-	return w.ResponseWriter.Write(data)
-}
-
-// ContextWithResponseClientID creates a contex with the provided client ID
-func ContextWithResponseClientID(ctx context.Context, rcc *ResponseClientIDContext) context.Context {
-	return context.WithValue(ctx, (*ResponseClientIDContext)(nil), rcc)
-}
-
-// ResponseClientIDContextFromContext returns the client ID context or nil
-func ResponseClientIDContextFromContext(ctx context.Context) *ResponseClientIDContext {
+// ClientIDContextFromContext returns the jwt-client-id dependency context or nil
+func ClientIDContextFromContext(ctx context.Context) *ResponseClientIDContext {
 	if v := ctx.Value((*ResponseClientIDContext)(nil)); v != nil {
 		return v.(*ResponseClientIDContext)
 	}
 	return nil
 }
 
-// ResponseClientIDContext contains all client IDs that were seen
-// during the request livecycle
+// ResponseClientIDContext contains the clientID
 type ResponseClientIDContext struct {
-	mu        sync.RWMutex
-	clientIDs []responseClientID
+	mu       sync.RWMutex
+	clientID string
 }
 
-func (rcc *ResponseClientIDContext) AddResponseClientID(clientID string) {
-	rcc.mu.Lock()
-	rcc.clientIDs = append(rcc.clientIDs, responseClientID{
-		ClientID: clientID,
-	})
-	rcc.mu.Unlock()
-}
-
-// String formats all client IDs
-func (rcc *ResponseClientIDContext) String() string {
-	var b strings.Builder
-	sep := len(rcc.clientIDs) - 1
-	for _, dep := range rcc.clientIDs {
-		b.WriteString(dep.String())
-		if sep > 0 {
-			b.WriteByte(',')
-			sep--
-		}
-	}
-	return b.String()
-}
-
-// responseClientID represents the client ID that
-// was sent in the request
-type responseClientID struct {
-	ClientID string //client ID name
-}
-
-// String return a client ID
-func (rcc responseClientID) String() string {
-	return rcc.ClientID
+func (rcID *ResponseClientIDContext) AddClientID(clientID string) {
+	rcID.mu.Lock()
+	rcID.clientID = clientID
+	rcID.mu.Unlock()
 }
