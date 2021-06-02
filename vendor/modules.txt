@@ -24,6 +24,9 @@ github.com/codahale/hdrhistogram
 github.com/dave/jennifer/jen
 # github.com/davecgh/go-spew v1.1.1
 github.com/davecgh/go-spew/spew
+# github.com/dgrijalva/jwt-go v3.2.0+incompatible
+## explicit
+github.com/dgrijalva/jwt-go
 # github.com/getkin/kin-openapi v0.0.0-20180813063848-e1956e8013e5
 ## explicit
 github.com/getkin/kin-openapi/jsoninfo
