@@ -30,6 +30,17 @@ func TestClientID(t *testing.T) {
 		assert.Empty(t, rec.Header().Get(ClientIDHeaderName))
 	})
 
+	t.Run("brokenToken", func(t *testing.T) {
+		rec := httptest.NewRecorder()
+		req := httptest.NewRequest(http.MethodGet, "/", nil)
+		req.Header.Set("Authorization", fmt.Sprintf("Bearer %v", emptyToken+"broken"))
+
+		h := ClientID(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		}))
+		h.ServeHTTP(rec, req)
+		assert.Empty(t, rec.Header().Get(ClientIDHeaderName))
+	})
+
 	t.Run("clientID", func(t *testing.T) {
 		rec := httptest.NewRecorder()
 		req := httptest.NewRequest(http.MethodGet, "/", nil)
