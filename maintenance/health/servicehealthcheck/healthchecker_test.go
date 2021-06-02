@@ -258,28 +258,25 @@ func TestHandlerJSONHealthCheck(t *testing.T) {
 		req     []*testHealthChecker
 		opt     []*testHealthChecker
 		expCode int
-		expReq  []jsonHealthHandler
+		expReq  jsonHealthHandler
 	}{
 		{
 			title:   "Test health check json all required",
 			req:     []*testHealthChecker{warn, err, initErr},
 			opt:     []*testHealthChecker{},
 			expCode: http.StatusServiceUnavailable,
-			expReq: []jsonHealthHandler{
-				jsonHealthHandler{
-					Name:     err.name,
+			expReq: jsonHealthHandler{
+				err.name: serviceStats{
 					Status:   Err,
 					Required: true,
 					Error:    "healthCheckErr",
 				},
-				jsonHealthHandler{
-					Name:     initErr.name,
+				initErr.name: serviceStats{
 					Status:   Err,
 					Required: true,
 					Error:    "initError",
 				},
-				jsonHealthHandler{
-					Name:     warn.name,
+				warn.name: serviceStats{
 					Status:   Ok,
 					Required: true,
 					Error:    "",
@@ -291,21 +288,18 @@ func TestHandlerJSONHealthCheck(t *testing.T) {
 			req:     []*testHealthChecker{warn, err},
 			opt:     []*testHealthChecker{initErr},
 			expCode: http.StatusServiceUnavailable,
-			expReq: []jsonHealthHandler{
-				jsonHealthHandler{
-					Name:     err.name,
+			expReq: jsonHealthHandler{
+				err.name: serviceStats{
 					Status:   Err,
 					Required: true,
 					Error:    "healthCheckErr",
 				},
-				jsonHealthHandler{
-					Name:     initErr.name,
+				initErr.name: serviceStats{
 					Status:   Err,
 					Required: false,
 					Error:    "initError",
 				},
-				jsonHealthHandler{
-					Name:     warn.name,
+				warn.name: serviceStats{
 					Status:   Ok,
 					Required: true,
 					Error:    "",
@@ -330,22 +324,14 @@ func TestHandlerJSONHealthCheck(t *testing.T) {
 
 			require.Equal(t, tc.expCode, resp.StatusCode)
 
-			var data []jsonHealthHandler
+			var data jsonHealthHandler
 			err := json.NewDecoder(resp.Body).Decode(&data)
 			require.NoError(t, err)
 
-			sort.Slice(data, func(i, j int) bool {
-				return data[i].Name < data[j].Name
-			})
-			sort.Slice(tc.expReq, func(i, j int) bool {
-				return tc.expReq[i].Name < tc.expReq[j].Name
-			})
-
-			for i := range tc.expReq {
-				require.Equal(t, tc.expReq[i].Name, data[i].Name)
-				require.Equal(t, tc.expReq[i].Status, data[i].Status)
-				require.Equal(t, tc.expReq[i].Required, data[i].Required)
-				require.Equal(t, tc.expReq[i].Error, data[i].Error)
+			for k, v := range tc.expReq {
+				require.Equal(t, v.Status, data[k].Status)
+				require.Equal(t, v.Required, data[k].Required)
+				require.Equal(t, v.Error, data[k].Error)
 			}
 		})
 	}

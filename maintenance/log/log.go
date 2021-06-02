@@ -99,6 +99,16 @@ func RequestIDFromContext(ctx context.Context) string {
 	return ""
 }
 
+// TraceIDFromContext returns a unique request id or an empty string if there is none
+func TraceIDFromContext(ctx context.Context) string {
+	id, ok := hlog.TraceIDFromCtx(ctx)
+	if ok {
+		return id
+	}
+
+	return ""
+}
+
 // Req returns the logger for the passed request
 func Req(r *http.Request) *zerolog.Logger {
 	return hlog.FromRequest(r)

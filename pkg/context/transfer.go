@@ -2,7 +2,7 @@ package context
 
 import (
 	"context"
-
+	"github.com/opentracing/opentracing-go"
 	http "github.com/pace/bricks/http/middleware"
 	"github.com/pace/bricks/http/oauth2"
 	"github.com/pace/bricks/locale"
@@ -22,5 +22,14 @@ func Transfer(in context.Context) context.Context {
 	out = errors.ContextTransfer(in, out)
 	out = http.ContextTransfer(in, out)
 	out = redact.ContextTransfer(in, out)
+	out = TransferTracingContext(in, out)
 	return locale.ContextTransfer(in, out)
+}
+
+func TransferTracingContext(in, out context.Context) context.Context {
+	span := opentracing.SpanFromContext(in)
+	if span != nil {
+		out = opentracing.ContextWithSpan(out, span)
+	}
+	return out
 }

@@ -4,6 +4,7 @@
 package tracing
 
 import (
+	"fmt"
 	"io"
 	"net/http"
 
@@ -51,21 +52,11 @@ type traceHandler struct {
 // Trace the service function handler execution
 func (h *traceHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
-	var handlerSpan opentracing.Span
-	wireContext, err := wire.FromWire(r)
-	handlerSpan, ctx = opentracing.StartSpanFromContext(ctx, "ServeHTTP", opentracing.ChildOf(wireContext))
-	handlerSpan.LogFields(olog.String("req_id", log.RequestID(r)),
-		olog.String("path", r.URL.Path),
-		olog.String("method", r.Method))
-	if err != nil {
-		handlerSpan.LogFields(olog.String("span", "new"), olog.String("spanerr", err.Error()))
-	} else {
-		handlerSpan.LogFields(olog.String("span", "wire"))
-	}
+	wireContext, _ := wire.FromWire(r)
+	_, ctx = opentracing.StartSpanFromContext(ctx, fmt.Sprintf("ServeHTTP Method: %s Path: %s", r.Method, r.URL.Path),
+		opentracing.ChildOf(wireContext))
 	ww := mutil.WrapWriter(w)
 	h.next.ServeHTTP(ww, r.WithContext(ctx))
-	handlerSpan.LogFields(olog.Int("bytes", ww.BytesWritten()), olog.Int("status_code", ww.Status()))
-	handlerSpan.Finish()
 }
 
 // Handler generates a tracing handler that decodes the current trace from the wire.
@@ -73,6 +64,35 @@ func (h *traceHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 func Handler(ignoredPrefixes ...string) func(http.Handler) http.Handler {
 	return util.NewIgnorePrefixMiddleware(func(next http.Handler) http.Handler {
 		return &traceHandler{
+			next: next,
+		}
+	}, ignoredPrefixes...)
+}
+
+type traceLogHandler struct {
+	next http.Handler
+}
+
+// Trace the service function handler execution
+func (h *traceLogHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	var handlerSpan opentracing.Span
+
+	handlerSpan = opentracing.SpanFromContext(ctx)
+	handlerSpan.LogFields(olog.String("req_id", log.RequestID(r)),
+		olog.String("path", r.URL.Path),
+		olog.String("method", r.Method))
+	ww := mutil.WrapWriter(w)
+	h.next.ServeHTTP(ww, r.WithContext(ctx))
+	handlerSpan.LogFields(olog.Int("bytes", ww.BytesWritten()), olog.Int("status_code", ww.Status()))
+	handlerSpan.Finish()
+}
+
+// TraceLogHandler generates a tracing handler that adds logging data to existing handler.
+// The tracing handler will not start traces for the list of ignoredPrefixes.
+func TraceLogHandler(ignoredPrefixes ...string) func(http.Handler) http.Handler {
+	return util.NewIgnorePrefixMiddleware(func(next http.Handler) http.Handler {
+		return &traceLogHandler{
 			next: next,
 		}
 	}, ignoredPrefixes...)

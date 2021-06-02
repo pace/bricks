@@ -172,6 +172,7 @@ func (lt *logtracer) BeforeProcess(ctx context.Context, cmd redis.Cmder) (contex
 
 	span, _ := opentracing.StartSpanFromContext(ctx, fmt.Sprintf("Redis: %s", cmd.Name()))
 	span.LogFields(olog.String("cmd", cmd.Name()))
+	defer span.Finish()
 
 	paceRedisCmdTotal.With(prometheus.Labels{
 		"method": cmd.Name(),

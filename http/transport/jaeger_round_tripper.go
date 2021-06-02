@@ -5,6 +5,8 @@ package transport
 
 import (
 	"fmt"
+	"github.com/pace/bricks/maintenance/log"
+	"github.com/pace/bricks/maintenance/tracing/wire"
 	"net/http"
 
 	"github.com/opentracing/opentracing-go"
@@ -31,6 +33,11 @@ func (l *JaegerRoundTripper) RoundTrip(req *http.Request) (*http.Response, error
 	operationName := fmt.Sprintf("%s %s", req.Method, req.URL.Path)
 	span, ctx := opentracing.StartSpanFromContext(req.Context(), operationName)
 	defer span.Finish()
+
+	err := wire.ToWire(span.Context(), req)
+	if err != nil {
+		log.Ctx(ctx).Info().Err(err).Msg("unable to serialize tracing context")
+	}
 
 	resp, err := l.Transport().RoundTrip(req.WithContext(ctx))
 
