@@ -15,7 +15,7 @@ import (
 GetTestHandler handles request/response marshaling and validation for
  Get /beta/test
 */
-func GetTestHandler(service Service) http.Handler {
+func GetTestHandler(service GetTestHandlerService) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		defer errors.HandleRequest("GetTestHandler", w, r)
 
@@ -79,10 +79,25 @@ type GetTestRequest struct {
 	Request *http.Request `valid:"-"`
 }
 
-// Service interface for all handlers
-type Service interface {
+// Service interface for GetTestHandler handler
+type GetTestHandlerService interface {
 	// GetTest Test
 	GetTest(context.Context, GetTestResponseWriter, *GetTestRequest) error
+}
+
+// Legacy Interface.
+// Use this if you want to fully implement a service.
+type Service interface {
+	GetTestHandlerService
+}
+
+// GetTestHandlerWithFallbackHelper helper that checks if the given service fulfills the interface. Returns fallback handler if not, otherwise returns matching handler.
+func GetTestHandlerWithFallbackHelper(service interface{}, fallback http.Handler) http.Handler {
+	if service, ok := service.(GetTestHandlerService); ok {
+		return GetTestHandler(service)
+	} else {
+		return fallback
+	}
 }
 
 /*
@@ -91,10 +106,24 @@ Router implements: PACE Payment API
 Welcome to the PACE Payment API documentation.
 This API is responsible for managing payment methods for users as well as authorizing payments on behalf of PACE services.
 */
-func Router(service Service) *mux.Router {
+func Router(service interface{}) *mux.Router {
 	router := mux.NewRouter()
 	// Subrouter s1 - Path: /pay
 	s1 := router.PathPrefix("/pay").Subrouter()
-	s1.Methods("GET").Path("/beta/test").Handler(GetTestHandler(service)).Name("GetTest")
+	s1.Methods("GET").Path("/beta/test").Name("GetTest").Handler(GetTestHandlerWithFallbackHelper(service, router.NotFoundHandler))
+	return router
+}
+
+/*
+Router implements: PACE Payment API
+
+Welcome to the PACE Payment API documentation.
+This API is responsible for managing payment methods for users as well as authorizing payments on behalf of PACE services.
+*/
+func RouterWithFallback(service interface{}, fallback http.Handler) *mux.Router {
+	router := mux.NewRouter()
+	// Subrouter s1 - Path: /pay
+	s1 := router.PathPrefix("/pay").Subrouter()
+	s1.Methods("GET").Path("/beta/test").Name("GetTest").Handler(GetTestHandlerWithFallbackHelper(service, fallback))
 	return router
 }

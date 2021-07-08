@@ -7,9 +7,10 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/pace/bricks/http/transport"
 	"net/http"
 	"time"
+
+	"github.com/pace/bricks/http/transport"
 
 	"github.com/pace/bricks/maintenance/health/servicehealthcheck"
 
@@ -121,10 +122,10 @@ func main() {
 			return
 		}
 		var doc interface{}
-		row.ScanDoc(&doc)
+		row.ScanDoc(&doc) // nolint: errcheck
 
 		w.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(w).Encode(doc)
+		json.NewEncoder(w).Encode(doc) // nolint: errcheck
 	})
 
 	h.HandleFunc("/panic", func(w http.ResponseWriter, r *http.Request) {
@@ -187,13 +188,13 @@ func fetchSunsetandSunrise(ctx context.Context) string {
 	span.LogFields(olog.Float64("lat", lat), olog.Float64("lon", lon))
 
 	url := fmt.Sprintf("https://api.sunrise-sunset.org/json?lat=%f&lng=%f&date=today", lat, lon)
-	req, err := http.NewRequestWithContext(ctx,"GET", url, nil)
+	req, err := http.NewRequestWithContext(ctx, "GET", url, nil)
 	if err != nil {
 		log.Fatal(err)
 	}
 
 	c := &http.Client{
-		Transport:     transport.NewDefaultTransportChain(),
+		Transport: transport.NewDefaultTransportChain(),
 	}
 	resp, err := c.Do(req)
 	if err != nil {

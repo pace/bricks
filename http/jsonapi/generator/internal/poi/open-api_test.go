@@ -158,8 +158,8 @@ type GasStation struct {
 	Brand             string              `json:"brand,omitempty" jsonapi:"attr,brand,omitempty" valid:"optional"`                                                                                                                                          // Example: "Total"
 	Contact           GasStationContact   `json:"contact,omitempty" jsonapi:"attr,contact,omitempty" valid:"optional"`
 	Food              []string            `json:"food,omitempty" jsonapi:"attr,food,omitempty" valid:"optional,in(bakery|bistro|cafe|restaurant|takeaway|)"`                                 // Example: "[restaurant bakery]"
-	Latitude          float32             `json:"latitude,omitempty" jsonapi:"attr,latitude,omitempty" valid:"optional"`                                                                     // Example: "49.013"
-	Longitude         float32             `json:"longitude,omitempty" jsonapi:"attr,longitude,omitempty" valid:"optional"`                                                                   // Example: "8.425"
+	Latitude          float32             `json:"latitude" jsonapi:"attr,latitude" valid:"optional"`                                                                                         // Example: "49.013"
+	Longitude         float32             `json:"longitude" jsonapi:"attr,longitude" valid:"optional"`                                                                                       // Example: "8.425"
 	LoyaltyPrograms   []string            `json:"loyaltyPrograms,omitempty" jsonapi:"attr,loyaltyPrograms,omitempty" valid:"optional,in(deutschlandCard|payback|shellClubsmart|totalClub|)"` // Example: "[payback]"
 	OpeningHours      CommonOpeningHours  `json:"openingHours,omitempty" jsonapi:"attr,openingHours,omitempty" valid:"optional"`
 	PaymentMethods    []string            `json:"paymentMethods,omitempty" jsonapi:"attr,paymentMethods,omitempty" valid:"optional,in(americanExpress|applyPay|aralKomfort|aviaCard|barclays|bayWaCard|cash|dinersClub|dkv|essoCard|essoVoucher|euroshell|ffCard|girocard|googlePay|hemMycard|jetCard|logPay|maestro|masterCard|novofleet|pacePay|paypal|routex|sepaDirectDebit|starFleetCard|tndCard|totalCard|uta|visa|vPay|westfalenCard|)"` // Example: "[sepaDirectDebit visa]"
@@ -225,15 +225,15 @@ type LocationBasedAppsWithRefs []*LocationBasedAppWithRefs
 
 // MoveRequest Creates a new event object at lat/lng from this POI ID
 type MoveRequest struct {
-	ID        string  `jsonapi:"primary,movePoi,omitempty" valid:"uuid,optional"`                      // UUID of the POI that is going to be moved
-	Latitude  float32 `json:"latitude,omitempty" jsonapi:"attr,latitude,omitempty" valid:"optional"`   // Latitude in degrees
-	Longitude float32 `json:"longitude,omitempty" jsonapi:"attr,longitude,omitempty" valid:"optional"` // Longitude in degrees
+	ID        string  `jsonapi:"primary,movePoi,omitempty" valid:"uuid,optional"`  // UUID of the POI that is going to be moved
+	Latitude  float32 `json:"latitude" jsonapi:"attr,latitude" valid:"optional"`   // Latitude in degrees
+	Longitude float32 `json:"longitude" jsonapi:"attr,longitude" valid:"optional"` // Longitude in degrees
 }
 
 // POI ...
 type POI struct {
 	ID                string               `jsonapi:"primary,GasStation,omitempty" valid:"uuid,optional"` // POI ID
-	Active            bool                 `json:"active,omitempty" jsonapi:"attr,active,omitempty" valid:"optional"`
+	Active            bool                 `json:"active" jsonapi:"attr,active" valid:"optional"`
 	Boundary          CommonGeoJSONPolygon `json:"boundary,omitempty" jsonapi:"attr,boundary,omitempty" valid:"optional"`
 	CountryID         CommonCountryID      `json:"countryId,omitempty" jsonapi:"attr,countryId,omitempty" valid:"optional"`
 	CreatedAt         *time.Time           `json:"createdAt,omitempty" jsonapi:"attr,createdAt,omitempty,iso8601" valid:"optional"`
@@ -275,7 +275,7 @@ type PolicyRule struct {
 // PolicyRulePriority ...
 type PolicyRulePriority struct {
 	SourceID   string  `json:"sourceId,omitempty" jsonapi:"attr,sourceId,omitempty" valid:"required,uuid"` // Tracks who did last change
-	TimeToLive float64 `json:"timeToLive,omitempty" jsonapi:"attr,timeToLive,omitempty" valid:"optional"`  // Time to live in seconds (in relation to other entries)
+	TimeToLive float64 `json:"timeToLive" jsonapi:"attr,timeToLive" valid:"optional"`                      // Time to live in seconds (in relation to other entries)
 }
 
 // PriceHistoryFuelPrices ...
@@ -332,7 +332,7 @@ type Sources []*Source
 
 // SubscriptionConditionsFuelPrice Condition on the fuelPrice of a gas station.
 type SubscriptionConditionsFuelPrice struct {
-	Lt float64 `json:"lt,omitempty" jsonapi:"attr,lt,omitempty" valid:"optional"` /*
+	Lt float64 `json:"lt" jsonapi:"attr,lt" valid:"optional"` /*
 	Fuel price is less then given amount. Amount is always given in the currency of the gas station. The units are not scaled, for `EUR`, the value 1.3 means 1 euro and 30 cents.
 	*/
 }
@@ -2759,8 +2759,8 @@ un-marshaled content object
 */
 type GetAppsRequest struct {
 	Request            *http.Request `valid:"-"`
-	ParamPageNumber    int64         `valid:"optional"`
-	ParamPageSize      int64         `valid:"optional"`
+	ParamPageNumber    int64         `json:"" jsonapi:"" valid:"optional"`
+	ParamPageSize      int64         `json:"" jsonapi:"" valid:"optional"`
 	ParamFilterAppType string        `valid:"optional,in(fueling|)"`
 	ParamFilterCache   string        `valid:"optional,in(preload|approaching|)"`
 	ParamFilterSince   time.Time     `valid:"optional,iso8601"`
@@ -2824,8 +2824,8 @@ un-marshaled content object
 */
 type CheckForPaceAppRequest struct {
 	Request              *http.Request `valid:"-"`
-	ParamFilterLatitude  float32       `valid:"required"`
-	ParamFilterLongitude float32       `valid:"required"`
+	ParamFilterLatitude  float32       `json:"" jsonapi:"" valid:"required"`
+	ParamFilterLongitude float32       `json:"" jsonapi:"" valid:"required"`
 	ParamFilterAppType   string        `valid:"optional,in(fueling|)"`
 }
 
@@ -3159,8 +3159,8 @@ un-marshaled content object
 */
 type GetEventsRequest struct {
 	Request             *http.Request `valid:"-"`
-	ParamPageNumber     int64         `valid:"optional"`
-	ParamPageSize       int64         `valid:"optional"`
+	ParamPageNumber     int64         `json:"" jsonapi:"" valid:"optional"`
+	ParamPageSize       int64         `json:"" jsonapi:"" valid:"optional"`
 	ParamFilterSourceID string        `valid:"optional,uuid"`
 	ParamFilterUserID   string        `valid:"optional,uuid"`
 }
@@ -3194,15 +3194,15 @@ un-marshaled content object
 */
 type GetGasStationsRequest struct {
 	Request                  *http.Request `valid:"-"`
-	ParamPageNumber          int64         `valid:"optional"`
-	ParamPageSize            int64         `valid:"optional"`
+	ParamPageNumber          int64         `json:"" jsonapi:"" valid:"optional"`
+	ParamPageSize            int64         `json:"" jsonapi:"" valid:"optional"`
 	ParamFilterPoiType       string        `valid:"optional,in(gasStation|)"`
-	ParamFilterAppType       []string      `valid:"optional,in(fueling|)"`
-	ParamFilterLatitude      float32       `valid:"optional"`
-	ParamFilterLongitude     float32       `valid:"optional"`
-	ParamFilterRadius        float32       `valid:"optional"`
-	ParamFilterBoundingBox   []float32     `valid:"optional"`
-	ParamCompileOpeningHours bool          `valid:"optional,in(true|false|)"`
+	ParamFilterAppType       []string      `json:"" jsonapi:"" valid:"optional,in(fueling|)"`
+	ParamFilterLatitude      float32       `json:"" jsonapi:"" valid:"optional"`
+	ParamFilterLongitude     float32       `json:"" jsonapi:"" valid:"optional"`
+	ParamFilterRadius        float32       `json:"" jsonapi:"" valid:"optional"`
+	ParamFilterBoundingBox   []float32     `json:"" jsonapi:"" valid:"optional"`
+	ParamCompileOpeningHours bool          `json:"" jsonapi:"" valid:"optional,in(true|false|)"`
 	ParamFilterSource        string        `valid:"optional,uuid"`
 }
 
@@ -3249,7 +3249,7 @@ un-marshaled content object
 type GetGasStationRequest struct {
 	Request                  *http.Request `valid:"-"`
 	ParamID                  string        `valid:"required,uuid"`
-	ParamCompileOpeningHours bool          `valid:"optional,in(true|false|)"`
+	ParamCompileOpeningHours bool          `json:"" jsonapi:"" valid:"optional,in(true|false|)"`
 }
 
 /*
@@ -3356,8 +3356,8 @@ un-marshaled content object
 */
 type GetMetadataFiltersRequest struct {
 	Request        *http.Request `valid:"-"`
-	ParamLatitude  float32       `valid:"required"`
-	ParamLongitude float32       `valid:"required"`
+	ParamLatitude  float32       `json:"" jsonapi:"" valid:"required"`
+	ParamLongitude float32       `json:"" jsonapi:"" valid:"required"`
 }
 
 /*
@@ -3389,8 +3389,8 @@ un-marshaled content object
 */
 type GetPoisRequest struct {
 	Request            *http.Request `valid:"-"`
-	ParamPageNumber    int64         `valid:"optional"`
-	ParamPageSize      int64         `valid:"optional"`
+	ParamPageNumber    int64         `json:"" jsonapi:"" valid:"optional"`
+	ParamPageSize      int64         `json:"" jsonapi:"" valid:"optional"`
 	ParamFilterPoiType POIType       `valid:"optional"`
 	ParamFilterAppID   string        `valid:"optional,uuid"`
 }
@@ -3511,8 +3511,8 @@ un-marshaled content object
 */
 type GetPoliciesRequest struct {
 	Request              *http.Request `valid:"-"`
-	ParamPageNumber      int64         `valid:"optional"`
-	ParamPageSize        int64         `valid:"optional"`
+	ParamPageNumber      int64         `json:"" jsonapi:"" valid:"optional"`
+	ParamPageSize        int64         `json:"" jsonapi:"" valid:"optional"`
 	ParamFilterPoiType   POIType       `valid:"optional"`
 	ParamFilterCountryID string        `valid:"optional"`
 	ParamFilterUserID    string        `valid:"optional,uuid"`
@@ -3614,8 +3614,8 @@ un-marshaled content object
 */
 type GetRegionalPricesRequest struct {
 	Request              *http.Request `valid:"-"`
-	ParamFilterLatitude  float32       `valid:"required"`
-	ParamFilterLongitude float32       `valid:"required"`
+	ParamFilterLatitude  float32       `json:"" jsonapi:"" valid:"required"`
+	ParamFilterLongitude float32       `json:"" jsonapi:"" valid:"required"`
 }
 
 /*
@@ -3647,8 +3647,8 @@ un-marshaled content object
 */
 type GetSourcesRequest struct {
 	Request            *http.Request `valid:"-"`
-	ParamPageNumber    int64         `valid:"optional"`
-	ParamPageSize      int64         `valid:"optional"`
+	ParamPageNumber    int64         `json:"" jsonapi:"" valid:"optional"`
+	ParamPageSize      int64         `json:"" jsonapi:"" valid:"optional"`
 	ParamFilterPoiType POIType       `valid:"optional"`
 	ParamFilterName    string        `valid:"optional"`
 }
@@ -3831,7 +3831,7 @@ type GetSubscriptionsContentItem struct {
 
 // GetSubscriptionsContentConditionsFuelPrice Condition on the fuelPrice of a gas station.
 type GetSubscriptionsContentConditionsFuelPrice struct {
-	Lt float64 `json:"lt,omitempty" jsonapi:"attr,lt,omitempty" valid:"optional"` /*
+	Lt float64 `json:"lt" jsonapi:"attr,lt" valid:"optional"` /*
 	Fuel price is less then given amount. Amount is always given in the currency of the gas station. The units are not scaled, for `EUR`, the value 1.3 means 1 euro and 30 cents.
 	*/
 }

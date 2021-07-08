@@ -76,9 +76,8 @@ type traceLogHandler struct {
 // Trace the service function handler execution
 func (h *traceLogHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
-	var handlerSpan opentracing.Span
 
-	handlerSpan = opentracing.SpanFromContext(ctx)
+	handlerSpan := opentracing.SpanFromContext(ctx)
 	handlerSpan.LogFields(olog.String("req_id", log.RequestID(r)),
 		olog.String("path", r.URL.Path),
 		olog.String("method", r.Method))
