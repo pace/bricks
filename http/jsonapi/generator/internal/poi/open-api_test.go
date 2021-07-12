@@ -2759,8 +2759,8 @@ un-marshaled content object
 */
 type GetAppsRequest struct {
 	Request            *http.Request `valid:"-"`
-	ParamPageNumber    int64         `json:"" jsonapi:"" valid:"optional"`
-	ParamPageSize      int64         `json:"" jsonapi:"" valid:"optional"`
+	ParamPageNumber    int64         `valid:"optional"`
+	ParamPageSize      int64         `valid:"optional"`
 	ParamFilterAppType string        `valid:"optional,in(fueling|)"`
 	ParamFilterCache   string        `valid:"optional,in(preload|approaching|)"`
 	ParamFilterSince   time.Time     `valid:"optional,iso8601"`
@@ -2824,8 +2824,8 @@ un-marshaled content object
 */
 type CheckForPaceAppRequest struct {
 	Request              *http.Request `valid:"-"`
-	ParamFilterLatitude  float32       `json:"" jsonapi:"" valid:"required"`
-	ParamFilterLongitude float32       `json:"" jsonapi:"" valid:"required"`
+	ParamFilterLatitude  float32       `valid:"required"`
+	ParamFilterLongitude float32       `valid:"required"`
 	ParamFilterAppType   string        `valid:"optional,in(fueling|)"`
 }
 
@@ -3159,8 +3159,8 @@ un-marshaled content object
 */
 type GetEventsRequest struct {
 	Request             *http.Request `valid:"-"`
-	ParamPageNumber     int64         `json:"" jsonapi:"" valid:"optional"`
-	ParamPageSize       int64         `json:"" jsonapi:"" valid:"optional"`
+	ParamPageNumber     int64         `valid:"optional"`
+	ParamPageSize       int64         `valid:"optional"`
 	ParamFilterSourceID string        `valid:"optional,uuid"`
 	ParamFilterUserID   string        `valid:"optional,uuid"`
 }
@@ -3194,15 +3194,15 @@ un-marshaled content object
 */
 type GetGasStationsRequest struct {
 	Request                  *http.Request `valid:"-"`
-	ParamPageNumber          int64         `json:"" jsonapi:"" valid:"optional"`
-	ParamPageSize            int64         `json:"" jsonapi:"" valid:"optional"`
+	ParamPageNumber          int64         `valid:"optional"`
+	ParamPageSize            int64         `valid:"optional"`
 	ParamFilterPoiType       string        `valid:"optional,in(gasStation|)"`
-	ParamFilterAppType       []string      `json:"" jsonapi:"" valid:"optional,in(fueling|)"`
-	ParamFilterLatitude      float32       `json:"" jsonapi:"" valid:"optional"`
-	ParamFilterLongitude     float32       `json:"" jsonapi:"" valid:"optional"`
-	ParamFilterRadius        float32       `json:"" jsonapi:"" valid:"optional"`
-	ParamFilterBoundingBox   []float32     `json:"" jsonapi:"" valid:"optional"`
-	ParamCompileOpeningHours bool          `json:"" jsonapi:"" valid:"optional,in(true|false|)"`
+	ParamFilterAppType       []string      `valid:"optional,in(fueling|)"`
+	ParamFilterLatitude      float32       `valid:"optional"`
+	ParamFilterLongitude     float32       `valid:"optional"`
+	ParamFilterRadius        float32       `valid:"optional"`
+	ParamFilterBoundingBox   []float32     `valid:"optional"`
+	ParamCompileOpeningHours bool          `valid:"optional,in(true|false|)"`
 	ParamFilterSource        string        `valid:"optional,uuid"`
 }
 
@@ -3249,7 +3249,7 @@ un-marshaled content object
 type GetGasStationRequest struct {
 	Request                  *http.Request `valid:"-"`
 	ParamID                  string        `valid:"required,uuid"`
-	ParamCompileOpeningHours bool          `json:"" jsonapi:"" valid:"optional,in(true|false|)"`
+	ParamCompileOpeningHours bool          `valid:"optional,in(true|false|)"`
 }
 
 /*
@@ -3356,8 +3356,8 @@ un-marshaled content object
 */
 type GetMetadataFiltersRequest struct {
 	Request        *http.Request `valid:"-"`
-	ParamLatitude  float32       `json:"" jsonapi:"" valid:"required"`
-	ParamLongitude float32       `json:"" jsonapi:"" valid:"required"`
+	ParamLatitude  float32       `valid:"required"`
+	ParamLongitude float32       `valid:"required"`
 }
 
 /*
@@ -3389,8 +3389,8 @@ un-marshaled content object
 */
 type GetPoisRequest struct {
 	Request            *http.Request `valid:"-"`
-	ParamPageNumber    int64         `json:"" jsonapi:"" valid:"optional"`
-	ParamPageSize      int64         `json:"" jsonapi:"" valid:"optional"`
+	ParamPageNumber    int64         `valid:"optional"`
+	ParamPageSize      int64         `valid:"optional"`
 	ParamFilterPoiType POIType       `valid:"optional"`
 	ParamFilterAppID   string        `valid:"optional,uuid"`
 }
@@ -3511,8 +3511,8 @@ un-marshaled content object
 */
 type GetPoliciesRequest struct {
 	Request              *http.Request `valid:"-"`
-	ParamPageNumber      int64         `json:"" jsonapi:"" valid:"optional"`
-	ParamPageSize        int64         `json:"" jsonapi:"" valid:"optional"`
+	ParamPageNumber      int64         `valid:"optional"`
+	ParamPageSize        int64         `valid:"optional"`
 	ParamFilterPoiType   POIType       `valid:"optional"`
 	ParamFilterCountryID string        `valid:"optional"`
 	ParamFilterUserID    string        `valid:"optional,uuid"`
@@ -3614,8 +3614,8 @@ un-marshaled content object
 */
 type GetRegionalPricesRequest struct {
 	Request              *http.Request `valid:"-"`
-	ParamFilterLatitude  float32       `json:"" jsonapi:"" valid:"required"`
-	ParamFilterLongitude float32       `json:"" jsonapi:"" valid:"required"`
+	ParamFilterLatitude  float32       `valid:"required"`
+	ParamFilterLongitude float32       `valid:"required"`
 }
 
 /*
@@ -3647,8 +3647,8 @@ un-marshaled content object
 */
 type GetSourcesRequest struct {
 	Request            *http.Request `valid:"-"`
-	ParamPageNumber    int64         `json:"" jsonapi:"" valid:"optional"`
-	ParamPageSize      int64         `json:"" jsonapi:"" valid:"optional"`
+	ParamPageNumber    int64         `valid:"optional"`
+	ParamPageSize      int64         `valid:"optional"`
 	ParamFilterPoiType POIType       `valid:"optional"`
 	ParamFilterName    string        `valid:"optional"`
 }

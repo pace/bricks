@@ -548,7 +548,7 @@ type WaitOnPumpStatusChangeRequest struct {
 	ParamPumpID       string        `valid:"required,uuid"`
 	ParamUpdate       string        `valid:"required,in(longPolling)"`
 	ParamLastStatus   PumpStatus    `valid:"optional"`
-	ParamTimeout      int64         `json:"" jsonapi:"" valid:"optional"`
+	ParamTimeout      int64         `valid:"optional"`
 }
 
 // Service interface for ProcessPaymentHandler handler

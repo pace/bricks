@@ -442,6 +442,10 @@ func addJSONAPITags(tags map[string]string, kind, name string) {
 }
 
 func removeOmitempty(tags map[string]string) {
-	tags["jsonapi"] = strings.ReplaceAll(tags["jsonapi"], ",omitempty", "")
-	tags["json"] = strings.ReplaceAll(tags["json"], ",omitempty", "")
+	if v, ok := tags["jsonapi"]; ok {
+		tags["jsonapi"] = strings.ReplaceAll(v, ",omitempty", "")
+	}
+	if v, ok := tags["json"]; ok {
+		tags["json"] = strings.ReplaceAll(v, ",omitempty", "")
+	}
 }
