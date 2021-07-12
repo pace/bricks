@@ -6,6 +6,7 @@ package generator
 import (
 	"fmt"
 	"sort"
+	"strings"
 
 	"github.com/dave/jennifer/jen"
 	"github.com/getkin/kin-openapi/openapi3"
@@ -438,4 +439,13 @@ func addRequiredOptionalTag(tags map[string]string, name string, schema *openapi
 func addJSONAPITags(tags map[string]string, kind, name string) {
 	tags["jsonapi"] = fmt.Sprintf("%s,%s,omitempty", kind, name)
 	tags["json"] = fmt.Sprintf("%s,omitempty", name)
+}
+
+func removeOmitempty(tags map[string]string) {
+	if v, ok := tags["jsonapi"]; ok {
+		tags["jsonapi"] = strings.ReplaceAll(v, ",omitempty", "")
+	}
+	if v, ok := tags["json"]; ok {
+		tags["json"] = strings.ReplaceAll(v, ",omitempty", "")
+	}
 }

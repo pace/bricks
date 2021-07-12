@@ -1086,11 +1086,13 @@
               "longitude": {
                 "type": "number",
                 "format": "float",
-                "example": 8.425
+                "example": 8.425,
+                "nullable": true
               },
               "stationName": {
                 "type": "string",
-                "example": "PACE Station"
+                "example": "PACE Station",
+                "nullable": true
               },
               "address": {
                 "type": "object",

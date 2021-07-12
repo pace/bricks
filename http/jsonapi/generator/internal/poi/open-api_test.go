@@ -158,8 +158,8 @@ type GasStation struct {
 	Brand             string              `json:"brand,omitempty" jsonapi:"attr,brand,omitempty" valid:"optional"`                                                                                                                                          // Example: "Total"
 	Contact           GasStationContact   `json:"contact,omitempty" jsonapi:"attr,contact,omitempty" valid:"optional"`
 	Food              []string            `json:"food,omitempty" jsonapi:"attr,food,omitempty" valid:"optional,in(bakery|bistro|cafe|restaurant|takeaway|)"`                                 // Example: "[restaurant bakery]"
-	Latitude          float32             `json:"latitude,omitempty" jsonapi:"attr,latitude,omitempty" valid:"optional"`                                                                     // Example: "49.013"
-	Longitude         float32             `json:"longitude,omitempty" jsonapi:"attr,longitude,omitempty" valid:"optional"`                                                                   // Example: "8.425"
+	Latitude          float32             `json:"latitude" jsonapi:"attr,latitude" valid:"optional"`                                                                                         // Example: "49.013"
+	Longitude         float32             `json:"longitude" jsonapi:"attr,longitude" valid:"optional"`                                                                                       // Example: "8.425"
 	LoyaltyPrograms   []string            `json:"loyaltyPrograms,omitempty" jsonapi:"attr,loyaltyPrograms,omitempty" valid:"optional,in(deutschlandCard|payback|shellClubsmart|totalClub|)"` // Example: "[payback]"
 	OpeningHours      CommonOpeningHours  `json:"openingHours,omitempty" jsonapi:"attr,openingHours,omitempty" valid:"optional"`
 	PaymentMethods    []string            `json:"paymentMethods,omitempty" jsonapi:"attr,paymentMethods,omitempty" valid:"optional,in(americanExpress|applyPay|aralKomfort|aviaCard|barclays|bayWaCard|cash|dinersClub|dkv|essoCard|essoVoucher|euroshell|ffCard|girocard|googlePay|hemMycard|jetCard|logPay|maestro|masterCard|novofleet|pacePay|paypal|routex|sepaDirectDebit|starFleetCard|tndCard|totalCard|uta|visa|vPay|westfalenCard|)"` // Example: "[sepaDirectDebit visa]"
@@ -225,15 +225,15 @@ type LocationBasedAppsWithRefs []*LocationBasedAppWithRefs
 
 // MoveRequest Creates a new event object at lat/lng from this POI ID
 type MoveRequest struct {
-	ID        string  `jsonapi:"primary,movePoi,omitempty" valid:"uuid,optional"`                      // UUID of the POI that is going to be moved
-	Latitude  float32 `json:"latitude,omitempty" jsonapi:"attr,latitude,omitempty" valid:"optional"`   // Latitude in degrees
-	Longitude float32 `json:"longitude,omitempty" jsonapi:"attr,longitude,omitempty" valid:"optional"` // Longitude in degrees
+	ID        string  `jsonapi:"primary,movePoi,omitempty" valid:"uuid,optional"`  // UUID of the POI that is going to be moved
+	Latitude  float32 `json:"latitude" jsonapi:"attr,latitude" valid:"optional"`   // Latitude in degrees
+	Longitude float32 `json:"longitude" jsonapi:"attr,longitude" valid:"optional"` // Longitude in degrees
 }
 
 // POI ...
 type POI struct {
 	ID                string               `jsonapi:"primary,GasStation,omitempty" valid:"uuid,optional"` // POI ID
-	Active            bool                 `json:"active,omitempty" jsonapi:"attr,active,omitempty" valid:"optional"`
+	Active            bool                 `json:"active" jsonapi:"attr,active" valid:"optional"`
 	Boundary          CommonGeoJSONPolygon `json:"boundary,omitempty" jsonapi:"attr,boundary,omitempty" valid:"optional"`
 	CountryID         CommonCountryID      `json:"countryId,omitempty" jsonapi:"attr,countryId,omitempty" valid:"optional"`
 	CreatedAt         *time.Time           `json:"createdAt,omitempty" jsonapi:"attr,createdAt,omitempty,iso8601" valid:"optional"`
@@ -275,7 +275,7 @@ type PolicyRule struct {
 // PolicyRulePriority ...
 type PolicyRulePriority struct {
 	SourceID   string  `json:"sourceId,omitempty" jsonapi:"attr,sourceId,omitempty" valid:"required,uuid"` // Tracks who did last change
-	TimeToLive float64 `json:"timeToLive,omitempty" jsonapi:"attr,timeToLive,omitempty" valid:"optional"`  // Time to live in seconds (in relation to other entries)
+	TimeToLive float64 `json:"timeToLive" jsonapi:"attr,timeToLive" valid:"optional"`                      // Time to live in seconds (in relation to other entries)
 }
 
 // PriceHistoryFuelPrices ...
@@ -332,7 +332,7 @@ type Sources []*Source
 
 // SubscriptionConditionsFuelPrice Condition on the fuelPrice of a gas station.
 type SubscriptionConditionsFuelPrice struct {
-	Lt float64 `json:"lt,omitempty" jsonapi:"attr,lt,omitempty" valid:"optional"` /*
+	Lt float64 `json:"lt" jsonapi:"attr,lt" valid:"optional"` /*
 	Fuel price is less then given amount. Amount is always given in the currency of the gas station. The units are not scaled, for `EUR`, the value 1.3 means 1 euro and 30 cents.
 	*/
 }
@@ -3202,7 +3202,7 @@ type GetGasStationsRequest struct {
 	ParamFilterLongitude     float32       `valid:"optional"`
 	ParamFilterRadius        float32       `valid:"optional"`
 	ParamFilterBoundingBox   []float32     `valid:"optional"`
-	ParamCompileOpeningHours bool          `valid:"optional,in(true|false|)"`
+	ParamCompileOpeningHours *bool         `valid:"optional,in(true|false|)"`
 	ParamFilterSource        string        `valid:"optional,uuid"`
 }
 
@@ -3831,7 +3831,7 @@ type GetSubscriptionsContentItem struct {
 
 // GetSubscriptionsContentConditionsFuelPrice Condition on the fuelPrice of a gas station.
 type GetSubscriptionsContentConditionsFuelPrice struct {
-	Lt float64 `json:"lt,omitempty" jsonapi:"attr,lt,omitempty" valid:"optional"` /*
+	Lt float64 `json:"lt" jsonapi:"attr,lt" valid:"optional"` /*
 	Fuel price is less then given amount. Amount is always given in the currency of the gas station. The units are not scaled, for `EUR`, the value 1.3 means 1 euro and 30 cents.
 	*/
 }

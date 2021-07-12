@@ -67,7 +67,11 @@ func (g *typeGenerator) invoke() error { // nolint: gocyclo
 			}
 		case "uuid":
 			addValidator(g.tags, "uuid")
-			g.stmt.String()
+			if g.schema.Nullable {
+				g.stmt.Op("*").String()
+			} else {
+				g.stmt.String()
+			}
 		case "decimal":
 			addValidator(g.tags, "matches(^(\\d*\\.)?\\d+$)")
 			if g.isParam {
@@ -76,33 +80,63 @@ func (g *typeGenerator) invoke() error { // nolint: gocyclo
 				g.stmt.Op("*").Qual(pkgDecimal, "Decimal")
 			}
 		default:
-			g.stmt.String()
+			if g.schema.Nullable {
+				g.stmt.Op("*").String()
+			} else {
+				g.stmt.String()
+			}
 		}
 	case "integer":
+		removeOmitempty(g.tags)
 		switch g.schema.Format {
 		case "int32":
-			g.stmt.Int32()
+			if g.schema.Nullable {
+				g.stmt.Op("*").Int32()
+			} else {
+				g.stmt.Int32()
+			}
 		default:
-			g.stmt.Int64()
+			if g.schema.Nullable {
+				g.stmt.Op("*").Int64()
+			} else {
+				g.stmt.Int64()
+			}
 		}
 	case "number":
 		switch g.schema.Format {
 		case "decimal":
 			if g.isParam {
+				removeOmitempty(g.tags)
 				g.stmt.Qual(pkgDecimal, "Decimal")
 			} else {
 				g.stmt.Op("*").Qual(pkgDecimal, "Decimal")
 			}
 		case "float":
-			g.stmt.Float32()
+			removeOmitempty(g.tags)
+			if g.schema.Nullable {
+				g.stmt.Op("*").Float32()
+			} else {
+				g.stmt.Float32()
+			}
 		case "double":
 			fallthrough
 		default:
-			g.stmt.Float64()
+			removeOmitempty(g.tags)
+			if g.schema.Nullable {
+				g.stmt.Op("*").Float64()
+			} else {
+				g.stmt.Float64()
+			}
 		}
 	case "boolean":
-		g.stmt.Bool()
+		removeOmitempty(g.tags)
+		if g.schema.Nullable {
+			g.stmt.Op("*").Bool()
+		} else {
+			g.stmt.Bool()
+		}
 	case "array": // nolint: goconst
+		removeOmitempty(g.tags)
 		err := g.g.goType(g.stmt.Index(), g.schema.Items.Value, g.tags).invoke()
 		if err != nil {
 			return err

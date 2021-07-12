@@ -105,7 +105,7 @@ type PaymentTokenCreateApplePay struct {
 // TransactionRequestFueling ...
 type TransactionRequestFueling struct {
 	AppID   string `json:"appId,omitempty" jsonapi:"attr,appId,omitempty" valid:"required,uuid"`   // Location-based App ID
-	Mileage int64  `json:"mileage,omitempty" jsonapi:"attr,mileage,omitempty" valid:"required"`    // Current mileage in meters
+	Mileage int64  `json:"mileage" jsonapi:"attr,mileage" valid:"required"`                        // Current mileage in meters
 	PumpID  string `json:"pumpId,omitempty" jsonapi:"attr,pumpId,omitempty" valid:"required,uuid"` // Pump ID
 	Vin     string `json:"vin,omitempty" jsonapi:"attr,vin,omitempty" valid:"required"`            // Example: "1B3EL46R36N102271"
 }
@@ -720,7 +720,7 @@ type DeletePaymentMethodRequest struct {
 // AuthorizePaymentMethodOK ...
 type AuthorizePaymentMethodOK struct {
 	ID       string  `jsonapi:"primary,paymentToken,omitempty" valid:"uuid,optional"`               // paymentToken ID (NOT the token value)
-	Amount   float64 `json:"amount,omitempty" jsonapi:"attr,amount,omitempty" valid:"optional"`     // Example: "65.49"
+	Amount   float64 `json:"amount" jsonapi:"attr,amount" valid:"optional"`                         // Example: "65.49"
 	Currency string  `json:"currency,omitempty" jsonapi:"attr,currency,omitempty" valid:"optional"` // Currency as specified in ISO-4217.
 	Value    string  `json:"value,omitempty" jsonapi:"attr,value,omitempty" valid:"optional"`       // The actual token value. Note that the format is subject to change. Treat transparently.
 }
@@ -763,7 +763,7 @@ func (w *authorizePaymentMethodResponseWriter) OK(data *AuthorizePaymentMethodOK
 // AuthorizePaymentMethodContent ...
 type AuthorizePaymentMethodContent struct {
 	ID       string  `jsonapi:"primary,paymentToken,omitempty" valid:"uuid,optional"`               // ID of the new paymentToken.
-	Amount   float64 `json:"amount,omitempty" jsonapi:"attr,amount,omitempty" valid:"required"`     // Example: "65.49"
+	Amount   float64 `json:"amount" jsonapi:"attr,amount" valid:"required"`                         // Example: "65.49"
 	Currency string  `json:"currency,omitempty" jsonapi:"attr,currency,omitempty" valid:"required"` // Currency as specified in ISO-4217.
 }
 
@@ -880,7 +880,7 @@ type ProcessPaymentCreatedVAT struct {
 // ProcessPaymentCreatedFueling ...
 type ProcessPaymentCreatedFueling struct {
 	AppID   string `json:"appId,omitempty" jsonapi:"attr,appId,omitempty" valid:"required,uuid"`   // Example: "c30bce97-b732-4390-af38-1ac6b017aa4c"
-	Mileage int64  `json:"mileage,omitempty" jsonapi:"attr,mileage,omitempty" valid:"required"`    // Example: "66435"
+	Mileage int64  `json:"mileage" jsonapi:"attr,mileage" valid:"required"`                        // Example: "66435"
 	PumpID  string `json:"pumpId,omitempty" jsonapi:"attr,pumpId,omitempty" valid:"required,uuid"` // Example: "460ffaad-a3c1-4199-b69e-63949ccda82f"
 	Vin     string `json:"vin,omitempty" jsonapi:"attr,vin,omitempty" valid:"required"`            // Example: "1B3EL46R36N102271"
 }
