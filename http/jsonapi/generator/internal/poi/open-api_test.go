@@ -3202,7 +3202,7 @@ type GetGasStationsRequest struct {
 	ParamFilterLongitude     float32       `valid:"optional"`
 	ParamFilterRadius        float32       `valid:"optional"`
 	ParamFilterBoundingBox   []float32     `valid:"optional"`
-	ParamCompileOpeningHours bool          `valid:"optional,in(true|false|)"`
+	ParamCompileOpeningHours *bool         `valid:"optional,in(true|false|)"`
 	ParamFilterSource        string        `valid:"optional,uuid"`
 }
 

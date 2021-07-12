@@ -201,7 +201,8 @@
             },
             "required": false,
             "description": "Radius in meters",
-            "example": 5.4
+            "example": 5.4,
+            "nullable": true
           },
           {
             "in": "query",
@@ -228,7 +229,8 @@
               "enum": [
                 true,
                 false
-              ]
+              ],
+              "nullable": true
             },
             "example": true,
             "description": "Reduces the opening hours rules. After compilation only rules with the action open will remain in the response."
@@ -3328,7 +3330,8 @@
                       "type": "number",
                       "format": "decimal",
                       "example": 1.449,
-                      "description": "The price at this point in time"
+                      "description": "The price at this point in time",
+                      "nullable": true
                     }
                   }
                 }

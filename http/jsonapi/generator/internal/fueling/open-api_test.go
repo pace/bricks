@@ -61,9 +61,9 @@ type GasStation struct {
 	Address      GasStationAddress        `json:"address,omitempty" jsonapi:"attr,address,omitempty" valid:"optional"`
 	Amenities    []string                 `json:"amenities,omitempty" jsonapi:"attr,amenities,omitempty" valid:"optional"` // Example: "[restaurant]"
 	Latitude     float32                  `json:"latitude" jsonapi:"attr,latitude" valid:"optional"`                       // Example: "49.013"
-	Longitude    float32                  `json:"longitude" jsonapi:"attr,longitude" valid:"optional"`                     // Example: "8.425"
+	Longitude    *float32                 `json:"longitude" jsonapi:"attr,longitude" valid:"optional"`                     // Example: "8.425"
 	OpeningHours []GasStationOpeningHours `json:"openingHours,omitempty" jsonapi:"attr,openingHours,omitempty" valid:"optional"`
-	StationName  string                   `json:"stationName,omitempty" jsonapi:"attr,stationName,omitempty" valid:"optional"` // Example: "PACE Station"
+	StationName  *string                  `json:"stationName,omitempty" jsonapi:"attr,stationName,omitempty" valid:"optional"` // Example: "PACE Station"
 	FuelPrices   []*FuelPrice             `json:"fuelPrices,omitempty" jsonapi:"relation,fuelPrices,omitempty" valid:"optional"`
 	Pumps        []*Pump                  `json:"pumps,omitempty" jsonapi:"relation,pumps,omitempty" valid:"optional"`
 }
