@@ -17,6 +17,10 @@ type ExternalDependencyRoundTripper struct {
 	transport http.RoundTripper
 }
 
+func NewExternalDependencyRoundTripper(name string) *ExternalDependencyRoundTripper {
+	return &ExternalDependencyRoundTripper{name: name}
+}
+
 // Transport returns the RoundTripper to make HTTP requests
 func (l *ExternalDependencyRoundTripper) Transport() http.RoundTripper {
 	return l.transport
