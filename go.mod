@@ -26,7 +26,7 @@ require (
 	github.com/jinzhu/inflection v0.0.0-20180308033659-04140366298a // indirect
 	github.com/jpillora/backoff v1.0.0
 	github.com/mattn/go-isatty v0.0.11
-	github.com/mattn/goveralls v0.0.5
+	github.com/mattn/goveralls v0.0.9
 	github.com/matttproud/golang_protobuf_extensions v1.0.1 // indirect
 	github.com/minio/minio-go/v7 v7.0.7
 	github.com/opentracing/opentracing-go v1.0.2
@@ -48,7 +48,8 @@ require (
 	github.com/uber/jaeger-client-go v2.14.0+incompatible
 	github.com/uber/jaeger-lib v1.5.0
 	github.com/zenazn/goji v0.9.0
-	golang.org/x/tools v0.0.0-20200304024140-c4206d458c3f
+	golang.org/x/mod v0.5.0 // indirect
+	golang.org/x/tools v0.1.5
 	golang.org/x/xerrors v0.0.0-20200804184101-5ec99f83aff1
 )
 
