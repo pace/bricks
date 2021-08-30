@@ -39,8 +39,9 @@ github.com/go-kivik/kiviktest/v3 v3.0.3 h1:4zX1F1eLTbIvyKiylzdWDgPqofJWiuQzQhKwZ
 github.com/go-kivik/kiviktest/v3 v3.0.3/go.mod h1:sqsz3M2sJxTxAUdOj+2SU21y4phcpYc0FJIn+hbf1D0=
 github.com/go-pg/pg v6.14.5+incompatible h1:Tc74MTCCIVd8sAJshYHqutcHhO64/EBHBTydzCGt3Js=
 github.com/go-pg/pg v6.14.5+incompatible/go.mod h1:a2oXow+aFOrvwcKs3eIA0lNFmMilrxK2sOkB5NWe0vA=
-github.com/go-redis/redis/v7 v7.2.0 h1:CrCexy/jYWZjW0AyVoHlcJUeZN19VWlbepTh1Vq6dJs=
 github.com/go-redis/redis/v7 v7.2.0/go.mod h1:JDNMw23GTyLNC4GZu9njt15ctBQVn7xjRfnwdHj/Dcg=
+github.com/go-redis/redis/v7 v7.4.1 h1:PASvf36gyUpr2zdOUS/9Zqc80GbM+9BDyiJSJDDOrTI=
+github.com/go-redis/redis/v7 v7.4.1/go.mod h1:JDNMw23GTyLNC4GZu9njt15ctBQVn7xjRfnwdHj/Dcg=
 github.com/golang-jwt/jwt v3.2.2+incompatible h1:IfV12K8xAKAnZqdXVzCZ+TOjboZ2keLg81eXfW3O+oY=
 github.com/golang-jwt/jwt v3.2.2+incompatible/go.mod h1:8pz2t5EyA70fFQQSrl6XZXzqecmYZeUEB8OUGHkxJ+I=
 github.com/golang/protobuf v1.2.0/go.mod h1:6lQm79b+lXiMfvg/cZm0SGofjICqVBUtrP5yJMmIC1U=
