@@ -16,7 +16,7 @@ github.com/caarlos0/env
 # github.com/certifi/gocertifi v0.0.0-20180118203423-deb3ae2ef261
 ## explicit
 github.com/certifi/gocertifi
-# github.com/codahale/hdrhistogram v0.0.0-20161010025455-3a0bb77429bd
+# github.com/codahale/hdrhistogram v0.0.0-20161010025455-3a0bb77429bd => github.com/HdrHistogram/hdrhistogram-go v0.9.0
 ## explicit
 github.com/codahale/hdrhistogram
 # github.com/dave/jennifer v1.0.2
@@ -24,8 +24,6 @@ github.com/codahale/hdrhistogram
 github.com/dave/jennifer/jen
 # github.com/davecgh/go-spew v1.1.1
 github.com/davecgh/go-spew/spew
-# github.com/dgrijalva/jwt-go v3.2.0+incompatible
-## explicit
 # github.com/getkin/kin-openapi v0.0.0-20180813063848-e1956e8013e5
 ## explicit
 github.com/getkin/kin-openapi/jsoninfo
@@ -234,3 +232,4 @@ gopkg.in/yaml.v2
 # gopkg.in/yaml.v3 v3.0.0-20200313102051-9f266ea9e77c
 gopkg.in/yaml.v3
 # github.com/adjust/rmq/v3 => github.com/daemonfire300/rmq/v3 v3.0.2
+# github.com/codahale/hdrhistogram => github.com/HdrHistogram/hdrhistogram-go v0.9.0

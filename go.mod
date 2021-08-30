@@ -51,3 +51,5 @@ require (
 	golang.org/x/tools v0.0.0-20200304024140-c4206d458c3f
 	golang.org/x/xerrors v0.0.0-20200804184101-5ec99f83aff1
 )
+
+replace github.com/codahale/hdrhistogram => github.com/HdrHistogram/hdrhistogram-go v0.9.0
