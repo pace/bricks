@@ -1,7 +1,7 @@
 name: Golang CI
 on: [push]
 jobs:
-  build:
+  test:
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -16,6 +16,13 @@ jobs:
       with:
         username: ${{ secrets.DOCKERHUB_USERNAME }}
         password: ${{ secrets.DOCKERHUB_TOKEN }}
-    - run: make test
-    - run: docker-compose run testserver make ci
-    - run: go run ./vendor/github.com/mattn/goveralls -coverprofile=coverage.out -service=travis-ci
+    - name: Unit tests
+      run: make test
+    - name: Integration tests
+      run: docker-compose run testserver make ci
+  # publish:
+  #   runs-on: ubuntu-latest
+  #   if: ${{ github.ref == 'refs/heads/master' }}
+  #   steps:
+  #   - name: Publish coverage
+  #     run: go run ./vendor/github.com/mattn/goveralls -coverprofile=coverage.out -service=travis-ci
