@@ -241,7 +241,11 @@ func (c *baseClient) initConn(ctx context.Context, cn *pool.Conn) error {
 
 	_, err := conn.Pipelined(func(pipe Pipeliner) error {
 		if c.opt.Password != "" {
-			pipe.Auth(c.opt.Password)
+			if c.opt.Username != "" {
+				pipe.AuthACL(c.opt.Username, c.opt.Password)
+			} else {
+				pipe.Auth(c.opt.Password)
+			}
 		}
 
 		if c.opt.DB > 0 {
@@ -469,11 +473,11 @@ func wrapMultiExec(cmds []Cmder) []Cmder {
 	if len(cmds) == 0 {
 		panic("not reached")
 	}
-	cmds = append(cmds, make([]Cmder, 2)...)
-	copy(cmds[1:], cmds[:len(cmds)-2])
-	cmds[0] = NewStatusCmd("multi")
-	cmds[len(cmds)-1] = NewSliceCmd("exec")
-	return cmds
+	cmdCopy := make([]Cmder, len(cmds)+2)
+	cmdCopy[0] = NewStatusCmd("multi")
+	copy(cmdCopy[1:], cmds)
+	cmdCopy[len(cmdCopy)-1] = NewSliceCmd("exec")
+	return cmdCopy
 }
 
 func txPipelineReadQueued(rd *proto.Reader, statusCmd *StatusCmd, cmds []Cmder) error {
