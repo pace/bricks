@@ -8,7 +8,7 @@ import (
 	"net/http"
 	"strings"
 
-	jwt "github.com/dgrijalva/jwt-go"
+	jwt "github.com/golang-jwt/jwt"
 )
 
 // ClientIDHeaderName name of the HTTP header that is used for reporting
