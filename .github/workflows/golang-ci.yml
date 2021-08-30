@@ -1,16 +1,17 @@
 name: Golang CI
-on: [push]
+on: [push, pull_request]
 jobs:
   test:
     runs-on: ubuntu-latest
     strategy:
+      fail-fast: false
       matrix:
         go: [ '1.17', '1.16' ]
     steps:
     - uses: actions/checkout@v2
     - uses: actions/setup-go@v2
       with:
-        go-version: ${{ matrix.node }}
+        go-version: ${{ matrix.go }}
     - name: Login to DockerHub
       uses: docker/login-action@v1 
       with:
@@ -20,9 +21,17 @@ jobs:
       run: make test
     - name: Integration tests
       run: docker-compose run testserver make ci
-  # publish:
-  #   runs-on: ubuntu-latest
-  #   if: ${{ github.ref == 'refs/heads/master' }}
-  #   steps:
-  #   - name: Publish coverage
-  #     run: go run ./vendor/github.com/mattn/goveralls -coverprofile=coverage.out -service=travis-ci
+    - name: Send coverage
+      uses: shogo82148/actions-goveralls@v1
+      with:
+        path-to-profile: coverage.out
+        flag-name: Go-${{ matrix.go }}
+        parallel: true
+
+  finish:
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: shogo82148/actions-goveralls@v1
+        with:
+          parallel-finished: true
