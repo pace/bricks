@@ -1,9 +1,7 @@
 # github.com/adjust/rmq/v3 v3.0.0 => github.com/daemonfire300/rmq/v3 v3.0.2
 ## explicit
 github.com/adjust/rmq/v3
-# github.com/adjust/uniuri v0.0.0-20130923163420-498743145e60
-## explicit
-# github.com/asaskevich/govalidator v0.0.0-20180720115003-f9ffefc3facf
+# github.com/asaskevich/govalidator v0.0.0-20210307081110-f21760c49a8d
 ## explicit
 github.com/asaskevich/govalidator
 # github.com/beorn7/perks v0.0.0-20180321164747-3a771d992973
@@ -227,12 +225,8 @@ golang.org/x/tools/cover
 ## explicit
 golang.org/x/xerrors
 golang.org/x/xerrors/internal
-# gopkg.in/bsm/ratelimit.v1 v1.0.0-20160220154919-db14e161995a
-## explicit
 # gopkg.in/ini.v1 v1.57.0
 gopkg.in/ini.v1
-# gopkg.in/redis.v3 v3.6.4
-## explicit
 # gopkg.in/yaml.v2 v2.2.8
 gopkg.in/yaml.v2
 # gopkg.in/yaml.v3 v3.0.0-20200313102051-9f266ea9e77c
