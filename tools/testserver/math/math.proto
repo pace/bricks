@@ -1,0 +1,19 @@
+syntax = "proto3";
+
+option go_package = "tools/testserver/math";
+
+package Math;
+
+message Input {
+    int64 a = 1;
+    int64 b = 2;
+}
+
+message Output {
+    int64 c = 1;
+}
+
+service MathService {
+    rpc Add(Input) returns (Output);
+    rpc Substract(Input) returns (Output);
+}

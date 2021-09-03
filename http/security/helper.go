@@ -6,6 +6,8 @@ package security
 import (
 	"context"
 	"strings"
+
+	"google.golang.org/grpc/metadata"
 )
 
 // Token represents an authentication token.
@@ -14,6 +16,12 @@ type Token interface {
 	GetValue() string
 }
 type ctx string
+
+type TokenString string
+
+func (ts TokenString) GetValue() string {
+	return string(ts)
+}
 
 // prefix of the Authorization header
 const headerPrefix = "Bearer "
@@ -34,6 +42,9 @@ func GetBearerTokenFromHeader(authHeader string) string {
 
 // ContextWithToken creates a new Context with the token
 func ContextWithToken(targetCtx context.Context, token Token) context.Context {
+	if token != nil {
+		targetCtx = metadata.AppendToOutgoingContext(targetCtx, "bearer_token", token.GetValue())
+	}
 	return context.WithValue(targetCtx, tokenKey, token)
 }
 
