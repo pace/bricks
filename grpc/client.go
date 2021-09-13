@@ -15,12 +15,20 @@ import (
 	grpc_prometheus "github.com/grpc-ecosystem/go-grpc-prometheus"
 )
 
-func Dial(address string) (*grpc.ClientConn, error) {
+func DialContext(ctx context.Context, addr string) (*grpc.ClientConn, error) {
+	return dialCtx(ctx, addr)
+}
+
+func Dial(addr string) (*grpc.ClientConn, error) {
+	return dialCtx(context.Background(), addr)
+}
+
+func dialCtx(ctx context.Context, addr string) (*grpc.ClientConn, error) {
 	var conn *grpc.ClientConn
 	opts := []grpc_retry.CallOption{
 		grpc_retry.WithBackoff(grpc_retry.BackoffLinear(100 * time.Millisecond)),
 	}
-	conn, err := grpc.Dial(address, grpc.WithInsecure(),
+	conn, err := grpc.DialContext(ctx, addr, grpc.WithInsecure(),
 		grpc.WithChainStreamInterceptor(
 			grpc_opentracing.StreamClientInterceptor(),
 			grpc_prometheus.StreamClientInterceptor,
