@@ -8,6 +8,7 @@ GOPATH?=~/go
 
 GO:=go
 GO_TEST_FLAGS:=-mod=vendor -count=1 -v -cover -race
+PROTO_TMP:=$(shell pwd)/proto.tmp
 
 export JAEGER_SERVICE_NAME:=unittest
 export JAEGER_SAMPLER_TYPE:=const
@@ -37,11 +38,19 @@ jsonapi:
 		-path tools/testserver/simple/open-api.go \
 		-source tools/testserver/simple/open-api.json
 
-lint: $(GOPATH)/bin/golangci-lint
-	$(GOPATH)/bin/golangci-lint run
+grpc: tools/testserver/math/math.pb.go
 
-$(GOPATH)/bin/golangci-lint:
-	curl -sfL https://install.goreleaser.com/github.com/golangci/golangci-lint.sh | sh -s -- -b $(GOPATH)/bin v1.21.0
+tools/testserver/math/math.pb.go: tools/testserver/math/math.proto
+	mkdir -p $(PROTO_TMP)
+	GOBIN=$(PROTO_TMP) $(GO) install -mod=vendor google.golang.org/grpc/cmd/protoc-gen-go-grpc
+	GOBIN=$(PROTO_TMP) $(GO) install -mod=vendor google.golang.org/protobuf/cmd/protoc-gen-go
+	protoc --plugin=$(PROTO_TMP)/protoc-gen-go-grpc \
+		--plugin=$(PROTO_TMP)/protoc-gen-go \
+		-I=./ --go-grpc_out=$(dir @) --go_out=$(dir @) $<
+	rm -rf $(PROTO_TMP)
+
+lint:
+	$(GO) run -mod=vendor github.com/golangci/golangci-lint/cmd/golangci-lint run --timeout 2m
 
 test:
 	$(GO) test $(GO_TEST_FLAGS) -short ./...

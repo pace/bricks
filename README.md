@@ -25,11 +25,15 @@ A pace/bricks microservice is:
   * **http** (logging, metrics, tracing, retries)
   * **s3** via http (logging, metrics, tracing, health)
   * **couchdb** via http (logging, metrics, tracing, retries, health)
+  * **grpc** (logging, metrics, tracing, retries)
 * provides two commands **control** and **daemon**
 * provides a **RESTful** API
   * code is generated from the **OpenAPIv3** spec
   * authenticated via **OAuth2**
   * encoded using **[json:api](https://jsonapi.org/)**
+  * that supports **logging**, **tracing** and **metrics**
+* optionally provides a **GRPC** API
+  * code is generated from the **protoc** spec
   * that supports **logging**, **tracing** and **metrics**
 
 ## Install
