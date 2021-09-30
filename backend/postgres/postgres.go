@@ -271,9 +271,10 @@ func openTracingAdapter(event *pg.QueryProcessedEvent) {
 		q = qe.Error()
 	}
 
-	name := fmt.Sprintf("PostgreSQL: %s", q)
-	span, _ := opentracing.StartSpanFromContext(event.DB.Context(), name,
+	span, _ := opentracing.StartSpanFromContext(event.DB.Context(), "sql:query",
 		opentracing.StartTime(event.StartTime))
+
+	span.SetTag("db.system", "postgres")
 
 	fields := []olog.Field{
 		olog.String("file", event.File),

@@ -6,7 +6,6 @@ package redis
 
 import (
 	"context"
-	"fmt"
 	"time"
 
 	"github.com/caarlos0/env"
@@ -170,9 +169,11 @@ type logtracerValues struct {
 func (lt *logtracer) BeforeProcess(ctx context.Context, cmd redis.Cmder) (context.Context, error) {
 	startedAt := time.Now()
 
-	span, _ := opentracing.StartSpanFromContext(ctx, fmt.Sprintf("Redis: %s", cmd.Name()))
+	span, _ := opentracing.StartSpanFromContext(ctx, cmd.Name())
 	span.LogFields(olog.String("cmd", cmd.Name()))
 	defer span.Finish()
+
+	span.SetTag("db.system", "redis")
 
 	paceRedisCmdTotal.With(prometheus.Labels{
 		"method": cmd.Name(),
