@@ -18,6 +18,7 @@ var AllPatterns = []*regexp.Regexp{
 	PatternCCDinersClub,
 	PatternCCDiscover,
 	PatternCCJCB,
+	PatternBasicAuthBase64,
 }
 
 var (
@@ -49,4 +50,7 @@ var (
 
 	// PatternJWT JsonWebToken
 	PatternJWT = regexp.MustCompile(`(?:ey[a-zA-Z0-9=_-]+\.){2}[a-zA-Z0-9=_-]+`)
+
+	//PatternBasicAuthBase match any: Basic YW55IGNhcm5hbCBwbGVhcw== does not validate base64 string
+	PatternBasicAuthBase64 = regexp.MustCompile(`Basic ([a-zA-Z0-9=]*)`)
 )
