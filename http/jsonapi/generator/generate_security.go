@@ -58,6 +58,9 @@ func (g *Generator) buildSecurityBackendInterface(schema *openapi3.Swagger) erro
 		case "apiKey":
 			r.Params(jen.Id("r").Id("*http.Request"), jen.Id("w").Id("http.ResponseWriter")).Params(jen.Id("context.Context"), jen.Id("bool"))
 			r.Line().Id("Init" + strings.Title(name)).Params(jen.Id("cfg"+strings.Title(name)).Op("*").Qual(pkgApiKey, "Config"))
+		case "http":
+			r.Params(jen.Id("r").Id("*http.Request"), jen.Id("w").Id("http.ResponseWriter"), jen.Id("scope").String()).Params(jen.Id("context.Context"), jen.Id("bool"))
+			r.Line().Id("Init" + strings.Title(name)).Params(jen.Id("cfg"+strings.Title(name)).Op("*").Qual(pkgHttp, "Config"))
 		default:
 			return errors.New("security schema type not supported: " + value.Value.Type)
 		}
@@ -124,6 +127,21 @@ func (g *Generator) buildSecurityConfigs(schema *openapi3.Swagger) error {
 			instanceVal[jen.Id("Description")] = jen.Lit(value.Value.Description)
 			instanceVal[jen.Id("In")] = jen.Lit(value.Value.In)
 			instanceVal[jen.Id("Name")] = jen.Lit(value.Value.Name)
+		case "http":
+			pkgName = pkgHttp
+			instanceVal[jen.Id("Description")] = jen.Lit(value.Value.Description)
+			if value.Value.Flows != nil {
+				flows := map[string]*openapi3.OAuthFlow{
+					"AuthorizationCode": value.Value.Flows.AuthorizationCode,
+					"ClientCredentials": value.Value.Flows.ClientCredentials,
+					"Implicit":          value.Value.Flows.Implicit,
+					"Password":          value.Value.Flows.Password}
+					for flowname, flow := range flows {
+						if flow != nil {
+							instanceVal[jen.Id(flowname)] = jen.Op("&").Qual(pkgOAuth2, "Flow").Values(getValuesFromFlow(flow))
+						}
+					}
+				}
 		default:
 			return errors.New("security schema type not supported: " + value.Value.Type)
 		}
