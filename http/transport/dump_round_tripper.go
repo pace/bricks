@@ -5,7 +5,6 @@ package transport
 
 import (
 	"encoding/hex"
-	"fmt"
 	"net/http"
 	"net/http/httputil"
 
@@ -111,7 +110,6 @@ func (l *DumpRoundTripper) RoundTrip(req *http.Request) (*http.Response, error) 
 
 	// request logging
 	if l.DumpRequest || l.DumpRequestHEX {
-		fmt.Println("je suisn la ", req)
 		reqDump, err := httputil.DumpRequest(req, l.DumpBody)
 		if err != nil {
 			reqDump = []byte(err.Error())
@@ -119,7 +117,6 @@ func (l *DumpRoundTripper) RoundTrip(req *http.Request) (*http.Response, error) 
 
 		// in case a redactor is present, redact the content before logging
 		if redactor != nil {
-			fmt.Println("je suisn oci ")
 			reqDump = []byte(redactor.Mask(string(reqDump)))
 		}
 
