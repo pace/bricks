@@ -101,7 +101,7 @@ func TestNewDumpRoundTripperRedactedBasicAuth(t *testing.T) {
 	assert.NoError(t, err)
 
 	assert.Contains(t, out.String(), `"level":"debug"`)
-	assert.Contains(t, out.String(), `"request":"GET /foo HTTP/1.1\r\nHost: example.com\r\n\r\nAuthorization: **********************ZA=="`)
+	assert.Contains(t, out.String(), `"request":"GET /foo HTTP/1.1\r\nHost: example.com\r\n\r\n*************************************ZA=="`)
 	assert.Contains(t, out.String(), `"response":"HTTP/0.0 000 status code 0\r\nContent-Length: 0\r\n\r\n"`)
 	assert.Contains(t, out.String(), `"message":"HTTP Transport Dump"`)
 }
