@@ -82,6 +82,30 @@ func TestNewDumpRoundTripperRedacted(t *testing.T) {
 	assert.Contains(t, out.String(), `"message":"HTTP Transport Dump"`)
 }
 
+func TestNewDumpRoundTripperRedactedBasicAuth(t *testing.T) {
+	out := &bytes.Buffer{}
+	ctx := log.Output(out).WithContext(context.Background())
+
+	rt := NewDumpRoundTripper(
+		DumpRoundTripperOptionRequest,
+		DumpRoundTripperOptionResponse,
+		DumpRoundTripperOptionBody,
+	)
+
+	req := httptest.NewRequest("GET", "/foo", bytes.NewBufferString("Authorization: Basic ZGVtbzpwQDU1dzByZA=="))
+	ctx = redact.Default.WithContext(ctx)
+	req = req.WithContext(ctx)
+	rt.SetTransport(&transportWithResponse{})
+
+	_, err := rt.RoundTrip(req)
+	assert.NoError(t, err)
+
+	assert.Contains(t, out.String(), `"level":"debug"`)
+	assert.Contains(t, out.String(), `"request":"GET /foo HTTP/1.1\r\nHost: example.com\r\n\r\n*************************************ZA=="`)
+	assert.Contains(t, out.String(), `"response":"HTTP/0.0 000 status code 0\r\nContent-Length: 0\r\n\r\n"`)
+	assert.Contains(t, out.String(), `"message":"HTTP Transport Dump"`)
+}
+
 func TestNewDumpRoundTripperSimple(t *testing.T) {
 	out := &bytes.Buffer{}
 	ctx := log.Output(out).WithContext(context.Background())
