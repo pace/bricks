@@ -10,6 +10,7 @@ import (
 	"math"
 	"os"
 	"path/filepath"
+	"strings"
 	"sync"
 	"time"
 
@@ -263,6 +264,37 @@ func queryLogger(event *pg.QueryProcessedEvent) {
 	le.Msg(q)
 }
 
+func firstWords(value string, count int) string {
+	replacer := strings.NewReplacer("\r", " ", "\n", " ")
+	value = replacer.Replace(value)
+	value = strings.TrimSpace(value)
+
+	// Loop over all indexes in the string.
+	for i := range value {
+		// If we encounter a space, reduce the count.
+		if value[i] == ' ' {
+			count -= 1
+			// When no more words required, return a substring.
+			if count == 0 {
+				return value[0:i]
+			}
+		}
+	}
+	// Return the entire string.
+	return value
+}
+
+func getQueryType(query string) string {
+	query = strings.ToUpper(query)
+
+	switch q := firstWords(query, 1); q {
+	case "UPDATE", "INSERT", "SELECT", "DELETE":
+		return q
+	default:
+		return "CMD"
+	}
+}
+
 func openTracingAdapter(event *pg.QueryProcessedEvent) {
 	// start span with general info
 	q, qe := event.UnformattedQuery()
@@ -271,7 +303,7 @@ func openTracingAdapter(event *pg.QueryProcessedEvent) {
 		q = qe.Error()
 	}
 
-	span, _ := opentracing.StartSpanFromContext(event.DB.Context(), "sql:query",
+	span, _ := opentracing.StartSpanFromContext(event.DB.Context(), "sql:"+getQueryType(q),
 		opentracing.StartTime(event.StartTime))
 
 	span.SetTag("db.system", "postgres")
