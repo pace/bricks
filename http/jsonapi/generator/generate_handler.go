@@ -5,6 +5,7 @@ package generator
 
 import (
 	"fmt"
+	"github.com/ettle/strcase"
 	"net/url"
 	"path/filepath"
 	"regexp"
@@ -548,6 +549,8 @@ func (g *Generator) buildHandler(method string, op *openapi3.Operation, pattern 
 		log.Warnf("Note: Avoid automatic method name generation for path (use OperationID): %s", pattern)
 		oid = generateName(method, op, pattern)
 	}
+	// sanitise operationID
+	oid = strcase.ToGoCamel(oid)
 	handler := oid + "Handler"
 	route.handler = handler
 	route.serviceFunc = oid
