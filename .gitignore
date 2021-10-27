@@ -13,3 +13,6 @@
 
 # tempfiles
 tmp/*
+
+# ignore intellij stuff
+.idea
