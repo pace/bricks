@@ -303,7 +303,7 @@ func openTracingAdapter(event *pg.QueryProcessedEvent) {
 		q = qe.Error()
 	}
 
-	span, _ := opentracing.StartSpanFromContext(event.DB.Context(), "sql:"+getQueryType(q),
+	span, _ := opentracing.StartSpanFromContext(event.DB.Context(), "sql: "+getQueryType(q),
 		opentracing.StartTime(event.StartTime))
 
 	span.SetTag("db.system", "postgres")
