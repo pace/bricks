@@ -10,6 +10,7 @@ import (
 	"math"
 	"os"
 	"path/filepath"
+	"regexp"
 	"strings"
 	"sync"
 	"time"
@@ -264,35 +265,18 @@ func queryLogger(event *pg.QueryProcessedEvent) {
 	le.Msg(q)
 }
 
-func firstWords(value string, count int) string {
-	replacer := strings.NewReplacer("\r", " ", "\n", " ")
-	value = replacer.Replace(value)
-	value = strings.TrimSpace(value)
+var reQueryType = regexp.MustCompile(`(\s)`)
+var reQueryTypeCleanup = regexp.MustCompile(`(?m)(\s+|\n)`)
 
-	// Loop over all indexes in the string.
-	for i := range value {
-		// If we encounter a space, reduce the count.
-		if value[i] == ' ' {
-			count -= 1
-			// When no more words required, return a substring.
-			if count == 0 {
-				return value[0:i]
-			}
-		}
+func getQueryType(s string) string {
+	s = reQueryTypeCleanup.ReplaceAllString(s, " ")
+	s = strings.TrimSpace(s)
+
+	p := reQueryType.FindStringIndex(s)
+	if len(p) > 0 {
+		return strings.ToUpper(s[:p[0]])
 	}
-	// Return the entire string.
-	return value
-}
-
-func getQueryType(query string) string {
-	query = strings.ToUpper(query)
-
-	switch q := firstWords(query, 1); q {
-	case "UPDATE", "INSERT", "SELECT", "DELETE":
-		return q
-	default:
-		return "CMD"
-	}
+	return strings.ToUpper(s)
 }
 
 func openTracingAdapter(event *pg.QueryProcessedEvent) {
