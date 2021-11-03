@@ -10,6 +10,8 @@ import (
 	"math"
 	"os"
 	"path/filepath"
+	"regexp"
+	"strings"
 	"sync"
 	"time"
 
@@ -263,6 +265,20 @@ func queryLogger(event *pg.QueryProcessedEvent) {
 	le.Msg(q)
 }
 
+var reQueryType = regexp.MustCompile(`(\s)`)
+var reQueryTypeCleanup = regexp.MustCompile(`(?m)(\s+|\n)`)
+
+func getQueryType(s string) string {
+	s = reQueryTypeCleanup.ReplaceAllString(s, " ")
+	s = strings.TrimSpace(s)
+
+	p := reQueryType.FindStringIndex(s)
+	if len(p) > 0 {
+		return strings.ToUpper(s[:p[0]])
+	}
+	return strings.ToUpper(s)
+}
+
 func openTracingAdapter(event *pg.QueryProcessedEvent) {
 	// start span with general info
 	q, qe := event.UnformattedQuery()
@@ -271,9 +287,10 @@ func openTracingAdapter(event *pg.QueryProcessedEvent) {
 		q = qe.Error()
 	}
 
-	name := fmt.Sprintf("PostgreSQL: %s", q)
-	span, _ := opentracing.StartSpanFromContext(event.DB.Context(), name,
+	span, _ := opentracing.StartSpanFromContext(event.DB.Context(), "sql: "+getQueryType(q),
 		opentracing.StartTime(event.StartTime))
+
+	span.SetTag("db.system", "postgres")
 
 	fields := []olog.Field{
 		olog.String("file", event.File),
