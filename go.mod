@@ -11,8 +11,8 @@ require (
 	github.com/caarlos0/env v3.3.0+incompatible
 	github.com/certifi/gocertifi v0.0.0-20180118203423-deb3ae2ef261
 	github.com/codahale/hdrhistogram v0.0.0-20161010025455-3a0bb77429bd // indirect
-	github.com/dave/jennifer v1.0.2
-	github.com/getkin/kin-openapi v0.0.0-20180813063848-e1956e8013e5
+	github.com/dave/jennifer v1.4.1
+	github.com/getkin/kin-openapi v0.81.0
 	github.com/go-kivik/couchdb/v3 v3.2.6
 	github.com/go-kivik/kivik/v3 v3.2.3
 	github.com/go-pg/pg v6.14.5+incompatible

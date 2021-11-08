@@ -14,7 +14,7 @@ import (
 	"github.com/getkin/kin-openapi/openapi3"
 )
 
-type buildFunc func(schema *openapi3.Swagger) error
+type buildFunc func(schema *openapi3.T) error
 
 // Generator for go types, requests handler and simple validators
 // for the given OpenAPIv3. The OpenAPIv3 schema is expected to comply
@@ -29,8 +29,8 @@ type Generator struct {
 	generatedArrayTypes map[string]bool
 }
 
-func loadSwaggerFromURI(loader *openapi3.SwaggerLoader, url *url.URL) (*openapi3.Swagger, error) { // nolint: interfacer
-	var schema *openapi3.Swagger
+func loadSwaggerFromURI(loader *openapi3.Loader, url *url.URL) (*openapi3.T, error) { // nolint: interfacer
+	var schema *openapi3.T
 
 	resp, err := http.Get(url.String())
 	if err != nil {
@@ -43,7 +43,7 @@ func loadSwaggerFromURI(loader *openapi3.SwaggerLoader, url *url.URL) (*openapi3
 		return nil, err
 	}
 
-	schema, err = loader.LoadSwaggerFromData(body)
+	schema, err = loader.LoadFromData(body)
 	if err != nil {
 		return nil, err
 	}
@@ -54,8 +54,8 @@ func loadSwaggerFromURI(loader *openapi3.SwaggerLoader, url *url.URL) (*openapi3
 // BuildSource generates the go code in the specified path with specified package name
 // based on the passed schema source (url or file path)
 func (g *Generator) BuildSource(source, packagePath, packageName string) (string, error) {
-	loader := openapi3.NewSwaggerLoader()
-	var schema *openapi3.Swagger
+	loader := openapi3.NewLoader()
+	var schema *openapi3.T
 
 	if strings.HasPrefix(source, "http://") || strings.HasPrefix(source, "https://") {
 		loc, err := url.Parse(source)
@@ -75,7 +75,7 @@ func (g *Generator) BuildSource(source, packagePath, packageName string) (string
 		}
 
 		// parse spec
-		schema, err = loader.LoadSwaggerFromData(data)
+		schema, err = loader.LoadFromData(data)
 		if err != nil {
 			return "", err
 		}
@@ -86,7 +86,7 @@ func (g *Generator) BuildSource(source, packagePath, packageName string) (string
 
 // BuildSchema generates the go code in the specified path with specified package name
 // based on the passed schema
-func (g *Generator) BuildSchema(schema *openapi3.Swagger, packagePath, packageName string) (string, error) {
+func (g *Generator) BuildSchema(schema *openapi3.T, packagePath, packageName string) (string, error) {
 	g.generatedTypes = make(map[string]bool)
 	g.generatedArrayTypes = make(map[string]bool)
 

@@ -19,7 +19,7 @@ const (
 )
 
 // BuildTypes transforms all component schemas into go types
-func (g *Generator) BuildTypes(schema *openapi3.Swagger) error {
+func (g *Generator) BuildTypes(schema *openapi3.T) error {
 	schemas := schema.Components.Schemas
 
 	// sort by key
@@ -350,15 +350,22 @@ func (g *Generator) generateStructRelationships(prefix string, schema *openapi3.
 
 		// generate relationship field
 		rel := jen.Id(goNameHelper(relName))
+		name := nameFromSchemaRef(relSchema)
 
 		switch data.Value.Type {
 		// case array = one-to-many
-		case "array": // nolint: goconst
-			name := data.Value.Items.Value.Properties["type"].Value.Enum[0].(string)
+			case "array": // nolint: goconst
+			if name == "" {
+				log.Warnf("using enum instead of schema ref name as fallback")
+				name = data.Value.Items.Value.Properties["type"].Value.Enum[0].(string)
+			}
 			rel.Index().Op("*").Id(goNameHelper(name)).Tag(tags)
 		// case object = belongs-to
 		case "object": // nolint: goconst
-			name := data.Value.Properties["type"].Value.Enum[0].(string)
+			if name == "" {
+				log.Warnf("using enum instead of schema ref name as fallback")
+				name = data.Value.Properties["type"].Value.Enum[0].(string)
+			}
 			rel.Op("*").Id(goNameHelper(name)).Tag(tags)
 		}
 

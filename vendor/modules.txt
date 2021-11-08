@@ -49,7 +49,7 @@ github.com/chavacava/garif
 github.com/codahale/hdrhistogram
 # github.com/daixiang0/gci v0.2.9
 github.com/daixiang0/gci/pkg/gci
-# github.com/dave/jennifer v1.0.2
+# github.com/dave/jennifer v1.4.1
 ## explicit
 github.com/dave/jennifer/jen
 # github.com/davecgh/go-spew v1.1.1
@@ -68,7 +68,7 @@ github.com/fatih/structtag
 github.com/fsnotify/fsnotify
 # github.com/fzipp/gocyclo v0.3.1
 github.com/fzipp/gocyclo
-# github.com/getkin/kin-openapi v0.0.0-20180813063848-e1956e8013e5
+# github.com/getkin/kin-openapi v0.81.0
 ## explicit
 github.com/getkin/kin-openapi/jsoninfo
 github.com/getkin/kin-openapi/openapi3
@@ -88,6 +88,10 @@ github.com/go-kivik/couchdb/v3/chttp
 github.com/go-kivik/kivik/v3
 github.com/go-kivik/kivik/v3/driver
 github.com/go-kivik/kivik/v3/internal/registry
+# github.com/go-openapi/jsonpointer v0.19.5
+github.com/go-openapi/jsonpointer
+# github.com/go-openapi/swag v0.19.5
+github.com/go-openapi/swag
 # github.com/go-pg/pg v6.14.5+incompatible
 ## explicit
 github.com/go-pg/pg
@@ -280,6 +284,10 @@ github.com/ldez/gomoddirectives
 github.com/ldez/tagliatelle
 # github.com/magiconair/properties v1.8.5
 github.com/magiconair/properties
+# github.com/mailru/easyjson v0.0.0-20190626092158-b2ccc519800e
+github.com/mailru/easyjson/buffer
+github.com/mailru/easyjson/jlexer
+github.com/mailru/easyjson/jwriter
 # github.com/maratori/testpackage v1.0.1
 github.com/maratori/testpackage/pkg/testpackage
 # github.com/matoous/godox v0.0.0-20210227103229-6504466cf951

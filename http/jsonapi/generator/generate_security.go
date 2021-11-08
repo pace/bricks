@@ -22,7 +22,7 @@ const (
 // buildSecurityBackendInterface builds the interface that is used to do the authentication.
 // It creates one method for each security type and an init method for handling the securityConfigs.
 // The Methods are named AuthenticateNAME and Init.
-func (g *Generator) buildSecurityBackendInterface(schema *openapi3.Swagger) error {
+func (g *Generator) buildSecurityBackendInterface(schema *openapi3.T) error {
 	if !hasSecuritySchema(schema) {
 		return nil
 	}
@@ -72,7 +72,7 @@ func (g *Generator) buildSecurityBackendInterface(schema *openapi3.Swagger) erro
 }
 
 // BuildSecurityConfigs creates structs with the config of each security schema
-func (g *Generator) buildSecurityConfigs(schema *openapi3.Swagger) error {
+func (g *Generator) buildSecurityConfigs(schema *openapi3.T) error {
 	if !hasSecuritySchema(schema) {
 		return nil
 	}

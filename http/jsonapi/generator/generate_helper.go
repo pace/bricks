@@ -172,7 +172,7 @@ func (g *Generator) commentOrExample(stmt *jen.Statement, schema *openapi3.Schem
 	}
 }
 
-func hasSecuritySchema(swagger *openapi3.Swagger) bool {
+func hasSecuritySchema(swagger *openapi3.T) bool {
 	return len(swagger.Components.SecuritySchemes) > 0
 }
 

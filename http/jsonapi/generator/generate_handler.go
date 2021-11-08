@@ -50,10 +50,10 @@ var generatorResponseBlacklist = map[string]bool{
 	// result in retry later / also rate limiting
 }
 
-type routeGeneratorFunc func([]*route, *openapi3.Swagger) error
+type routeGeneratorFunc func([]*route, *openapi3.T) error
 
 // BuildHandler generates the request handlers based on gorilla mux
-func (g *Generator) BuildHandler(schema *openapi3.Swagger) error {
+func (g *Generator) BuildHandler(schema *openapi3.T) error {
 	paths := schema.Paths
 	// sort by key
 	keys := make([]string, 0, len(paths))
@@ -127,7 +127,7 @@ func (g *Generator) buildPath(pattern string, pathItem *openapi3.PathItem, route
 	return nil
 }
 
-func (g *Generator) generateRequestResponseTypes(routes []*route, schema *openapi3.Swagger) error {
+func (g *Generator) generateRequestResponseTypes(routes []*route, schema *openapi3.T) error {
 	for _, route := range routes {
 		// generate ...ResponseWriter for each route
 		err := g.generateResponseInterface(route, schema)
@@ -145,7 +145,7 @@ func (g *Generator) generateRequestResponseTypes(routes []*route, schema *openap
 	return nil
 }
 
-func (g *Generator) generateResponseInterface(route *route, schema *openapi3.Swagger) error {
+func (g *Generator) generateResponseInterface(route *route, schema *openapi3.T) error {
 	var methods []jen.Code
 	methods = append(methods, jen.Qual("net/http", "ResponseWriter"))
 
@@ -175,7 +175,7 @@ func (g *Generator) generateResponseInterface(route *route, schema *openapi3.Swa
 		if response.Ref != "" {
 			methodName = generateMethodName(filepath.Base(response.Ref))
 		} else {
-			methodName = generateMethodName(response.Value.Description)
+			methodName = generateMethodName(*response.Value.Description)
 		}
 
 		method := jen.Id(methodName)
@@ -252,7 +252,7 @@ func (g *Generator) generateResponseInterface(route *route, schema *openapi3.Swa
 	return nil
 }
 
-func (g *Generator) generateRequestStruct(route *route, schema *openapi3.Swagger) error {
+func (g *Generator) generateRequestStruct(route *route, schema *openapi3.T) error {
 	body := route.operation.RequestBody
 	var fields []jen.Code
 
@@ -311,7 +311,7 @@ func (g *Generator) generateRequestStruct(route *route, schema *openapi3.Swagger
 	return nil
 }
 
-func (g *Generator) buildServiceInterface(routes []*route, schema *openapi3.Swagger) error {
+func (g *Generator) buildServiceInterface(routes []*route, schema *openapi3.T) error {
 	for _, route := range routes {
 		if err := g.buildSubServiceInterface(route, schema); err != nil {
 			return err
@@ -332,7 +332,7 @@ func (g *Generator) buildServiceInterface(routes []*route, schema *openapi3.Swag
 	return nil
 }
 
-func (g *Generator) buildSubServiceInterface(route *route, schema *openapi3.Swagger) error {
+func (g *Generator) buildSubServiceInterface(route *route, schema *openapi3.T) error {
 	methods := make([]jen.Code, 0)
 
 	if route.operation.Description != "" {
@@ -352,7 +352,7 @@ func (g *Generator) buildSubServiceInterface(route *route, schema *openapi3.Swag
 	return nil
 }
 
-func (g *Generator) buildRouter(routes []*route, schema *openapi3.Swagger) error {
+func (g *Generator) buildRouter(routes []*route, schema *openapi3.T) error {
 	routerBody, err := g.buildRouterBodyWithFallback(routes, schema, jen.Id(rootRouterName).Dot("NotFoundHandler"))
 	if err != nil {
 		return nil
@@ -370,7 +370,7 @@ func (g *Generator) buildRouter(routes []*route, schema *openapi3.Swagger) error
 	return nil
 }
 
-func (g *Generator) buildRouterWithFallbackAsArg(routes []*route, schema *openapi3.Swagger) error {
+func (g *Generator) buildRouterWithFallbackAsArg(routes []*route, schema *openapi3.T) error {
 	routerBody, err := g.buildRouterBodyWithFallback(routes, schema, jen.Id("fallback"))
 	if err != nil {
 		return nil
@@ -388,7 +388,7 @@ func (g *Generator) buildRouterWithFallbackAsArg(routes []*route, schema *openap
 	return nil
 }
 
-func (g *Generator) buildRouterHelpers(routes []*route, schema *openapi3.Swagger) error {
+func (g *Generator) buildRouterHelpers(routes []*route, schema *openapi3.T) error {
 	needsSecurity := hasSecuritySchema(schema)
 
 	// sort the routes with query parameter to the top
@@ -440,7 +440,7 @@ func (g *Generator) buildRouterHelpers(routes []*route, schema *openapi3.Swagger
 	return nil
 }
 
-func (g *Generator) buildRouterBodyWithFallback(routes []*route, schema *openapi3.Swagger, fallback jen.Code) ([]jen.Code, error) {
+func (g *Generator) buildRouterBodyWithFallback(routes []*route, schema *openapi3.T, fallback jen.Code) ([]jen.Code, error) {
 	needsSecurity := hasSecuritySchema(schema)
 	startInd := 0
 	var routeStmts []jen.Code
