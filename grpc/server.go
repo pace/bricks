@@ -68,7 +68,9 @@ func Server(ab AuthBackend) *grpc.Server {
 	myServer := grpc.NewServer(
 		grpc.StreamInterceptor(grpc_middleware.ChainStreamServer(
 			func(srv interface{}, stream grpc.ServerStream, info *grpc.StreamServerInfo, handler grpc.StreamHandler) error {
-				ctx := log.WithContext(stream.Context())
+				logger := log.Logger().With().Logger()
+				ctx := logger.WithContext(stream.Context())
+
 				wrappedStream := grpc_middleware.WrapServerStream(stream)
 				wrappedStream.WrappedContext = ctx
 				var addr string
@@ -83,7 +85,6 @@ func Server(ab AuthBackend) *grpc.Server {
 					ctx = security.ContextWithToken(ctx, security.TokenString(bt[0]))
 				}
 
-				logger := zerolog.Ctx(ctx)
 				logger.UpdateContext(func(c zerolog.Context) zerolog.Context {
 					return c.Str("req_id", strings.Join(md.Get("req_id"), ""))
 				})
@@ -100,7 +101,7 @@ func Server(ab AuthBackend) *grpc.Server {
 				return err
 			},
 			func(srv interface{}, stream grpc.ServerStream, info *grpc.StreamServerInfo, handler grpc.StreamHandler) (err error) {
-				defer errors.HandleWithCtx(stream.Context(), "GRPC"+info.FullMethod)
+				defer errors.HandleWithCtx(stream.Context(), "GRPC "+info.FullMethod)
 				err = InternalServerError // default in case of a panic
 				err = handler(srv, stream)
 				return err
@@ -112,12 +113,13 @@ func Server(ab AuthBackend) *grpc.Server {
 		)),
 		grpc.UnaryInterceptor(grpc_middleware.ChainUnaryServer(
 			func(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (resp interface{}, err error) {
+				logger := log.Logger().With().Logger()
+				ctx = logger.WithContext(ctx)
+
 				var addr string
 				if p, ok := peer.FromContext(ctx); ok {
 					addr = p.Addr.String()
 				}
-
-				ctx = log.WithContext(ctx)
 
 				md, _ := metadata.FromIncomingContext(ctx)
 
@@ -126,7 +128,6 @@ func Server(ab AuthBackend) *grpc.Server {
 					ctx = security.ContextWithToken(ctx, security.TokenString(bt[0]))
 				}
 
-				logger := zerolog.Ctx(ctx)
 				logger.UpdateContext(func(c zerolog.Context) zerolog.Context {
 					return c.Str("req_id", strings.Join(md.Get("req_id"), ""))
 				})
@@ -145,7 +146,7 @@ func Server(ab AuthBackend) *grpc.Server {
 				return
 			},
 			func(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (resp interface{}, err error) {
-				defer errors.HandleWithCtx(ctx, "GRPC"+info.FullMethod)
+				defer errors.HandleWithCtx(ctx, "GRPC "+info.FullMethod)
 				err = InternalServerError // default in case of a panic
 				resp, err = handler(ctx, req)
 				return
