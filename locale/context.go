@@ -3,7 +3,9 @@
 
 package locale
 
-import "context"
+import (
+	"context"
+)
 
 // ctx private key type to seal the access
 type ctx string

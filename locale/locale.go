@@ -16,6 +16,8 @@ package locale
 
 import (
 	"errors"
+	"fmt"
+	"strings"
 	"time"
 )
 
@@ -72,6 +74,13 @@ func (l Locale) Location() (*time.Location, error) {
 	return time.LoadLocation(l.Timezone())
 }
 
+const serializeSep = "|"
+
+// Serialize into a transportable form
+func (l Locale) Serialize() string {
+	return l.acceptLanguage + serializeSep + l.acceptTimezone
+}
+
 // Now returns the current time with the set timezone
 // or local time if timezone is not set
 func (l Locale) Now() time.Time {
@@ -84,4 +93,13 @@ func (l Locale) Now() time.Time {
 	}
 
 	return time.Now() // Local
+}
+
+// ParseLocale parses a serialized locale
+func ParseLocale(serialized string) (*Locale, error) {
+	parts := strings.Split(serialized, serializeSep)
+	if len(parts) != 2 {
+		return nil, fmt.Errorf("invalid locale format: %q", serialized)
+	}
+	return NewLocale(parts[0], parts[1]), nil
 }
