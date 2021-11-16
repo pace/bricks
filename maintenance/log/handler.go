@@ -43,7 +43,7 @@ var requestCompleted = func(r *http.Request, status, size int, duration time.Dur
 	var traceId string
 	if span != nil {
 		if sc, ok := span.Context().(jaeger.SpanContext); ok {
-			traceId = sc.TraceID().String()
+			traceId = sc.String()
 		}
 	}
 
