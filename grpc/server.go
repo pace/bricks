@@ -181,7 +181,8 @@ func prepareContext(ctx context.Context) (context.Context, metadata.MD) {
 		return c.Str("req_id", reqID.String())
 	})
 
-	ctx = logger.WithContext(ctx)
+	// set logger and log sink
+	ctx = log.ContextWithSink(logger.WithContext(ctx), log.NewSink())
 
 	// add security context if bearer token is given
 	if bt := md.Get("bearer_token"); len(bt) > 0 {
