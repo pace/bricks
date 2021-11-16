@@ -22,6 +22,7 @@ import (
 	"github.com/pace/bricks/maintenance/log/hlog"
 	"github.com/rs/xid"
 	"github.com/rs/zerolog"
+	zlog "github.com/rs/zerolog/log"
 
 	"github.com/caarlos0/env"
 	"google.golang.org/grpc"
@@ -145,7 +146,7 @@ func Server(ab AuthBackend) *grpc.Server {
 
 func prepareContext(ctx context.Context) (context.Context, metadata.MD) {
 	md, _ := metadata.FromIncomingContext(ctx)
-	logger := log.Logger().With().Logger()
+	logger := zlog.With().Logger()
 
 	// add request context if req_id is given
 	var reqID xid.ID
@@ -170,8 +171,6 @@ func prepareContext(ctx context.Context) (context.Context, metadata.MD) {
 	zlog.UpdateContext(func(c zerolog.Context) zerolog.Context {
 		return c.Str("req_id", reqID.String())
 	})
-
-	log.Ctx(ctx).Debug().Msgf("MD %#v", md)
 
 	// handle locale
 	if l := md.Get("locale"); len(l) > 0 {
