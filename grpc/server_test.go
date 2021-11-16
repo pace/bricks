@@ -37,7 +37,7 @@ func TestPrepareContext(t *testing.T) {
 
 	ctx1, md := prepareContext(ctx)
 	assert.Len(t, md.Get("req_id"), 0)
-	assert.Equal(t, md.Get("bearer_token")[0], "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ")
+	assert.Len(t, md.Get("bearer_token"), 0)
 	assert.Equal(t, "c690uu0ta2rv348epm8g", log.RequestIDFromContext(ctx1))
 	loc, ok := locale.FromCtx(ctx1)
 	assert.True(t, ok)
@@ -58,7 +58,7 @@ func TestPrepareContext(t *testing.T) {
 
 	ctx2, md := prepareContext(ctx)
 	assert.Len(t, md.Get("req_id"), 0)
-	assert.Equal(t, md.Get("bearer_token")[0], "eyJhbGciOiJIUzI1Ni******************")
+	assert.Len(t, md.Get("bearer_token"), 0)
 	assert.Equal(t, "c690uu0ta2rv348epm8g", log.RequestIDFromContext(ctx1))
 
 	var buf2 bytes.Buffer
