@@ -13,6 +13,8 @@ import (
 	"github.com/pace/bricks/grpc"
 	"github.com/pace/bricks/http/security"
 	"github.com/pace/bricks/http/transport"
+	"github.com/pace/bricks/locale"
+	"github.com/uber/jaeger-client-go"
 
 	"github.com/pace/bricks/maintenance/health/servicehealthcheck"
 
@@ -85,6 +87,14 @@ type SimpleMathServer struct {
 }
 
 func (*SimpleMathServer) Add(ctx context.Context, i *math.Input) (*math.Output, error) {
+	if loc, ok := locale.FromCtx(ctx); ok {
+		log.Ctx(ctx).Debug().Msgf("Locale: %q", loc.Serialize())
+	}
+	span := opentracing.SpanFromContext(ctx)
+	if sc, ok := span.Context().(jaeger.SpanContext); ok {
+		log.Ctx(ctx).Debug().Msgf("Span: %q", sc.String())
+	}
+
 	var o math.Output
 	o.C = i.A + i.B
 	log.Ctx(ctx).Debug().Msgf("A: %d + B: %d = C: %d", i.A, i.B, o.C)
@@ -161,7 +171,7 @@ func main() {
 	h.HandleFunc("/grpc", func(rw http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
 
-		conn, err := grpc.Dial(":3001")
+		conn, err := grpc.DialContext(ctx, ":3001")
 		if err != nil {
 			log.Fatalf("did not connect: %s", err)
 		}
@@ -180,10 +190,20 @@ func main() {
 		}
 		log.Ctx(ctx).Info().Msgf("C: %d", o.C)
 
-		_, err = c.Substract(ctx, &math.Input{})
+		ctx = locale.WithLocale(ctx, locale.NewLocale("fr-CH", "Europe/Paris"))
+
+		_, err = c.Add(ctx, &math.Input{})
 		if err != nil {
 			log.Ctx(ctx).Debug().Err(err).Msg("failed to substract")
 			return
+		}
+
+		if r.URL.Query().Get("error") != "" {
+			_, err = c.Substract(ctx, &math.Input{})
+			if err != nil {
+				log.Ctx(ctx).Debug().Err(err).Msg("failed to substract")
+				return
+			}
 		}
 	})
 
