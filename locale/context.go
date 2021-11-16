@@ -5,8 +5,6 @@ package locale
 
 import (
 	"context"
-
-	"google.golang.org/grpc/metadata"
 )
 
 // ctx private key type to seal the access
@@ -17,9 +15,6 @@ var tokenKey = ctx("locale")
 
 // WithLocale creates a new context with the passed locale
 func WithLocale(ctx context.Context, locale *Locale) context.Context {
-	if locale != nil {
-		ctx = metadata.AppendToOutgoingContext(ctx, "locale", locale.Serialize())
-	}
 	return context.WithValue(ctx, tokenKey, locale)
 }
 

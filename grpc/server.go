@@ -97,13 +97,13 @@ func Server(ab AuthBackend) *grpc.Server {
 					Msg("GRPC completed Stream")
 				return err
 			},
-			grpc_auth.StreamServerInterceptor(ab.AuthorizeStream),
 			func(srv interface{}, stream grpc.ServerStream, info *grpc.StreamServerInfo, handler grpc.StreamHandler) (err error) {
 				defer errors.HandleWithCtx(stream.Context(), "GRPC "+info.FullMethod)
 				err = InternalServerError // default in case of a panic
 				err = handler(srv, stream)
 				return err
 			},
+			grpc_auth.StreamServerInterceptor(ab.AuthorizeStream),
 		)),
 		grpc.UnaryInterceptor(grpc_middleware.ChainUnaryServer(
 			grpc_ctxtags.UnaryServerInterceptor(),
@@ -130,13 +130,13 @@ func Server(ab AuthBackend) *grpc.Server {
 					Msg("GRPC completed Unary")
 				return
 			},
-			grpc_auth.UnaryServerInterceptor(ab.AuthorizeUnary),
 			func(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (resp interface{}, err error) {
 				defer errors.HandleWithCtx(ctx, "GRPC "+info.FullMethod)
 				err = InternalServerError // default in case of a panic
 				resp, err = handler(ctx, req)
 				return
 			},
+			grpc_auth.UnaryServerInterceptor(ab.AuthorizeUnary),
 		)),
 	)
 
@@ -145,8 +145,6 @@ func Server(ab AuthBackend) *grpc.Server {
 
 func prepareContext(ctx context.Context) (context.Context, metadata.MD) {
 	md, _ := metadata.FromIncomingContext(ctx)
-	delete(md, "content-type")
-
 	logger := log.Logger().With().Logger()
 
 	// add request context if req_id is given
@@ -158,45 +156,41 @@ func prepareContext(ctx context.Context) (context.Context, metadata.MD) {
 			log.Debugf("unable to parse xid from req_id: %v", err)
 			reqID = xid.New()
 		}
-		delete(md, "req_id")
 	} else {
 		// generate random request id
 		reqID = xid.New()
 	}
 
+	//  attach request ID to context and logger
+	ctx = hlog.WithValue(ctx, reqID)
+
+	// set logger and log sink
+	ctx = log.ContextWithSink(logger.WithContext(ctx), log.NewSink())
+	zlog := zerolog.Ctx(ctx)
+	zlog.UpdateContext(func(c zerolog.Context) zerolog.Context {
+		return c.Str("req_id", reqID.String())
+	})
+
+	log.Ctx(ctx).Debug().Msgf("MD %#v", md)
+
 	// handle locale
 	if l := md.Get("locale"); len(l) > 0 {
 		loc, err := locale.ParseLocale(l[0])
 		if err != nil {
-			log.Debugf("unable to parse locale: %v", err)
+			log.Ctx(ctx).Debug().Err(err).Msgf("unable to parse locale: %v", err)
 		} else {
 			ctx = locale.WithLocale(ctx, loc)
 		}
-		delete(md, "locale")
 	}
-
-	//  attach request ID to context and logger
-	ctx = hlog.WithValue(ctx, reqID)
-	logger.UpdateContext(func(c zerolog.Context) zerolog.Context {
-		return c.Str("req_id", reqID.String())
-	})
-
-	// set logger and log sink
-	ctx = log.ContextWithSink(logger.WithContext(ctx), log.NewSink())
 
 	// add security context if bearer token is given
 	if bt := md.Get("bearer_token"); len(bt) > 0 {
-		token := bt[0]
-		// cut bearer token to not show up in logs
-		if index := strings.LastIndex(token, "."); index != -1 {
-			// cut jwt signature
-			md.Set("bearer_token", token[:index])
-		} else {
-			// otherwise show half of the token stared out
-			md.Set("bearer_token", token[:len(token)/2]+strings.Repeat("*", len(token)/2))
-		}
-		ctx = security.ContextWithToken(ctx, security.TokenString(token))
+		ctx = security.ContextWithToken(ctx, security.TokenString(bt[0]))
 	}
+	delete(md, "content-type")
+	delete(md, "locale")
+	delete(md, "bearer_token")
+	delete(md, "req_id")
 
 	return ctx, md
 }
