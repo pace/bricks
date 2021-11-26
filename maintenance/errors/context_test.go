@@ -102,7 +102,7 @@ func TestHide(t *testing.T) {
 				err:        fmt.Errorf("%s: %w", iAmAnError, context.Canceled),
 				exposedErr: iAmAnotherError,
 			},
-			want: fmt.Errorf("%s: %s: %w", iAmAnotherError, iAmAnError, context.Canceled),
+			want: fmt.Errorf("%s: %w", iAmAnError, context.Canceled),
 		},
 		{
 			name: "exceeded_context_no_error_nothing_exposed",
@@ -138,7 +138,7 @@ func TestHide(t *testing.T) {
 				err:        fmt.Errorf("%s: %w", iAmAnError, context.DeadlineExceeded),
 				exposedErr: iAmAnotherError,
 			},
-			want: fmt.Errorf("%s: %s: %w", iAmAnotherError, iAmAnError, context.DeadlineExceeded),
+			want: fmt.Errorf("%s: %w", iAmAnError, context.DeadlineExceeded),
 		},
 	}
 	for _, tt := range tests {

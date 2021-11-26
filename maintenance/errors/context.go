@@ -21,12 +21,12 @@ func Hide(ctx context.Context, err, exposedErr error) error {
 	}
 
 	if ctx.Err() == context.Canceled && errors.Is(err, context.Canceled) {
-		s := strings.TrimSuffix(ret.Error(), context.Canceled.Error())
+		s := strings.TrimSuffix(err.Error(), context.Canceled.Error())
 		return fmt.Errorf("%s%w", s, context.Canceled)
 	}
 
 	if ctx.Err() == context.DeadlineExceeded && errors.Is(err, context.DeadlineExceeded) {
-		s := strings.TrimSuffix(ret.Error(), context.DeadlineExceeded.Error())
+		s := strings.TrimSuffix(err.Error(), context.DeadlineExceeded.Error())
 		return fmt.Errorf("%s%w", s, context.DeadlineExceeded)
 	}
 
