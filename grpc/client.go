@@ -10,6 +10,7 @@ import (
 	"github.com/pace/bricks/http/security"
 	"github.com/pace/bricks/locale"
 	"github.com/pace/bricks/maintenance/log"
+	"github.com/pace/bricks/utm"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/metadata"
 
@@ -75,6 +76,9 @@ func prepareClientContext(ctx context.Context) context.Context {
 	}
 	if reqID := log.RequestIDFromContext(ctx); reqID != "" {
 		ctx = metadata.AppendToOutgoingContext(ctx, "req_id", reqID)
+	}
+	if utmCtx, ok := utm.FromContext(ctx); ok {
+		ctx = metadata.AppendToOutgoingContext(ctx, "utm", utmCtx.ToString())
 	}
 	return ctx
 }
