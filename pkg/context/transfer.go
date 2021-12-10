@@ -36,3 +36,11 @@ func TransferTracingContext(in, out context.Context) context.Context {
 	}
 	return out
 }
+
+func TransferExternalDependencyContext(in, out context.Context) context.Context {
+	edc := http.ExternalDependencyContextFromContext(in)
+	if edc == nil {
+		return out
+	}
+	return http.ContextWithExternalDependency(out, edc)
+}
