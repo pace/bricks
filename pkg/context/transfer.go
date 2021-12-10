@@ -2,6 +2,7 @@ package context
 
 import (
 	"context"
+
 	"github.com/opentracing/opentracing-go"
 	http "github.com/pace/bricks/http/middleware"
 	"github.com/pace/bricks/http/oauth2"
@@ -9,6 +10,7 @@ import (
 	"github.com/pace/bricks/maintenance/errors"
 	"github.com/pace/bricks/maintenance/log"
 	"github.com/pace/bricks/pkg/redact"
+	"github.com/pace/bricks/pkg/tracking/utm"
 )
 
 // Transfer takes the logger, log.Sink, authentication, request and
@@ -22,6 +24,7 @@ func Transfer(in context.Context) context.Context {
 	out = errors.ContextTransfer(in, out)
 	out = http.ContextTransfer(in, out)
 	out = redact.ContextTransfer(in, out)
+	out = utm.ContextTransfer(in, out)
 	out = TransferTracingContext(in, out)
 	return locale.ContextTransfer(in, out)
 }
