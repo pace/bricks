@@ -187,13 +187,11 @@ func (lt *logtracer) BeforeProcess(ctx context.Context, cmd redis.Cmder) (contex
 
 func (l *logtracer) AfterProcess(ctx context.Context, cmd redis.Cmder) error {
 	vals := ctx.Value(logtracerKey{}).(*logtracerValues)
-	le := log.Ctx(ctx).Debug().Str("cmd", cmd.Name()).Str("sentry:category", "redis")
 
 	// add error
 	cmdErr := cmd.Err()
 	if cmdErr != nil {
 		vals.span.LogFields(olog.Error(cmdErr))
-		le = le.Err(cmdErr)
 		paceRedisCmdFailed.With(prometheus.Labels{
 			"method": cmd.Name(),
 		}).Inc()
