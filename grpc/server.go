@@ -182,6 +182,8 @@ func prepareContext(ctx context.Context) (context.Context, metadata.MD) {
 		}
 	}
 
+	ctx = ContextWithUTMFromMetadata(ctx, md)
+
 	// add security context if bearer token is given
 	if bt := md.Get("bearer_token"); len(bt) > 0 {
 		ctx = security.ContextWithToken(ctx, security.TokenString(bt[0]))

@@ -76,5 +76,6 @@ func prepareClientContext(ctx context.Context) context.Context {
 	if reqID := log.RequestIDFromContext(ctx); reqID != "" {
 		ctx = metadata.AppendToOutgoingContext(ctx, "req_id", reqID)
 	}
+	ctx = EncodeContextWithUTMData(ctx)
 	return ctx
 }
