@@ -9,6 +9,7 @@ import (
 	"github.com/pace/bricks/locale"
 	"github.com/pace/bricks/maintenance/errors"
 	"github.com/pace/bricks/maintenance/log"
+	"github.com/pace/bricks/maintenance/log/hlog"
 	"github.com/pace/bricks/pkg/redact"
 	"github.com/pace/bricks/pkg/tracking/utm"
 )
@@ -25,6 +26,7 @@ func Transfer(in context.Context) context.Context {
 	out = http.ContextTransfer(in, out)
 	out = redact.ContextTransfer(in, out)
 	out = utm.ContextTransfer(in, out)
+	out = hlog.ContextTransfer(in, out)
 	out = TransferTracingContext(in, out)
 	return locale.ContextTransfer(in, out)
 }
