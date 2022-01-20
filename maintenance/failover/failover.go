@@ -122,11 +122,9 @@ func (a *ActivePassive) Run(ctx context.Context) error {
 					RetryStrategy: redislock.LimitRetry(redislock.LinearBackoff(a.timeToFailover/3), 3),
 				})
 				if err != nil {
-					logger.Debug().Err(err).Msgf("failed to acquire")
-
 					// we became passive, trigger callback
 					if a.getState() != PASSIVE {
-						logger.Debug().Msg("becoming passive")
+						logger.Debug().Err(err).Msg("becoming passive")
 						a.setState(PASSIVE)
 						if a.OnPassive != nil {
 							a.OnPassive()
