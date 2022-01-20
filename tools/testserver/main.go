@@ -15,6 +15,7 @@ import (
 	"github.com/pace/bricks/http/transport"
 	"github.com/pace/bricks/locale"
 
+	"github.com/pace/bricks/maintenance/failover"
 	"github.com/pace/bricks/maintenance/health/servicehealthcheck"
 
 	"github.com/opentracing/opentracing-go"
@@ -76,6 +77,9 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
+
+	ap := failover.NewActivePassive("testserver", time.Second*10, rdb)
+	go ap.Run(log.WithContext(context.Background()))
 
 	h := pacehttp.Router()
 	servicehealthcheck.RegisterHealthCheckFunc("fail-50", func(ctx context.Context) (r servicehealthcheck.HealthCheckResult) {
