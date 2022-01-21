@@ -12,7 +12,7 @@ import (
 	"google.golang.org/grpc/metadata"
 )
 
-const utmMetadataKey = "utm"
+const utmMetadataKey = "utm-bin"
 
 func ContextWithUTMFromMetadata(parentCtx context.Context, md metadata.MD) context.Context {
 	dataSlice := md.Get(utmMetadataKey)
