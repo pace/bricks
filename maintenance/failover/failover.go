@@ -4,14 +4,22 @@
 package failover
 
 import (
+	"bytes"
 	"context"
+	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
+	"os"
+	"strings"
 	"sync"
 	"time"
 
 	"github.com/bsm/redislock"
+	"github.com/caarlos0/env"
 	"github.com/go-redis/redis/v7"
+	"github.com/pace/bricks/http/transport"
+	"github.com/pace/bricks/maintenance/errors"
 	"github.com/pace/bricks/maintenance/health"
 	"github.com/pace/bricks/maintenance/log"
 )
@@ -26,9 +34,21 @@ const (
 	ACTIVE    status = 1
 )
 
+const Label = "github.com.pace.bricks.activepassive"
+
+// Config gathers the required kubernetes system configuration to use the
+// kubernetes API
+type Config struct {
+	Host      string `env:"KUBERNETES_SERVICE_HOST" envDefault:"localhost"`
+	Port      int    `env:"KUBERNETES_PORT_443_TCP_PORT" envDefault:"433"`
+	Namespace string `env:"KUBERNETES_NAMESPACE,file" envDefault:"/run/secrets/kubernetes.io/serviceaccount/namespace"`
+	CACert    string `env:"KUBERNETES_API_CA,file" envDefault:"/run/secrets/kubernetes.io/serviceaccount/ca.crt"`
+	Token     string `env:"KUBERNETES_API_TOKEN,file" envDefault:"/run/secrets/kubernetes.io/serviceaccount/token"`
+}
+
 // ActivePassive implements a failover mechanism that allows
 // to deploy a service multiple times but ony one will accept
-// traffic by using the readiness check of kubernetes.
+// traffic by using the label selector of kubernetes.
 // In order to determine the active, a lock needs to be hold
 // in redis. Hocks can be passed to handle the case of becoming
 // the active or passive.
@@ -46,10 +66,14 @@ type ActivePassive struct {
 	// OnStop is called after the ActivePassive process stops
 	OnStop func()
 
+	Client *http.Client
+
 	close          chan struct{}
 	clusterName    string
 	timeToFailover time.Duration
 	locker         *redislock.Client
+	cfg            Config
+	podname        string
 
 	state   status
 	stateMu sync.RWMutex
@@ -62,21 +86,43 @@ type ActivePassive struct {
 // NOTE: creating multiple ActivePassive in one processes
 // is not working correctly as there is only one readiness
 // probe.
-func NewActivePassive(clusterName string, timeToFailover time.Duration, client *redis.Client) *ActivePassive {
+func NewActivePassive(clusterName string, timeToFailover time.Duration, client *redis.Client) (*ActivePassive, error) {
 	ap := &ActivePassive{
 		clusterName:    clusterName,
 		timeToFailover: timeToFailover,
 		locker:         redislock.New(client),
+		Client: &http.Client{
+			Transport: transport.NewDefaultTransportChain(),
+		},
 	}
 	health.SetCustomReadinessCheck(ap.Handler)
-	return ap
+
+	// lookup hostname (for pod update)
+	hostname, err := os.Hostname()
+	if err != nil {
+		return nil, err
+	}
+	ap.podname = hostname
+
+	// parse environment including secrets mounted by kubernetes
+	err = env.Parse(&ap.cfg)
+	if err != nil {
+		return nil, err
+	}
+
+	return ap, nil
 }
 
 // Run registers the readiness probe and calls the OnActive
 // and OnPassive callbacks in case the election toke place.
+// Will handle panic safely and therefore can be directly called
+// with go.
 func (a *ActivePassive) Run(ctx context.Context) error {
+	defer errors.HandleWithCtx(ctx, "activepassive failover handler")
+
 	lockName := "activepassive:lock:" + a.clusterName
 	logger := log.Ctx(ctx).With().Str("failover", lockName).Logger()
+	ctx = logger.WithContext(ctx)
 
 	a.close = make(chan struct{})
 	defer close(a.close)
@@ -111,7 +157,7 @@ func (a *ActivePassive) Run(ctx context.Context) error {
 				})
 				if err != nil {
 					logger.Debug().Err(err).Msgf("failed to refresh")
-					a.setState(UNDEFINED)
+					a.becomeUndefined(ctx)
 				}
 			}
 		case <-retry.C:
@@ -125,10 +171,7 @@ func (a *ActivePassive) Run(ctx context.Context) error {
 					// we became passive, trigger callback
 					if a.getState() != PASSIVE {
 						logger.Debug().Err(err).Msg("becoming passive")
-						a.setState(PASSIVE)
-						if a.OnPassive != nil {
-							a.OnPassive()
-						}
+						a.becomePassive(ctx)
 					}
 
 					continue
@@ -136,10 +179,7 @@ func (a *ActivePassive) Run(ctx context.Context) error {
 
 				// lock acquired
 				logger.Debug().Msg("becoming active")
-				a.setState(ACTIVE)
-				if a.OnActive != nil {
-					a.OnActive()
-				}
+				a.becomeActive(ctx)
 
 				// we are active, renew if required
 				d, err := lock.TTL()
@@ -149,8 +189,8 @@ func (a *ActivePassive) Run(ctx context.Context) error {
 				if d == 0 {
 					// TTL seems to be expired, retry to get lock or become
 					// passive in next iteration
-					a.setState(UNDEFINED)
 					logger.Debug().Msg("ttl expired")
+					a.becomeUndefined(ctx)
 				}
 				refreshTime := d / 2
 
@@ -170,23 +210,41 @@ func (a *ActivePassive) Stop() {
 
 // Handler implements the readiness http endpoint
 func (a *ActivePassive) Handler(w http.ResponseWriter, r *http.Request) {
-	var str string
-	var code int
+	label := a.label(a.getState())
+	w.WriteHeader(http.StatusOK)
+	fmt.Fprintln(w, strings.ToUpper(label))
+}
 
-	switch a.getState() {
-	case UNDEFINED:
-		str = "UNDEFINED"
-		code = 503
+func (a *ActivePassive) label(s status) string {
+	switch s {
 	case ACTIVE:
-		str = "ACTIVE"
-		code = 200
+		return "active"
 	case PASSIVE:
-		str = "PASSIVE"
-		code = 502
+		return "passive"
+	default:
+		return "undefined"
 	}
+}
 
-	w.WriteHeader(code)
-	fmt.Fprintln(w, str)
+func (a *ActivePassive) becomeActive(ctx context.Context) {
+	a.setState(ACTIVE)
+	a.updateLabel(ctx, ACTIVE)
+	if a.OnActive != nil {
+		a.OnActive()
+	}
+}
+
+func (a *ActivePassive) becomePassive(ctx context.Context) {
+	a.setState(PASSIVE)
+	a.updateLabel(ctx, PASSIVE)
+	if a.OnPassive != nil {
+		a.OnPassive()
+	}
+}
+
+func (a *ActivePassive) becomeUndefined(ctx context.Context) {
+	a.setState(UNDEFINED)
+	a.updateLabel(ctx, UNDEFINED)
 }
 
 func (a *ActivePassive) setState(state status) {
@@ -200,4 +258,49 @@ func (a *ActivePassive) getState() status {
 	state := a.state
 	a.stateMu.RUnlock()
 	return state
+}
+
+func (a *ActivePassive) updateLabel(ctx context.Context, s status) {
+start:
+	pr := patchRequest{
+		{
+			Op:    "add",
+			Path:  "/metadata/labels/" + Label,
+			Value: a.label(s),
+		},
+	}
+	data, err := json.Marshal(pr)
+	if err != nil {
+		panic(err)
+	}
+
+	url := fmt.Sprintf("https://%s:%d/api/v1/namespaces/%s/pods/%s",
+		a.cfg.Host, a.cfg.Port, a.cfg.Namespace, a.podname)
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodPatch, url, bytes.NewReader(data))
+	if err != nil {
+		panic(err)
+	}
+
+	req.Header.Set("Content-Type", "application/json-patch+json")
+	req.Header.Set("Authorization", "Bearer "+a.cfg.Token)
+
+	resp, err := a.Client.Do(req)
+	if err != nil {
+		log.Ctx(ctx).Debug().Err(err).Msg("failed to do api request")
+		time.Sleep(time.Second)
+		goto start
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != 200 {
+		body, _ := io.ReadAll(resp.Body) // nolint: errcheck
+		log.Ctx(ctx).Debug().Msgf("failed to do api request, due to: %s", string(body))
+	}
+}
+
+type patchRequest []struct {
+	Op    string `json:"op"`
+	Path  string `json:"path"`
+	Value string `json:"value"`
 }
