@@ -6,6 +6,8 @@ package failover
 import (
 	"bytes"
 	"context"
+	"crypto/tls"
+	"crypto/x509"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -42,7 +44,7 @@ type Config struct {
 	Host      string `env:"KUBERNETES_SERVICE_HOST" envDefault:"localhost"`
 	Port      int    `env:"KUBERNETES_PORT_443_TCP_PORT" envDefault:"433"`
 	Namespace string `env:"KUBERNETES_NAMESPACE,file" envDefault:"/run/secrets/kubernetes.io/serviceaccount/namespace"`
-	CACert    string `env:"KUBERNETES_API_CA,file" envDefault:"/run/secrets/kubernetes.io/serviceaccount/ca.crt"`
+	CACert    []byte `env:"KUBERNETES_API_CA,file" envDefault:"/run/secrets/kubernetes.io/serviceaccount/ca.crt"`
 	Token     string `env:"KUBERNETES_API_TOKEN,file" envDefault:"/run/secrets/kubernetes.io/serviceaccount/token"`
 }
 
@@ -91,9 +93,7 @@ func NewActivePassive(clusterName string, timeToFailover time.Duration, client *
 		clusterName:    clusterName,
 		timeToFailover: timeToFailover,
 		locker:         redislock.New(client),
-		Client: &http.Client{
-			Transport: transport.NewDefaultTransportChain(),
-		},
+		Client:         &http.Client{},
 	}
 	health.SetCustomReadinessCheck(ap.Handler)
 
@@ -109,6 +109,20 @@ func NewActivePassive(clusterName string, timeToFailover time.Duration, client *
 	if err != nil {
 		return nil, err
 	}
+
+	// add kubernetes api server cert
+	chain := transport.NewDefaultTransportChain()
+	pool := x509.NewCertPool()
+	ok := pool.AppendCertsFromPEM(ap.cfg.CACert)
+	if !ok {
+		return nil, fmt.Errorf("failed to load kubernetes ca cert")
+	}
+	chain.Final(&http.Transport{
+		TLSClientConfig: &tls.Config{
+			RootCAs: pool,
+		},
+	})
+	ap.Client.Transport = chain
 
 	return ap, nil
 }
