@@ -12,7 +12,7 @@ import (
 	"google.golang.org/grpc/metadata"
 )
 
-const utmMetadataKey = "utm-bin"
+const utmMetadataKey = "utm-bin" // IMPORTANT -bin post-fix allows us to send binary data via grpc metadata, otherwise it will break the protocol
 
 func ContextWithUTMFromMetadata(parentCtx context.Context, md metadata.MD) context.Context {
 	dataSlice := md.Get(utmMetadataKey)
