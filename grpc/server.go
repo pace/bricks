@@ -192,6 +192,7 @@ func prepareContext(ctx context.Context) (context.Context, metadata.MD) {
 	delete(md, "locale")
 	delete(md, "bearer_token")
 	delete(md, "req_id")
+	delete(md, utmMetadataKey) // why is this even needed?
 
 	return ctx, md
 }
