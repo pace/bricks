@@ -33,5 +33,5 @@ func (c *Client) SetPodLabel(ctx context.Context, namespace, podname, label, val
 		c.cfg.Host, c.cfg.Port, namespace, podname)
 	var resp interface{}
 
-	return c.SimpleRequest(ctx, http.MethodPatch, url, pr, resp)
+	return c.SimpleRequest(ctx, http.MethodPatch, url, &pr, &resp)
 }
