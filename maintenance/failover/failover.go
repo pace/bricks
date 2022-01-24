@@ -202,30 +202,39 @@ func (a *ActivePassive) label(s status) string {
 }
 
 func (a *ActivePassive) becomeActive(ctx context.Context) {
-	a.setState(ACTIVE)
-	a.client.SetCurrentPodLabel(ctx, Label, a.label(ACTIVE))
-	if a.OnActive != nil {
-		a.OnActive()
+	if a.setState(ctx, ACTIVE) {
+		if a.OnActive != nil {
+			a.OnActive()
+		}
 	}
 }
 
 func (a *ActivePassive) becomePassive(ctx context.Context) {
-	a.setState(PASSIVE)
-	a.client.SetCurrentPodLabel(ctx, Label, a.label(PASSIVE))
-	if a.OnPassive != nil {
-		a.OnPassive()
+	if a.setState(ctx, PASSIVE) {
+		if a.OnPassive != nil {
+			a.OnPassive()
+		}
 	}
 }
 
 func (a *ActivePassive) becomeUndefined(ctx context.Context) {
-	a.setState(UNDEFINED)
-	a.client.SetCurrentPodLabel(ctx, Label, a.label(UNDEFINED))
+	a.setState(ctx, UNDEFINED)
 }
 
-func (a *ActivePassive) setState(state status) {
+// setState returns true if the state was set successfully
+func (a *ActivePassive) setState(ctx context.Context, state status) bool {
+	err := a.client.SetCurrentPodLabel(ctx, Label, a.label(UNDEFINED))
+	if err != nil {
+		log.Ctx(ctx).Error().Err(err).Msgf("failed to mark pod as undefined")
+		a.stateMu.Lock()
+		a.state = UNDEFINED
+		a.stateMu.Unlock()
+		return false
+	}
 	a.stateMu.Lock()
 	a.state = state
 	a.stateMu.Unlock()
+	return true
 }
 
 func (a *ActivePassive) getState() status {

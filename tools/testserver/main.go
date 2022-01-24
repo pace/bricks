@@ -82,7 +82,7 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	go ap.Run(log.WithContext(context.Background()))
+	go ap.Run(log.WithContext(context.Background())) // nolint: errcheck
 
 	h := pacehttp.Router()
 	servicehealthcheck.RegisterHealthCheckFunc("fail-50", func(ctx context.Context) (r servicehealthcheck.HealthCheckResult) {
