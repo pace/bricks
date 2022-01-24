@@ -26,7 +26,7 @@ type Client struct {
 	Namespace  string
 	CACert     []byte
 	Token      string
-	cfg        *Config
+	cfg        Config
 	HttpClient *http.Client
 }
 
