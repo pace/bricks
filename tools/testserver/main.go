@@ -78,7 +78,10 @@ func main() {
 		log.Fatal(err)
 	}
 
-	ap := failover.NewActivePassive("testserver", time.Second*10, rdb)
+	ap, err := failover.NewActivePassive("testserver", time.Second*10, rdb)
+	if err != nil {
+		log.Fatal(err)
+	}
 	go ap.Run(log.WithContext(context.Background()))
 
 	h := pacehttp.Router()
