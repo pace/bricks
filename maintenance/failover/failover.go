@@ -223,7 +223,7 @@ func (a *ActivePassive) becomeUndefined(ctx context.Context) {
 
 // setState returns true if the state was set successfully
 func (a *ActivePassive) setState(ctx context.Context, state status) bool {
-	err := a.client.SetCurrentPodLabel(ctx, Label, a.label(UNDEFINED))
+	err := a.client.SetCurrentPodLabel(ctx, Label, a.label(state))
 	if err != nil {
 		log.Ctx(ctx).Error().Err(err).Msgf("failed to mark pod as undefined")
 		a.stateMu.Lock()
