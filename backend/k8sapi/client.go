@@ -32,7 +32,9 @@ type Client struct {
 
 // NewClient create new api client
 func NewClient() (*Client, error) {
-	var cl Client
+	cl := Client{
+		HttpClient: &http.Client{},
+	}
 
 	// lookup hostname (for pod update)
 	hostname, err := os.Hostname()
