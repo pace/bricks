@@ -159,7 +159,7 @@ func (a *ActivePassive) Run(ctx context.Context) error {
 				// we are active, renew if required
 				d, err := lock.TTL()
 				if err != nil {
-					logger.Debug().Err(err).Msgf("failed to get TTL %q")
+					logger.Debug().Err(err).Msgf("failed to get TTL")
 				}
 				if d == 0 {
 					// TTL seems to be expired, retry to get lock or become
