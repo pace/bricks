@@ -131,7 +131,7 @@ func (a *ActivePassive) Run(ctx context.Context) error {
 					RetryStrategy: redislock.LimitRetry(redislock.LinearBackoff(a.timeToFailover/3), 3),
 				})
 				if err != nil {
-					logger.Debug().Err(err).Msgf("failed to refresh")
+					logger.Debug().Err(err).Msg("failed to refresh")
 					a.becomeUndefined(ctx)
 				}
 			}
@@ -159,7 +159,7 @@ func (a *ActivePassive) Run(ctx context.Context) error {
 				// we are active, renew if required
 				d, err := lock.TTL()
 				if err != nil {
-					logger.Debug().Err(err).Msgf("failed to get TTL")
+					logger.Debug().Err(err).Msg("failed to get TTL")
 				}
 				if d == 0 {
 					// TTL seems to be expired, retry to get lock or become
@@ -225,7 +225,7 @@ func (a *ActivePassive) becomeUndefined(ctx context.Context) {
 func (a *ActivePassive) setState(ctx context.Context, state status) bool {
 	err := a.client.SetCurrentPodLabel(ctx, Label, a.label(state))
 	if err != nil {
-		log.Ctx(ctx).Error().Err(err).Msgf("failed to mark pod as undefined")
+		log.Ctx(ctx).Error().Err(err).Msg("failed to mark pod as undefined")
 		a.stateMu.Lock()
 		a.state = UNDEFINED
 		a.stateMu.Unlock()
