@@ -54,7 +54,7 @@ func TestLoggingRoundTripper(t *testing.T) {
 	})
 	t.Run("With retries", func(t *testing.T) {
 		l := Chain(NewDefaultRetryRoundTripper(), &LoggingRoundTripper{})
-		l.Final(&retriedTransport{body: "", statusCodes: []int{502, 503, 408, 202}})
+		l.Final(&retriedTransport{statusCodes: []int{502, 503, 408, 202}})
 
 		_, err = l.RoundTrip(req)
 

@@ -31,10 +31,7 @@ func RetryNetErr() rehttp.RetryFn {
 // RetryEOFErr retries only when the error is EOF
 func RetryEOFErr() rehttp.RetryFn {
 	return func(attempt rehttp.Attempt) bool {
-		if attempt.Error == io.EOF {
-			return true
-		}
-		return false
+		return attempt.Error == io.EOF
 	}
 }
 
@@ -42,11 +39,14 @@ func RetryEOFErr() rehttp.RetryFn {
 func NewDefaultRetryTransport() *rehttp.Transport {
 	return rehttp.NewTransport(
 		nil,
-		rehttp.RetryAny(
-			rehttp.RetryStatuses(408, 502, 503, 504),
-			RetryEOFErr(),
-			RetryNetErr(),
-			rehttp.RetryTemporaryErr(),
+		rehttp.RetryAll(
+			rehttp.RetryMaxRetries(9),
+			rehttp.RetryAny(
+				rehttp.RetryStatuses(408, 502, 503, 504),
+				RetryEOFErr(),
+				RetryNetErr(),
+				rehttp.RetryTemporaryErr(),
+			),
 		),
 		rehttp.ConstDelay(100*time.Millisecond),
 	)
