@@ -4,13 +4,10 @@
 package transport
 
 import (
-	"errors"
-	"github.com/streadway/handy/retry"
 	"net/http"
 	"time"
 
 	"github.com/PuerkitoBio/rehttp"
-	// "github.com/streadway/handy/retry"
 )
 
 // RetryRoundTripper implements a chainable round tripper for retrying requests
@@ -56,14 +53,8 @@ func (l *RetryRoundTripper) RoundTrip(req *http.Request) (*http.Response, error)
 	retryTransport.RoundTripper = transportWithAttempt(l.Transport())
 	resp, err := retryTransport.RoundTrip(req)
 
-	var maxRetriesError retry.MaxError
 	if err != nil {
-		switch {
-		case errors.As(err, &maxRetriesError):
-			return nil, ErrRetryFailed
-		default:
-			return nil, err
-		}
+		return nil, err
 	}
 
 	return resp, nil
