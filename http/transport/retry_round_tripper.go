@@ -18,19 +18,6 @@ type RetryRoundTripper struct {
 	transport      http.RoundTripper
 }
 
-// AbortContextDone aborts if the request's context is finished
-func AbortContextDone() rehttp.RetryFn {
-	return func(attempt rehttp.Attempt) bool {
-		ctx := attempt.Request.Context()
-		select {
-		case <-ctx.Done():
-			return false
-		default:
-			return true
-		}
-	}
-}
-
 // RetryNetErr retries errors returned by the 'net' package.
 func RetryNetErr() rehttp.RetryFn {
 	return func(attempt rehttp.Attempt) bool {
@@ -53,14 +40,10 @@ func RetryEOFErr() rehttp.RetryFn {
 
 // NewDefaultRetryTransport returns a new default retry transport.
 func NewDefaultRetryTransport() *rehttp.Transport {
-	// Retry: retry.All(Context(), retry.Max(9), retry.EOF(), retry.Net(), retry.Temporary(), RetryCodes(408, 502, 503, 504)),
 	return rehttp.NewTransport(
 		nil,
 		rehttp.RetryAny(
-			rehttp.RetryAll(
-				AbortContextDone(),
-				rehttp.RetryStatuses(408, 502, 503, 504),
-			),
+			rehttp.RetryStatuses(408, 502, 503, 504),
 			RetryEOFErr(),
 			RetryNetErr(),
 			rehttp.RetryTemporaryErr(),

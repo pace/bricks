@@ -7,6 +7,7 @@ import (
 	"bytes"
 	"context"
 	"errors"
+	"fmt"
 	"io"
 	"io/ioutil"
 	"net/http"
@@ -17,10 +18,11 @@ import (
 func TestRetryRoundTripper(t *testing.T) {
 	requestBody := []byte(`{"key":"value""}`)
 	req := httptest.NewRequest("GET", "/foo", bytes.NewReader(requestBody))
+	statuses := []int{408, 502, 503, 504, 200}
 
 	t.Run("Successful response after some retries", func(t *testing.T) {
 		rt := NewDefaultRetryRoundTripper()
-		tr := &retriedTransport{body: "abc", statusCodes: []int{408, 502, 503, 504, 200}, requestBody: string(requestBody)}
+		tr := &retriedTransport{body: "abc", statusCodes: statuses, requestBody: string(requestBody)}
 		rt.SetTransport(tr)
 
 		resp, err := rt.RoundTrip(req)
@@ -29,8 +31,8 @@ func TestRetryRoundTripper(t *testing.T) {
 			t.Fatalf("Expected err to be nil, got %#v", err)
 		}
 
-		if ex, got := 4, tr.attempts; got != ex {
-			t.Errorf("Expected %d attempts, got %d", ex, got)
+		if tr.attempts != len(statuses) {
+			t.Errorf("Expected %d attempts, got %d", len(statuses), tr.attempts)
 		}
 
 		body, err := ioutil.ReadAll(resp.Body)
@@ -40,8 +42,8 @@ func TestRetryRoundTripper(t *testing.T) {
 		if tr.body != string(body) {
 			t.Errorf("Expected body %q, got %q", tr.body, string(body))
 		}
-		if got, ex := attemptFromCtx(tr.ctx), int32(4); got != ex {
-			t.Errorf("Expected %d attempts, got %d", ex, got)
+		if int(attemptFromCtx(tr.ctx)) != len(statuses) {
+			t.Errorf("Expected %d attempts, got %d", len(statuses), attemptFromCtx(tr.ctx))
 		}
 	})
 	t.Run("No retry after error response", func(t *testing.T) {
@@ -67,7 +69,7 @@ func TestRetryRoundTripper(t *testing.T) {
 	})
 	t.Run("No retry after context is finished", func(t *testing.T) {
 		rt := NewDefaultRetryRoundTripper()
-		tr := &retriedTransport{body: "abc", statusCodes: []int{408, 502, 503, 504, 200}}
+		tr := &retriedTransport{body: "abc", statusCodes: statuses}
 		rt.SetTransport(tr)
 
 		ctx, cancel := context.WithCancel(context.Background())
@@ -111,7 +113,8 @@ func (t *retriedTransport) RoundTrip(req *http.Request) (*http.Response, error) 
 		return nil, t.err
 	}
 	body := ioutil.NopCloser(bytes.NewReader([]byte(t.body)))
-	resp := &http.Response{Body: body, StatusCode: t.statusCodes[t.attempts]}
+	fmt.Printf("retrying %d\n", t.statusCodes[t.attempts-1])
+	resp := &http.Response{Body: body, StatusCode: t.statusCodes[t.attempts-1]}
 
 	readAll, _ := io.ReadAll(req.Body)
 	if string(readAll) != t.requestBody {
