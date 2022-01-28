@@ -7,6 +7,7 @@ import (
 	"bytes"
 	"context"
 	"errors"
+	"io"
 	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
@@ -14,11 +15,12 @@ import (
 )
 
 func TestRetryRoundTripper(t *testing.T) {
-	req := httptest.NewRequest("GET", "/foo", nil)
+	requestBody := []byte(`{"key":"value""}`)
+	req := httptest.NewRequest("GET", "/foo", bytes.NewReader(requestBody))
 
 	t.Run("Successful response after some retries", func(t *testing.T) {
 		rt := NewDefaultRetryRoundTripper()
-		tr := &retriedTransport{body: "abc", statusCodes: []int{408, 502, 503, 504, 200}}
+		tr := &retriedTransport{body: "abc", statusCodes: []int{408, 502, 503, 504, 200}, requestBody: string(requestBody)}
 		rt.SetTransport(tr)
 
 		resp, err := rt.RoundTrip(req)
@@ -93,6 +95,8 @@ type retriedTransport struct {
 	statusCodes []int
 	// returned response body as string
 	body string
+	// expected request body as string
+	requestBody string
 	// returned error
 	err error
 	// recorded context
@@ -108,6 +112,11 @@ func (t *retriedTransport) RoundTrip(req *http.Request) (*http.Response, error) 
 	}
 	body := ioutil.NopCloser(bytes.NewReader([]byte(t.body)))
 	resp := &http.Response{Body: body, StatusCode: t.statusCodes[t.attempts]}
+
+	readAll, _ := io.ReadAll(req.Body)
+	if string(readAll) != t.requestBody {
+		return nil, errors.New("request body not equal")
+	}
 
 	return resp, nil
 }
