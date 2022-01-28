@@ -4,6 +4,8 @@
 package transport
 
 import (
+	"io"
+	"net"
 	"net/http"
 	"time"
 
@@ -16,12 +18,53 @@ type RetryRoundTripper struct {
 	transport      http.RoundTripper
 }
 
+// AbortContextDone aborts if the request's context is finished
+func AbortContextDone() rehttp.RetryFn {
+	return func(attempt rehttp.Attempt) bool {
+		ctx := attempt.Request.Context()
+		select {
+		case <-ctx.Done():
+			return false
+		default:
+			return true
+		}
+	}
+}
+
+// RetryNetErr retries errors returned by the 'net' package.
+func RetryNetErr() rehttp.RetryFn {
+	return func(attempt rehttp.Attempt) bool {
+		if _, isNetError := attempt.Error.(*net.OpError); isNetError {
+			return true
+		}
+		return false
+	}
+}
+
+// RetryEOFErr retries only when the error is EOF
+func RetryEOFErr() rehttp.RetryFn {
+	return func(attempt rehttp.Attempt) bool {
+		if attempt.Error == io.EOF {
+			return true
+		}
+		return false
+	}
+}
+
 // NewDefaultRetryTransport returns a new default retry transport.
 func NewDefaultRetryTransport() *rehttp.Transport {
 	// Retry: retry.All(Context(), retry.Max(9), retry.EOF(), retry.Net(), retry.Temporary(), RetryCodes(408, 502, 503, 504)),
 	return rehttp.NewTransport(
 		nil,
-		rehttp.RetryAll(rehttp.RetryMaxRetries(9), rehttp.RetryStatuses(408, 502, 503, 504)), // max 3 retries for Temporary errors
+		rehttp.RetryAny(
+			rehttp.RetryAll(
+				AbortContextDone(),
+				rehttp.RetryStatuses(408, 502, 503, 504),
+			),
+			RetryEOFErr(),
+			RetryNetErr(),
+			rehttp.RetryTemporaryErr(),
+		),
 		rehttp.ConstDelay(100*time.Millisecond),
 	)
 }
