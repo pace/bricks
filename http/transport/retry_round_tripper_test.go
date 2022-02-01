@@ -7,7 +7,6 @@ import (
 	"bytes"
 	"context"
 	"errors"
-	"fmt"
 	"github.com/stretchr/testify/require"
 	"io"
 	"io/ioutil"
@@ -120,7 +119,6 @@ type retriedTransport struct {
 }
 
 func (t *retriedTransport) RoundTrip(req *http.Request) (*http.Response, error) {
-	fmt.Printf("Request Nr %d %d\n", t.attempts, t.statusCodes[t.attempts])
 	t.ctx = req.Context()
 
 	if t.err != nil {
