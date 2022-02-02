@@ -13,7 +13,7 @@ import (
 // the optional exposedErr is provided, it is attached as prefix
 // to the returned error. If the given err is not any of the above
 // ones, the given exposedErr (if present) is wrapped as prefix
-// to the returned error.
+// to the returned error, if there is an err that is not nil.
 func Hide(ctx context.Context, err, exposedErr error) error {
 	if err == nil {
 		return nil
