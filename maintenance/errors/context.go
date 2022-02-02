@@ -15,6 +15,10 @@ import (
 // ones, the given exposedErr (if present) is wrapped as prefix
 // to the returned error.
 func Hide(ctx context.Context, err, exposedErr error) error {
+	if err == nil {
+		return nil
+	}
+	
 	ret := errors.New(err.Error())
 	if exposedErr != nil {
 		ret = fmt.Errorf("%w: %s", exposedErr, err)
