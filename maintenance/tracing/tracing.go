@@ -31,8 +31,7 @@ func init() {
 		return
 	}
 	if cfg.ServiceName == "" {
-		log.Warn("Using Jaeger noop tracer since no JAEGER_SERVICE_NAME is present")
-		return
+		log.Fatal("JAEGER_SERVICE_NAME is not present")
 	}
 
 	Tracer, Closer, err = cfg.NewTracer(
