@@ -183,7 +183,15 @@ func DefaultConnectionPool() *pg.DB {
 // ConnectionPool returns a new database connection pool
 // that is already configured with the correct credentials and
 // instrumented with tracing and logging
-func ConnectionPool() *pg.DB {
+// Used Config is taken from the env and it's default values. These
+// values can be overwritten by the use of ConfigOption.
+func ConnectionPool(opts ...ConfigOption) *pg.DB {
+
+	// apply functional options if given to overwrite the default config / env config
+	for _, f := range opts {
+		f(&cfg)
+	}
+
 	return CustomConnectionPool(&pg.Options{
 		Addr:                  fmt.Sprintf("%s:%d", cfg.Host, cfg.Port),
 		User:                  cfg.User,
