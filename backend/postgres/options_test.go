@@ -173,3 +173,11 @@ func TestWithWriteTimeout(t *testing.T) {
 	f(&conf)
 	require.Equal(t, conf.WriteTimeout, param)
 }
+
+func TestWithQueryLogging(t *testing.T) {
+	param := true
+	var conf Config
+	f := WithQueryLogging(param)
+	f(&conf)
+	require.Equal(t, conf.QueryLogging, param)
+}

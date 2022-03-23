@@ -78,6 +78,9 @@ type Config struct {
 	HealthCheckTableName string `env:"POSTGRES_HEALTH_CHECK_TABLE_NAME" envDefault:"healthcheck"`
 	// Amount of time to cache the last health check result
 	HealthCheckResultTTL time.Duration `env:"POSTGRES_HEALTH_CHECK_RESULT_TTL" envDefault:"10s"`
+
+	// Controls if queries are logged
+	QueryLogging bool `env:"POSTGRES_QUERY_LOGGING" envDefault:"true"`
 }
 
 var (
@@ -192,7 +195,7 @@ func ConnectionPool(opts ...ConfigOption) *pg.DB {
 		f(&cfg)
 	}
 
-	return CustomConnectionPool(&pg.Options{
+	options := &pg.Options{
 		Addr:                  fmt.Sprintf("%s:%d", cfg.Host, cfg.Port),
 		User:                  cfg.User,
 		Password:              cfg.Password,
@@ -211,7 +214,12 @@ func ConnectionPool(opts ...ConfigOption) *pg.DB {
 		PoolTimeout:           cfg.PoolTimeout,
 		IdleTimeout:           cfg.IdleTimeout,
 		IdleCheckFrequency:    cfg.IdleCheckFrequency,
-	})
+	}
+
+	if cfg.QueryLogging == false {
+		return CustomConnectionPoolWithoutLogging(options)
+	}
+	return CustomConnectionPool(options)
 }
 
 // CustomConnectionPool returns a new database connection pool
@@ -222,6 +230,7 @@ func ConnectionPool(opts ...ConfigOption) *pg.DB {
 // be registered:
 //  servicehealthcheck.RegisterHealthCheck(...)
 func CustomConnectionPool(opts *pg.Options) *pg.DB {
+	// required here a second time to keep function signature and still ensure that the option would be used if provided.
 	log.Logger().Info().Str("addr", opts.Addr).
 		Str("user", opts.User).
 		Str("database", opts.Database).
@@ -229,6 +238,29 @@ func CustomConnectionPool(opts *pg.Options) *pg.DB {
 		Msg("PostgreSQL connection pool created")
 	db := pg.Connect(opts)
 	db.OnQueryProcessed(queryLogger)
+	db.OnQueryProcessed(openTracingAdapter)
+	db.OnQueryProcessed(func(event *pg.QueryProcessedEvent) {
+		metricsAdapter(event, opts)
+	})
+	return db
+}
+
+// CustomConnectionPoolWithoutLogging returns a new database connection pool
+// that is already configured with the correct credentials and
+// instrumented with tracing using the passed options
+// Query logging is not configured
+//
+// For a health check for this connection a PgHealthCheck needs to
+// be registered:
+//  servicehealthcheck.RegisterHealthCheck(...)
+func CustomConnectionPoolWithoutLogging(opts *pg.Options) *pg.DB {
+	// required here a second time to keep function signature and still ensure that the option would be used if provided.
+	log.Logger().Info().Str("addr", opts.Addr).
+		Str("user", opts.User).
+		Str("database", opts.Database).
+		Str("as", opts.ApplicationName).
+		Msg("PostgreSQL connection pool created (no query logging)")
+	db := pg.Connect(opts)
 	db.OnQueryProcessed(openTracingAdapter)
 	db.OnQueryProcessed(func(event *pg.QueryProcessedEvent) {
 		metricsAdapter(event, opts)

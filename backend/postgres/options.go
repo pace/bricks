@@ -168,3 +168,10 @@ func WithHealthCheckResultTTL(healthCheckResultTTL time.Duration) ConfigOption {
 		cfg.HealthCheckResultTTL = healthCheckResultTTL
 	}
 }
+
+// WithQueryLogging - Controls if SQL queries are logged
+func WithQueryLogging(logging bool) ConfigOption {
+	return func(cfg *Config) {
+		cfg.QueryLogging = logging
+	}
+}
