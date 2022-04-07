@@ -35,7 +35,53 @@ func TestNewDumpRoundTripperEnv(t *testing.T) {
 	})
 }
 
-func TestNewDumpRoundTripperEnvDisablePrefixBased(t *testing.T) {
+func TestNewDumpRoundTripperEnvDisablePrefixBasedComplete(t *testing.T) {
+	out := &bytes.Buffer{}
+	ctx := log.Output(out).WithContext(context.Background())
+
+	require.NotPanics(t, func() {
+		defer os.Setenv("HTTP_TRANSPORT_DUMP_DISABLE_ALL_URL_PREFIX", os.Getenv("HTTP_TRANSPORT_DUMP_DISABLE_ALL_URL_PREFIX"))
+		os.Setenv("HTTP_TRANSPORT_DUMP_DISABLE_ALL_URL_PREFIX", "https://please-ignore-me")
+		rt, err := NewDumpRoundTripper(
+			roundTripConfigViaEnv(),
+			RoundTripConfig(
+				DumpRoundTripperOptionRequest,
+				DumpRoundTripperOptionRequestHEX,
+				DumpRoundTripperOptionResponse,
+				DumpRoundTripperOptionResponseHEX,
+				DumpRoundTripperOptionBody,
+			))
+		require.NoError(t, err)
+		assert.NotNil(t, rt)
+
+		req := httptest.NewRequest("GET", "/foo", bytes.NewBufferString("Foo"))
+		req = req.WithContext(ctx)
+		rt.SetTransport(&transportWithResponse{})
+
+		_, err = rt.RoundTrip(req)
+		assert.NoError(t, err)
+
+		assert.Contains(t, out.String(), `"level":"debug"`)
+		assert.Contains(t, out.String(), `"request":"GET /foo HTTP/1.1\r\nHost: example.com\r\n\r\nFoo"`)
+		assert.Contains(t, out.String(), `"request-hex":"474554202f666f6f20485454502f312e310d0a486f73743a206578616d706c652e636f6d0d0a0d0a466f6f"`)
+		assert.Contains(t, out.String(), `"response":"HTTP/0.0 000 status code 0\r\nContent-Length: 0\r\n\r\n"`)
+		assert.Contains(t, out.String(), `"response-hex":"485454502f302e30203030302073746174757320636f646520300d0a436f6e74656e742d4c656e6774683a20300d0a0d0a"`)
+		assert.Contains(t, out.String(), `"message":"HTTP Transport Dump"`)
+
+		out.Reset()
+
+		assert.Equal(t, "", out.String())
+
+		reqWithPrefix := httptest.NewRequest("GET", "https://please-ignore-me.org/foo/", bytes.NewBufferString("Foo"))
+		reqWithPrefix = reqWithPrefix.WithContext(ctx)
+
+		_, err = rt.RoundTrip(reqWithPrefix)
+		assert.NoError(t, err)
+		assert.Empty(t, out.String())
+	})
+}
+
+func TestNewDumpRoundTripperEnvDisablePrefixBasedBody(t *testing.T) {
 	out := &bytes.Buffer{}
 	ctx := log.Output(out).WithContext(context.Background())
 
