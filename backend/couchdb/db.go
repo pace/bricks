@@ -75,16 +75,18 @@ func Client(cfg *Config) (*kivik.Client, error) {
 	if err != nil {
 		return nil, err
 	}
-
-	chain := transport.Chain(
+	rts := []transport.ChainableRoundTripper{
 		&AuthTransport{
 			Username: cfg.User,
 			Password: cfg.Password,
 		},
 		&transport.JaegerRoundTripper{},
 		transport.NewDumpRoundTripperEnv(),
-		&transport.LoggingRoundTripper{},
-	)
+	}
+	if !cfg.DisableRequestLogging {
+		rts = append(rts, &transport.LoggingRoundTripper{})
+	}
+	chain := transport.Chain(rts...)
 	tr := couchdb.SetTransport(chain)
 	err = client.Authenticate(ctx, tr)
 	if err != nil {

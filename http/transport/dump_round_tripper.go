@@ -28,14 +28,16 @@ type DumpRoundTripper struct {
 	DumpBody        bool
 	DumpNoRedact    bool
 
-	BlacklistPrefixes []string
+	BlacklistBodyDumpPrefixes []string
+	BlacklistAnyDumpPrefixes  []string
 }
 
 type DumpRoundTripperOption func(rt *DumpRoundTripper) (*DumpRoundTripper, error)
 
 type dumpRoundTripperConfig struct {
-	Options           []string `env:"HTTP_TRANSPORT_DUMP" envSeparator:"," envDefault:""`
-	BlacklistPrefixes []string `env:"HTTP_TRANSPORT_DUMP_DISABLE_DUMP_BODY_URL_PREFIX" envSeparator:"," envDefault:""`
+	Options                   []string `env:"HTTP_TRANSPORT_DUMP" envSeparator:"," envDefault:""`
+	BlacklistBodyDumpPrefixes []string `env:"HTTP_TRANSPORT_DUMP_DISABLE_DUMP_BODY_URL_PREFIX" envSeparator:"," envDefault:""`
+	BlacklistAnyDumpPrefixes  []string `env:"HTTP_TRANSPORT_DUMP_DISABLE_ALL_URL_PREFIX" envSeparator:"," envDefault:""`
 }
 
 func roundTripConfigViaEnv() DumpRoundTripperOption {
@@ -48,7 +50,8 @@ func roundTripConfigViaEnv() DumpRoundTripperOption {
 		if err := setRoundTripOptions(rt, cfg.Options...); err != nil {
 			return rt, err
 		}
-		rt.BlacklistPrefixes = cfg.BlacklistPrefixes
+		rt.BlacklistBodyDumpPrefixes = cfg.BlacklistBodyDumpPrefixes
+		rt.BlacklistAnyDumpPrefixes = cfg.BlacklistAnyDumpPrefixes
 		return rt, nil
 	}
 }
@@ -131,8 +134,11 @@ func (l DumpRoundTripper) AnyEnabled() bool {
 	return l.DumpRequest || l.DumpResponse || l.DumpRequestHEX || l.DumpResponseHEX
 }
 
-func (l DumpRoundTripper) ContainsBlacklistedPrefix(url *url.URL) bool {
-	for _, prefix := range l.BlacklistPrefixes {
+func (l DumpRoundTripper) ContainsBlacklistedPrefix(url *url.URL, blacklist []string) bool {
+	if len(blacklist) == 0 {
+		return false
+	}
+	for _, prefix := range blacklist {
 		// TODO (juf): Do benchmark and compare against using pre-constructed prefix-tree
 		if strings.HasPrefix(url.String(), prefix) {
 			return true
@@ -150,12 +156,16 @@ func (l *DumpRoundTripper) RoundTrip(req *http.Request) (*http.Response, error) 
 		redactor = redact.Ctx(req.Context())
 	}
 
-	dumpBody := !l.ContainsBlacklistedPrefix(req.URL) && l.DumpBody
-
 	// fast path if logging is disabled
 	if !l.AnyEnabled() {
 		return l.Transport().RoundTrip(req)
 	}
+
+	if l.ContainsBlacklistedPrefix(req.URL, l.BlacklistAnyDumpPrefixes) {
+		return l.Transport().RoundTrip(req)
+	}
+
+	dumpBody := !l.ContainsBlacklistedPrefix(req.URL, l.BlacklistBodyDumpPrefixes) && l.DumpBody // move below !l.AnyEnabled to not clutter execution if everything is disabled
 
 	dl := log.Ctx(req.Context()).Debug()
 

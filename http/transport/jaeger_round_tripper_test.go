@@ -36,7 +36,7 @@ func TestJaegerRoundTripper(t *testing.T) {
 		exs := []string{`operationName:"GET /foo"`, "numericVal:202"}
 		for _, ex := range exs {
 			if !strings.Contains(spanString, ex) {
-				t.Errorf("Expected %q to be included in span %v", ex, spanString)
+				t.Errorf("Expected %q to be included in span %q", ex, spanString)
 			}
 		}
 	})
