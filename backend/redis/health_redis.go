@@ -30,7 +30,7 @@ func (h *HealthCheck) HealthCheck(ctx context.Context) servicehealthcheck.Health
 	}
 
 	// Try writing
-	if err := client.Append(cfg.HealthCheckKey, "true").Err(); err != nil {
+	if err := client.Set(cfg.HealthCheckKey, "true", 0).Err(); err != nil {
 		h.state.SetErrorState(err)
 		return h.state.GetState()
 	}
