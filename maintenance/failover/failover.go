@@ -13,6 +13,7 @@ import (
 
 	"github.com/bsm/redislock"
 	"github.com/go-redis/redis/v7"
+
 	"github.com/pace/bricks/backend/k8sapi"
 	"github.com/pace/bricks/maintenance/errors"
 	"github.com/pace/bricks/maintenance/health"
@@ -225,7 +226,7 @@ func (a *ActivePassive) becomeUndefined(ctx context.Context) {
 func (a *ActivePassive) setState(ctx context.Context, state status) bool {
 	err := a.client.SetCurrentPodLabel(ctx, Label, a.label(state))
 	if err != nil {
-		log.Ctx(ctx).Error().Err(err).Msg("failed to mark pod as undefined")
+		log.Ctx(ctx).Error().Err(err).Msgf("failed to mark pod as %q", a.label(state))
 		a.stateMu.Lock()
 		a.state = UNDEFINED
 		a.stateMu.Unlock()
