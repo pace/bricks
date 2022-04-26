@@ -6,12 +6,13 @@ package servicehealthcheck
 import (
 	"context"
 	"fmt"
-	"github.com/opentracing/opentracing-go"
 	"net/http"
 	"sync"
 	"time"
 
 	"github.com/caarlos0/env"
+	"github.com/opentracing/opentracing-go"
+
 	"github.com/pace/bricks/maintenance/errors"
 	"github.com/pace/bricks/maintenance/log"
 )
@@ -97,13 +98,25 @@ func check(ctx context.Context, hcs *sync.Map) map[string]HealthCheckResult {
 			span, ctx := opentracing.StartSpanFromContext(ctx, fmt.Sprintf("HealthCheck %s", name))
 			defer span.Finish()
 
-			// If it was not possible to initialize this health check, then show the initialization error message
-			if val, isIn := initErrors.Load(name); isIn {
+			// If Init failed, try again
+			if val, ok := initErrors.Load(name); ok {
 				state := val.(*ConnectionState)
-				if done := reInitHealthCheck(ctx, state, name, hc.(Initializable)); done {
+				if time.Since(state.LastChecked()) < cfg.HealthCheckInitResultErrorTTL {
+					// Too soon, return same state
 					resultSync.Store(name, state.GetState())
 					return
 				}
+
+				initErr := hc.(Initializable).Init(ctx)
+				if initErr != nil {
+					// Init failed, update init state err and return it
+					state.SetErrorState(initErr)
+					resultSync.Store(name, state.GetState())
+					return
+				}
+
+				// Init succeeded, clear init state error, and proceed with check
+				initErrors.Delete(name)
 			}
 			// this is the actual health check
 			resultSync.Store(name, hc.HealthCheck(ctx))
@@ -118,19 +131,6 @@ func check(ctx context.Context, hcs *sync.Map) map[string]HealthCheckResult {
 	})
 
 	return result
-}
-
-func reInitHealthCheck(ctx context.Context, conState *ConnectionState, name string, initHc Initializable) bool {
-	if time.Since(conState.LastChecked()) < cfg.HealthCheckInitResultErrorTTL {
-		return true
-	}
-	err := initHc.Init(ctx)
-	if err != nil {
-		conState.SetErrorState(err)
-		return true
-	}
-	initErrors.Delete(name)
-	return false
 }
 
 func writeResult(w http.ResponseWriter, status int, body string) {
@@ -174,7 +174,15 @@ func registerHealthCheck(checks *sync.Map, hc HealthCheck, name string) {
 		log.Warnf("tried to register health check with name %q twice", name)
 		return
 	}
-	if initHC, ok := hc.(Initializable); ok {
+
+	if bgHC, ok := hc.(BackgroundHealthCheck); ok {
+		// registerBackgroundHealthCheck returns a backgroundStateHealthChecker,
+		// which will be used instead to check the state, and the original health check
+		// will run in the background.
+		// Also, initialization + retries are done in the background.
+		hc = registerBackgroundHealthCheck(name, bgHC)
+
+	} else if initHC, ok := hc.(Initializable); ok {
 		if err := initHC.Init(ctx); err != nil {
 			log.Warnf("error initializing health check %q: %s", name, err)
 			initErrors.Store(name, &ConnectionState{
