@@ -26,10 +26,7 @@ type BackgroundHealthCheckMaxWait interface {
 func registerBackgroundHealthCheck(name string, bhc BackgroundHealthCheck) *backgroundStateHealthChecker {
 	var bgState ConnectionState
 
-	go func() {
-		s := log.Sink{Silent: true}
-		ctx := log.ContextWithSink(context.Background(), &s)
-
+	go func(ctx context.Context) {
 		var initErr error
 		if initHC, ok := bhc.(Initializable); ok {
 			if initErr = initHC.Init(ctx); initErr != nil {
@@ -72,7 +69,7 @@ func registerBackgroundHealthCheck(name string, bhc BackgroundHealthCheck) *back
 				bgState.setConnectionState(bhc.HealthCheck(ctx))
 			}()
 		}
-	}()
+	}(context.Background())
 
 	// Return a HealthCheck that just checks the background "cached" state.
 	return &backgroundStateHealthChecker{&bgState}
