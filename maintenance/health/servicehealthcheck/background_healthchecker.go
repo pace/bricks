@@ -39,8 +39,8 @@ func registerBackgroundHealthCheck(name string, bhc BackgroundHealthCheck) *back
 		}
 		timer := time.NewTimer(0) // Do first health check instantly
 		for {
+			<-timer.C
 			func() {
-				<-timer.C
 				defer timer.Reset(bhc.Interval())
 
 				maxWait := cfg.HealthCheckMaxWait
