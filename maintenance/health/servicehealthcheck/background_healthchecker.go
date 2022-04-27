@@ -2,10 +2,12 @@ package servicehealthcheck
 
 import (
 	"context"
+	"fmt"
 	"time"
 
 	"github.com/opentracing/opentracing-go"
 
+	"github.com/pace/bricks/maintenance/errors"
 	"github.com/pace/bricks/maintenance/log"
 )
 
@@ -27,9 +29,12 @@ func registerBackgroundHealthCheck(name string, bhc BackgroundHealthCheck) *back
 	var bgState ConnectionState
 
 	go func(ctx context.Context) {
+		defer errors.HandleWithCtx(ctx, fmt.Sprintf("BackgroundHealthCheck %s", name))
+
 		var initErr error
 		if initHC, ok := bhc.(Initializable); ok {
-			if initErr = initHC.Init(ctx); initErr != nil {
+			initErr = initHealthCheck(ctx, initHC)
+			if initErr != nil {
 				log.Warnf("error initializing background health check %q: %s", name, initErr)
 				bgState.SetErrorState(initErr)
 			}
@@ -38,6 +43,7 @@ func registerBackgroundHealthCheck(name string, bhc BackgroundHealthCheck) *back
 		for {
 			<-timer.C
 			func() {
+				defer errors.HandleWithCtx(ctx, fmt.Sprintf("BackgroundHealthCheck_HealthCheck %s", name))
 				defer timer.Reset(bhc.Interval())
 
 				maxWait := cfg.HealthCheckMaxWait
@@ -55,7 +61,7 @@ func registerBackgroundHealthCheck(name string, bhc BackgroundHealthCheck) *back
 						// Too soon, leave the same state
 						return
 					}
-					initErr = bhc.(Initializable).Init(ctx)
+					initErr = initHealthCheck(ctx, bhc.(Initializable))
 					if initErr != nil {
 						// Init failed again
 						bgState.SetErrorState(initErr)
@@ -73,6 +79,18 @@ func registerBackgroundHealthCheck(name string, bhc BackgroundHealthCheck) *back
 
 	// Return a HealthCheck that just checks the background "cached" state.
 	return &backgroundStateHealthChecker{&bgState}
+}
+
+// initHealthCheck will recover from panics and return a proper error
+func initHealthCheck(ctx context.Context, initHC Initializable) (err error) {
+	defer func() {
+		if rp := recover(); rp != nil {
+			err = fmt.Errorf("panic: %v", rp)
+			errors.Handle(ctx, rp)
+		}
+	}()
+
+	return initHC.Init(ctx)
 }
 
 var _ HealthCheck = (*backgroundStateHealthChecker)(nil)
