@@ -24,27 +24,29 @@ func gatherMetrics(connection rmq.Connection) {
 	ctx := log.ContextWithSink(log.WithContext(context.Background()), new(log.Sink))
 
 	routine.Run(ctx, func(_ context.Context) {
-		queues, err := connection.GetOpenQueues()
-		if err != nil {
-			log.Ctx(ctx).Debug().Err(err).Msg("rmq metrics: could not get open queues")
-			pberrors.Handle(ctx, err)
-		}
-		stats, err := connection.CollectStats(queues)
-		if err != nil {
-			log.Ctx(ctx).Debug().Err(err).Msg("rmq metrics: could not collect stats")
-			pberrors.Handle(ctx, err)
-		}
-		for queue, queueStats := range stats.QueueStats {
-			labels := prometheus.Labels{
-				"queue": queue,
+		ticker := time.NewTicker(cfg.MetricsRefreshInterval)
+		for range ticker.C {
+			queues, err := connection.GetOpenQueues()
+			if err != nil {
+				log.Ctx(ctx).Debug().Err(err).Msg("rmq metrics: could not get open queues")
+				pberrors.Handle(ctx, err)
 			}
-			gauges.readyGauge.With(labels).Set(float64(queueStats.ReadyCount))
-			gauges.rejectedGauge.With(labels).Set(float64(queueStats.RejectedCount))
-			gauges.connectionGauge.With(labels).Set(float64(queueStats.ConnectionCount()))
-			gauges.consumerGauge.With(labels).Set(float64(queueStats.ConsumerCount()))
-			gauges.unackedGauge.With(labels).Set(float64(queueStats.UnackedCount()))
+			stats, err := connection.CollectStats(queues)
+			if err != nil {
+				log.Ctx(ctx).Debug().Err(err).Msg("rmq metrics: could not collect stats")
+				pberrors.Handle(ctx, err)
+			}
+			for queue, queueStats := range stats.QueueStats {
+				labels := prometheus.Labels{
+					"queue": queue,
+				}
+				gauges.readyGauge.With(labels).Set(float64(queueStats.ReadyCount))
+				gauges.rejectedGauge.With(labels).Set(float64(queueStats.RejectedCount))
+				gauges.connectionGauge.With(labels).Set(float64(queueStats.ConnectionCount()))
+				gauges.consumerGauge.With(labels).Set(float64(queueStats.ConsumerCount()))
+				gauges.unackedGauge.With(labels).Set(float64(queueStats.UnackedCount()))
+			}
 		}
-		time.Sleep(cfg.MetricsRefreshInterval)
 	})
 }
 
