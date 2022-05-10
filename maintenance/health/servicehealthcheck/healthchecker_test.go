@@ -41,15 +41,6 @@ func (t *testHealthChecker) HealthCheck(ctx context.Context) HealthCheckResult {
 	return HealthCheckResult{Ok, ""}
 }
 
-type testBackgroundHealthChecker struct {
-	*testHealthChecker
-	interval time.Duration
-}
-
-func (t *testBackgroundHealthChecker) Interval() time.Duration {
-	return t.interval
-}
-
 func TestHandlerHealthCheck(t *testing.T) {
 	testCases := []struct {
 		title   string
@@ -99,8 +90,9 @@ func TestHandlerHealthCheck(t *testing.T) {
 			})
 			t.Run("background", func(t *testing.T) {
 				resetHealthChecks()
-				var hc HealthCheck = &testBackgroundHealthChecker{testHealthChecker: tc.check}
-				RegisterHealthCheck(tc.check.name, hc)
+				RegisterHealthCheck(tc.check.name, tc.check,
+					RunInBackgroundAtInterval(time.Second),
+				)
 				waitForBackgroundCheck()
 				testRequest(t, tc.expCode, tc.expBody)
 			})
@@ -118,9 +110,6 @@ func waitForBackgroundCheck(additionalWait ...time.Duration) {
 }
 
 func TestInitErrorRetry(t *testing.T) {
-	// No caching of the init results
-	cfg.HealthCheckInitResultErrorTTL = 0
-
 	resetHealthChecks()
 
 	// Create Check with initErr
@@ -130,7 +119,9 @@ func TestInitErrorRetry(t *testing.T) {
 		healthCheckWarn: false,
 		name:            "initRetry",
 	}
-	RegisterHealthCheck(checker.name, checker)
+	RegisterHealthCheck(checker.name, checker,
+		UseInitErrResultTTL(0), // No caching of the init results
+	)
 
 	testRequest(t, http.StatusServiceUnavailable, "ERR: 1 errors and 0 warnings")
 
@@ -140,28 +131,27 @@ func TestInitErrorRetry(t *testing.T) {
 }
 
 func TestInitErrorRetry_BackgroundCheck(t *testing.T) {
-	// No caching of the init err results
-	cfg.HealthCheckInitResultErrorTTL = 0
-
 	resetHealthChecks()
 
 	// Create Check with initErr
-	checker := &testBackgroundHealthChecker{
-		testHealthChecker: &testHealthChecker{
-			initErr:         true,
-			healthCheckErr:  false,
-			healthCheckWarn: false,
-			name:            "initRetry",
-		},
-		interval: time.Second,
+	checker := &testHealthChecker{
+		initErr:         true,
+		healthCheckErr:  false,
+		healthCheckWarn: false,
+		name:            "initRetry",
 	}
-	RegisterHealthCheck(checker.name, checker)
+	backgroundInterval := time.Second
+
+	RegisterHealthCheck(checker.name, checker,
+		RunInBackgroundAtInterval(backgroundInterval),
+		UseInitErrResultTTL(0), // No caching of the init err results
+	)
 	waitForBackgroundCheck()
 	testRequest(t, http.StatusServiceUnavailable, "ERR: 1 errors and 0 warnings")
 
 	// remove initErr
 	checker.initErr = false
-	waitForBackgroundCheck(checker.interval)
+	waitForBackgroundCheck(backgroundInterval)
 	testRequest(t, http.StatusOK, "OK")
 }
 
@@ -187,7 +177,7 @@ func resetHealthChecks() {
 }
 
 func TestInitErrorCaching(t *testing.T) {
-	cfg.HealthCheckInitResultErrorTTL = time.Hour
+	// Create Check with initErr
 	hc := &testHealthChecker{
 		initErr:         true,
 		healthCheckErr:  false,
@@ -196,56 +186,64 @@ func TestInitErrorCaching(t *testing.T) {
 	}
 
 	resetHealthChecks()
-	RegisterHealthCheck(hc.name, hc)
-
+	RegisterHealthCheck(hc.name, hc,
+		UseInitErrResultTTL(time.Hour), // Big caching ttl of the init err results
+	)
 	testRequest(t, http.StatusServiceUnavailable, "ERR: 1 errors and 0 warnings")
+
+	// No init err, but expect err because of cache
 	hc.initErr = false
 	testRequest(t, http.StatusServiceUnavailable, "ERR: 1 errors and 0 warnings")
 
-	cfg.HealthCheckInitResultErrorTTL = 0
 	resetHealthChecks()
+	// Expect err
 	hc.initErr = true
-	RegisterHealthCheck(hc.name, hc)
+	RegisterHealthCheck(hc.name, hc,
+		UseInitErrResultTTL(0), // No caching of the init err results
+	)
 	testRequest(t, http.StatusServiceUnavailable, "ERR: 1 errors and 0 warnings")
+
+	// Remove init err, expect OK
 	hc.initErr = false
 	testRequest(t, http.StatusOK, "OK")
 }
 
 func TestInitErrorCaching_BackgroundCheck(t *testing.T) {
-	// Big caching ttl of the init err results
-	cfg.HealthCheckInitResultErrorTTL = time.Hour
 	// Create Check with initErr
-	hc := &testBackgroundHealthChecker{
-		testHealthChecker: &testHealthChecker{
-			initErr:         true,
-			healthCheckErr:  false,
-			healthCheckWarn: false,
-			name:            "initErrorCaching",
-		},
-		interval: time.Second,
+	hc := &testHealthChecker{
+		initErr:         true,
+		healthCheckErr:  false,
+		healthCheckWarn: false,
+		name:            "initErrorCaching",
 	}
+	bgInterval := time.Second
+
 	resetHealthChecks()
-	RegisterHealthCheck(hc.name, hc)
+	RegisterHealthCheck(hc.name, hc,
+		RunInBackgroundAtInterval(bgInterval),
+		UseInitErrResultTTL(time.Hour), // Big caching ttl of the init err results
+	)
 	waitForBackgroundCheck()
 	testRequest(t, http.StatusServiceUnavailable, "ERR: 1 errors and 0 warnings")
 
 	// No init err, but expect err because of cache
 	hc.initErr = false
-	waitForBackgroundCheck(hc.interval)
+	waitForBackgroundCheck(bgInterval)
 	testRequest(t, http.StatusServiceUnavailable, "ERR: 1 errors and 0 warnings")
 
-	// No caching of the init err results
-	cfg.HealthCheckInitResultErrorTTL = 0
 	resetHealthChecks()
 	// Expect err
 	hc.initErr = true
-	RegisterHealthCheck(hc.name, hc)
+	RegisterHealthCheck(hc.name, hc,
+		RunInBackgroundAtInterval(bgInterval),
+		UseInitErrResultTTL(0), // No caching of the init err results
+	)
 	waitForBackgroundCheck()
 	testRequest(t, http.StatusServiceUnavailable, "ERR: 1 errors and 0 warnings")
 
 	// Remove init err, expect OK
 	hc.initErr = false
-	waitForBackgroundCheck(hc.interval)
+	waitForBackgroundCheck(bgInterval)
 	testRequest(t, http.StatusOK, "OK")
 }
 

@@ -11,28 +11,16 @@ import (
 	"github.com/pace/bricks/maintenance/log"
 )
 
-// BackgroundHealthCheck is an interface that, when implemented, will run the
-// HealthCheck in the background, and cache the result, that will be fetched by the HealthHandler
-type BackgroundHealthCheck interface {
-	HealthCheck
-	Interval() time.Duration
-}
-
-// BackgroundHealthCheckMaxWait allows to use a custom amount of time to wait before failing the health check
-type BackgroundHealthCheckMaxWait interface {
-	MaxWait() time.Duration
-}
-
 // registerBackgroundHealthCheck will run the HealthCheck in the background at every given interval.
 // The returned backgroundStateHealthChecker is then used to query this cached state when needed.
-func registerBackgroundHealthCheck(name string, bhc BackgroundHealthCheck) *backgroundStateHealthChecker {
+func registerBackgroundHealthCheck(name string, hc healthCheck) *backgroundStateHealthChecker {
 	var bgState ConnectionState
 
 	go func(ctx context.Context) {
 		defer errors.HandleWithCtx(ctx, fmt.Sprintf("BackgroundHealthCheck %s", name))
 
 		var initErr error
-		if initHC, ok := bhc.(Initializable); ok {
+		if initHC, ok := hc.check.(Initializable); ok {
 			initErr = initHealthCheck(ctx, initHC)
 			if initErr != nil {
 				log.Warnf("error initializing background health check %q: %s", name, initErr)
@@ -44,24 +32,20 @@ func registerBackgroundHealthCheck(name string, bhc BackgroundHealthCheck) *back
 			<-timer.C
 			func() {
 				defer errors.HandleWithCtx(ctx, fmt.Sprintf("BackgroundHealthCheck_HealthCheck %s", name))
-				defer timer.Reset(bhc.Interval())
+				defer timer.Reset(hc.runInBackgroundInterval)
 
-				maxWait := cfg.HealthCheckMaxWait
-				if mw, ok := bhc.(BackgroundHealthCheckMaxWait); ok {
-					maxWait = mw.MaxWait()
-				}
-				ctx, cancel := context.WithTimeout(ctx, maxWait)
+				ctx, cancel := context.WithTimeout(ctx, hc.maxWait)
 				defer cancel()
 				span, ctx := opentracing.StartSpanFromContext(ctx, "BackgroundHealthCheck")
 				defer span.Finish()
 
 				// If Init failed, try again
 				if initErr != nil {
-					if time.Since(bgState.LastChecked()) < cfg.HealthCheckInitResultErrorTTL {
+					if time.Since(bgState.LastChecked()) < hc.initResultErrorTTL {
 						// Too soon, leave the same state
 						return
 					}
-					initErr = initHealthCheck(ctx, bhc.(Initializable))
+					initErr = initHealthCheck(ctx, hc.check.(Initializable))
 					if initErr != nil {
 						// Init failed again
 						bgState.SetErrorState(initErr)
@@ -72,7 +56,7 @@ func registerBackgroundHealthCheck(name string, bhc BackgroundHealthCheck) *back
 				}
 
 				// Actual health check
-				bgState.setConnectionState(bhc.HealthCheck(ctx))
+				bgState.setConnectionState(hc.check.HealthCheck(ctx))
 			}()
 		}
 	}(context.Background())

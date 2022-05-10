@@ -80,7 +80,6 @@ func init() {
 }
 
 func check(ctx context.Context, hcs *sync.Map) map[string]HealthCheckResult {
-	ctx, cancel := context.WithTimeout(ctx, cfg.HealthCheckMaxWait)
 	span, ctx := opentracing.StartSpanFromContext(ctx, "HealthCheck")
 	defer span.Finish()
 
@@ -90,10 +89,13 @@ func check(ctx context.Context, hcs *sync.Map) map[string]HealthCheckResult {
 
 	hcs.Range(func(key, value interface{}) bool {
 		name := key.(string)
-		hc := value.(HealthCheck)
+		hc := value.(healthCheck)
+		ctx, cancel := context.WithTimeout(ctx, hc.maxWait)
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
+			defer cancel()
+
 			defer errors.HandleWithCtx(ctx, fmt.Sprintf("HealthCheck %s", name))
 			span, ctx := opentracing.StartSpanFromContext(ctx, fmt.Sprintf("HealthCheck %s", name))
 			defer span.Finish()
@@ -101,13 +103,13 @@ func check(ctx context.Context, hcs *sync.Map) map[string]HealthCheckResult {
 			// If Init failed, try again
 			if val, ok := initErrors.Load(name); ok {
 				state := val.(*ConnectionState)
-				if time.Since(state.LastChecked()) < cfg.HealthCheckInitResultErrorTTL {
+				if time.Since(state.LastChecked()) < hc.initResultErrorTTL {
 					// Too soon, return same state
 					resultSync.Store(name, state.GetState())
 					return
 				}
 
-				initErr := hc.(Initializable).Init(ctx)
+				initErr := hc.check.(Initializable).Init(ctx)
 				if initErr != nil {
 					// Init failed, update init state err and return it
 					state.SetErrorState(initErr)
@@ -119,12 +121,11 @@ func check(ctx context.Context, hcs *sync.Map) map[string]HealthCheckResult {
 				initErrors.Delete(name)
 			}
 			// this is the actual health check
-			resultSync.Store(name, hc.HealthCheck(ctx))
+			resultSync.Store(name, hc.check.HealthCheck(ctx))
 		}()
 		return true
 	})
 	wg.Wait()
-	cancel()
 	resultSync.Range(func(key, value interface{}) bool {
 		result[key.(string)] = value.(HealthCheckResult)
 		return true
@@ -141,28 +142,55 @@ func writeResult(w http.ResponseWriter, status int, body string) {
 	}
 }
 
+type healthCheck struct {
+	check                   HealthCheck
+	initResultErrorTTL      time.Duration
+	maxWait                 time.Duration
+	runInBackgroundInterval time.Duration
+}
+
+type HealthCheckOption func(cfg *healthCheck)
+
+func UseInitErrResultTTL(ttl time.Duration) HealthCheckOption {
+	return func(cfg *healthCheck) {
+		cfg.initResultErrorTTL = ttl
+	}
+}
+
+func UseMaxWait(maxWait time.Duration) HealthCheckOption {
+	return func(cfg *healthCheck) {
+		cfg.maxWait = maxWait
+	}
+}
+
+func RunInBackgroundAtInterval(interval time.Duration) HealthCheckOption {
+	return func(cfg *healthCheck) {
+		cfg.runInBackgroundInterval = interval
+	}
+}
+
 // RegisterHealthCheck registers a required HealthCheck. The name
 // must be unique. If the health check satisfies the Initializable interface, it
 // is initialized before it is added.
 // It is not possible to add a health check with the same name twice, even if one is required and one is optional
-func RegisterHealthCheck(name string, hc HealthCheck) {
-	registerHealthCheck(&requiredChecks, hc, name)
+func RegisterHealthCheck(name string, hc HealthCheck, opts ...HealthCheckOption) {
+	registerHealthCheck(&requiredChecks, hc, name, opts...)
 }
 
 // RegisterHealthCheckFunc registers a required HealthCheck. The name
 // must be unique.  It is not possible to add a health check with the same name twice,
 // even if one is required and one is optional
-func RegisterHealthCheckFunc(name string, f HealthCheckFunc) {
-	RegisterHealthCheck(name, f)
+func RegisterHealthCheckFunc(name string, f HealthCheckFunc, opts ...HealthCheckOption) {
+	RegisterHealthCheck(name, f, opts...)
 }
 
 // RegisterOptionalHealthCheck registers a HealthCheck like RegisterHealthCheck(hc HealthCheck, name string)
 // but the health check is only checked for /health/check and not for /health/
-func RegisterOptionalHealthCheck(hc HealthCheck, name string) {
-	registerHealthCheck(&optionalChecks, hc, name)
+func RegisterOptionalHealthCheck(hc HealthCheck, name string, opts ...HealthCheckOption) {
+	registerHealthCheck(&optionalChecks, hc, name, opts...)
 }
 
-func registerHealthCheck(checks *sync.Map, hc HealthCheck, name string) {
+func registerHealthCheck(checks *sync.Map, check HealthCheck, name string, opts ...HealthCheckOption) {
 	ctx := log.Logger().WithContext(context.Background())
 
 	// check both lists, because
@@ -175,14 +203,23 @@ func registerHealthCheck(checks *sync.Map, hc HealthCheck, name string) {
 		return
 	}
 
-	if bgHC, ok := hc.(BackgroundHealthCheck); ok {
+	hc := healthCheck{
+		check:              check,
+		initResultErrorTTL: cfg.HealthCheckInitResultErrorTTL,
+		maxWait:            cfg.HealthCheckMaxWait,
+	}
+	for _, o := range opts {
+		o(&hc)
+	}
+
+	if hc.runInBackgroundInterval > 0 {
 		// registerBackgroundHealthCheck returns a backgroundStateHealthChecker,
 		// which will be used instead to check the state, and the original health check
 		// will run in the background.
 		// Also, initialization + retries are done in the background.
-		hc = registerBackgroundHealthCheck(name, bgHC)
+		hc.check = registerBackgroundHealthCheck(name, hc)
 
-	} else if initHC, ok := hc.(Initializable); ok {
+	} else if initHC, ok := hc.check.(Initializable); ok {
 		if err := initHC.Init(ctx); err != nil {
 			log.Warnf("error initializing health check %q: %s", name, err)
 			initErrors.Store(name, &ConnectionState{
