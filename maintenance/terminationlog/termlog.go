@@ -16,7 +16,7 @@ import (
 
 var logFile *os.File
 
-const StackTraceLimit = 100
+const LogFileLimit = 4096 // bytes
 
 type stackTracer interface {
 	StackTrace() errors.StackTrace
@@ -25,11 +25,7 @@ type stackTracer interface {
 // Fatalf implements log Fatalf interface
 func Fatalf(format string, v ...interface{}) {
 	if logFile != nil {
-		if fs, err := extractErrorFrames(v); err == nil {
-			fmt.Fprintf(logFile, format, fs)
-		} else {
-			fmt.Fprintf(logFile, format, v...)
-		}
+		fmt.Fprint(logFile, buildTerminationLogOutputf(format, v...))
 	}
 
 	log.Fatal().Msg(fmt.Sprintf(format, v...))
@@ -38,11 +34,7 @@ func Fatalf(format string, v ...interface{}) {
 // Fatal implements log Fatal interface
 func Fatal(v ...interface{}) {
 	if logFile != nil {
-		if fs, err := extractErrorFrames(v); err == nil {
-			fmt.Fprint(logFile, fs)
-		} else {
-			fmt.Fprint(logFile, v...)
-		}
+		fmt.Fprint(logFile, buildTerminationLogOutput(v...))
 	}
 
 	log.Fatal().Msg(fmt.Sprint(v...))
@@ -53,24 +45,58 @@ func Fatalln(v ...interface{}) {
 	Fatal(v...)
 }
 
-func extractErrorFrames(v ...interface{}) (string, error) {
+func buildTerminationLogOutputf(f string, v ...interface{}) string {
+	if res, err := extractErrorFrames(v...); err == nil {
+		vs := make([]interface{}, 0)
+		vs = append(vs, f)
+		vs = append(vs, res...)
+		return buildOutput(vs...)
+	}
+
+	return buildOutput(fmt.Sprintf(f, v...))
+}
+
+func buildTerminationLogOutput(v ...interface{}) string {
+	if res, err := extractErrorFrames(v...); err == nil {
+		return buildOutput(res...)
+	}
+
+	return buildOutput(v...)
+}
+
+func buildOutput(v ...interface{}) string {
+	sb := make([]byte, 0)
+	for _, f := range v {
+		s := fmt.Sprintf("%+v\n", f)
+		b := []byte(s)
+		if len(b) <= LogFileLimit && len(sb)+len(b) <= LogFileLimit {
+			sb = append(sb, b...)
+		} else {
+			break
+		}
+	}
+	return string(sb)
+}
+
+func extractErrorFrames(v ...interface{}) ([]interface{}, error) {
 	if len(v) != 1 {
-		return "", fmt.Errorf("value contains multiple elements")
+		return nil, fmt.Errorf("value contains multiple elements")
 	}
 
 	err, ok := v[0].(error)
 	if !ok {
-		return "", fmt.Errorf("value element is not an error")
+		return nil, fmt.Errorf("value element is not an error")
 	}
 
 	if str, ok := err.(stackTracer); ok {
 		st := str.StackTrace()
-		if len(st) > StackTraceLimit {
-			return fmt.Sprintf("%+v", st[0:StackTraceLimit]), nil
-		} else {
-			return fmt.Sprintf("%+v", st[0:]), nil
+		vs := make([]interface{}, 0)
+		vs = append(vs, fmt.Sprintf("%s", err.Error()))
+		for _, f := range st {
+			vs = append(vs, f)
 		}
+		return vs, nil
 	} else {
-		return "", fmt.Errorf("error does not implement stackTracer")
+		return nil, fmt.Errorf("error does not implement stackTracer")
 	}
 }
