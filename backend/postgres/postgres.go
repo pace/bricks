@@ -78,6 +78,10 @@ type Config struct {
 	HealthCheckTableName string `env:"POSTGRES_HEALTH_CHECK_TABLE_NAME" envDefault:"healthcheck"`
 	// Amount of time to cache the last health check result
 	HealthCheckResultTTL time.Duration `env:"POSTGRES_HEALTH_CHECK_RESULT_TTL" envDefault:"10s"`
+	// Indicator whether write (insert,update,delete) queries should be logged
+	LogWrite bool `env:"POSTGRES_LOG_WRITES" envDefault:"true"`
+	// Indicator whether read (select) queries should be logged
+	LogRead bool `env:"POSTGRES_LOG_READS" envDefault:"false"`
 }
 
 var (
@@ -228,7 +232,11 @@ func CustomConnectionPool(opts *pg.Options) *pg.DB {
 		Str("as", opts.ApplicationName).
 		Msg("PostgreSQL connection pool created")
 	db := pg.Connect(opts)
-	db.OnQueryProcessed(queryLogger)
+	if cfg.LogWrite || cfg.LogRead {
+		db.OnQueryProcessed(queryLogger)
+	} else {
+		log.Logger().Warn().Msg("Connection pool has logging queries disabled completely")
+	}
 	db.OnQueryProcessed(openTracingAdapter)
 	db.OnQueryProcessed(func(event *pg.QueryProcessedEvent) {
 		metricsAdapter(event, opts)
@@ -236,7 +244,38 @@ func CustomConnectionPool(opts *pg.Options) *pg.DB {
 	return db
 }
 
+type queryMode int
+
+const (
+	readMode  queryMode = iota
+	writeMode queryMode = iota
+)
+
+// determineQueryMode is a poorman's attempt at checking whether the query is a read or write to the database.
+// Feel free to improve.
+func determineQueryMode(qry string) queryMode {
+	if strings.HasPrefix(strings.ToLower(strings.TrimSpace(qry)), "select") {
+		return readMode
+	}
+	return writeMode
+}
+
 func queryLogger(event *pg.QueryProcessedEvent) {
+	q, qe := event.UnformattedQuery()
+	if qe == nil {
+		if !(cfg.LogRead || cfg.LogWrite) {
+			return
+		}
+		// we can only and should only perfom the following check if we have the information availaible
+		mode := determineQueryMode(q)
+		if mode == readMode && !cfg.LogRead {
+			return
+		}
+		if mode == writeMode && !cfg.LogWrite {
+			return
+		}
+
+	}
 	ctx := event.DB.Context()
 	dur := float64(time.Since(event.StartTime)) / float64(time.Millisecond)
 
@@ -265,7 +304,6 @@ func queryLogger(event *pg.QueryProcessedEvent) {
 			Int("rows", event.Result.RowsReturned())
 	}
 
-	q, qe := event.UnformattedQuery()
 	if qe != nil {
 		// this is only a display issue not a "real" issue
 		le.Msgf("%v", qe)

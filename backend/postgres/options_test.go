@@ -1,9 +1,11 @@
 package postgres
 
 import (
-	"github.com/stretchr/testify/require"
 	"testing"
 	"time"
+
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestWithApplicationName(t *testing.T) {
@@ -172,4 +174,30 @@ func TestWithWriteTimeout(t *testing.T) {
 	f := WithWriteTimeout(param)
 	f(&conf)
 	require.Equal(t, conf.WriteTimeout, param)
+}
+
+func TestWithLogReadWriteOnly(t *testing.T) {
+	cases := [][]bool{
+		{
+			true, true,
+		},
+		{
+			false, true,
+		},
+		{
+			true, false,
+		},
+		{
+			false, false,
+		},
+	}
+	for _, tc := range cases {
+		read := tc[0]
+		write := tc[1]
+		var conf Config
+		f := WithQueryLogging(read, write)
+		f(&conf)
+		assert.Equal(t, conf.LogRead, read)
+		assert.Equal(t, conf.LogWrite, write)
+	}
 }

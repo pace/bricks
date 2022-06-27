@@ -9,6 +9,13 @@ import (
 
 type ConfigOption func(cfg *Config)
 
+func WithQueryLogging(logRead, logWrite bool) ConfigOption {
+	return func(cfg *Config) {
+		cfg.LogRead = logRead
+		cfg.LogWrite = logWrite
+	}
+}
+
 // WithPort - customize the db port
 func WithPort(port int) ConfigOption {
 	return func(cfg *Config) {
