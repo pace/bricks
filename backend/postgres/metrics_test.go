@@ -5,16 +5,17 @@ package postgres_test
 
 import (
 	"context"
+	"errors"
 	"net/http/httptest"
 	"testing"
 	"time"
 
-	. "github.com/pace/bricks/backend/postgres"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"golang.org/x/xerrors"
+
+	. "github.com/pace/bricks/backend/postgres"
 )
 
 func ExampleConnectionPoolMetrics() {
@@ -77,5 +78,5 @@ func TestIntegrationConnectionPoolMetrics_duplicatePoolName(t *testing.T) {
 	require.NoError(t, err)
 	// registering second with name "test" fails
 	err = metrics.ObserveRegularly(context.Background(), ConnectionPool(), "test")
-	assert.True(t, xerrors.Is(err, ErrNotUnique))
+	assert.True(t, errors.Is(err, ErrNotUnique))
 }

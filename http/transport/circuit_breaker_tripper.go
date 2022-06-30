@@ -7,7 +7,6 @@ import (
 
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/sony/gobreaker"
-	"golang.org/x/xerrors"
 )
 
 // circuitBreakerTripper implements a ChainableRoundTripper with
@@ -50,7 +49,7 @@ func NewCircuitBreakerTripper(settings gobreaker.Settings) *circuitBreakerTrippe
 
 	var ok bool
 	var are prometheus.AlreadyRegisteredError
-	if err := prometheus.Register(stateSwitchCounterVec); xerrors.As(err, &are) {
+	if err := prometheus.Register(stateSwitchCounterVec); errors.As(err, &are) {
 		stateSwitchCounterVec, ok = are.ExistingCollector.(*prometheus.CounterVec)
 		if !ok {
 			panic(fmt.Sprintf(`existing "pace_http_circuit_breaker_state_switch_total" collector no CounterVec, but %T`, are.ExistingCollector))

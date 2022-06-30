@@ -5,12 +5,12 @@ package postgres
 
 import (
 	"context"
+	"fmt"
 	"sync"
 	"time"
 
 	"github.com/go-pg/pg"
 	"github.com/prometheus/client_golang/prometheus"
-	"golang.org/x/xerrors"
 )
 
 // ConnectionPoolMetrics is the metrics collector for postgres connection pools
@@ -154,7 +154,7 @@ func (m *ConnectionPoolMetrics) ObserveWhenTriggered(trigger <-chan chan<- struc
 	m.poolMetricsMx.Lock()
 	defer m.poolMetricsMx.Unlock()
 	if _, ok := m.poolMetrics[poolName]; ok {
-		return xerrors.Errorf("invalid pool name: %q: %w", poolName, ErrNotUnique)
+		return fmt.Errorf("invalid pool name: %q: %w", poolName, ErrNotUnique)
 	}
 	m.poolMetrics[poolName] = struct{}{}
 
