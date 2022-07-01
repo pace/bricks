@@ -3,6 +3,7 @@ package queue_test
 import (
 	"context"
 	"testing"
+	"time"
 
 	"github.com/pace/bricks/backend/queue"
 	"github.com/pace/bricks/maintenance/log"
@@ -19,10 +20,11 @@ func TestIntegrationHealthCheck(t *testing.T) {
 	err = q1.Publish("nothing here")
 	assert.NoError(t, err)
 
+	time.Sleep(time.Second)
 	check := &queue.HealthCheck{IgnoreInterval: true}
 	res := check.HealthCheck(ctx)
 	if res.State != "OK" {
-		t.Errorf("Expected health check to be OK for a non-full queue")
+		t.Errorf("Expected health check to be OK for a non-full queue: state %s, message: %s", res.State, res.Msg)
 	}
 
 	err = q1.Publish("nothing here either")
