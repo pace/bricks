@@ -34,6 +34,7 @@ func TestIntegrationHealthCheck(t *testing.T) {
 	if testing.Short() {
 		t.SkipNow()
 	}
+	time.Sleep(1 * time.Second) // by the magic of asynchronous code, I here-by present a magic wait
 	resp := setup()
 	if resp.StatusCode != 200 {
 		t.Errorf("Expected /health/check to respond with 200, got: %d", resp.StatusCode)
