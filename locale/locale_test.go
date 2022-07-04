@@ -73,14 +73,14 @@ func TestLocale_Now(t *testing.T) {
 		acceptTimezone string
 		want           string
 	}{
-		{"invalid locale", "Foo/bar", time.Now().Round(time.Second).String()},
-		{"valid locale", "America/Marigot", time.Now().Round(time.Second).In(location).String()},
-		{"no locale", None, time.Now().Round(time.Second).String()},
+		{"invalid locale", "Foo/bar", time.Now().Round(time.Minute).String()},
+		{"valid locale", "America/Marigot", time.Now().Round(time.Minute).In(location).String()},
+		{"no locale", None, time.Now().Round(time.Minute).String()},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			l := Locale{acceptTimezone: tt.acceptTimezone}
-			got := l.Now().Round(time.Second)
+			got := l.Now().Round(time.Minute)
 			assert.Equal(t, tt.want, got.String())
 		})
 	}

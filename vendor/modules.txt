@@ -412,6 +412,9 @@ github.com/ryancurrah/gomodguard
 github.com/ryanrolds/sqlclosecheck/pkg/analyzer
 # github.com/sanposhiho/wastedassign/v2 v2.0.6
 github.com/sanposhiho/wastedassign/v2
+# github.com/satori/go.uuid v1.2.0
+## explicit
+github.com/satori/go.uuid
 # github.com/securego/gosec/v2 v2.8.1
 github.com/securego/gosec/v2
 github.com/securego/gosec/v2/cwe

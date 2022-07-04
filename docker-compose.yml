@@ -56,7 +56,7 @@ services:
      - "./prometheus.yml:/etc/prometheus/prometheus.yml"
 
   testserver:
-    image: "golang:latest"
+    image: "golang:1.17"
     volumes:
       - .:/srv
     working_dir: /srv

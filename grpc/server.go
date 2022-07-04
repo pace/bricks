@@ -16,9 +16,13 @@ import (
 	grpc_opentracing "github.com/grpc-ecosystem/go-grpc-middleware/tracing/opentracing"
 	grpc_prometheus "github.com/grpc-ecosystem/go-grpc-prometheus"
 	"github.com/pace/bricks/http/security"
+	"github.com/pace/bricks/locale"
 	"github.com/pace/bricks/maintenance/errors"
 	"github.com/pace/bricks/maintenance/log"
+	"github.com/pace/bricks/maintenance/log/hlog"
+	"github.com/rs/xid"
 	"github.com/rs/zerolog"
+	zlog "github.com/rs/zerolog/log"
 
 	"github.com/caarlos0/env"
 	"google.golang.org/grpc"
@@ -67,26 +71,19 @@ func Listener() (net.Listener, error) {
 func Server(ab AuthBackend) *grpc.Server {
 	myServer := grpc.NewServer(
 		grpc.StreamInterceptor(grpc_middleware.ChainStreamServer(
+			grpc_ctxtags.StreamServerInterceptor(),
+			grpc_opentracing.StreamServerInterceptor(),
+			grpc_prometheus.StreamServerInterceptor,
 			func(srv interface{}, stream grpc.ServerStream, info *grpc.StreamServerInfo, handler grpc.StreamHandler) error {
-				ctx := log.WithContext(stream.Context())
+				ctx := stream.Context()
+				ctx, md := prepareContext(ctx)
+
 				wrappedStream := grpc_middleware.WrapServerStream(stream)
 				wrappedStream.WrappedContext = ctx
 				var addr string
 				if p, ok := peer.FromContext(ctx); ok {
 					addr = p.Addr.String()
 				}
-
-				md, _ := metadata.FromIncomingContext(ctx)
-
-				bt := md.Get("bearer_token")
-				if len(bt) > 0 {
-					ctx = security.ContextWithToken(ctx, security.TokenString(bt[0]))
-				}
-
-				logger := zerolog.Ctx(ctx)
-				logger.UpdateContext(func(c zerolog.Context) zerolog.Context {
-					return c.Str("req_id", strings.Join(md.Get("req_id"), ""))
-				})
 
 				start := time.Now()
 				err := handler(srv, wrappedStream)
@@ -95,41 +92,31 @@ func Server(ab AuthBackend) *grpc.Server {
 					Dur("duration", time.Since(start)).
 					Str("type", "stream").
 					Str("ip", addr).
+					Interface("md", md).
+					Str("user_agent", strings.Join(md.Get("user-agent"), ",")).
 					Err(err).
-					Msg("GRPC completed")
+					Msg("GRPC completed Stream")
 				return err
 			},
 			func(srv interface{}, stream grpc.ServerStream, info *grpc.StreamServerInfo, handler grpc.StreamHandler) (err error) {
-				defer errors.HandleWithCtx(stream.Context(), "GRPC"+info.FullMethod)
+				defer errors.HandleWithCtx(stream.Context(), "GRPC "+info.FullMethod)
 				err = InternalServerError // default in case of a panic
 				err = handler(srv, stream)
 				return err
 			},
-			grpc_ctxtags.StreamServerInterceptor(),
-			grpc_opentracing.StreamServerInterceptor(),
-			grpc_prometheus.StreamServerInterceptor,
 			grpc_auth.StreamServerInterceptor(ab.AuthorizeStream),
 		)),
 		grpc.UnaryInterceptor(grpc_middleware.ChainUnaryServer(
+			grpc_ctxtags.UnaryServerInterceptor(),
+			grpc_opentracing.UnaryServerInterceptor(),
+			grpc_prometheus.UnaryServerInterceptor,
 			func(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (resp interface{}, err error) {
+				ctx, md := prepareContext(ctx)
+
 				var addr string
 				if p, ok := peer.FromContext(ctx); ok {
 					addr = p.Addr.String()
 				}
-
-				ctx = log.WithContext(ctx)
-
-				md, _ := metadata.FromIncomingContext(ctx)
-
-				bt := md.Get("bearer_token")
-				if len(bt) > 0 {
-					ctx = security.ContextWithToken(ctx, security.TokenString(bt[0]))
-				}
-
-				logger := zerolog.Ctx(ctx)
-				logger.UpdateContext(func(c zerolog.Context) zerolog.Context {
-					return c.Str("req_id", strings.Join(md.Get("req_id"), ""))
-				})
 
 				start := time.Now()
 				resp, err = handler(ctx, req)
@@ -141,21 +128,70 @@ func Server(ab AuthBackend) *grpc.Server {
 					Interface("md", md).
 					Str("user_agent", strings.Join(md.Get("user-agent"), ",")).
 					Err(err).
-					Msg("GRPC completed")
+					Msg("GRPC completed Unary")
 				return
 			},
 			func(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (resp interface{}, err error) {
-				defer errors.HandleWithCtx(ctx, "GRPC"+info.FullMethod)
+				defer errors.HandleWithCtx(ctx, "GRPC "+info.FullMethod)
 				err = InternalServerError // default in case of a panic
 				resp, err = handler(ctx, req)
 				return
 			},
-			grpc_ctxtags.UnaryServerInterceptor(),
-			grpc_opentracing.UnaryServerInterceptor(),
-			grpc_prometheus.UnaryServerInterceptor,
 			grpc_auth.UnaryServerInterceptor(ab.AuthorizeUnary),
 		)),
 	)
 
 	return myServer
+}
+
+func prepareContext(ctx context.Context) (context.Context, metadata.MD) {
+	md, _ := metadata.FromIncomingContext(ctx)
+	logger := zlog.With().Logger()
+
+	// add request context if req_id is given
+	var reqID xid.ID
+	if ri := md.Get("req_id"); len(ri) > 0 {
+		var err error
+		reqID, err = xid.FromString(ri[0])
+		if err != nil {
+			log.Debugf("unable to parse xid from req_id: %v", err)
+			reqID = xid.New()
+		}
+	} else {
+		// generate random request id
+		reqID = xid.New()
+	}
+
+	//  attach request ID to context and logger
+	ctx = hlog.WithValue(ctx, reqID)
+
+	// set logger and log sink
+	ctx = log.ContextWithSink(logger.WithContext(ctx), log.NewSink())
+	zlog := zerolog.Ctx(ctx)
+	zlog.UpdateContext(func(c zerolog.Context) zerolog.Context {
+		return c.Str("req_id", reqID.String())
+	})
+
+	// handle locale
+	if l := md.Get("locale"); len(l) > 0 {
+		loc, err := locale.ParseLocale(l[0])
+		if err != nil {
+			log.Ctx(ctx).Debug().Err(err).Msgf("unable to parse locale: %v", err)
+		} else {
+			ctx = locale.WithLocale(ctx, loc)
+		}
+	}
+
+	ctx = ContextWithUTMFromMetadata(ctx, md)
+
+	// add security context if bearer token is given
+	if bt := md.Get("bearer_token"); len(bt) > 0 {
+		ctx = security.ContextWithToken(ctx, security.TokenString(bt[0]))
+	}
+	delete(md, "content-type")
+	delete(md, "locale")
+	delete(md, "bearer_token")
+	delete(md, "req_id")
+
+	return ctx, md
 }

@@ -87,9 +87,6 @@ func registerHealthchecks() {
 		if err != nil {
 			log.Fatalf("Failed to create object storage client: %v", err)
 		}
-		servicehealthcheck.RegisterHealthCheck("objstore", &HealthCheck{
-			Client: client,
-		})
 
 		ctx := context.Background()
 
@@ -105,6 +102,10 @@ func registerHealthchecks() {
 				log.Warnf("Failed to create bucket: %v", err)
 			}
 		}
+		servicehealthcheck.RegisterHealthCheck("objstore", &HealthCheck{
+			Client: client,
+		})
+
 	})
 }
 

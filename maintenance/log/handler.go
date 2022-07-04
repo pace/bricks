@@ -11,7 +11,6 @@ import (
 
 	"github.com/opentracing/opentracing-go"
 	"github.com/uber/jaeger-client-go"
-	"google.golang.org/grpc/metadata"
 
 	"github.com/pace/bricks/maintenance/log/hlog"
 	"github.com/rs/xid"
@@ -43,7 +42,7 @@ var requestCompleted = func(r *http.Request, status, size int, duration time.Dur
 	var traceId string
 	if span != nil {
 		if sc, ok := span.Context().(jaeger.SpanContext); ok {
-			traceId = sc.TraceID().String()
+			traceId = sc.String()
 		}
 	}
 
@@ -126,7 +125,6 @@ func RequestIDHandler(fieldKey, headerName string) func(next http.Handler) http.
 			}
 
 			ctx = hlog.WithValue(ctx, id)
-			ctx = metadata.AppendToOutgoingContext(ctx, "req_id", id.String())
 			r = r.WithContext(ctx)
 
 			// log requests with request id

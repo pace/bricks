@@ -2,13 +2,16 @@ package context
 
 import (
 	"context"
+
 	"github.com/opentracing/opentracing-go"
 	http "github.com/pace/bricks/http/middleware"
 	"github.com/pace/bricks/http/oauth2"
 	"github.com/pace/bricks/locale"
 	"github.com/pace/bricks/maintenance/errors"
 	"github.com/pace/bricks/maintenance/log"
+	"github.com/pace/bricks/maintenance/log/hlog"
 	"github.com/pace/bricks/pkg/redact"
+	"github.com/pace/bricks/pkg/tracking/utm"
 )
 
 // Transfer takes the logger, log.Sink, authentication, request and
@@ -22,6 +25,8 @@ func Transfer(in context.Context) context.Context {
 	out = errors.ContextTransfer(in, out)
 	out = http.ContextTransfer(in, out)
 	out = redact.ContextTransfer(in, out)
+	out = utm.ContextTransfer(in, out)
+	out = hlog.ContextTransfer(in, out)
 	out = TransferTracingContext(in, out)
 	return locale.ContextTransfer(in, out)
 }
@@ -32,4 +37,12 @@ func TransferTracingContext(in, out context.Context) context.Context {
 		out = opentracing.ContextWithSpan(out, span)
 	}
 	return out
+}
+
+func TransferExternalDependencyContext(in, out context.Context) context.Context {
+	edc := http.ExternalDependencyContextFromContext(in)
+	if edc == nil {
+		return out
+	}
+	return http.ContextWithExternalDependency(out, edc)
 }

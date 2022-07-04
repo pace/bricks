@@ -34,6 +34,7 @@ require (
 	github.com/prometheus/client_golang v1.7.1
 	github.com/rs/xid v1.2.1
 	github.com/rs/zerolog v1.17.2
+	github.com/satori/go.uuid v1.2.0
 	github.com/shopspring/decimal v0.0.0-20200105231215-408a2507e114
 	github.com/sony/gobreaker v0.4.1
 	github.com/spf13/cobra v1.2.1

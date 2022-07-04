@@ -10,6 +10,8 @@ import (
 	"math"
 	"os"
 	"path/filepath"
+	"regexp"
+	"strings"
 	"sync"
 	"time"
 
@@ -76,6 +78,10 @@ type Config struct {
 	HealthCheckTableName string `env:"POSTGRES_HEALTH_CHECK_TABLE_NAME" envDefault:"healthcheck"`
 	// Amount of time to cache the last health check result
 	HealthCheckResultTTL time.Duration `env:"POSTGRES_HEALTH_CHECK_RESULT_TTL" envDefault:"10s"`
+	// Indicator whether write (insert,update,delete) queries should be logged
+	LogWrite bool `env:"POSTGRES_LOG_WRITES" envDefault:"true"`
+	// Indicator whether read (select) queries should be logged
+	LogRead bool `env:"POSTGRES_LOG_READS" envDefault:"false"`
 }
 
 var (
@@ -181,7 +187,15 @@ func DefaultConnectionPool() *pg.DB {
 // ConnectionPool returns a new database connection pool
 // that is already configured with the correct credentials and
 // instrumented with tracing and logging
-func ConnectionPool() *pg.DB {
+// Used Config is taken from the env and it's default values. These
+// values can be overwritten by the use of ConfigOption.
+func ConnectionPool(opts ...ConfigOption) *pg.DB {
+
+	// apply functional options if given to overwrite the default config / env config
+	for _, f := range opts {
+		f(&cfg)
+	}
+
 	return CustomConnectionPool(&pg.Options{
 		Addr:                  fmt.Sprintf("%s:%d", cfg.Host, cfg.Port),
 		User:                  cfg.User,
@@ -218,7 +232,11 @@ func CustomConnectionPool(opts *pg.Options) *pg.DB {
 		Str("as", opts.ApplicationName).
 		Msg("PostgreSQL connection pool created")
 	db := pg.Connect(opts)
-	db.OnQueryProcessed(queryLogger)
+	if cfg.LogWrite || cfg.LogRead {
+		db.OnQueryProcessed(queryLogger)
+	} else {
+		log.Logger().Warn().Msg("Connection pool has logging queries disabled completely")
+	}
 	db.OnQueryProcessed(openTracingAdapter)
 	db.OnQueryProcessed(func(event *pg.QueryProcessedEvent) {
 		metricsAdapter(event, opts)
@@ -226,7 +244,38 @@ func CustomConnectionPool(opts *pg.Options) *pg.DB {
 	return db
 }
 
+type queryMode int
+
+const (
+	readMode  queryMode = iota
+	writeMode queryMode = iota
+)
+
+// determineQueryMode is a poorman's attempt at checking whether the query is a read or write to the database.
+// Feel free to improve.
+func determineQueryMode(qry string) queryMode {
+	if strings.HasPrefix(strings.ToLower(strings.TrimSpace(qry)), "select") {
+		return readMode
+	}
+	return writeMode
+}
+
 func queryLogger(event *pg.QueryProcessedEvent) {
+	q, qe := event.UnformattedQuery()
+	if qe == nil {
+		if !(cfg.LogRead || cfg.LogWrite) {
+			return
+		}
+		// we can only and should only perfom the following check if we have the information availaible
+		mode := determineQueryMode(q)
+		if mode == readMode && !cfg.LogRead {
+			return
+		}
+		if mode == writeMode && !cfg.LogWrite {
+			return
+		}
+
+	}
 	ctx := event.DB.Context()
 	dur := float64(time.Since(event.StartTime)) / float64(time.Millisecond)
 
@@ -255,12 +304,25 @@ func queryLogger(event *pg.QueryProcessedEvent) {
 			Int("rows", event.Result.RowsReturned())
 	}
 
-	q, qe := event.UnformattedQuery()
 	if qe != nil {
 		// this is only a display issue not a "real" issue
 		le.Msgf("%v", qe)
 	}
 	le.Msg(q)
+}
+
+var reQueryType = regexp.MustCompile(`(\s)`)
+var reQueryTypeCleanup = regexp.MustCompile(`(?m)(\s+|\n)`)
+
+func getQueryType(s string) string {
+	s = reQueryTypeCleanup.ReplaceAllString(s, " ")
+	s = strings.TrimSpace(s)
+
+	p := reQueryType.FindStringIndex(s)
+	if len(p) > 0 {
+		return strings.ToUpper(s[:p[0]])
+	}
+	return strings.ToUpper(s)
 }
 
 func openTracingAdapter(event *pg.QueryProcessedEvent) {
@@ -271,9 +333,10 @@ func openTracingAdapter(event *pg.QueryProcessedEvent) {
 		q = qe.Error()
 	}
 
-	name := fmt.Sprintf("PostgreSQL: %s", q)
-	span, _ := opentracing.StartSpanFromContext(event.DB.Context(), name,
+	span, _ := opentracing.StartSpanFromContext(event.DB.Context(), "sql: "+getQueryType(q),
 		opentracing.StartTime(event.StartTime))
+
+	span.SetTag("db.system", "postgres")
 
 	fields := []olog.Field{
 		olog.String("file", event.File),

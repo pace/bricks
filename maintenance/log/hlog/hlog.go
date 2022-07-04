@@ -146,7 +146,6 @@ func TraceIDFromCtx(ctx context.Context) (id string, ok bool) {
 	return
 }
 
-
 // RequestIDHandler returns a handler setting a unique id to the request which can
 // be gathered using IDFromRequest(req). This generated id is added as a field to the
 // logger using the passed fieldKey as field name. The id is also added as a response
@@ -210,4 +209,12 @@ func AccessHandler(f func(r *http.Request, status, size int, duration time.Durat
 
 func WithValue(ctx context.Context, reqID xid.ID) context.Context {
 	return context.WithValue(ctx, idKey{}, reqID)
+}
+
+func ContextTransfer(parentCtx, out context.Context) context.Context {
+	id, found := IDFromCtx(parentCtx)
+	if !found {
+		return out
+	}
+	return WithValue(out, id)
 }
