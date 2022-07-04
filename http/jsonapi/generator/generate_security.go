@@ -47,7 +47,7 @@ func (g *Generator) buildSecurityBackendInterface(schema *openapi3.Swagger) erro
 		}
 	}
 
-	caser := cases.Title(language.English)
+	caser := cases.Title(language.Und, cases.NoLower)
 	for _, name := range keys {
 		value := securitySchemes[name]
 		r.Line().Id(authFuncPrefix + caser.String(name))
@@ -130,7 +130,7 @@ func (g *Generator) buildSecurityConfigs(schema *openapi3.Swagger) error {
 		default:
 			return errors.New("security schema type not supported: " + value.Value.Type)
 		}
-		caser := cases.Title(language.English)
+		caser := cases.Title(language.Und, cases.NoLower)
 		g.goSource.Var().Id("cfg"+caser.String(name)).Op("=").Op("&").Qual(pkgName, "Config").Values(instanceVal)
 	}
 	return nil

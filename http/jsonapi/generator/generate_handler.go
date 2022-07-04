@@ -455,7 +455,7 @@ func (g *Generator) buildRouterBodyWithFallback(routes []*route, schema *openapi
 			names = append(names, name)
 		}
 		sort.Stable(sort.StringSlice(names))
-		caser := cases.Title(language.English)
+		caser := cases.Title(language.Und, cases.NoLower)
 		for _, name := range names {
 			routeStmts = append(routeStmts, jen.Id("authBackend").Dot("Init"+caser.String(name)).Call(jen.Id("cfg"+caser.String(name))))
 		}
@@ -546,7 +546,7 @@ func (g *Generator) buildHandler(method string, op *openapi3.Operation, pattern 
 	}
 
 	// use OperationID for go function names or generate the name
-	caser := cases.Title(language.English)
+	caser := cases.Title(language.Und, cases.NoLower)
 	oid := caser.String(op.OperationID)
 	if oid == "" {
 		log.Warnf("Note: Avoid automatic method name generation for path (use OperationID): %s", pattern)
@@ -636,7 +636,7 @@ func (g *Generator) buildHandler(method string, op *openapi3.Operation, pattern 
 						g.Id("w")
 						g.Id("r")
 
-						caser := cases.Title(language.English)
+						caser := cases.Title(language.Und, cases.NoLower)
 
 						for _, param := range route.operation.Parameters {
 							name := generateParamName(param)
@@ -772,7 +772,7 @@ func generateAuthorizationForSingleSecSchema(op *openapi3.Operation, schemas map
 	if len(req[0]) == 0 {
 		return nil, nil
 	}
-	caser := cases.Title(language.English)
+	caser := cases.Title(language.Und, cases.NoLower)
 	for name, secConfig := range (*op.Security)[0] {
 		securityScheme := schemas[name]
 		switch securityScheme.Value.Type {
@@ -811,7 +811,7 @@ func generateAuthorizationForMultipleSecSchemas(op *openapi3.Operation, secSchem
 	last.Qual("net/http", "Error").Call(jen.Id("w"), jen.Lit("Authorization Error"), jen.Qual("net/http", "StatusUnauthorized"))
 	last.Line().Return()
 
-	caser := cases.Title(language.English)
+	caser := cases.Title(language.Und, cases.NoLower)
 
 	r.Line().Var().Id("ctx").Id("context.Context")
 	r.Line().Var().Id("ok").Id("bool")

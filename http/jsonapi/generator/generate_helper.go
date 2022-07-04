@@ -204,7 +204,7 @@ func hasValidator(tags map[string]string, validator string) bool {
 var idRegex = regexp.MustCompile("Id$")
 
 func goNameHelper(name string) string {
-	caser := cases.Title(language.English)
+	caser := cases.Title(language.Und, cases.NoLower)
 	name = caser.String(name)
 	name = strings.Replace(name, "Url", "URL", -1)
 	name = idRegex.ReplaceAllString(name, "ID")
