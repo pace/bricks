@@ -13,6 +13,7 @@ import (
 	"strings"
 
 	"github.com/dave/jennifer/jen"
+	"github.com/ettle/strcase"
 	"github.com/getkin/kin-openapi/openapi3"
 
 	"github.com/pace/bricks/maintenance/log"
@@ -548,6 +549,8 @@ func (g *Generator) buildHandler(method string, op *openapi3.Operation, pattern 
 		log.Warnf("Note: Avoid automatic method name generation for path (use OperationID): %s", pattern)
 		oid = generateName(method, op, pattern)
 	}
+	// sanitise operationID
+	oid = strcase.ToGoCamel(oid)
 	handler := oid + "Handler"
 	route.handler = handler
 	route.serviceFunc = oid
