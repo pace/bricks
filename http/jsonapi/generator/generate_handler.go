@@ -14,6 +14,8 @@ import (
 
 	"github.com/dave/jennifer/jen"
 	"github.com/getkin/kin-openapi/openapi3"
+	"golang.org/x/text/cases"
+	"golang.org/x/text/language"
 
 	"github.com/pace/bricks/maintenance/log"
 )
@@ -453,8 +455,9 @@ func (g *Generator) buildRouterBodyWithFallback(routes []*route, schema *openapi
 			names = append(names, name)
 		}
 		sort.Stable(sort.StringSlice(names))
+		caser := cases.Title(language.Und, cases.NoLower)
 		for _, name := range names {
-			routeStmts = append(routeStmts, jen.Id("authBackend").Dot("Init"+strings.Title(name)).Call(jen.Id("cfg"+strings.Title(name))))
+			routeStmts = append(routeStmts, jen.Id("authBackend").Dot("Init"+caser.String(name)).Call(jen.Id("cfg"+caser.String(name))))
 		}
 	} else {
 		routeStmts = make([]jen.Code, 1, (len(routes)+2)*len(schema.Servers)+1)
@@ -543,7 +546,8 @@ func (g *Generator) buildHandler(method string, op *openapi3.Operation, pattern 
 	}
 
 	// use OperationID for go function names or generate the name
-	oid := strings.Title(op.OperationID)
+	caser := cases.Title(language.Und, cases.NoLower)
+	oid := caser.String(op.OperationID)
 	if oid == "" {
 		log.Warnf("Note: Avoid automatic method name generation for path (use OperationID): %s", pattern)
 		oid = generateName(method, op, pattern)
@@ -632,11 +636,13 @@ func (g *Generator) buildHandler(method string, op *openapi3.Operation, pattern 
 						g.Id("w")
 						g.Id("r")
 
+						caser := cases.Title(language.Und, cases.NoLower)
+
 						for _, param := range route.operation.Parameters {
 							name := generateParamName(param)
 							g.Op("&").Qual(pkgJSONAPIRuntime, "ScanParameter").BlockFunc(func(g *jen.Group) {
 								g.Id("Data").Op(":").Op("&").Id("request").Dot(name).Op(",")
-								g.Id("Location").Op(":").Qual(pkgJSONAPIRuntime, "ScanIn"+strings.Title(param.Value.In)).Op(",")
+								g.Id("Location").Op(":").Qual(pkgJSONAPIRuntime, "ScanIn"+caser.String(param.Value.In)).Op(",")
 								if param.Value.In == "path" {
 									g.Id("Input").Op(":").Id("vars").Index(jen.Lit(param.Value.Name)).Op(",")
 								}
@@ -766,20 +772,21 @@ func generateAuthorizationForSingleSecSchema(op *openapi3.Operation, schemas map
 	if len(req[0]) == 0 {
 		return nil, nil
 	}
+	caser := cases.Title(language.Und, cases.NoLower)
 	for name, secConfig := range (*op.Security)[0] {
 		securityScheme := schemas[name]
 		switch securityScheme.Value.Type {
 		case "oauth2", "openIdConnect":
 			if len(secConfig) > 0 {
-				r.Line().List(jen.Id("ctx"), jen.Id("ok")).Op(":=").Id("authBackend."+authFuncPrefix+strings.Title(name)).Call(jen.Id("r"), jen.Id("w"), jen.Lit(secConfig[0]))
+				r.Line().List(jen.Id("ctx"), jen.Id("ok")).Op(":=").Id("authBackend."+authFuncPrefix+caser.String(name)).Call(jen.Id("r"), jen.Id("w"), jen.Lit(secConfig[0]))
 			} else {
-				r.Line().List(jen.Id("ctx"), jen.Id("ok")).Op(":=").Id("authBackend."+authFuncPrefix+strings.Title(name)).Call(jen.Id("r"), jen.Id("w"), jen.Lit(""))
+				r.Line().List(jen.Id("ctx"), jen.Id("ok")).Op(":=").Id("authBackend."+authFuncPrefix+caser.String(name)).Call(jen.Id("r"), jen.Id("w"), jen.Lit(""))
 			}
 		case "apiKey":
 			if len(secConfig) > 0 {
 				return nil, fmt.Errorf("security config for api key authorization needs %d values but had: %d", 0, len(secConfig))
 			}
-			r.Line().List(jen.Id("ctx"), jen.Id("ok")).Op(":=").Id("authBackend."+authFuncPrefix+strings.Title(name)).Call(jen.Id("r"), jen.Id("w"))
+			r.Line().List(jen.Id("ctx"), jen.Id("ok")).Op(":=").Id("authBackend."+authFuncPrefix+caser.String(name)).Call(jen.Id("r"), jen.Id("w"))
 		default:
 			return nil, fmt.Errorf("security Scheme of type %q is not suppported", securityScheme.Value.Type)
 		}
@@ -804,13 +811,15 @@ func generateAuthorizationForMultipleSecSchemas(op *openapi3.Operation, secSchem
 	last.Qual("net/http", "Error").Call(jen.Id("w"), jen.Lit("Authorization Error"), jen.Qual("net/http", "StatusUnauthorized"))
 	last.Line().Return()
 
+	caser := cases.Title(language.Und, cases.NoLower)
+
 	r.Line().Var().Id("ctx").Id("context.Context")
 	r.Line().Var().Id("ok").Id("bool")
 	for _, val := range orderedSec {
 		name := val[0]
 		securityScheme := secSchemes[name]
 		innerBlock := &jen.Group{}
-		innerBlock.Line().List(jen.Id("ctx"), jen.Id("ok")).Op("=").Id("authBackend." + authFuncPrefix + strings.Title(name))
+		innerBlock.Line().List(jen.Id("ctx"), jen.Id("ok")).Op("=").Id("authBackend." + authFuncPrefix + caser.String(name))
 		switch securityScheme.Value.Type {
 		case "oauth2", "openIdConnect":
 			if len(val) >= 2 {
@@ -827,7 +836,7 @@ func generateAuthorizationForMultipleSecSchemas(op *openapi3.Operation, secSchem
 			return nil, fmt.Errorf("security Scheme of type %q is not suppported", securityScheme.Value.Type)
 		}
 		innerBlock.Line().If(jen.Op("!").Id("ok")).Block(jen.Return())
-		r.Line().If(jen.Id("authBackend." + authCanAuthFuncPrefix + strings.Title(name))).Call(jen.Id("r")).Block(innerBlock).Else()
+		r.Line().If(jen.Id("authBackend." + authCanAuthFuncPrefix + caser.String(name))).Call(jen.Id("r")).Block(innerBlock).Else()
 	}
 	r.Block(last)
 	return r, nil
