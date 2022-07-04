@@ -62,40 +62,72 @@ func TestInitErrorRetryAndCaching(t *testing.T) {
 	handler := HealthHandler()
 	resetHealthChecks()
 
-	// Create Check with initErr
-	hc := &mockHealthCheck{
-		initErr:         true,
-		healthCheckErr:  false,
-		healthCheckWarn: false,
-		name:            "initErr",
+	bgInterval := time.Second
+	{
+		// Create Check with initErr
+		hc := &mockHealthCheck{
+			initErr:         true,
+			healthCheckErr:  false,
+			healthCheckWarn: false,
+			name:            "initErr",
+		}
+
+		RegisterHealthCheck(hc.name, hc,
+			UseInterval(bgInterval),
+			UseInitErrResultTTL(time.Hour), // Big caching ttl of the init err result
+		)
+		testRequest(t, handler, http.StatusServiceUnavailable, expBody("ERR: 1 errors and 0 warnings"))
+
 	}
 
-	bgInterval := time.Second
-	RegisterHealthCheck(hc.name, hc,
-		UseInterval(bgInterval),
-		UseInitErrResultTTL(time.Hour), // Big caching ttl of the init err result
-	)
-	testRequest(t, handler, http.StatusServiceUnavailable, expBody("ERR: 1 errors and 0 warnings"))
-
-	// No init err, but expect err because of cache
-	hc.initErr = false
-	waitForBackgroundCheck(bgInterval)
-	testRequest(t, handler, http.StatusServiceUnavailable, expBody("ERR: 1 errors and 0 warnings"))
+	{
+		hc := &mockHealthCheck{
+			initErr:         true,
+			healthCheckErr:  false,
+			healthCheckWarn: false,
+			name:            "initErr",
+		}
+		// No init err, but expect err because of cache
+		hc.initErr = false
+		waitForBackgroundCheck(bgInterval)
+		testRequest(t, handler, http.StatusServiceUnavailable, expBody("ERR: 1 errors and 0 warnings"))
+	}
 
 	resetHealthChecks()
-	// Expect err
-	hc.initErr = true
-	RegisterHealthCheck(hc.name, hc,
-		UseInterval(bgInterval),
-		UseInitErrResultTTL(0), // No caching of the init err results
-	)
-	waitForBackgroundCheck(bgInterval)
-	testRequest(t, handler, http.StatusServiceUnavailable, expBody("ERR: 1 errors and 0 warnings"))
 
-	// Remove init err, no caching, expect OK
-	hc.initErr = false
-	waitForBackgroundCheck(bgInterval)
-	testRequest(t, handler, http.StatusOK, expBody("OK"))
+	{
+		hc := &mockHealthCheck{
+			initErr:         true,
+			healthCheckErr:  false,
+			healthCheckWarn: false,
+			name:            "initErr",
+		}
+		// Expect err
+		hc.initErr = true
+		RegisterHealthCheck(hc.name, hc,
+			UseInterval(bgInterval),
+			UseInitErrResultTTL(0), // No caching of the init err results
+		)
+		waitForBackgroundCheck(bgInterval)
+		testRequest(t, handler, http.StatusServiceUnavailable, expBody("ERR: 1 errors and 0 warnings"))
+	}
+
+	resetHealthChecks()
+
+	{
+		hc := &mockHealthCheck{
+			initErr:         true,
+			healthCheckErr:  false,
+			healthCheckWarn: false,
+			name:            "initErr",
+		}
+
+		// Remove init err, no caching, expect OK
+		hc.initErr = false
+		waitForBackgroundCheck(bgInterval)
+		testRequest(t, handler, http.StatusOK, expBody("OK"))
+	}
+	resetHealthChecks()
 }
 
 func TestHandlerHealthCheckOptional(t *testing.T) {
