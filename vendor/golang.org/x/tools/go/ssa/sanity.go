@@ -132,14 +132,8 @@ func (s *sanity) checkInstr(idx int, instr Instruction) {
 	case *Call:
 	case *ChangeInterface:
 	case *ChangeType:
+	case *SliceToArrayPointer:
 	case *Convert:
-		if _, ok := instr.X.Type().Underlying().(*types.Slice); ok {
-			if ptr, ok := instr.Type().Underlying().(*types.Pointer); ok {
-				if _, ok := ptr.Elem().(*types.Array); ok {
-					break
-				}
-			}
-		}
 		if _, ok := instr.X.Type().Underlying().(*types.Basic); !ok {
 			if _, ok := instr.Type().Underlying().(*types.Basic); !ok {
 				s.errorf("convert %s -> %s: at least one type must be basic", instr.X.Type(), instr.Type())
@@ -415,8 +409,8 @@ func (s *sanity) checkFunction(fn *Function) bool {
 		s.errorf("nil Prog")
 	}
 
-	_ = fn.String()            // must not crash
-	_ = fn.RelString(fn.pkg()) // must not crash
+	_ = fn.String()               // must not crash
+	_ = fn.RelString(fn.relPkg()) // must not crash
 
 	// All functions have a package, except delegates (which are
 	// shared across packages, or duplicated as weak symbols in a

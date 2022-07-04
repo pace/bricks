@@ -11,6 +11,8 @@ import (
 
 	"github.com/dave/jennifer/jen"
 	"github.com/getkin/kin-openapi/openapi3"
+	"golang.org/x/text/cases"
+	"golang.org/x/text/language"
 )
 
 func (g *Generator) addGoDoc(typeName, description string) {
@@ -202,7 +204,8 @@ func hasValidator(tags map[string]string, validator string) bool {
 var idRegex = regexp.MustCompile("Id$")
 
 func goNameHelper(name string) string {
-	name = strings.Title(name)
+	caser := cases.Title(language.English)
+	name = caser.String(name)
 	name = strings.Replace(name, "Url", "URL", -1)
 	name = idRegex.ReplaceAllString(name, "ID")
 	return name

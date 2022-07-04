@@ -6,10 +6,12 @@ package generator
 import (
 	"encoding/json"
 	"sort"
-	"strings"
 
 	"github.com/dave/jennifer/jen"
 	"github.com/getkin/kin-openapi/openapi3"
+	"golang.org/x/text/cases"
+	"golang.org/x/text/language"
+
 	"github.com/pace/bricks/maintenance/errors"
 )
 
@@ -45,25 +47,26 @@ func (g *Generator) buildSecurityBackendInterface(schema *openapi3.Swagger) erro
 		}
 	}
 
+	caser := cases.Title(language.English)
 	for _, name := range keys {
 		value := securitySchemes[name]
-		r.Line().Id(authFuncPrefix + strings.Title(name))
+		r.Line().Id(authFuncPrefix + caser.String(name))
 		switch value.Value.Type {
 		case "oauth2":
 			r.Params(jen.Id("r").Id("*http.Request"), jen.Id("w").Id("http.ResponseWriter"), jen.Id("scope").String()).Params(jen.Id("context.Context"), jen.Id("bool"))
-			r.Line().Id("Init" + strings.Title(name)).Params(jen.Id("cfg"+strings.Title(name)).Op("*").Qual(pkgOAuth2, "Config"))
+			r.Line().Id("Init" + caser.String(name)).Params(jen.Id("cfg"+caser.String(name)).Op("*").Qual(pkgOAuth2, "Config"))
 		case "openIdConnect":
 			r.Params(jen.Id("r").Id("*http.Request"), jen.Id("w").Id("http.ResponseWriter"), jen.Id("scope").String()).Params(jen.Id("context.Context"), jen.Id("bool"))
-			r.Line().Id("Init" + strings.Title(name)).Params(jen.Id("cfg"+strings.Title(name)).Op("*").Qual(pkgOIDC, "Config"))
+			r.Line().Id("Init" + caser.String(name)).Params(jen.Id("cfg"+caser.String(name)).Op("*").Qual(pkgOIDC, "Config"))
 		case "apiKey":
 			r.Params(jen.Id("r").Id("*http.Request"), jen.Id("w").Id("http.ResponseWriter")).Params(jen.Id("context.Context"), jen.Id("bool"))
-			r.Line().Id("Init" + strings.Title(name)).Params(jen.Id("cfg"+strings.Title(name)).Op("*").Qual(pkgApiKey, "Config"))
+			r.Line().Id("Init" + caser.String(name)).Params(jen.Id("cfg"+caser.String(name)).Op("*").Qual(pkgApiKey, "Config"))
 		default:
 			return errors.New("security schema type not supported: " + value.Value.Type)
 		}
 
 		if hasDuplicatedSecuritySchema {
-			r.Line().Id(authCanAuthFuncPrefix + strings.Title(name)).Params(jen.Id("r").Id("*http.Request")).Id("bool")
+			r.Line().Id(authCanAuthFuncPrefix + caser.String(name)).Params(jen.Id("r").Id("*http.Request")).Id("bool")
 		}
 	}
 
@@ -127,7 +130,8 @@ func (g *Generator) buildSecurityConfigs(schema *openapi3.Swagger) error {
 		default:
 			return errors.New("security schema type not supported: " + value.Value.Type)
 		}
-		g.goSource.Var().Id("cfg"+strings.Title(name)).Op("=").Op("&").Qual(pkgName, "Config").Values(instanceVal)
+		caser := cases.Title(language.English)
+		g.goSource.Var().Id("cfg"+caser.String(name)).Op("=").Op("&").Qual(pkgName, "Config").Values(instanceVal)
 	}
 	return nil
 }

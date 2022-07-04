@@ -7,11 +7,13 @@ import (
 	"context"
 	"time"
 
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
+	"google.golang.org/grpc/metadata"
+
 	"github.com/pace/bricks/http/security"
 	"github.com/pace/bricks/locale"
 	"github.com/pace/bricks/maintenance/log"
-	"google.golang.org/grpc"
-	"google.golang.org/grpc/metadata"
 
 	grpc_retry "github.com/grpc-ecosystem/go-grpc-middleware/retry"
 	grpc_opentracing "github.com/grpc-ecosystem/go-grpc-middleware/tracing/opentracing"
@@ -31,7 +33,7 @@ func dialCtx(ctx context.Context, addr string) (*grpc.ClientConn, error) {
 	opts := []grpc_retry.CallOption{
 		grpc_retry.WithBackoff(grpc_retry.BackoffLinear(100 * time.Millisecond)),
 	}
-	conn, err := grpc.DialContext(ctx, addr, grpc.WithInsecure(),
+	conn, err := grpc.DialContext(ctx, addr, grpc.WithTransportCredentials(insecure.NewCredentials()),
 		grpc.WithChainStreamInterceptor(
 			grpc_opentracing.StreamClientInterceptor(),
 			grpc_prometheus.StreamClientInterceptor,
