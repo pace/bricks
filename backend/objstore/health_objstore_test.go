@@ -29,6 +29,7 @@ func TestIntegrationHealthCheck(t *testing.T) {
 		t.SkipNow()
 	}
 	RegisterHealthchecks()
+	time.Sleep(1 * time.Second) // by the magic of asynchronous code, I here-by present a magic wait
 	resp := setup()
 	if resp.StatusCode != 200 {
 		t.Errorf("Expected /health/check to respond with 200, got: %d", resp.StatusCode)
@@ -39,7 +40,7 @@ func TestIntegrationHealthCheck(t *testing.T) {
 		log.Fatal(err)
 	}
 	if !strings.Contains(string(data), "objstore               OK") {
-		t.Errorf("Expected /health/check to return OK, got: %q", string(data[:]))
+		t.Errorf("Expected /health/check to return OK, got: %s", string(data))
 	}
 }
 
