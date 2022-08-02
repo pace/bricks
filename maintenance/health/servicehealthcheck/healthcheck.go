@@ -99,6 +99,7 @@ func registerHealthCheck(checks *sync.Map, name string, check HealthCheck, opts 
 		interval:           cfg.Interval,
 		initResultErrorTTL: cfg.HealthCheckInitResultErrorTTL,
 		maxWait:            cfg.HealthCheckMaxWait,
+		warmupDelay:        cfg.HealthCheckWarmupDelay,
 	}
 	for _, o := range opts {
 		o(&hcCfg)
@@ -127,8 +128,14 @@ func registerHealthCheck(checks *sync.Map, name string, check HealthCheck, opts 
 		var (
 			initHC, hasInitialization = check.(Initializable)
 			initialized               = false
+			warmupFinished            = false
 		)
-		timer := time.NewTimer(0) // Do first health check instantly
+		// Start first health check run instantly
+		timer := time.NewTimer(0)
+		// calculate when the warmup phase should be finished
+		healthCheckStart := time.Now()
+		warmupDeadline := healthCheckStart.Add(hcCfg.warmupDelay)
+		fmt.Println("STARTED", healthCheckStart, warmupDeadline, hcCfg.warmupDelay)
 		for {
 			<-timer.C
 			func() {
@@ -154,6 +161,21 @@ func registerHealthCheck(checks *sync.Map, name string, check HealthCheck, opts 
 
 					initialized = true
 					// Init succeeded, proceed with check
+				}
+
+				// don't execute the first healtcheck before we finished the warmup period
+				if !warmupFinished {
+					if warmupDeadline.Before(time.Now()) {
+						warmupFinished = true
+					} else {
+						bgState.setConnectionState(HealthCheckResult{
+							State: Ok,
+							Msg:   fmt.Sprintf("Service warms up since '%s'", healthCheckStart.Format(time.RFC3339)),
+						})
+						// sanity trigger a health check, since we can not gurantee what the real implementation does ...
+						go check.HealthCheck(ctx)
+						return
+					}
 				}
 
 				// Actual health check

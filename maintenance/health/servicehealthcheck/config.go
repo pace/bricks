@@ -16,6 +16,9 @@ type config struct {
 	HealthCheckInitResultErrorTTL time.Duration `env:"HEALTH_CHECK_INIT_RESULT_ERROR_TTL" envDefault:"10s"`
 	// Amount of time to wait before failing the health check
 	HealthCheckMaxWait time.Duration `env:"HEALTH_CHECK_MAX_WAIT" envDefault:"5s"`
+	// Amount of time given to warmup before running the first full healtheck. Delay will be applied based on the
+	// healthcheck start time and not delay a possible required initialization.
+	HealthCheckWarmupDelay time.Duration `env:"HEALTH_CHECK_WARMUP_DELAY" envDefault:"0s"`
 }
 
 var cfg config
@@ -32,6 +35,7 @@ type HealthCheckCfg struct {
 	interval           time.Duration
 	initResultErrorTTL time.Duration
 	maxWait            time.Duration
+	warmupDelay        time.Duration
 }
 
 type HealthCheckOption func(cfg *HealthCheckCfg)
@@ -51,5 +55,12 @@ func UseInitErrResultTTL(ttl time.Duration) HealthCheckOption {
 func UseMaxWait(maxWait time.Duration) HealthCheckOption {
 	return func(cfg *HealthCheckCfg) {
 		cfg.maxWait = maxWait
+	}
+}
+
+// UseWarmup - delays a healthcheck during warmup
+func UseWarmup(delay time.Duration) HealthCheckOption {
+	return func(cfg *HealthCheckCfg) {
+		cfg.warmupDelay = delay
 	}
 }

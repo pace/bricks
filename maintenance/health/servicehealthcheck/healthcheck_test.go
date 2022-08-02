@@ -52,7 +52,8 @@ func TestHandlerHealthCheck(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.title, func(t *testing.T) {
 			resetHealthChecks()
-			RegisterHealthCheck(tc.check.name, tc.check)
+			// set warmup for unit testing explicitely to 0
+			RegisterHealthCheck(tc.check.name, tc.check, UseWarmup(0))
 			testRequest(t, handler, tc.expCode, expBody(tc.expBody))
 		})
 	}
