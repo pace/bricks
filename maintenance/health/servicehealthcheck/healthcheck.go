@@ -135,7 +135,6 @@ func registerHealthCheck(checks *sync.Map, name string, check HealthCheck, opts 
 		// calculate when the warmup phase should be finished
 		healthCheckStart := time.Now()
 		warmupDeadline := healthCheckStart.Add(hcCfg.warmupDelay)
-		fmt.Println("STARTED", healthCheckStart, warmupDeadline, hcCfg.warmupDelay)
 		for {
 			<-timer.C
 			func() {
@@ -172,7 +171,7 @@ func registerHealthCheck(checks *sync.Map, name string, check HealthCheck, opts 
 							State: Ok,
 							Msg:   fmt.Sprintf("Service warms up since '%s'", healthCheckStart.Format(time.RFC3339)),
 						})
-						// sanity trigger a health check, since we can not gurantee what the real implementation does ...
+						// sanity trigger a health check, since we can not guarantee what the real implementation does ...
 						go check.HealthCheck(ctx)
 						return
 					}
