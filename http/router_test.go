@@ -6,7 +6,7 @@ package http
 import (
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -26,7 +26,7 @@ func TestHealthHandler(t *testing.T) {
 	resp := rec.Result()
 	require.Equal(t, 200, resp.StatusCode)
 
-	data, err := ioutil.ReadAll(resp.Body)
+	data, err := io.ReadAll(resp.Body)
 	require.NoError(t, err)
 	require.Equal(t, "OK\n", string(data))
 }
@@ -65,7 +65,7 @@ func TestHealthRoutes(t *testing.T) {
 			Router().ServeHTTP(rec, req)
 
 			resp := rec.Result()
-			data, err := ioutil.ReadAll(resp.Body)
+			data, err := io.ReadAll(resp.Body)
 			require.NoError(t, err)
 			require.Equal(t, tC.expectedResult, string(data))
 		})

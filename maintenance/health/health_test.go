@@ -4,7 +4,7 @@
 package health
 
 import (
-	"io/ioutil"
+	"io"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -48,7 +48,7 @@ func checkResult(rec *httptest.ResponseRecorder, expCode int, expBody string, t 
 	if resp.StatusCode != expCode {
 		t.Errorf("Expected /health to respond with %d, got: %d", expCode, resp.StatusCode)
 	}
-	data, err := ioutil.ReadAll(resp.Body)
+	data, err := io.ReadAll(resp.Body)
 	require.NoError(t, err)
 	require.Equal(t, expBody, string(data))
 

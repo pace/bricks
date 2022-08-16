@@ -2,7 +2,7 @@ package transport
 
 import (
 	"errors"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -49,7 +49,7 @@ func TestCircuitBreakerTripper(t *testing.T) {
 		resp, err := chain.RoundTrip(req)
 		require.NoError(t, err, "expected no err, got err=%q", err)
 
-		gotBodyStr, err := ioutil.ReadAll(resp.Body)
+		gotBodyStr, err := io.ReadAll(resp.Body)
 		require.NoError(t, err, "failed reading response body no err, got err=%q", err)
 
 		if string(gotBodyStr) != wantBodyStr {

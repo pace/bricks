@@ -422,7 +422,8 @@ var cfgOIDC = &oidc.Config{
 
 /*
 DeduplicatePoiHandler handles request/response marshaling and validation for
- Patch /beta/admin/poi/dedupe
+
+	Patch /beta/admin/poi/dedupe
 */
 func DeduplicatePoiHandler(service DeduplicatePoiHandlerService, authBackend AuthorizationBackend) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -476,7 +477,8 @@ func DeduplicatePoiHandler(service DeduplicatePoiHandlerService, authBackend Aut
 
 /*
 MovePoiAtPositionHandler handles request/response marshaling and validation for
- Patch /beta/admin/poi/move
+
+	Patch /beta/admin/poi/move
 */
 func MovePoiAtPositionHandler(service MovePoiAtPositionHandlerService, authBackend AuthorizationBackend) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -530,7 +532,8 @@ func MovePoiAtPositionHandler(service MovePoiAtPositionHandlerService, authBacke
 
 /*
 GetAppsHandler handles request/response marshaling and validation for
- Get /beta/apps
+
+	Get /beta/apps
 */
 func GetAppsHandler(service GetAppsHandlerService, authBackend AuthorizationBackend) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -604,7 +607,8 @@ func GetAppsHandler(service GetAppsHandlerService, authBackend AuthorizationBack
 
 /*
 CreateAppHandler handles request/response marshaling and validation for
- Post /beta/apps
+
+	Post /beta/apps
 */
 func CreateAppHandler(service CreateAppHandlerService, authBackend AuthorizationBackend) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -658,7 +662,8 @@ func CreateAppHandler(service CreateAppHandlerService, authBackend Authorization
 
 /*
 CheckForPaceAppHandler handles request/response marshaling and validation for
- Get /beta/apps/query
+
+	Get /beta/apps/query
 */
 func CheckForPaceAppHandler(service CheckForPaceAppHandlerService, authBackend AuthorizationBackend) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -724,7 +729,8 @@ func CheckForPaceAppHandler(service CheckForPaceAppHandlerService, authBackend A
 
 /*
 DeleteAppHandler handles request/response marshaling and validation for
- Delete /beta/apps/{appID}
+
+	Delete /beta/apps/{appID}
 */
 func DeleteAppHandler(service DeleteAppHandlerService, authBackend AuthorizationBackend) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -784,7 +790,8 @@ func DeleteAppHandler(service DeleteAppHandlerService, authBackend Authorization
 
 /*
 GetAppHandler handles request/response marshaling and validation for
- Get /beta/apps/{appID}
+
+	Get /beta/apps/{appID}
 */
 func GetAppHandler(service GetAppHandlerService, authBackend AuthorizationBackend) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -844,7 +851,8 @@ func GetAppHandler(service GetAppHandlerService, authBackend AuthorizationBacken
 
 /*
 UpdateAppHandler handles request/response marshaling and validation for
- Put /beta/apps/{appID}
+
+	Put /beta/apps/{appID}
 */
 func UpdateAppHandler(service UpdateAppHandlerService, authBackend AuthorizationBackend) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -907,7 +915,8 @@ func UpdateAppHandler(service UpdateAppHandlerService, authBackend Authorization
 
 /*
 GetAppPOIsRelationshipsHandler handles request/response marshaling and validation for
- Get /beta/apps/{appID}/relationships/pois
+
+	Get /beta/apps/{appID}/relationships/pois
 */
 func GetAppPOIsRelationshipsHandler(service GetAppPOIsRelationshipsHandlerService, authBackend AuthorizationBackend) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -967,7 +976,8 @@ func GetAppPOIsRelationshipsHandler(service GetAppPOIsRelationshipsHandlerServic
 
 /*
 UpdateAppPOIsRelationshipsHandler handles request/response marshaling and validation for
- Patch /beta/apps/{appID}/relationships/pois
+
+	Patch /beta/apps/{appID}/relationships/pois
 */
 func UpdateAppPOIsRelationshipsHandler(service UpdateAppPOIsRelationshipsHandlerService, authBackend AuthorizationBackend) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -1030,7 +1040,8 @@ func UpdateAppPOIsRelationshipsHandler(service UpdateAppPOIsRelationshipsHandler
 
 /*
 GetDuplicatesKMLHandler handles request/response marshaling and validation for
- Get /beta/datadumps/duplicatemap/{countryCode}
+
+	Get /beta/datadumps/duplicatemap/{countryCode}
 */
 func GetDuplicatesKMLHandler(service GetDuplicatesKMLHandlerService, authBackend AuthorizationBackend) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -1090,7 +1101,8 @@ func GetDuplicatesKMLHandler(service GetDuplicatesKMLHandlerService, authBackend
 
 /*
 GetPoisDumpHandler handles request/response marshaling and validation for
- Get /beta/datadumps/pois
+
+	Get /beta/datadumps/pois
 */
 func GetPoisDumpHandler(service GetPoisDumpHandlerService, authBackend AuthorizationBackend) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -1148,7 +1160,8 @@ func GetPoisDumpHandler(service GetPoisDumpHandlerService, authBackend Authoriza
 
 /*
 DeleteGasStationReferenceStatusHandler handles request/response marshaling and validation for
- Delete /beta/delivery/gas-stations/{gasStationId}/reference-status/{reference}
+
+	Delete /beta/delivery/gas-stations/{gasStationId}/reference-status/{reference}
 */
 func DeleteGasStationReferenceStatusHandler(service DeleteGasStationReferenceStatusHandlerService, authBackend AuthorizationBackend) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -1213,7 +1226,8 @@ func DeleteGasStationReferenceStatusHandler(service DeleteGasStationReferenceSta
 
 /*
 PutGasStationReferenceStatusHandler handles request/response marshaling and validation for
- Put /beta/delivery/gas-stations/{gasStationId}/reference-status/{reference}
+
+	Put /beta/delivery/gas-stations/{gasStationId}/reference-status/{reference}
 */
 func PutGasStationReferenceStatusHandler(service PutGasStationReferenceStatusHandlerService, authBackend AuthorizationBackend) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -1281,7 +1295,8 @@ func PutGasStationReferenceStatusHandler(service PutGasStationReferenceStatusHan
 
 /*
 GetEventsHandler handles request/response marshaling and validation for
- Get /beta/events
+
+	Get /beta/events
 */
 func GetEventsHandler(service GetEventsHandlerService, authBackend AuthorizationBackend) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -1351,7 +1366,8 @@ func GetEventsHandler(service GetEventsHandlerService, authBackend Authorization
 
 /*
 GetGasStationsHandler handles request/response marshaling and validation for
- Get /beta/gas-stations
+
+	Get /beta/gas-stations
 */
 func GetGasStationsHandler(service GetGasStationsHandlerService, authBackend AuthorizationBackend) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -1445,7 +1461,8 @@ func GetGasStationsHandler(service GetGasStationsHandlerService, authBackend Aut
 
 /*
 GetGasStationHandler handles request/response marshaling and validation for
- Get /beta/gas-stations/{id}
+
+	Get /beta/gas-stations/{id}
 */
 func GetGasStationHandler(service GetGasStationHandlerService, authBackend AuthorizationBackend) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -1509,7 +1526,8 @@ func GetGasStationHandler(service GetGasStationHandlerService, authBackend Autho
 
 /*
 GetPriceHistoryHandler handles request/response marshaling and validation for
- Get /beta/gas-stations/{id}/fuel-price-histories/{fuel_type}
+
+	Get /beta/gas-stations/{id}/fuel-price-histories/{fuel_type}
 */
 func GetPriceHistoryHandler(service GetPriceHistoryHandlerService, authBackend AuthorizationBackend) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -1586,7 +1604,8 @@ func GetPriceHistoryHandler(service GetPriceHistoryHandlerService, authBackend A
 
 /*
 GetGasStationFuelTypeNameMappingHandler handles request/response marshaling and validation for
- Get /beta/gas-stations/{id}/fueltype
+
+	Get /beta/gas-stations/{id}/fueltype
 */
 func GetGasStationFuelTypeNameMappingHandler(service GetGasStationFuelTypeNameMappingHandlerService, authBackend AuthorizationBackend) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -1650,7 +1669,8 @@ func GetGasStationFuelTypeNameMappingHandler(service GetGasStationFuelTypeNameMa
 
 /*
 GetMetadataFiltersHandler handles request/response marshaling and validation for
- Get /beta/meta
+
+	Get /beta/meta
 */
 func GetMetadataFiltersHandler(service GetMetadataFiltersHandlerService, authBackend AuthorizationBackend) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -1712,7 +1732,8 @@ func GetMetadataFiltersHandler(service GetMetadataFiltersHandlerService, authBac
 
 /*
 GetPoisHandler handles request/response marshaling and validation for
- Get /beta/pois
+
+	Get /beta/pois
 */
 func GetPoisHandler(service GetPoisHandlerService, authBackend AuthorizationBackend) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -1782,7 +1803,8 @@ func GetPoisHandler(service GetPoisHandlerService, authBackend AuthorizationBack
 
 /*
 GetPoiHandler handles request/response marshaling and validation for
- Get /beta/pois/{poiId}
+
+	Get /beta/pois/{poiId}
 */
 func GetPoiHandler(service GetPoiHandlerService, authBackend AuthorizationBackend) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -1842,7 +1864,8 @@ func GetPoiHandler(service GetPoiHandlerService, authBackend AuthorizationBacken
 
 /*
 ChangePoiHandler handles request/response marshaling and validation for
- Patch /beta/pois/{poiId}
+
+	Patch /beta/pois/{poiId}
 */
 func ChangePoiHandler(service ChangePoiHandlerService, authBackend AuthorizationBackend) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -1905,7 +1928,8 @@ func ChangePoiHandler(service ChangePoiHandlerService, authBackend Authorization
 
 /*
 GetPoliciesHandler handles request/response marshaling and validation for
- Get /beta/policies
+
+	Get /beta/policies
 */
 func GetPoliciesHandler(service GetPoliciesHandlerService, authBackend AuthorizationBackend) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -1979,7 +2003,8 @@ func GetPoliciesHandler(service GetPoliciesHandlerService, authBackend Authoriza
 
 /*
 CreatePolicyHandler handles request/response marshaling and validation for
- Post /beta/policies
+
+	Post /beta/policies
 */
 func CreatePolicyHandler(service CreatePolicyHandlerService, authBackend AuthorizationBackend) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -2033,7 +2058,8 @@ func CreatePolicyHandler(service CreatePolicyHandlerService, authBackend Authori
 
 /*
 GetPolicyHandler handles request/response marshaling and validation for
- Get /beta/policies/{policyId}
+
+	Get /beta/policies/{policyId}
 */
 func GetPolicyHandler(service GetPolicyHandlerService, authBackend AuthorizationBackend) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -2093,7 +2119,8 @@ func GetPolicyHandler(service GetPolicyHandlerService, authBackend Authorization
 
 /*
 GetRegionalPricesHandler handles request/response marshaling and validation for
- Get /beta/prices/regional
+
+	Get /beta/prices/regional
 */
 func GetRegionalPricesHandler(service GetRegionalPricesHandlerService, authBackend AuthorizationBackend) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -2149,7 +2176,8 @@ func GetRegionalPricesHandler(service GetRegionalPricesHandlerService, authBacke
 
 /*
 GetSourcesHandler handles request/response marshaling and validation for
- Get /beta/sources
+
+	Get /beta/sources
 */
 func GetSourcesHandler(service GetSourcesHandlerService, authBackend AuthorizationBackend) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -2219,7 +2247,8 @@ func GetSourcesHandler(service GetSourcesHandlerService, authBackend Authorizati
 
 /*
 CreateSourceHandler handles request/response marshaling and validation for
- Post /beta/sources
+
+	Post /beta/sources
 */
 func CreateSourceHandler(service CreateSourceHandlerService, authBackend AuthorizationBackend) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -2273,7 +2302,8 @@ func CreateSourceHandler(service CreateSourceHandlerService, authBackend Authori
 
 /*
 DeleteSourceHandler handles request/response marshaling and validation for
- Delete /beta/sources/{sourceId}
+
+	Delete /beta/sources/{sourceId}
 */
 func DeleteSourceHandler(service DeleteSourceHandlerService, authBackend AuthorizationBackend) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -2333,7 +2363,8 @@ func DeleteSourceHandler(service DeleteSourceHandlerService, authBackend Authori
 
 /*
 GetSourceHandler handles request/response marshaling and validation for
- Get /beta/sources/{sourceId}
+
+	Get /beta/sources/{sourceId}
 */
 func GetSourceHandler(service GetSourceHandlerService, authBackend AuthorizationBackend) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -2393,7 +2424,8 @@ func GetSourceHandler(service GetSourceHandlerService, authBackend Authorization
 
 /*
 UpdateSourceHandler handles request/response marshaling and validation for
- Put /beta/sources/{sourceId}
+
+	Put /beta/sources/{sourceId}
 */
 func UpdateSourceHandler(service UpdateSourceHandlerService, authBackend AuthorizationBackend) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -2456,7 +2488,8 @@ func UpdateSourceHandler(service UpdateSourceHandlerService, authBackend Authori
 
 /*
 GetSubscriptionsHandler handles request/response marshaling and validation for
- Get /beta/subscriptions
+
+	Get /beta/subscriptions
 */
 func GetSubscriptionsHandler(service GetSubscriptionsHandlerService, authBackend AuthorizationBackend) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -2510,7 +2543,8 @@ func GetSubscriptionsHandler(service GetSubscriptionsHandlerService, authBackend
 
 /*
 DeleteSubscriptionHandler handles request/response marshaling and validation for
- Delete /beta/subscriptions/{id}
+
+	Delete /beta/subscriptions/{id}
 */
 func DeleteSubscriptionHandler(service DeleteSubscriptionHandlerService, authBackend AuthorizationBackend) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -2558,7 +2592,8 @@ func DeleteSubscriptionHandler(service DeleteSubscriptionHandlerService, authBac
 
 /*
 StoreSubscriptionHandler handles request/response marshaling and validation for
- Put /beta/subscriptions/{id}
+
+	Put /beta/subscriptions/{id}
 */
 func StoreSubscriptionHandler(service StoreSubscriptionHandlerService, authBackend AuthorizationBackend) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -2612,7 +2647,8 @@ func StoreSubscriptionHandler(service StoreSubscriptionHandlerService, authBacke
 
 /*
 GetTilesHandler handles request/response marshaling and validation for
- Post /v1/tiles/query
+
+	Post /v1/tiles/query
 */
 func GetTilesHandler(service GetTilesHandlerService, authBackend AuthorizationBackend) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -3983,7 +4019,6 @@ type CheckForPaceAppHandlerService interface {
 	/*
 	   CheckForPaceApp Query for location-based apps
 
-
 	   These location-based PACE apps deliver additional services for PACE customers based on their current position.
 	   You can (or should) trigger this whenever:
 	   * A longer stand-still is detected
@@ -4060,7 +4095,6 @@ type GetDuplicatesKMLHandlerService interface {
 type GetPoisDumpHandlerService interface {
 	/*
 	   GetPoisDump Create a full POI dump
-
 
 	   Dump all POI data in XLSX format, along with full amenities.
 	*/
@@ -4155,11 +4189,11 @@ type GetMetadataFiltersHandlerService interface {
 	   Returns filterable values around the current location on the map, within a certain radius.
 	   For the latitude and longitude values used in the request, returns the available and unavailable values for the following fields:
 
-	     * brand
+	     - brand
 
-	     * payment methods
+	     - payment methods
 
-	     * amenities
+	     - amenities
 	*/
 	GetMetadataFilters(context.Context, GetMetadataFiltersResponseWriter, *GetMetadataFiltersRequest) error
 }
@@ -4289,7 +4323,6 @@ type GetSubscriptionsHandlerService interface {
 	/*
 	   GetSubscriptions Get the list of POI subscriptions for the user or device
 
-
 	   Returns a list of all current (not expired) subscriptions of the user.
 	*/
 	GetSubscriptions(context.Context, GetSubscriptionsResponseWriter, *GetSubscriptionsRequest) error
@@ -4308,20 +4341,21 @@ type StoreSubscriptionHandlerService interface {
 	/*
 	   StoreSubscription Stores a POI subscription
 
-
 	   Stores a POI subscription to send a push notification to the device with the specified `pushToken` once one of the pois change based on the change condition. The notification contains (max 4kb)
 	   ```
-	   {
-	     "target": "..."
-	     "subscription": "706087b4-8bca-4db9-b037-8a7ff4ce5633",
-	     "poi": {
-	       "id": "4d6dd9db-b0ac-40e8-a099-b606cace6f72", # poi ID
-	       "type": "gasStation",
-	       "attributes": {
-	         # ... more data of the type
-	       }
-	     }
-	   }
+
+	   	{
+	   	  "target": "..."
+	   	  "subscription": "706087b4-8bca-4db9-b037-8a7ff4ce5633",
+	   	  "poi": {
+	   	    "id": "4d6dd9db-b0ac-40e8-a099-b606cace6f72", # poi ID
+	   	    "type": "gasStation",
+	   	    "attributes": {
+	   	      # ... more data of the type
+	   	    }
+	   	  }
+	   	}
+
 	   ```
 	*/
 	StoreSubscription(context.Context, StoreSubscriptionResponseWriter, *StoreSubscriptionRequest) error
@@ -4331,7 +4365,6 @@ type StoreSubscriptionHandlerService interface {
 type GetTilesHandlerService interface {
 	/*
 	   GetTiles Query for tiles
-
 
 	   Get a list of map tiles in the Protobuf binary wire format.
 	*/

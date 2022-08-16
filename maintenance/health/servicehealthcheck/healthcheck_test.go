@@ -4,7 +4,7 @@
 package servicehealthcheck
 
 import (
-	"io/ioutil"
+	"io"
 	"net/http"
 	"net/http/httptest"
 	"sync"
@@ -166,7 +166,7 @@ func testRequest(t *testing.T, handler http.Handler, expCode int, expBody resBod
 	resp := rec.Result()
 	assert.Equal(t, expCode, resp.StatusCode)
 	defer resp.Body.Close()
-	data, err := ioutil.ReadAll(resp.Body)
+	data, err := io.ReadAll(resp.Body)
 	require.NoError(t, err)
 	if expBody != nil {
 		expBody(t, data)

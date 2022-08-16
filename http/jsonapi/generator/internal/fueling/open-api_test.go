@@ -124,7 +124,8 @@ type Currency string
 
 /*
 ProcessPaymentHandler handles request/response marshaling and validation for
- Post /gas-station/{gasStationId}/payment
+
+	Post /gas-station/{gasStationId}/payment
 */
 func ProcessPaymentHandler(service ProcessPaymentHandlerService) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -181,7 +182,8 @@ func ProcessPaymentHandler(service ProcessPaymentHandlerService) http.Handler {
 
 /*
 ApproachingAtTheForecourtHandler handles request/response marshaling and validation for
- Post /gas-stations/{gasStationId}/approaching
+
+	Post /gas-stations/{gasStationId}/approaching
 */
 func ApproachingAtTheForecourtHandler(service ApproachingAtTheForecourtHandlerService) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -242,7 +244,8 @@ func ApproachingAtTheForecourtHandler(service ApproachingAtTheForecourtHandlerSe
 
 /*
 GetPumpHandler handles request/response marshaling and validation for
- Get /gas-stations/{gasStationId}/pumps/{pumpId}
+
+	Get /gas-stations/{gasStationId}/pumps/{pumpId}
 */
 func GetPumpHandler(service GetPumpHandlerService) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -301,7 +304,8 @@ func GetPumpHandler(service GetPumpHandlerService) http.Handler {
 
 /*
 WaitOnPumpStatusChangeHandler handles request/response marshaling and validation for
- Get /gas-stations/{gasStationId}/pumps/{pumpId}/wait-for-status-change
+
+	Get /gas-stations/{gasStationId}/pumps/{pumpId}/wait-for-status-change
 */
 func WaitOnPumpStatusChangeHandler(service WaitOnPumpStatusChangeHandlerService) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -565,7 +569,6 @@ type ProcessPaymentHandlerService interface {
 type ApproachingAtTheForecourtHandlerService interface {
 	/*
 	   ApproachingAtTheForecourt Gather information when approaching at the forecourt
-
 
 	   This request will:
 	   * Return a list of available paymentMethodIds

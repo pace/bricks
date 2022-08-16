@@ -12,7 +12,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"io/ioutil"
 	mrand "math/rand"
 	"net/http"
 	"net/url"
@@ -957,7 +956,7 @@ func (t *HTTPTransport) Send(url, authHeader string, packet *Packet) error {
 	if err != nil {
 		return err
 	}
-	io.Copy(ioutil.Discard, res.Body) // nolint: errcheck
+	io.Copy(io.Discard, res.Body) // nolint: errcheck
 	res.Body.Close()
 	if res.StatusCode != 200 {
 		return fmt.Errorf("raven: got http status %d", res.StatusCode)

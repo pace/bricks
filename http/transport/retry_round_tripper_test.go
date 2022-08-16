@@ -7,7 +7,7 @@ import (
 	"bytes"
 	"context"
 	"errors"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -31,7 +31,7 @@ func TestRetryRoundTripper(t *testing.T) {
 			t.Errorf("Expected %d attempts, got %d", ex, got)
 		}
 
-		body, err := ioutil.ReadAll(resp.Body)
+		body, err := io.ReadAll(resp.Body)
 		if err != nil {
 			t.Fatalf("Expected readable body, got error: %q", err.Error())
 		}
@@ -106,7 +106,7 @@ func (t *retriedTransport) RoundTrip(req *http.Request) (*http.Response, error) 
 	if t.err != nil {
 		return nil, t.err
 	}
-	body := ioutil.NopCloser(bytes.NewReader([]byte(t.body)))
+	body := io.NopCloser(bytes.NewReader([]byte(t.body)))
 	resp := &http.Response{Body: body, StatusCode: t.statusCodes[t.attempts]}
 
 	return resp, nil

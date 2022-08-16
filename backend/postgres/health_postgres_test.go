@@ -5,7 +5,7 @@ package postgres
 
 import (
 	"context"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -40,7 +40,7 @@ func TestIntegrationHealthCheck(t *testing.T) {
 		t.Errorf("Expected /health/check to respond with 200, got: %d", resp.StatusCode)
 	}
 
-	data, err := ioutil.ReadAll(resp.Body)
+	data, err := io.ReadAll(resp.Body)
 	if err != nil {
 		log.Fatal(err)
 	}

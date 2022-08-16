@@ -5,7 +5,6 @@ package jsonapi
 
 import (
 	"io"
-	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -86,7 +85,7 @@ func TestMetric(t *testing.T) {
 
 			handler := func(w http.ResponseWriter, r *http.Request) {
 				NewMetric("foobar", "/foobar", w, r)
-				_, err := io.Copy(ioutil.Discard, r.Body) // read request body
+				_, err := io.Copy(io.Discard, r.Body) // read request body
 				if err != nil {
 					panic(err)
 				}

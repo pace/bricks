@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"context"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"time"
 
 	"github.com/minio/minio-go/v7"
@@ -94,7 +94,7 @@ func (h *HealthCheck) HealthCheck(ctx context.Context) servicehealthcheck.Health
 	defer obj.Close()
 
 	// Assert expectations
-	buf, err := ioutil.ReadAll(obj)
+	buf, err := io.ReadAll(obj)
 	if err != nil {
 		h.state.SetErrorState(fmt.Errorf("failed to compare object: %v", err))
 		return h.state.GetState()

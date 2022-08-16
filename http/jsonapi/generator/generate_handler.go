@@ -579,7 +579,8 @@ func (g *Generator) buildHandler(method string, op *openapi3.Operation, pattern 
 			}
 		}
 	}
-	g.addGoDoc(handler, fmt.Sprintf("handles request/response marshaling and validation for \n %s %s",
+	g.addGoDoc(handler, fmt.Sprintf(`handles request/response marshaling and validation for
+        %s %s`,
 		method, pattern))
 	var params *jen.Statement
 	if needsSecurity {

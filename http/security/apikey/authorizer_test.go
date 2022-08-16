@@ -4,7 +4,7 @@
 package apikey
 
 import (
-	"io/ioutil"
+	"io"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -20,7 +20,7 @@ func TestApiKeyAuthenticationSuccessful(t *testing.T) {
 	_, b := auth.Authorize(r, w)
 
 	resp := w.Result()
-	body, err := ioutil.ReadAll(resp.Body)
+	body, err := io.ReadAll(resp.Body)
 	resp.Body.Close()
 	if err != nil {
 		t.Fatal(err)
@@ -46,7 +46,7 @@ func TestApiKeyAuthenticationError(t *testing.T) {
 	_, b := auth.Authorize(r, w)
 
 	resp := w.Result()
-	body, err := ioutil.ReadAll(resp.Body)
+	body, err := io.ReadAll(resp.Body)
 	resp.Body.Close()
 	if err != nil {
 		t.Fatal(err)
@@ -70,7 +70,7 @@ func TestApiKeyAuthenticationNoKey(t *testing.T) {
 	_, b := auth.Authorize(r, w)
 
 	resp := w.Result()
-	body, err := ioutil.ReadAll(resp.Body)
+	body, err := io.ReadAll(resp.Body)
 	resp.Body.Close()
 	if err != nil {
 		t.Fatal(err)
