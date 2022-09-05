@@ -18,7 +18,7 @@ func Hide(ctx context.Context, err, exposedErr error) error {
 	if err == nil {
 		return nil
 	}
-	
+
 	ret := errors.New(err.Error())
 	if exposedErr != nil {
 		ret = fmt.Errorf("%w: %s", exposedErr, err)
@@ -35,4 +35,11 @@ func Hide(ctx context.Context, err, exposedErr error) error {
 	}
 
 	return ret
+}
+
+func IsStdLibContextError(err error) bool {
+	if errors.Is(err, context.Canceled) || errors.Is(err, context.DeadlineExceeded) {
+		return true
+	}
+	return false
 }
