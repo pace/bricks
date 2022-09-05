@@ -28,9 +28,10 @@ func TestHide(t *testing.T) {
 		exposedErr error
 	}
 	tests := []struct {
-		name string
-		args args
-		want error
+		name             string
+		args             args
+		want             error
+		expectContextErr bool
 	}{
 		{
 			name: "normal_context_no_error_nothing_exposed",
@@ -57,7 +58,8 @@ func TestHide(t *testing.T) {
 				err:        fmt.Errorf("%s: %w", iAmAnError, context.Canceled),
 				exposedErr: nil,
 			},
-			want: fmt.Errorf("%s: %s", iAmAnError, context.Canceled),
+			want:             fmt.Errorf("%s: %s", iAmAnError, context.Canceled),
+			expectContextErr: true,
 		},
 		{
 			name: "normal_context_with_error_with_exposed",
@@ -66,7 +68,8 @@ func TestHide(t *testing.T) {
 				err:        fmt.Errorf("%s: %w", iAmAnError, context.Canceled),
 				exposedErr: iAmAnotherError,
 			},
-			want: fmt.Errorf("%w: %s: %s", iAmAnotherError, iAmAnError, context.Canceled),
+			want:             fmt.Errorf("%w: %s: %s", iAmAnotherError, iAmAnError, context.Canceled),
+			expectContextErr: true,
 		},
 		{
 			name: "canceled_context_no_error_nothing_exposed",
@@ -75,7 +78,8 @@ func TestHide(t *testing.T) {
 				err:        iAmAnError,
 				exposedErr: nil,
 			},
-			want: iAmAnError,
+			want:             iAmAnError,
+			expectContextErr: false,
 		},
 		{
 			name: "canceled_context_no_error_with_exposed",
@@ -84,7 +88,8 @@ func TestHide(t *testing.T) {
 				err:        iAmAnError,
 				exposedErr: iAmAnotherError,
 			},
-			want: fmt.Errorf("%w: %s", iAmAnotherError, iAmAnError),
+			want:             fmt.Errorf("%w: %s", iAmAnotherError, iAmAnError),
+			expectContextErr: false,
 		},
 		{
 			name: "canceled_context_with_error_nothing_exposed",
@@ -93,7 +98,8 @@ func TestHide(t *testing.T) {
 				err:        fmt.Errorf("%s: %w", iAmAnError, context.Canceled),
 				exposedErr: nil,
 			},
-			want: fmt.Errorf("%s: %w", iAmAnError, context.Canceled),
+			want:             fmt.Errorf("%s: %w", iAmAnError, context.Canceled),
+			expectContextErr: true,
 		},
 		{
 			name: "canceled_context_with_error_with_exposed",
@@ -102,7 +108,8 @@ func TestHide(t *testing.T) {
 				err:        fmt.Errorf("%s: %w", iAmAnError, context.Canceled),
 				exposedErr: iAmAnotherError,
 			},
-			want: fmt.Errorf("%s: %s: %w", iAmAnotherError, iAmAnError, context.Canceled),
+			want:             fmt.Errorf("%s: %s: %w", iAmAnotherError, iAmAnError, context.Canceled),
+			expectContextErr: true,
 		},
 		{
 			name: "exceeded_context_no_error_nothing_exposed",
@@ -111,7 +118,8 @@ func TestHide(t *testing.T) {
 				err:        iAmAnError,
 				exposedErr: nil,
 			},
-			want: iAmAnError,
+			want:             iAmAnError,
+			expectContextErr: false,
 		},
 		{
 			name: "exceeded_context_no_error_with_exposed",
@@ -120,7 +128,8 @@ func TestHide(t *testing.T) {
 				err:        iAmAnError,
 				exposedErr: iAmAnotherError,
 			},
-			want: fmt.Errorf("%w: %s", iAmAnotherError, iAmAnError),
+			want:             fmt.Errorf("%w: %s", iAmAnotherError, iAmAnError),
+			expectContextErr: false,
 		},
 		{
 			name: "exceeded_context_with_error_nothing_exposed",
@@ -129,7 +138,8 @@ func TestHide(t *testing.T) {
 				err:        fmt.Errorf("%s: %w", iAmAnError, context.DeadlineExceeded),
 				exposedErr: nil,
 			},
-			want: fmt.Errorf("%s: %w", iAmAnError, context.DeadlineExceeded),
+			want:             fmt.Errorf("%s: %w", iAmAnError, context.DeadlineExceeded),
+			expectContextErr: true,
 		},
 		{
 			name: "exceeded_context_with_error_with_exposed",
@@ -138,13 +148,15 @@ func TestHide(t *testing.T) {
 				err:        fmt.Errorf("%s: %w", iAmAnError, context.DeadlineExceeded),
 				exposedErr: iAmAnotherError,
 			},
-			want: fmt.Errorf("%s: %s: %w", iAmAnotherError, iAmAnError, context.DeadlineExceeded),
+			want:             fmt.Errorf("%s: %s: %w", iAmAnotherError, iAmAnError, context.DeadlineExceeded),
+			expectContextErr: true,
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			got := Hide(tt.args.ctx, tt.args.err, tt.args.exposedErr)
 			require.Equal(t, tt.want, got)
+			require.Equal(t, tt.expectContextErr, IsStdLibContextError(tt.args.err))
 		})
 	}
 }
