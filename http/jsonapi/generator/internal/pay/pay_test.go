@@ -3,7 +3,7 @@ package pay
 import (
 	"context"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -164,14 +164,14 @@ func TestHandler(t *testing.T) {
 
 	if resp.StatusCode != 201 {
 		t.Errorf("expected OK got: %d", resp.StatusCode)
-		b, err := ioutil.ReadAll(resp.Body)
+		b, err := io.ReadAll(resp.Body)
 		if err != nil {
 			t.Fatal(err)
 		}
 		t.Error(string(b[:]))
 	}
 
-	b, err := ioutil.ReadAll(resp.Body)
+	b, err := io.ReadAll(resp.Body)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -211,7 +211,7 @@ func TestHandlerDecimal(t *testing.T) {
 
 	if resp.StatusCode != 201 {
 		t.Errorf("expected OK got: %d", resp.StatusCode)
-		b, err := ioutil.ReadAll(resp.Body)
+		b, err := io.ReadAll(resp.Body)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -249,7 +249,7 @@ func TestHandlerPanic(t *testing.T) {
 
 	if resp.StatusCode != http.StatusInternalServerError {
 		t.Errorf("expected 500 got: %d", resp.StatusCode)
-		b, err := ioutil.ReadAll(resp.Body)
+		b, err := io.ReadAll(resp.Body)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -271,7 +271,7 @@ func TestHandlerError(t *testing.T) {
 
 	if resp.StatusCode != http.StatusInternalServerError {
 		t.Errorf("expected 500 got: %d", resp.StatusCode)
-		b, err := ioutil.ReadAll(resp.Body)
+		b, err := io.ReadAll(resp.Body)
 		if err != nil {
 			t.Fatal(err)
 		}

@@ -7,7 +7,6 @@ package jsonapi
 
 import (
 	"io"
-	"io/ioutil"
 	"net/http"
 	"strconv"
 	"time"
@@ -164,7 +163,7 @@ func (r *lenCallbackReader) Read(p []byte) (int, error) {
 
 func (r *lenCallbackReader) Close() error {
 	// read everything left
-	n, _ := io.Copy(ioutil.Discard, r.reader)
+	n, _ := io.Copy(io.Discard, r.reader)
 	r.size += int(n)
 	r.onEOF(r.size)
 	return r.reader.Close()

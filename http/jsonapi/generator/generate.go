@@ -5,9 +5,10 @@ package generator
 
 import (
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"net/url"
+	"os"
 	"strings"
 
 	"github.com/dave/jennifer/jen"
@@ -38,7 +39,7 @@ func loadSwaggerFromURI(loader *openapi3.SwaggerLoader, url *url.URL) (*openapi3
 	}
 	defer resp.Body.Close() // nolint: errcheck
 
-	body, err := ioutil.ReadAll(resp.Body)
+	body, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return nil, err
 	}
@@ -69,7 +70,7 @@ func (g *Generator) BuildSource(source, packagePath, packageName string) (string
 		}
 	} else {
 		// read spec
-		data, err := ioutil.ReadFile(source) // nolint: gosec
+		data, err := os.ReadFile(source) // nolint: gosec
 		if err != nil {
 			return "", err
 		}

@@ -7,7 +7,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -65,7 +65,7 @@ func TestHandlerIntrospectErrorAsMiddleware(t *testing.T) {
 			r.ServeHTTP(w, req)
 
 			resp := w.Result()
-			body, err := ioutil.ReadAll(resp.Body)
+			body, err := io.ReadAll(resp.Body)
 			resp.Body.Close()
 			if err != nil {
 				t.Fatal(err)
@@ -137,7 +137,7 @@ func TestAuthenticatorWithSuccess(t *testing.T) {
 			}
 			authorize, b := auth.Authorize(r, w)
 			resp := w.Result()
-			body, err := ioutil.ReadAll(resp.Body)
+			body, err := io.ReadAll(resp.Body)
 			resp.Body.Close()
 			if err != nil {
 				t.Fatal(err)
@@ -171,7 +171,7 @@ func TestAuthenticationSuccessScopeError(t *testing.T) {
 	_, b := auth.Authorize(r, w)
 
 	resp := w.Result()
-	body, err := ioutil.ReadAll(resp.Body)
+	body, err := io.ReadAll(resp.Body)
 	defer resp.Body.Close()
 	if err != nil {
 		t.Fatal(err)
@@ -228,7 +228,7 @@ func TestAuthenticationWithErrors(t *testing.T) {
 			_, b := auth.Authorize(r, w)
 
 			resp := w.Result()
-			body, err := ioutil.ReadAll(resp.Body)
+			body, err := io.ReadAll(resp.Body)
 			defer resp.Body.Close()
 			if err != nil {
 				t.Fatal(err)

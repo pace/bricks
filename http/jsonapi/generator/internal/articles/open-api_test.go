@@ -51,7 +51,8 @@ type MapTypeString map[string]string
 
 /*
 UpdateArticleCommentsHandler handles request/response marshaling and validation for
- Patch /api/articles/{uuid}/relationships/comments
+
+	Patch /api/articles/{uuid}/relationships/comments
 */
 func UpdateArticleCommentsHandler(service UpdateArticleCommentsHandlerService) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -113,7 +114,8 @@ func UpdateArticleCommentsHandler(service UpdateArticleCommentsHandlerService) h
 
 /*
 UpdateArticleInlineTypeHandler handles request/response marshaling and validation for
- Patch /api/articles/{uuid}/relationships/inline
+
+	Patch /api/articles/{uuid}/relationships/inline
 */
 func UpdateArticleInlineTypeHandler(service UpdateArticleInlineTypeHandlerService) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -170,7 +172,8 @@ func UpdateArticleInlineTypeHandler(service UpdateArticleInlineTypeHandlerServic
 
 /*
 UpdateArticleInlineRefHandler handles request/response marshaling and validation for
- Patch /api/articles/{uuid}/relationships/inlineref
+
+	Patch /api/articles/{uuid}/relationships/inlineref
 */
 func UpdateArticleInlineRefHandler(service UpdateArticleInlineRefHandlerService) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {

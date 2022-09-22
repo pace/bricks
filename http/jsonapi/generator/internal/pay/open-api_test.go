@@ -154,7 +154,8 @@ var cfgProfileKey = &apikey.Config{
 
 /*
 GetPaymentMethodsHandler handles request/response marshaling and validation for
- Get /beta/payment-methods
+
+	Get /beta/payment-methods
 */
 func GetPaymentMethodsHandler(service GetPaymentMethodsHandlerService, authBackend AuthorizationBackend) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -196,7 +197,8 @@ func GetPaymentMethodsHandler(service GetPaymentMethodsHandlerService, authBacke
 
 /*
 CreatePaymentMethodSEPAHandler handles request/response marshaling and validation for
- Post /beta/payment-methods/sepa-direct-debit
+
+	Post /beta/payment-methods/sepa-direct-debit
 */
 func CreatePaymentMethodSEPAHandler(service CreatePaymentMethodSEPAHandlerService, authBackend AuthorizationBackend) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -270,7 +272,8 @@ func CreatePaymentMethodSEPAHandler(service CreatePaymentMethodSEPAHandlerServic
 
 /*
 DeletePaymentMethodHandler handles request/response marshaling and validation for
- Delete /beta/payment-methods/{paymentMethodId}
+
+	Delete /beta/payment-methods/{paymentMethodId}
 */
 func DeletePaymentMethodHandler(service DeletePaymentMethodHandlerService, authBackend AuthorizationBackend) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -344,7 +347,8 @@ func DeletePaymentMethodHandler(service DeletePaymentMethodHandlerService, authB
 
 /*
 AuthorizePaymentMethodHandler handles request/response marshaling and validation for
- Post /beta/payment-methods/{paymentMethodId}/authorize
+
+	Post /beta/payment-methods/{paymentMethodId}/authorize
 */
 func AuthorizePaymentMethodHandler(service AuthorizePaymentMethodHandlerService, authBackend AuthorizationBackend) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -401,7 +405,8 @@ func AuthorizePaymentMethodHandler(service AuthorizePaymentMethodHandlerService,
 
 /*
 DeletePaymentTokenHandler handles request/response marshaling and validation for
- Delete /beta/payment-methods/{paymentMethodId}/paymentTokens/{paymentTokenId}
+
+	Delete /beta/payment-methods/{paymentMethodId}/paymentTokens/{paymentTokenId}
 */
 func DeletePaymentTokenHandler(service DeletePaymentTokenHandlerService, authBackend AuthorizationBackend) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -460,7 +465,8 @@ func DeletePaymentTokenHandler(service DeletePaymentTokenHandlerService, authBac
 
 /*
 GetPaymentMethodsIncludingCreditCheckHandler handles request/response marshaling and validation for
- Get /beta/payment-methods?include=creditCheck
+
+	Get /beta/payment-methods?include=creditCheck
 */
 func GetPaymentMethodsIncludingCreditCheckHandler(service GetPaymentMethodsIncludingCreditCheckHandlerService, authBackend AuthorizationBackend) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -512,7 +518,8 @@ func GetPaymentMethodsIncludingCreditCheckHandler(service GetPaymentMethodsInclu
 
 /*
 GetPaymentMethodsIncludingPaymentTokenHandler handles request/response marshaling and validation for
- Get /beta/payment-methods?include=paymentToken
+
+	Get /beta/payment-methods?include=paymentToken
 */
 func GetPaymentMethodsIncludingPaymentTokenHandler(service GetPaymentMethodsIncludingPaymentTokenHandlerService, authBackend AuthorizationBackend) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -564,7 +571,8 @@ func GetPaymentMethodsIncludingPaymentTokenHandler(service GetPaymentMethodsIncl
 
 /*
 ProcessPaymentHandler handles request/response marshaling and validation for
- Post /beta/transaction/{pathDecimal}
+
+	Post /beta/transaction/{pathDecimal}
 */
 func ProcessPaymentHandler(service ProcessPaymentHandlerService, authBackend AuthorizationBackend) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {

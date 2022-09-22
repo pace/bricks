@@ -3,7 +3,6 @@ package middleware
 import (
 	"encoding/json"
 	"io"
-	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -32,7 +31,7 @@ func TestErrorMiddleware(t *testing.T) {
 			r.ServeHTTP(rec, req)
 
 			resp := rec.Result()
-			b, err := ioutil.ReadAll(resp.Body)
+			b, err := io.ReadAll(resp.Body)
 			resp.Body.Close()
 			if err != nil {
 				t.Fatal(err)
@@ -91,7 +90,7 @@ func TestJsonApiErrorMiddlewareMultipleErrorWrite(t *testing.T) {
 	req.Header.Set("Accept", runtime.JSONAPIContentType)
 	r.ServeHTTP(rec, req)
 	resp := rec.Result()
-	b, err := ioutil.ReadAll(resp.Body)
+	b, err := io.ReadAll(resp.Body)
 	resp.Body.Close()
 	if err != nil {
 		t.Fatal(err)
@@ -132,7 +131,7 @@ func TestJsonApiErrorMiddlewareInvalidWriteOrder(t *testing.T) {
 	req.Header.Set("Accept", runtime.JSONAPIContentType)
 	r.ServeHTTP(rec, req)
 	resp := rec.Result()
-	b, err := ioutil.ReadAll(resp.Body)
+	b, err := io.ReadAll(resp.Body)
 	resp.Body.Close()
 	if err != nil {
 		t.Fatal(err)

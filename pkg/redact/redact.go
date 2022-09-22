@@ -55,8 +55,6 @@ func (r *PatternRedactor) SetScheme(scheme RedactionScheme) {
 func (r *PatternRedactor) Clone() *PatternRedactor {
 	rc := NewPatternRedactor(r.scheme)
 	rc.patterns = make([]*regexp.Regexp, len(r.patterns))
-	for i, p := range r.patterns {
-		rc.patterns[i] = p
-	}
+	copy(rc.patterns, r.patterns)
 	return rc
 }

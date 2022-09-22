@@ -6,7 +6,7 @@ package middleware
 import (
 	"context"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -23,7 +23,7 @@ func TestScopesMiddleware(t *testing.T) {
 		r.ServeHTTP(w, req)
 
 		resp := w.Result()
-		body, err := ioutil.ReadAll(resp.Body)
+		body, err := io.ReadAll(resp.Body)
 		defer resp.Body.Close()
 		if err != nil {
 			t.Fatal(err)
@@ -45,7 +45,7 @@ func TestScopesMiddleware(t *testing.T) {
 		r.ServeHTTP(w, req)
 
 		resp := w.Result()
-		body, err := ioutil.ReadAll(resp.Body)
+		body, err := io.ReadAll(resp.Body)
 		defer resp.Body.Close()
 		if err != nil {
 			t.Fatal(err)

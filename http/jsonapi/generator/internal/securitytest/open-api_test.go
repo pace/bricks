@@ -39,7 +39,8 @@ var cfgProfileKey = &apikey.Config{
 
 /*
 GetTestHandler handles request/response marshaling and validation for
- Get /beta/test
+
+	Get /beta/test
 */
 func GetTestHandler(service GetTestHandlerService, authBackend AuthorizationBackend) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {

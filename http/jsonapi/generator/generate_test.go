@@ -5,7 +5,6 @@ package generator
 
 import (
 	"fmt"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"testing"
@@ -26,7 +25,7 @@ func TestGenerator(t *testing.T) {
 
 	for _, testCase := range cases {
 		t.Run(testCase.title, func(t *testing.T) {
-			expected, err := ioutil.ReadFile(testCase.path)
+			expected, err := os.ReadFile(testCase.path)
 			if err != nil {
 				t.Fatal(err)
 			}

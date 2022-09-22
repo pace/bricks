@@ -7,7 +7,7 @@ import (
 	"bytes"
 	"context"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -47,7 +47,7 @@ func TestNewDefaultTransportChain(t *testing.T) {
 
 		assert.Equal(t, retry, 5)
 
-		body, err := ioutil.ReadAll(resp.Body)
+		body, err := io.ReadAll(resp.Body)
 		if err != nil {
 			t.Fatalf("Expected readable body, got error: %q", err.Error())
 		}
@@ -68,7 +68,7 @@ func TestNewDefaultTransportChain(t *testing.T) {
 			t.Fatalf("Expected err to be nil, got %#v", err)
 		}
 
-		body, err := ioutil.ReadAll(resp.Body)
+		body, err := io.ReadAll(resp.Body)
 		if err != nil {
 			t.Fatalf("Expected readable body, got error: %q", err.Error())
 		}
@@ -84,7 +84,7 @@ type transportWithBody struct {
 }
 
 func (t *transportWithBody) RoundTrip(req *http.Request) (*http.Response, error) {
-	body := ioutil.NopCloser(bytes.NewReader([]byte(t.body)))
+	body := io.NopCloser(bytes.NewReader([]byte(t.body)))
 	resp := &http.Response{Body: body, StatusCode: 200}
 
 	return resp, nil
