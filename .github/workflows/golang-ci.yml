@@ -6,7 +6,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        go: [ '1.19' ]
+        go: [ '1.19.1' ]
     steps:
     - uses: actions/checkout@v2
     - uses: actions/setup-go@v2
@@ -19,6 +19,8 @@ jobs:
         password: ${{ secrets.DOCKERHUB_TOKEN }}
     - name: Unit tests
       run: make test
+    - name: (Experimental) Vulnerability Scan
+      run: make vuln-scan
     - name: Integration tests
       run: docker-compose run testserver make ci
     - name: Send coverage

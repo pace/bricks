@@ -18,6 +18,9 @@ export LOG_FORMAT:=console
 install:
 	$(GO) install ./cmd/pb
 
+vuln-scan:
+	$(GO) run -mod=vendor golang.org/x/vuln/cmd/govulncheck ./...
+
 jsonapi:
 	$(GO) run $(JSONAPIGEN) -pkg poi \
 		-path $(JSONAPITEST)/poi/open-api_test.go \
