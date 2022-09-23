@@ -59,6 +59,9 @@ systems like elasticsearch.
 * `LOG_FORMAT` default: `auto`
     * If set to auto will detect if stdout is attached to a TTY and set the format to `console`
       otherwise the format will be `json`. Formats can be set directly.
+* `LOG_COMPLETED_REQUEST` default: `true`
+    * If set to true allows log handler to log request related information once at the end of 
+      the request
 
 ## Resources
 
