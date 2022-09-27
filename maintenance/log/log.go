@@ -22,8 +22,9 @@ import (
 )
 
 type config struct {
-	LogLevel string `env:"LOG_LEVEL" envDefault:"debug"`
-	Format   string `env:"LOG_FORMAT" envDefault:"auto"`
+	LogLevel            string `env:"LOG_LEVEL" envDefault:"debug"`
+	Format              string `env:"LOG_FORMAT" envDefault:"auto"`
+	LogCompletedRequest bool   `env:"LOG_COMPLETED_REQUEST" envDefault:"true"`
 }
 
 // map to translate the string log level
