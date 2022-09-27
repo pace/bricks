@@ -28,18 +28,17 @@ const RequestIDHeader = "Request-Id"
 // in the request specific Sink.
 func Handler(silentPrefixes ...string) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
-		chain := hlog.NewHandler(log.Logger)(
-			handlerWithSink(silentPrefixes...)(
-				hlog.AccessHandler(requestCompleted)(
-					RequestIDHandler("req_id", RequestIDHeader)(next))))
-
 		if !cfg.LogCompletedRequest {
-			chain = hlog.NewHandler(log.Logger)(
+			return hlog.NewHandler(log.Logger)(
 				handlerWithSink(silentPrefixes...)(
 					RequestIDHandler("req_id", RequestIDHeader)(next)))
 		}
 
-		return chain
+		return hlog.NewHandler(log.Logger)(
+			handlerWithSink(silentPrefixes...)(
+				hlog.AccessHandler(requestCompleted)(
+					RequestIDHandler("req_id", RequestIDHeader)(next))))
+
 	}
 }
 
