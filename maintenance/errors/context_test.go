@@ -58,7 +58,7 @@ func TestHide(t *testing.T) {
 				err:        fmt.Errorf("%s: %w", iAmAnError, context.Canceled),
 				exposedErr: nil,
 			},
-			want:             fmt.Errorf("%s: %s", iAmAnError, context.Canceled),
+			want:             fmt.Errorf("%s: %w", iAmAnError, context.Canceled),
 			expectContextErr: true,
 		},
 		{

@@ -19,7 +19,7 @@ func Hide(ctx context.Context, err, exposedErr error) error {
 		return nil
 	}
 
-	ret := errors.New(err.Error())
+	ret := err
 	if exposedErr != nil {
 		ret = fmt.Errorf("%w: %s", exposedErr, err)
 	}
