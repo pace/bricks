@@ -66,7 +66,7 @@ func TestRetryRoundTripper(t *testing.T) {
 				statuses:    []int{408, 502, 503, 504, 504, 504, 504, 504, 504, 504, 504, 504, 504, 504, 504, 504, 504, 504, 504, 504, 200},
 			},
 			wantRetries: 10,
-			wantErr:     false,
+			wantErr:     true,
 		},
 	}
 	for _, tt := range tests {

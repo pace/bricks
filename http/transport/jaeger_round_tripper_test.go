@@ -75,7 +75,7 @@ func TestJaegerRoundTripper(t *testing.T) {
 
 		span := opentracing.SpanFromContext(tr.ctx)
 		spanString := fmt.Sprintf("%#v", span)
-		exs := []string{`operationName:"GET /bar"`, `log.Field{key:"attempt", fieldType:2, numericVal:2`}
+		exs := []string{`operationName:"GET /bar"`, `log.Field{key:"attempt", fieldType:2, numericVal:3`}
 		for _, ex := range exs {
 			if !strings.Contains(spanString, ex) {
 				t.Errorf("Expected %q to be included in span %v", ex, spanString)

@@ -12,6 +12,8 @@ import (
 	"github.com/PuerkitoBio/rehttp"
 )
 
+const maxRetries = 9
+
 // RetryRoundTripper implements a chainable round tripper for retrying requests
 type RetryRoundTripper struct {
 	retryTransport *rehttp.Transport
@@ -40,7 +42,7 @@ func NewDefaultRetryTransport() *rehttp.Transport {
 	return rehttp.NewTransport(
 		nil,
 		rehttp.RetryAll(
-			rehttp.RetryMaxRetries(9),
+			rehttp.RetryMaxRetries(maxRetries),
 			rehttp.RetryAny(
 				rehttp.RetryStatuses(408, 502, 503, 504),
 				RetryEOFErr(),
@@ -63,6 +65,16 @@ func NewDefaultRetryRoundTripper() *RetryRoundTripper {
 	return &RetryRoundTripper{retryTransport: NewDefaultRetryTransport()}
 }
 
+type retryWrappedTransport struct {
+	transport http.RoundTripper
+	attempts  int
+}
+
+func (rt *retryWrappedTransport) RoundTrip(r *http.Request) (*http.Response, error) {
+	rt.attempts++
+	return rt.transport.RoundTrip(r)
+}
+
 // Transport returns the RoundTripper to make HTTP requests
 func (l *RetryRoundTripper) Transport() http.RoundTripper {
 	return l.transport
@@ -76,11 +88,18 @@ func (l *RetryRoundTripper) SetTransport(rt http.RoundTripper) {
 // RoundTrip executes a HTTP request with retrying
 func (l *RetryRoundTripper) RoundTrip(req *http.Request) (*http.Response, error) {
 	retryTransport := *l.retryTransport
-	retryTransport.RoundTripper = transportWithAttempt(l.Transport())
+	wrappedTransport := &retryWrappedTransport{
+		transport: transportWithAttempt(l.Transport()),
+	}
+	retryTransport.RoundTripper = wrappedTransport
 	resp, err := retryTransport.RoundTrip(req)
 
 	if err != nil {
 		return nil, err
+	}
+
+	if resp.StatusCode >= 400 && wrappedTransport.attempts > maxRetries {
+		return nil, ErrRetryFailed
 	}
 
 	return resp, nil
