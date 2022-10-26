@@ -4,57 +4,58 @@
 package transport
 
 import (
-	"errors"
+	"io"
+	"net"
 	"net/http"
 	"time"
 
-	"github.com/streadway/handy/retry"
+	"github.com/PuerkitoBio/rehttp"
 )
+
+const maxRetries = 9
 
 // RetryRoundTripper implements a chainable round tripper for retrying requests
 type RetryRoundTripper struct {
-	retryTransport *retry.Transport
+	retryTransport *rehttp.Transport
 	transport      http.RoundTripper
 }
 
-// RetryCodes retries when the status code is one of the provided list
-func RetryCodes(codes ...int) retry.Retryer {
-	return func(a retry.Attempt) (retry.Decision, error) {
-		if a.Response == nil {
-			return retry.Ignore, nil
+// RetryNetErr retries errors returned by the 'net' package.
+func RetryNetErr() rehttp.RetryFn {
+	return func(attempt rehttp.Attempt) bool {
+		if _, isNetError := attempt.Error.(*net.OpError); isNetError {
+			return true
 		}
-		for _, code := range codes {
-			if a.Response.StatusCode == code {
-				return retry.Retry, nil
-			}
-		}
-		return retry.Ignore, nil
+		return false
 	}
 }
 
-// Context aborts if the request's context is finished
-func Context() retry.Retryer {
-	return func(a retry.Attempt) (retry.Decision, error) {
-		ctx := a.Request.Context()
-		select {
-		case <-ctx.Done():
-			return retry.Abort, ctx.Err()
-		default:
-			return retry.Ignore, nil
-		}
+// RetryEOFErr retries only when the error is EOF
+func RetryEOFErr() rehttp.RetryFn {
+	return func(attempt rehttp.Attempt) bool {
+		return attempt.Error == io.EOF
 	}
 }
 
 // NewDefaultRetryTransport returns a new default retry transport.
-func NewDefaultRetryTransport() *retry.Transport {
-	return &retry.Transport{
-		Delay: retry.Constant(100 * time.Millisecond),
-		Retry: retry.All(Context(), retry.Max(9), retry.EOF(), retry.Net(), retry.Temporary(), RetryCodes(408, 502, 503, 504)),
-	}
+func NewDefaultRetryTransport() *rehttp.Transport {
+	return rehttp.NewTransport(
+		nil,
+		rehttp.RetryAll(
+			rehttp.RetryMaxRetries(maxRetries),
+			rehttp.RetryAny(
+				rehttp.RetryStatuses(408, 502, 503, 504),
+				RetryEOFErr(),
+				RetryNetErr(),
+				rehttp.RetryTemporaryErr(),
+			),
+		),
+		rehttp.ConstDelay(100*time.Millisecond),
+	)
 }
 
 // NewRetryRoundTripper returns a retry round tripper with the specified retry transport.
-func NewRetryRoundTripper(rt *retry.Transport) *RetryRoundTripper {
+func NewRetryRoundTripper(rt *rehttp.Transport) *RetryRoundTripper {
 	return &RetryRoundTripper{retryTransport: rt}
 }
 
@@ -62,6 +63,16 @@ func NewRetryRoundTripper(rt *retry.Transport) *RetryRoundTripper {
 // NewDefaultRetryTransport() as transport.
 func NewDefaultRetryRoundTripper() *RetryRoundTripper {
 	return &RetryRoundTripper{retryTransport: NewDefaultRetryTransport()}
+}
+
+type retryWrappedTransport struct {
+	transport http.RoundTripper
+	attempts  int
+}
+
+func (rt *retryWrappedTransport) RoundTrip(r *http.Request) (*http.Response, error) {
+	rt.attempts++
+	return rt.transport.RoundTrip(r)
 }
 
 // Transport returns the RoundTripper to make HTTP requests
@@ -77,17 +88,18 @@ func (l *RetryRoundTripper) SetTransport(rt http.RoundTripper) {
 // RoundTrip executes a HTTP request with retrying
 func (l *RetryRoundTripper) RoundTrip(req *http.Request) (*http.Response, error) {
 	retryTransport := *l.retryTransport
-	retryTransport.Next = transportWithAttempt(l.Transport())
+	wrappedTransport := &retryWrappedTransport{
+		transport: transportWithAttempt(l.Transport()),
+	}
+	retryTransport.RoundTripper = wrappedTransport
 	resp, err := retryTransport.RoundTrip(req)
 
-	var maxRetriesError retry.MaxError
 	if err != nil {
-		switch {
-		case errors.As(err, &maxRetriesError):
-			return nil, ErrRetryFailed
-		default:
-			return nil, err
-		}
+		return nil, err
+	}
+
+	if resp.StatusCode >= 400 && wrappedTransport.attempts > maxRetries {
+		return nil, ErrRetryFailed
 	}
 
 	return resp, nil

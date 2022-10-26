@@ -5,6 +5,7 @@ go 1.19
 replace github.com/adjust/rmq/v3 => github.com/daemonfire300/rmq/v3 v3.0.2
 
 require (
+	github.com/PuerkitoBio/rehttp v1.1.0
 	github.com/adjust/rmq/v3 v3.0.0
 	github.com/asaskevich/govalidator v0.0.0-20210307081110-f21760c49a8d
 	github.com/bsm/redislock v0.5.0
@@ -35,7 +36,6 @@ require (
 	github.com/shopspring/decimal v0.0.0-20200105231215-408a2507e114
 	github.com/sony/gobreaker v0.4.1
 	github.com/spf13/cobra v1.4.0
-	github.com/streadway/handy v0.0.0-20200128134331-0f66f006fb2e
 	github.com/stretchr/testify v1.7.1
 	github.com/uber/jaeger-client-go v2.14.0+incompatible
 	github.com/uber/jaeger-lib v1.5.0

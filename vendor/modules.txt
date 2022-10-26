@@ -23,6 +23,9 @@ github.com/Masterminds/semver
 # github.com/OpenPeeDeeP/depguard v1.1.0
 ## explicit; go 1.13
 github.com/OpenPeeDeeP/depguard
+# github.com/PuerkitoBio/rehttp v1.1.0
+## explicit; go 1.16
+github.com/PuerkitoBio/rehttp
 # github.com/adjust/rmq/v3 v3.0.0 => github.com/daemonfire300/rmq/v3 v3.0.2
 ## explicit; go 1.16
 github.com/adjust/rmq/v3
@@ -645,9 +648,6 @@ github.com/ssgreg/nlreturn/v2/pkg/nlreturn
 # github.com/stbenjam/no-sprintf-host-port v0.1.1
 ## explicit; go 1.16
 github.com/stbenjam/no-sprintf-host-port/pkg/analyzer
-# github.com/streadway/handy v0.0.0-20200128134331-0f66f006fb2e
-## explicit
-github.com/streadway/handy/retry
 # github.com/stretchr/objx v0.1.1
 ## explicit
 github.com/stretchr/objx

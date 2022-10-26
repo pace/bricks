@@ -8,82 +8,104 @@ import (
 	"context"
 	"errors"
 	"io"
+	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
 	"testing"
+
+	"github.com/stretchr/testify/require"
 )
 
 func TestRetryRoundTripper(t *testing.T) {
-	req := httptest.NewRequest("GET", "/foo", nil)
 
-	t.Run("Successful response after some retries", func(t *testing.T) {
-		rt := NewDefaultRetryRoundTripper()
-		tr := &retriedTransport{body: "abc", statusCodes: []int{408, 502, 503, 504, 200}}
-		rt.SetTransport(tr)
+	type args struct {
+		requestBody []byte
+		statuses    []int
+		err         error
+		cancel      bool
+	}
 
-		resp, err := rt.RoundTrip(req)
+	tests := []struct {
+		name        string
+		args        args
+		wantRetries int
+		wantErr     bool
+	}{
+		{
+			name: "Successful response after some retries",
+			args: args{
+				requestBody: []byte(`{"key":"value""}`),
+				statuses:    []int{408, 502, 503, 504, 200},
+			},
+			wantRetries: 5,
+			wantErr:     false,
+		},
+		{
+			name: "No retry after error response",
+			args: args{
+				requestBody: []byte(`{"key":"value""}`),
+				statuses:    []int{408, 502, 503, 504, 200},
+				err:         errors.New("Any Error"),
+			},
+			wantRetries: 0,
+			wantErr:     true,
+		},
+		{
+			name: "No retry after context is finished",
+			args: args{
+				requestBody: []byte(`{"key":"value""}`),
+				statuses:    []int{408, 502, 503, 504, 200},
+				cancel:      true,
+			},
+			wantRetries: 1,
+			wantErr:     true,
+		},
+		{
+			name: "Exceed retries",
+			args: args{
+				requestBody: []byte(`{"key":"value""}`),
+				statuses:    []int{408, 502, 503, 504, 504, 504, 504, 504, 504, 504, 504, 504, 504, 504, 504, 504, 504, 504, 504, 504, 200},
+			},
+			wantRetries: 10,
+			wantErr:     true,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
 
-		if err != nil {
-			t.Fatalf("Expected err to be nil, got %#v", err)
-		}
+			rt := NewDefaultRetryRoundTripper()
+			tr := &retriedTransport{
+				statusCodes: tt.args.statuses,
+				err:         tt.args.err,
+			}
+			rt.SetTransport(tr)
 
-		if ex, got := 4, tr.attempts; got != ex {
-			t.Errorf("Expected %d attempts, got %d", ex, got)
-		}
+			ctx, cancel := context.WithCancel(context.Background())
+			defer cancel()
+			// cancel directly, so the original request is performed and
+			// then the retry mechanism aborts on the second attempt
+			if tt.args.cancel {
+				cancel()
+			}
+			req := httptest.NewRequest("GET", "/foo", bytes.NewReader(tt.args.requestBody))
+			resp, err := rt.RoundTrip(req.WithContext(ctx))
 
-		body, err := io.ReadAll(resp.Body)
-		if err != nil {
-			t.Fatalf("Expected readable body, got error: %q", err.Error())
-		}
-		if tr.body != string(body) {
-			t.Errorf("Expected body %q, got %q", tr.body, string(body))
-		}
-		if got, ex := attemptFromCtx(tr.ctx), int32(4); got != ex {
-			t.Errorf("Expected %d attempts, got %d", ex, got)
-		}
-	})
-	t.Run("No retry after error response", func(t *testing.T) {
-		rt := NewDefaultRetryRoundTripper()
-		e := errors.New("abc")
-		tr := &retriedTransport{err: e}
-		rt.SetTransport(tr)
+			require.Equal(t, tt.wantRetries, tr.attempts)
 
-		_, err := rt.RoundTrip(req)
+			if tt.wantErr {
+				require.Error(t, err)
+				return
+			} else {
+				require.NoError(t, err)
+			}
 
-		if err == nil {
-			t.Fatal("Expected error to be returned, got nil")
-		}
-		if got, ex := err.Error(), e.Error(); got != ex {
-			t.Errorf("Expected error %q, got %q", ex, got)
-		}
-		if ex, got := 1, tr.attempts; got != ex {
-			t.Errorf("Expected %d attempts, got %d", ex, got)
-		}
-		if got, ex := attemptFromCtx(tr.ctx), int32(1); got != ex {
-			t.Errorf("Expected %d attempts, got %d", ex, got)
-		}
-	})
-	t.Run("No retry after context is finished", func(t *testing.T) {
-		rt := NewDefaultRetryRoundTripper()
-		tr := &retriedTransport{body: "abc", statusCodes: []int{408, 502, 503, 504, 200}}
-		rt.SetTransport(tr)
+			body, err := ioutil.ReadAll(resp.Body)
+			require.NoError(t, err)
+			require.Equal(t, string(tt.args.requestBody), string(body))
+			require.Equal(t, tt.wantRetries, int(attemptFromCtx(tr.ctx)))
 
-		ctx, cancel := context.WithCancel(context.Background())
-		// cancel directly, so the original request is performed and
-		// then the retry mechanism aborts on the second attempt
-		cancel()
-		resp, err := rt.RoundTrip(req.WithContext(ctx))
-
-		if resp == nil && err == nil {
-			t.Fatalf("Expected err or response")
-		}
-		if ex, got := 1, tr.attempts; got != ex {
-			t.Errorf("Expected %d attempts, got %d", ex, got)
-		}
-		if got, ex := attemptFromCtx(tr.ctx), int32(1); got != ex {
-			t.Errorf("Expected %d attempts, got %d", ex, got)
-		}
-	})
+		})
+	}
 }
 
 type retriedTransport struct {
@@ -91,8 +113,6 @@ type retriedTransport struct {
 	attempts int
 	// returned status codes in order they are provided
 	statusCodes []int
-	// returned response body as string
-	body string
 	// returned error
 	err error
 	// recorded context
@@ -100,14 +120,15 @@ type retriedTransport struct {
 }
 
 func (t *retriedTransport) RoundTrip(req *http.Request) (*http.Response, error) {
-	t.attempts++
 	t.ctx = req.Context()
 
 	if t.err != nil {
 		return nil, t.err
 	}
-	body := io.NopCloser(bytes.NewReader([]byte(t.body)))
+	readAll, _ := io.ReadAll(req.Body)
+	body := ioutil.NopCloser(bytes.NewReader(readAll))
 	resp := &http.Response{Body: body, StatusCode: t.statusCodes[t.attempts]}
+	t.attempts++
 
 	return resp, nil
 }
