@@ -204,7 +204,7 @@ func TestHandlerWithLogSink(t *testing.T) {
 		sink2Ctx = r.Context()
 
 		client := &http.Client{
-			Transport: transport.NewDefaultTransportChain(),
+			Transport: transport.Chain(&transport.LoggingRoundTripper{}, &transport.DumpRoundTripper{}),
 		}
 
 		r0, err := http.NewRequest("GET", "https://www.pace.car/de", nil)
