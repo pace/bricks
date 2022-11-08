@@ -2,7 +2,7 @@
 // Created at 2018/09/04 by Vincent Landgraf
 
 // Package jsonapi implements the json api related metrics documented here:
-// https://lab.jamit.de/pace/web/meta/wikis/concept/metrics#m2-microservice-any-pace-microservice
+// https://git.pace.cloud/pace/web/meta/wikis/concept/metrics#m2-microservice-any-pace-microservice
 package jsonapi
 
 import (
