@@ -1,6 +1,6 @@
 ## exhaustive [![Godoc][2]][1]
 
-Check exhaustiveness of enum switch statements in Go source code.
+Check exhaustiveness of enum switch statements and map literals in Go source code.
 
 ```
 go install github.com/nishanths/exhaustive/cmd/exhaustive@latest
@@ -14,6 +14,12 @@ For the changelog, see [CHANGELOG][changelog] in the wiki.
 The package provides an `Analyzer` that follows the guidelines in the
 [`go/analysis`][3] package; this should make it possible to integrate
 exhaustive with your own analysis driver program.
+
+## Bugs
+
+`exhaustive` does not report missing cases if the switch statement
+switches on a type parameterized type. See [this
+issue](https://github.com/nishanths/exhaustive/issues/31) for details.
 
 ## Example
 
@@ -33,7 +39,7 @@ const (
 )
 ```
 
-and the switch statement
+and the code
 
 ```go
 package calc
@@ -48,12 +54,21 @@ func f(t token.Token) {
 	default:
 	}
 }
+
+func g(t token.Token) string {
+	return map[token.Token]string{
+		token.Add:      "add",
+		token.Subtract: "subtract",
+		token.Multiply: "multiply",
+	}[t]
+}
 ```
 
 running exhaustive will print
 
 ```
 calc.go:6:2: missing cases in switch of type token.Token: Quotient, Remainder
+calc.go:15:9: missing map keys of type token.Token: Quotient, Remainder
 ```
 
 ## Contributing

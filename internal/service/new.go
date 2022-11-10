@@ -28,7 +28,7 @@ func New(name string, options NewOptions) {
 
 	SimpleExec("git", "init", dir)
 	SimpleExecInPath(dir, "git", "remote", "add", "origin", fmt.Sprintf(GitLabTemplate, name))
-	log.Printf("Remember to create the %s repository in gitlab: https://git.pace.cloud/projects/new?namespace_id=296\n", name)
+	log.Printf("Remember to create the %s repository in gitlab: https://your_gitlab_url_goes_here/projects/new\n", name)
 
 	// add REST API if there was a source specified
 	if options.RestSource != "" {

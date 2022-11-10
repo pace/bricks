@@ -1,8 +1,7 @@
 // Copyright © 2018 by PACE Telematics GmbH. All rights reserved.
 // Created at 2018/09/04 by Vincent Landgraf
 
-// Package jsonapi implements the json api related metrics documented here:
-// https://git.pace.cloud/pace/web/meta/wikis/concept/metrics#m2-microservice-any-pace-microservice
+// Package jsonapi implements the json api related metrics
 package jsonapi
 
 import (
@@ -11,8 +10,9 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/pace/bricks/http/oauth2"
 	"github.com/prometheus/client_golang/prometheus"
+
+	"github.com/pace/bricks/http/oauth2"
 )
 
 const (
