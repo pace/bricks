@@ -23,7 +23,12 @@ var readinessCheck = &handler{check: liveness}
 func (h *handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	logger := log.Logger()
 	logger.Level(zerolog.DebugLevel)
-	h.check(w, r.WithContext(logger.WithContext(r.Context())))
+	h.check(w, r.WithContext(
+		log.ContextWithSink(
+			logger.WithContext(r.Context()),
+			log.NewSink(log.Silent()),
+		),
+	))
 }
 
 // ReadinessCheck allows to set a different function for the readiness check. The default readiness check
