@@ -93,7 +93,7 @@ func RegisterOptionalHealthCheck(hc HealthCheck, name string, opts ...HealthChec
 // registerHealthCheck will run the HealthCheck in the background.
 func registerHealthCheck(checks *sync.Map, name string, check HealthCheck, opts ...HealthCheckOption) {
 	ctx := log.Logger().WithContext(context.Background())
-	ctx = log.ContextWithSink(ctx, log.NewSink(Silent()))
+	ctx = log.ContextWithSink(ctx, log.NewSink(log.Silent()))
 
 	// create config based on defaults, then overwrite with given options
 	hcCfg := HealthCheckCfg{
