@@ -68,7 +68,6 @@ services:
       - JAEGER_SAMPLER_TYPE=const
       - JAEGER_SAMPLER_PARAM=1
       - JAEGER_SERVICE_NAME=testserver
-      - SENTRY_DSN=https://35223d89148145ae9d47ba3f268e6ece:1756d00edb714cf1aa07b478627176f3@sentry.jamit.de/193
       - SENTRY_ENVIRONMENT=development
       - SENTRY_RELEASE=HEAD
       - PACE_LIVETEST_INTERVAL=10s

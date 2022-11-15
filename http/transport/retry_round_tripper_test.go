@@ -8,7 +8,6 @@ import (
 	"context"
 	"errors"
 	"io"
-	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -99,7 +98,7 @@ func TestRetryRoundTripper(t *testing.T) {
 				require.NoError(t, err)
 			}
 
-			body, err := ioutil.ReadAll(resp.Body)
+			body, err := io.ReadAll(resp.Body)
 			require.NoError(t, err)
 			require.Equal(t, string(tt.args.requestBody), string(body))
 			require.Equal(t, tt.wantRetries, int(attemptFromCtx(tr.ctx)))
@@ -126,7 +125,7 @@ func (t *retriedTransport) RoundTrip(req *http.Request) (*http.Response, error) 
 		return nil, t.err
 	}
 	readAll, _ := io.ReadAll(req.Body)
-	body := ioutil.NopCloser(bytes.NewReader(readAll))
+	body := io.NopCloser(bytes.NewReader(readAll))
 	resp := &http.Response{Body: body, StatusCode: t.statusCodes[t.attempts]}
 	t.attempts++
 
