@@ -73,7 +73,7 @@ func init() {
 		logOutput = zerolog.ConsoleWriter{Out: os.Stdout, TimeFormat: "2006-01-02 15:04:05"}
 	case "json":
 		// configure json output log
-		// use default timestamp format (RFC3339, subset of iso8601) and UTC for json as defined in https://lab.jamit.de/pace/web/meta/issues/11
+		// use default timestamp format (RFC3339, subset of iso8601) and UTC for json as defined in https://git.pace.cloud/pace/web/meta/issues/11
 		logOutput = os.Stdout
 		zerolog.TimestampFunc = func() time.Time { return time.Now().UTC() }
 	}
