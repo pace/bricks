@@ -14,13 +14,13 @@ import (
 )
 
 // PaceBase for all go projects
-const PaceBase = "lab.jamit.de/pace"
+const PaceBase = "git.pace.cloud/pace"
 
 // ServiceBase for all go microservices
 const ServiceBase = "web/service"
 
 // GitLabTemplate git clone template for cloning repositories
-const GitLabTemplate = "git@lab.jamit.de:pace/web/service/%s.git"
+const GitLabTemplate = "git@git.pace.cloud:pace/web/service/%s.git"
 
 // GoPath returns the gopath for the current system,
 // uses GOPATH env and fallback to default go dir
