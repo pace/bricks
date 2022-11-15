@@ -13,6 +13,7 @@ import (
 	"testing"
 
 	"github.com/gorilla/mux"
+
 	"github.com/pace/bricks/http/security"
 	"github.com/pace/bricks/maintenance/log"
 )
@@ -402,5 +403,58 @@ func TestWithBearerToken(t *testing.T) {
 	token, ok := security.GetTokenFromContext(ctx)
 	if !ok || token.GetValue() != "some access token" {
 		t.Error("could not store bearer token in context")
+	}
+}
+
+func TestAddScope(t *testing.T) {
+	type args struct {
+		ctx   context.Context
+		scope string
+	}
+
+	ctx := context.Background()
+	ctx = WithBearerToken(ctx, "some access token")
+
+	wantCtx := context.Background()
+	wantCtx = WithBearerToken(wantCtx, "some access token")
+	tok, ok := security.GetTokenFromContext(wantCtx)
+	if !ok {
+		t.Error("could not get token from context")
+	}
+	ouathToken, ok := tok.(*token)
+	if !ok {
+		t.Error("could not convert token to oauth token")
+	}
+	ouathToken.scope = "scope1"
+
+	tests := []struct {
+		name string
+		args args
+		want *token
+	}{
+		{
+			name: "add scope",
+			args: args{
+				ctx:   ctx,
+				scope: "scope1",
+			},
+			want: ouathToken,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := AddScope(tt.args.ctx, tt.args.scope)
+			gotTok, ok := security.GetTokenFromContext(got)
+			if !ok {
+				t.Error("could not get token from context")
+			}
+			gotOauthToken, ok := gotTok.(*token)
+			if !ok {
+				t.Error("could not convert token to oauth token")
+			}
+			if gotOauthToken.scope != tt.want.scope {
+				t.Errorf("AddScope() = %v, want %v", gotOauthToken.scope, tt.want.scope)
+			}
+		})
 	}
 }

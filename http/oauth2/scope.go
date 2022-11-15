@@ -40,3 +40,7 @@ func (s *Scope) IsIncludedIn(t Scope) bool {
 func (s *Scope) toSlice() []string {
 	return strings.Fields(string(*s))
 }
+
+func (s *Scope) Add(scope string) Scope {
+	return Scope(strings.Join(append(s.toSlice(), scope), " "))
+}
