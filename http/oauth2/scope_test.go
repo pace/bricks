@@ -31,3 +31,24 @@ func TestIsIncludedIn(t *testing.T) {
 		}
 	}
 }
+
+func TestScope_Add(t *testing.T) {
+	type args struct {
+		scope string
+	}
+	tests := []struct {
+		name string
+		s    Scope
+		args args
+		want Scope
+	}{
+		{"add one", Scope("a:read"), args{"b:write"}, Scope("a:read b:write")},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := tt.s.Add(tt.args.scope); got != tt.want {
+				t.Errorf("Add() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}

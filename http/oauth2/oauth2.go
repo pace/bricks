@@ -11,8 +11,9 @@ import (
 	"errors"
 	"net/http"
 
-	opentracing "github.com/opentracing/opentracing-go"
+	"github.com/opentracing/opentracing-go"
 	olog "github.com/opentracing/opentracing-go/log"
+
 	"github.com/pace/bricks/http/security"
 	"github.com/pace/bricks/maintenance/log"
 )
@@ -148,6 +149,16 @@ func Scopes(ctx context.Context) []string {
 		return []string{}
 	}
 	return oauth2token.scope.toSlice()
+}
+
+func AddScope(ctx context.Context, scope string) context.Context {
+	tok, _ := security.GetTokenFromContext(ctx)
+	oauth2token, ok := tok.(*token)
+	if !ok {
+		return ctx
+	}
+	oauth2token.scope = oauth2token.scope.Add(scope)
+	return security.ContextWithToken(ctx, oauth2token)
 }
 
 // ClientID returns the clientID stored in ctx
