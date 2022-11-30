@@ -7,6 +7,7 @@ import (
 	"bytes"
 	"context"
 	"errors"
+	"fmt"
 	"io"
 	"net/http"
 	"net/http/httptest"
@@ -21,14 +22,15 @@ func TestRetryRoundTripper(t *testing.T) {
 		requestBody []byte
 		statuses    []int
 		err         error
-		cancel      bool
 	}
+
+	anyErr := errors.New("any error")
 
 	tests := []struct {
 		name        string
 		args        args
 		wantRetries int
-		wantErr     bool
+		wantErr     error
 	}{
 		{
 			name: "Successful response after some retries",
@@ -37,27 +39,33 @@ func TestRetryRoundTripper(t *testing.T) {
 				statuses:    []int{408, 502, 503, 504, 200},
 			},
 			wantRetries: 5,
-			wantErr:     false,
 		},
 		{
 			name: "No retry after error response",
 			args: args{
 				requestBody: []byte(`{"key":"value""}`),
-				statuses:    []int{408, 502, 503, 504, 200},
-				err:         errors.New("Any Error"),
+				err:         anyErr,
 			},
 			wantRetries: 0,
-			wantErr:     true,
+			wantErr:     anyErr,
 		},
 		{
-			name: "No retry after context is finished",
+			name: "No retry after context is canceled",
 			args: args{
 				requestBody: []byte(`{"key":"value""}`),
-				statuses:    []int{408, 502, 503, 504, 200},
-				cancel:      true,
+				err:         context.Canceled,
 			},
-			wantRetries: 1,
-			wantErr:     true,
+			wantRetries: 0,
+			wantErr:     context.Canceled,
+		},
+		{
+			name: "No retry after context deadline is exceeded",
+			args: args{
+				requestBody: []byte(`{"key":"value""}`),
+				err:         context.DeadlineExceeded,
+			},
+			wantRetries: 0,
+			wantErr:     context.DeadlineExceeded,
 		},
 		{
 			name: "Exceed retries",
@@ -66,7 +74,7 @@ func TestRetryRoundTripper(t *testing.T) {
 				statuses:    []int{408, 502, 503, 504, 504, 504, 504, 504, 504, 504, 504, 504, 504, 504, 504, 504, 504, 504, 504, 504, 200},
 			},
 			wantRetries: 10,
-			wantErr:     true,
+			wantErr:     ErrRetryFailed,
 		},
 	}
 	for _, tt := range tests {
@@ -79,30 +87,21 @@ func TestRetryRoundTripper(t *testing.T) {
 			}
 			rt.SetTransport(tr)
 
-			ctx, cancel := context.WithCancel(context.Background())
-			defer cancel()
-			// cancel directly, so the original request is performed and
-			// then the retry mechanism aborts on the second attempt
-			if tt.args.cancel {
-				cancel()
-			}
 			req := httptest.NewRequest("GET", "/foo", bytes.NewReader(tt.args.requestBody))
-			resp, err := rt.RoundTrip(req.WithContext(ctx))
+			resp, err := rt.RoundTrip(req.WithContext(context.Background()))
 
 			require.Equal(t, tt.wantRetries, tr.attempts)
 
-			if tt.wantErr {
-				require.Error(t, err)
+			if tt.wantErr != nil {
+				require.ErrorIs(t, err, tt.wantErr)
 				return
-			} else {
-				require.NoError(t, err)
 			}
+			require.NoError(t, err)
 
 			body, err := io.ReadAll(resp.Body)
 			require.NoError(t, err)
 			require.Equal(t, string(tt.args.requestBody), string(body))
 			require.Equal(t, tt.wantRetries, int(attemptFromCtx(tr.ctx)))
-
 		})
 	}
 }
@@ -122,7 +121,7 @@ func (t *retriedTransport) RoundTrip(req *http.Request) (*http.Response, error) 
 	t.ctx = req.Context()
 
 	if t.err != nil {
-		return nil, t.err
+		return nil, fmt.Errorf("%w", t.err)
 	}
 	readAll, _ := io.ReadAll(req.Body)
 	body := io.NopCloser(bytes.NewReader(readAll))
