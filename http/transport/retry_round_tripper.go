@@ -4,6 +4,8 @@
 package transport
 
 import (
+	"context"
+	"errors"
 	"io"
 	"net"
 	"net/http"
@@ -47,7 +49,12 @@ func NewDefaultRetryTransport() *rehttp.Transport {
 				rehttp.RetryStatuses(408, 502, 503, 504),
 				RetryEOFErr(),
 				RetryNetErr(),
-				rehttp.RetryTemporaryErr(),
+				rehttp.RetryAll(
+					rehttp.RetryTemporaryErr(),
+					rehttp.RetryIsErr(func(err error) bool {
+						return !errors.Is(err, context.DeadlineExceeded)
+					}),
+				),
 			),
 		),
 		rehttp.ConstDelay(100*time.Millisecond),
