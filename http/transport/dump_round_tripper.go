@@ -12,6 +12,7 @@ import (
 	"strings"
 
 	"github.com/caarlos0/env"
+
 	"github.com/pace/bricks/maintenance/log"
 	"github.com/pace/bricks/pkg/redact"
 )
@@ -21,15 +22,10 @@ import (
 type DumpRoundTripper struct {
 	transport http.RoundTripper
 
-	DumpRequest     bool
-	DumpResponse    bool
-	DumpRequestHEX  bool
-	DumpResponseHEX bool
-	DumpBody        bool
-	DumpNoRedact    bool
+	options DumpOptions
 
-	BlacklistBodyDumpPrefixes []string
-	BlacklistAnyDumpPrefixes  []string
+	blacklistAnyDumpPrefixes  []string
+	blacklistBodyDumpPrefixes []string
 }
 
 type DumpRoundTripperOption func(rt *DumpRoundTripper) (*DumpRoundTripper, error)
@@ -47,54 +43,29 @@ func roundTripConfigViaEnv() DumpRoundTripperOption {
 		if err != nil {
 			return rt, fmt.Errorf("failed to parse dump round tripper environment: %w", err)
 		}
-		if err := setRoundTripOptions(rt, cfg.Options...); err != nil {
-			return rt, err
+		for _, option := range cfg.Options {
+			if !isDumpOptionValid(option) {
+				return nil, fmt.Errorf("invalid dump option %q", option)
+			}
+			rt.options[option] = true
 		}
-		rt.BlacklistBodyDumpPrefixes = cfg.BlacklistBodyDumpPrefixes
-		rt.BlacklistAnyDumpPrefixes = cfg.BlacklistAnyDumpPrefixes
+		rt.blacklistAnyDumpPrefixes = cfg.BlacklistAnyDumpPrefixes
+		rt.blacklistBodyDumpPrefixes = cfg.BlacklistBodyDumpPrefixes
 		return rt, nil
 	}
-}
-
-func setRoundTripOptions(rt *DumpRoundTripper, dumpOptions ...string) error {
-	for _, option := range dumpOptions {
-		switch option {
-		case DumpRoundTripperOptionRequest:
-			rt.DumpRequest = true
-		case DumpRoundTripperOptionResponse:
-			rt.DumpResponse = true
-		case DumpRoundTripperOptionRequestHEX:
-			rt.DumpRequestHEX = true
-		case DumpRoundTripperOptionResponseHEX:
-			rt.DumpResponseHEX = true
-		case DumpRoundTripperOptionBody:
-			rt.DumpBody = true
-		case DumpRoundTripperOptionNoRedact:
-			rt.DumpNoRedact = true
-		default:
-			return fmt.Errorf("failed to parse dump round tripper options from input: %v", option)
-		}
-	}
-	return nil
 }
 
 func RoundTripConfig(dumpOptions ...string) DumpRoundTripperOption {
 	return func(rt *DumpRoundTripper) (*DumpRoundTripper, error) {
-		if err := setRoundTripOptions(rt, dumpOptions...); err != nil {
-			return rt, err
+		for _, option := range dumpOptions {
+			if !isDumpOptionValid(option) {
+				return nil, fmt.Errorf("invalid dump option %q", option)
+			}
+			rt.options[option] = true
 		}
 		return rt, nil
 	}
 }
-
-const (
-	DumpRoundTripperOptionRequest     = "request"
-	DumpRoundTripperOptionResponse    = "response"
-	DumpRoundTripperOptionRequestHEX  = "request-hex"
-	DumpRoundTripperOptionResponseHEX = "response-hex"
-	DumpRoundTripperOptionBody        = "body"
-	DumpRoundTripperOptionNoRedact    = "no-redact"
-)
 
 // NewDumpRoundTripperEnv creates a new RoundTripper based on the configuration
 // that is passed via environment variables
@@ -108,7 +79,7 @@ func NewDumpRoundTripperEnv() *DumpRoundTripper {
 
 // NewDumpRoundTripper return the roundtripper with configured options
 func NewDumpRoundTripper(options ...DumpRoundTripperOption) (*DumpRoundTripper, error) {
-	rt := &DumpRoundTripper{}
+	rt := &DumpRoundTripper{options: DumpOptions{}}
 	var err error
 	for _, option := range options {
 		rt, err = option(rt)
@@ -130,11 +101,11 @@ func (l *DumpRoundTripper) SetTransport(rt http.RoundTripper) {
 }
 
 // AnyEnabled returns true if any logging is enabled
-func (l DumpRoundTripper) AnyEnabled() bool {
-	return l.DumpRequest || l.DumpResponse || l.DumpRequestHEX || l.DumpResponseHEX
+func (l *DumpRoundTripper) AnyEnabled() bool {
+	return l.options.AnyEnabled(DumpRoundTripperOptionRequest, DumpRoundTripperOptionRequestHEX, DumpRoundTripperOptionResponse, DumpRoundTripperOptionResponseHEX)
 }
 
-func (l DumpRoundTripper) ContainsBlacklistedPrefix(url *url.URL, blacklist []string) bool {
+func (l *DumpRoundTripper) ContainsBlacklistedPrefix(url *url.URL, blacklist []string) bool {
 	if len(blacklist) == 0 {
 		return false
 	}
@@ -151,26 +122,28 @@ func (l DumpRoundTripper) ContainsBlacklistedPrefix(url *url.URL, blacklist []st
 func (l *DumpRoundTripper) RoundTrip(req *http.Request) (*http.Response, error) {
 	var redactor *redact.PatternRedactor
 
+	options := mergeDumpOptions(l.options, DumpRoundTripperOptionsFromCtx(req.Context()))
+
 	// check if the content redaction is enabled
-	if !l.DumpNoRedact {
+	if !options.IsEnabled(DumpRoundTripperOptionNoRedact) {
 		redactor = redact.Ctx(req.Context())
 	}
 
 	// fast path if logging is disabled
-	if !l.AnyEnabled() {
+	if !options.AnyEnabled(DumpRoundTripperOptionRequest, DumpRoundTripperOptionRequestHEX, DumpRoundTripperOptionResponse, DumpRoundTripperOptionResponseHEX) {
 		return l.Transport().RoundTrip(req)
 	}
 
-	if l.ContainsBlacklistedPrefix(req.URL, l.BlacklistAnyDumpPrefixes) {
+	if l.ContainsBlacklistedPrefix(req.URL, l.blacklistAnyDumpPrefixes) {
 		return l.Transport().RoundTrip(req)
 	}
 
-	dumpBody := !l.ContainsBlacklistedPrefix(req.URL, l.BlacklistBodyDumpPrefixes) && l.DumpBody // move below !l.AnyEnabled to not clutter execution if everything is disabled
+	dumpBody := options.IsEnabled(DumpRoundTripperOptionBody) && !l.ContainsBlacklistedPrefix(req.URL, l.blacklistBodyDumpPrefixes)
 
 	dl := log.Ctx(req.Context()).Debug()
 
 	// request logging
-	if l.DumpRequest || l.DumpRequestHEX {
+	if options.AnyEnabled(DumpRoundTripperOptionRequest, DumpRoundTripperOptionRequestHEX) {
 		reqDump, err := httputil.DumpRequest(req, dumpBody)
 		if err != nil {
 			reqDump = []byte(err.Error())
@@ -181,10 +154,10 @@ func (l *DumpRoundTripper) RoundTrip(req *http.Request) (*http.Response, error) 
 			reqDump = []byte(redactor.Mask(string(reqDump)))
 		}
 
-		if l.DumpRequest {
+		if options.IsEnabled(DumpRoundTripperOptionRequest) {
 			dl = dl.Bytes(DumpRoundTripperOptionRequest, reqDump)
 		}
-		if l.DumpRequestHEX {
+		if options.IsEnabled(DumpRoundTripperOptionRequestHEX) {
 			dl = dl.Str(DumpRoundTripperOptionRequestHEX, hex.EncodeToString(reqDump))
 		}
 	}
@@ -195,7 +168,7 @@ func (l *DumpRoundTripper) RoundTrip(req *http.Request) (*http.Response, error) 
 	}
 
 	// response logging
-	if l.DumpResponse || l.DumpResponseHEX {
+	if options.AnyEnabled(DumpRoundTripperOptionResponse, DumpRoundTripperOptionResponseHEX) {
 		respDump, err := httputil.DumpResponse(resp, dumpBody)
 		if err != nil {
 			respDump = []byte(err.Error())
@@ -205,10 +178,10 @@ func (l *DumpRoundTripper) RoundTrip(req *http.Request) (*http.Response, error) 
 		if redactor != nil {
 			respDump = []byte(redactor.Mask(string(respDump)))
 		}
-		if l.DumpResponse {
+		if options.IsEnabled(DumpRoundTripperOptionResponse) {
 			dl = dl.Bytes(DumpRoundTripperOptionResponse, respDump)
 		}
-		if l.DumpResponseHEX {
+		if options.IsEnabled(DumpRoundTripperOptionResponseHEX) {
 			dl = dl.Str(DumpRoundTripperOptionResponseHEX, hex.EncodeToString(respDump))
 		}
 	}
