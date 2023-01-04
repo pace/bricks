@@ -72,24 +72,23 @@ func newErrUnsupportedPtrType(rf reflect.Value, t reflect.Type, structField refl
 // For example you could pass it, in, req.Body and, model, a BlogPost
 // struct instance to populate in an http handler,
 //
-//   func CreateBlog(w http.ResponseWriter, r *http.Request) {
-//   	blog := new(Blog)
+//	func CreateBlog(w http.ResponseWriter, r *http.Request) {
+//		blog := new(Blog)
 //
-//   	if err := jsonapi.UnmarshalPayload(r.Body, blog); err != nil {
-//   		http.Error(w, err.Error(), 500)
-//   		return
-//   	}
+//		if err := jsonapi.UnmarshalPayload(r.Body, blog); err != nil {
+//			http.Error(w, err.Error(), 500)
+//			return
+//		}
 //
-//   	// ...do stuff with your blog...
+//		// ...do stuff with your blog...
 //
-//   	w.Header().Set("Content-Type", jsonapi.MediaType)
-//   	w.WriteHeader(201)
+//		w.Header().Set("Content-Type", jsonapi.MediaType)
+//		w.WriteHeader(201)
 //
-//   	if err := jsonapi.MarshalPayload(w, blog); err != nil {
-//   		http.Error(w, err.Error(), 500)
-//   	}
-//   }
-//
+//		if err := jsonapi.MarshalPayload(w, blog); err != nil {
+//			http.Error(w, err.Error(), 500)
+//		}
+//	}
 //
 // Visit https://github.com/google/jsonapi#create for more info.
 //
@@ -408,6 +407,12 @@ func unmarshalAttribute(
 		return
 	}
 
+	// map[string][]string
+	if fieldValue.Type() == reflect.TypeOf(map[string][]string{}) {
+		value, err = handleMapStringSlice(rawAttribute)
+		return
+	}
+
 	// Handle field of type time.Time
 	if fieldValue.Type() == reflect.TypeOf(time.Time{}) ||
 		fieldValue.Type() == reflect.TypeOf(new(time.Time)) {
@@ -457,6 +462,16 @@ func handleDecimal(attribute json.RawMessage) (reflect.Value, error) {
 	}
 
 	return reflect.ValueOf(dec), nil
+}
+
+func handleMapStringSlice(attribute json.RawMessage) (reflect.Value, error) {
+	var m map[string][]string
+	err := json.Unmarshal(attribute, &m)
+	if err != nil {
+		return reflect.Value{}, fmt.Errorf("can't decode map string slice from value %q: %v", string(attribute), err)
+	}
+
+	return reflect.ValueOf(m), nil
 }
 
 func handleTime(attribute interface{}, args []string, fieldValue reflect.Value) (reflect.Value, error) {

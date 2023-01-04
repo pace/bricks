@@ -15,6 +15,8 @@ import (
 	"strings"
 	"testing"
 	"time"
+
+	"github.com/stretchr/testify/assert"
 )
 
 func TestUnmarshall_attrStringSlice(t *testing.T) {
@@ -62,6 +64,54 @@ func TestUnmarshall_attrStringSlice(t *testing.T) {
 		if e, a := tag, out.Tags[i]; e != a {
 			t.Fatalf("At index %d, was expecting %s got %s", i, e, a)
 		}
+	}
+}
+
+func TestUnmarshall_MapStringSlice(t *testing.T) {
+	tcs := []struct {
+		name  string
+		fail  bool
+		input interface{}
+	}{
+		{
+			name: "succeed",
+			fail: false,
+			input: map[string]interface{}{
+				"data": map[string]interface{}{
+					"type": "books",
+					"id":   "1",
+					"attributes": map[string]json.RawMessage{
+						"mss": json.RawMessage(`{"field": ["string1","string2"]}`),
+					},
+				},
+			},
+		},
+		{
+			name: "fail because slice contains numbers",
+			fail: true,
+			input: map[string]interface{}{
+				"data": map[string]interface{}{
+					"type": "books",
+					"id":   "1",
+					"attributes": map[string]json.RawMessage{
+						"mss": json.RawMessage(`{"field": ["string1",1234,9.9]}`),
+					},
+				},
+			},
+		},
+	}
+
+	for _, tc := range tcs {
+		t.Run(tc.name, func(t *testing.T) {
+			out := &Book{}
+			b, err := json.Marshal(tc.input)
+			if err != nil {
+				t.Fatal(err)
+			}
+
+			err = UnmarshalPayload(bytes.NewReader(b), out)
+			assert.Equal(t, tc.fail, err != nil)
+		})
 	}
 }
 

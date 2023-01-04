@@ -62,17 +62,18 @@ type Comment struct {
 }
 
 type Book struct {
-	ID          uint64  `jsonapi:"primary,books"`
-	Author      string  `jsonapi:"attr,author"`
-	ISBN        string  `jsonapi:"attr,isbn"`
-	Title       string  `jsonapi:"attr,title,omitempty"`
-	Description *string `jsonapi:"attr,description"`
-	Pages       *uint   `jsonapi:"attr,pages,omitempty"`
-	PublishedAt time.Time
-	Tags        []string        `jsonapi:"attr,tags"`
-	Decimal1    decimal.Decimal `jsonapi:"attr,dec1,omitempty"`
-	Decimal2    decimal.Decimal `jsonapi:"attr,dec2,omitempty"`
-	Decimal3    decimal.Decimal `jsonapi:"attr,dec3,omitempty"`
+	ID             uint64  `jsonapi:"primary,books"`
+	Author         string  `jsonapi:"attr,author"`
+	ISBN           string  `jsonapi:"attr,isbn"`
+	Title          string  `jsonapi:"attr,title,omitempty"`
+	Description    *string `jsonapi:"attr,description"`
+	Pages          *uint   `jsonapi:"attr,pages,omitempty"`
+	PublishedAt    time.Time
+	Tags           []string            `jsonapi:"attr,tags"`
+	Decimal1       decimal.Decimal     `jsonapi:"attr,dec1,omitempty"`
+	Decimal2       decimal.Decimal     `jsonapi:"attr,dec2,omitempty"`
+	Decimal3       decimal.Decimal     `jsonapi:"attr,dec3,omitempty"`
+	MapStringSlice map[string][]string `jsonapi:"attr,mss,omitempty"`
 }
 
 type Blog struct {
