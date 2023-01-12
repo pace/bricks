@@ -10,10 +10,11 @@ import (
 	"os"
 	"testing"
 
-	"github.com/pace/bricks/maintenance/log"
-	"github.com/pace/bricks/pkg/redact"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	"github.com/pace/bricks/maintenance/log"
+	"github.com/pace/bricks/pkg/redact"
 )
 
 func TestNewDumpRoundTripperEnv(t *testing.T) {
@@ -240,4 +241,100 @@ func TestNewDumpRoundTripperSimple(t *testing.T) {
 	assert.Contains(t, out.String(), `"request":"GET /foo HTTP/1.1\r\nHost: example.com\r\n\r\n"`)
 	assert.Contains(t, out.String(), `"response":"HTTP/0.0 000 status code 0\r\nContent-Length: 0\r\n\r\n"`)
 	assert.Contains(t, out.String(), `"message":"HTTP Transport Dump"`)
+}
+
+func TestNewDumpRoundTripperContextOptionsOverwrite(t *testing.T) {
+
+	rt, err := NewDumpRoundTripper(
+		RoundTripConfig(
+			DumpRoundTripperOptionRequest,
+			DumpRoundTripperOptionResponse,
+		))
+	require.NoError(t, err)
+	rt.SetTransport(&transportWithResponse{})
+
+	t.Run("global options", func(t *testing.T) {
+		out := &bytes.Buffer{}
+		ctx := log.Output(out).WithContext(context.Background())
+
+		req := httptest.NewRequest("GET", "/foo", bytes.NewBufferString("Foo"))
+		req = req.WithContext(ctx)
+
+		_, err = rt.RoundTrip(req)
+		require.NoError(t, err)
+
+		assert.Contains(t, out.String(), `"level":"debug"`)
+		assert.Contains(t, out.String(), `"request":"GET /foo HTTP/1.1\r\nHost: example.com\r\n\r\n"`)
+		assert.Contains(t, out.String(), `"response":"HTTP/0.0 000 status code 0\r\nContent-Length: 0\r\n\r\n"`)
+		assert.Contains(t, out.String(), `"message":"HTTP Transport Dump"`)
+	})
+
+	t.Run("context options", func(t *testing.T) {
+		out := &bytes.Buffer{}
+		ctx := log.Output(out).WithContext(context.Background())
+
+		ctxDumpOptions, err := NewDumpOptions(
+			WithDumpOption(DumpRoundTripperOptionRequest, false),
+			WithDumpOption(DumpRoundTripperOptionResponse, false),
+		)
+		require.NoError(t, err)
+		ctx = CtxWithDumpRoundTripperOptions(ctx, ctxDumpOptions)
+
+		req := httptest.NewRequest("GET", "/foo", bytes.NewBufferString("Foo"))
+		req = req.WithContext(ctx)
+
+		_, err = rt.RoundTrip(req)
+		require.NoError(t, err)
+		require.Empty(t, out.String()) // Both request and response were disabled for this request
+	})
+}
+
+func TestNewDumpRoundTripperContextOptionsOverwriteBody(t *testing.T) {
+
+	rt, err := NewDumpRoundTripper(
+		RoundTripConfig(
+			DumpRoundTripperOptionRequest,
+			DumpRoundTripperOptionResponse,
+			DumpRoundTripperOptionBody,
+		))
+	require.NoError(t, err)
+	rt.SetTransport(&transportWithResponse{body: "test body"})
+
+	t.Run("global options", func(t *testing.T) {
+		out := &bytes.Buffer{}
+		ctx := log.Output(out).WithContext(context.Background())
+
+		req := httptest.NewRequest("GET", "/foo", bytes.NewBufferString("Foo"))
+		req = req.WithContext(ctx)
+
+		_, err = rt.RoundTrip(req)
+		require.NoError(t, err)
+
+		assert.Contains(t, out.String(), `"level":"debug"`)
+		assert.Contains(t, out.String(), `"request":"GET /foo HTTP/1.1\r\nHost: example.com\r\n\r\nFoo"`)
+		assert.Contains(t, out.String(), `"response":"HTTP/0.0 000 status code 0\r\n\r\ntest body"`)
+		assert.Contains(t, out.String(), `"message":"HTTP Transport Dump"`)
+	})
+
+	t.Run("context options", func(t *testing.T) {
+		out := &bytes.Buffer{}
+		ctx := log.Output(out).WithContext(context.Background())
+
+		ctxDumpOptions, err := NewDumpOptions(
+			WithDumpOption(DumpRoundTripperOptionBody, false),
+		)
+		require.NoError(t, err)
+		ctx = CtxWithDumpRoundTripperOptions(ctx, ctxDumpOptions)
+
+		req := httptest.NewRequest("GET", "/foo", bytes.NewBufferString("Foo"))
+		req = req.WithContext(ctx)
+
+		_, err = rt.RoundTrip(req)
+		require.NoError(t, err)
+
+		assert.Contains(t, out.String(), `"level":"debug"`)
+		assert.Contains(t, out.String(), `"request":"GET /foo HTTP/1.1\r\nHost: example.com\r\n\r\n"`)
+		assert.Contains(t, out.String(), `"response":"HTTP/0.0 000 status code 0\r\nContent-Length: 0\r\n\r\n"`)
+		assert.Contains(t, out.String(), `"message":"HTTP Transport Dump"`)
+	})
 }
