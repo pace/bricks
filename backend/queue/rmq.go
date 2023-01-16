@@ -6,12 +6,13 @@ import (
 	"sync"
 	"time"
 
-	"github.com/adjust/rmq/v3"
 	"github.com/pace/bricks/backend/redis"
 	pberrors "github.com/pace/bricks/maintenance/errors"
 	"github.com/pace/bricks/maintenance/health/servicehealthcheck"
 	"github.com/pace/bricks/maintenance/log"
 	"github.com/pace/bricks/pkg/routine"
+
+	"github.com/adjust/rmq/v3"
 )
 
 var (
@@ -20,6 +21,11 @@ var (
 
 	initMutex sync.Mutex
 )
+
+type queueHealth struct {
+	limit             int
+	markedUnhealthyAt time.Time
+}
 
 func initDefault() error {
 	var err error
@@ -69,7 +75,7 @@ func NewQueue(name string, healthyLimit int) (rmq.Queue, error) {
 	if _, ok := queueHealthLimits.Load(name); ok {
 		return queue, nil
 	}
-	queueHealthLimits.Store(name, healthyLimit)
+	queueHealthLimits.Store(name, &queueHealth{limit: healthyLimit})
 	return queue, nil
 }
 
@@ -101,13 +107,25 @@ func (h *HealthCheck) HealthCheck(ctx context.Context) servicehealthcheck.Health
 	}
 	queueHealthLimits.Range(func(k, v interface{}) bool {
 		name := k.(string)
-		healthLimit := v.(int)
+		hl := v.(*queueHealth)
+		now := time.Now()
 		stat := stats.QueueStats[name]
-		if stat.ReadyCount > int64(healthLimit) {
-			h.state.SetErrorState(fmt.Errorf("Queue '%s' exceeded safe health limit of '%d'", name, healthLimit))
+		if stat.ReadyCount > int64(hl.limit) {
+			if hl.markedUnhealthyAt.IsZero() {
+				hl.markedUnhealthyAt = now
+				h.state.SetHealthy()
+				return true
+			}
+			// queue health is still pending
+			if !now.After(hl.markedUnhealthyAt.Add(cfg.HealthCheckPendingStateInterval)) {
+				return true
+			}
+
+			h.state.SetErrorState(fmt.Errorf("Queue '%s' exceeded safe health limit of '%d'", name, hl.limit))
 			return false
 		}
 		h.state.SetHealthy()
+		hl.markedUnhealthyAt = time.Time{}
 		return true
 	})
 	return h.state.GetState()
