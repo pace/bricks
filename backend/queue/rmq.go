@@ -25,6 +25,32 @@ var (
 type queueHealth struct {
 	limit             int
 	markedUnhealthyAt time.Time
+
+	mu sync.Mutex
+}
+
+func (h *queueHealth) isMarkedHealthy() bool {
+	h.mu.Lock()
+	defer h.mu.Unlock()
+	return h.markedUnhealthyAt.IsZero()
+}
+
+func (h *queueHealth) markUnhealthy() {
+	h.mu.Lock()
+	defer h.mu.Unlock()
+	h.markedUnhealthyAt = time.Now()
+}
+
+func (h *queueHealth) markHealthy() {
+	h.mu.Lock()
+	defer h.mu.Unlock()
+	h.markedUnhealthyAt = time.Time{}
+}
+
+func (h *queueHealth) getMarkedUnhealthyAt() time.Time {
+	h.mu.Lock()
+	defer h.mu.Unlock()
+	return h.markedUnhealthyAt
 }
 
 func initDefault() error {
@@ -108,16 +134,15 @@ func (h *HealthCheck) HealthCheck(ctx context.Context) servicehealthcheck.Health
 	queueHealthLimits.Range(func(k, v interface{}) bool {
 		name := k.(string)
 		hl := v.(*queueHealth)
-		now := time.Now()
 		stat := stats.QueueStats[name]
 		if stat.ReadyCount > int64(hl.limit) {
-			if hl.markedUnhealthyAt.IsZero() {
-				hl.markedUnhealthyAt = now
+			if hl.isMarkedHealthy() {
+				hl.markUnhealthy()
 				h.state.SetHealthy()
 				return true
 			}
 			// queue health is still pending
-			if !now.After(hl.markedUnhealthyAt.Add(cfg.HealthCheckPendingStateInterval)) {
+			if !time.Now().After(hl.getMarkedUnhealthyAt().Add(cfg.HealthCheckPendingStateInterval)) {
 				return true
 			}
 
@@ -125,7 +150,7 @@ func (h *HealthCheck) HealthCheck(ctx context.Context) servicehealthcheck.Health
 			return false
 		}
 		h.state.SetHealthy()
-		hl.markedUnhealthyAt = time.Time{}
+		hl.markHealthy()
 		return true
 	})
 	return h.state.GetState()
