@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"regexp"
 	"strings"
+	"unicode"
+	"unicode/utf8"
 )
 
 // NewFile Creates a new file, with the specified package name.
@@ -47,7 +49,7 @@ func NewFilePathName(packagePath, packageName string) *File {
 }
 
 // File represents a single source file. Package imports are managed
-// automaticaly by File.
+// automatically by File.
 type File struct {
 	*Group
 	name        string
@@ -57,9 +59,14 @@ type File struct {
 	comments    []string
 	headers     []string
 	cgoPreamble []string
+	// NoFormat can be set to true to disable formatting of the generated source. This may be useful
+	// when performance is critical, and readable code is not required.
+	NoFormat bool
 	// If you're worried about generated package aliases conflicting with local variable names, you
 	// can set a prefix here. Package foo becomes {prefix}_foo.
 	PackagePrefix string
+	// CanonicalPath adds a canonical import path annotation to the package clause.
+	CanonicalPath string
 }
 
 // importdef is used to differentiate packages where we know the package name from packages where the
@@ -112,7 +119,8 @@ func (f *File) ImportNames(names map[string]string) {
 	}
 }
 
-// ImportAlias provides the alias for a package path that should be used in the import block.
+// ImportAlias provides the alias for a package path that should be used in the import block. A
+// period can be used to force a dot-import.
 func (f *File) ImportAlias(path, alias string) {
 	f.hints[path] = importdef{name: alias, alias: true}
 }
@@ -121,27 +129,13 @@ func (f *File) isLocal(path string) bool {
 	return f.path == path
 }
 
-var reserved = []string{
-	/* keywords */
-	"break", "default", "func", "interface", "select", "case", "defer", "go", "map", "struct", "chan", "else", "goto", "package", "switch", "const", "fallthrough", "if", "range", "type", "continue", "for", "import", "return", "var",
-	/* predeclared */
-	"bool", "byte", "complex64", "complex128", "error", "float32", "float64", "int", "int8", "int16", "int32", "int64", "rune", "string", "uint", "uint8", "uint16", "uint32", "uint64", "uintptr", "true", "false", "iota", "nil", "append", "cap", "close", "complex", "copy", "delete", "imag", "len", "make", "new", "panic", "print", "println", "real", "recover",
-	/* common variables */
-	"err",
-}
-
-func isReservedWord(alias string) bool {
-	for _, name := range reserved {
-		if alias == name {
-			return true
-		}
-	}
-	return false
-}
-
 func (f *File) isValidAlias(alias string) bool {
+	// multiple dot-imports are ok
+	if alias == "." {
+		return true
+	}
 	// the import alias is invalid if it's a reserved word
-	if isReservedWord(alias) {
+	if IsReservedWord(alias) {
 		return false
 	}
 	// the import alias is invalid if it's already been registered
@@ -151,6 +145,13 @@ func (f *File) isValidAlias(alias string) bool {
 		}
 	}
 	return true
+}
+
+func (f *File) isDotImport(path string) bool {
+	if id, ok := f.hints[path]; ok {
+		return id.name == "." && id.alias
+	}
+	return false
 }
 
 func (f *File) register(path string) string {
@@ -243,6 +244,16 @@ func guessAlias(path string) string {
 	// alias should now only contain alphanumerics
 	importsRegex := regexp.MustCompile(`[^a-z0-9]`)
 	alias = importsRegex.ReplaceAllString(alias, "")
+
+	// can't have a first digit, per Go identifier rules, so just skip them
+	for firstRune, runeLen := utf8.DecodeRuneInString(alias); unicode.IsDigit(firstRune); firstRune, runeLen = utf8.DecodeRuneInString(alias) {
+		alias = alias[runeLen:]
+	}
+
+	// If path part was all digits, we may be left with an empty string. In this case use "pkg" as the alias.
+	if alias == "" {
+		alias = "pkg"
+	}
 
 	return alias
 }
