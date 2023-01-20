@@ -168,8 +168,9 @@ func addServiceGenerateCommands(rootCmdGenerate *cobra.Command) {
 	var errorsDefinitionsPkgName, errorsDefinitionsPath, errorsDefinitionsSource string
 
 	cmdErrorDefinitions := &cobra.Command{
-		Use:  "error-definitions NAME",
-		Args: cobra.ExactArgs(1),
+		Use:   "error-definitions NAME",
+		Short: "generate BricksErrors based on an array of JSON error objects",
+		Args:  cobra.ExactArgs(1),
 		Run: func(cmd *cobra.Command, args []string) {
 			generate.ErrorDefinitionFile(generate.ErrorDefinitionFileOptions{
 				PkgName: errorsDefinitionsPkgName,
