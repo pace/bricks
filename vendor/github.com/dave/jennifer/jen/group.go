@@ -25,10 +25,6 @@ func (g *Group) isNull(f *File) bool {
 	if g.open != "" || g.close != "" {
 		return false
 	}
-	return g.isNullItems(f)
-}
-
-func (g *Group) isNullItems(f *File) bool {
 	for _, c := range g.items {
 		if !c.isNull(f) {
 			return false
@@ -38,10 +34,6 @@ func (g *Group) isNullItems(f *File) bool {
 }
 
 func (g *Group) render(f *File, w io.Writer, s *Statement) error {
-	if g.name == "types" && g.isNullItems(f) {
-		// Special case for types - if all items are null, don't render the open/close tokens.
-		return nil
-	}
 	if g.name == "block" && s != nil {
 		// Special CaseBlock format for then the previous item in the statement
 		// is a Case group or the default keyword.
@@ -51,6 +43,7 @@ func (g *Group) render(f *File, w io.Writer, s *Statement) error {
 		if isGrp && grp.name == "case" || isTkn && tkn.content == "default" {
 			g.open = ""
 			g.close = ""
+			g.separator = "\n"
 		}
 	}
 	if g.open != "" {
@@ -86,12 +79,6 @@ func (g *Group) render(f *File, w io.Writer, s *Statement) error {
 func (g *Group) renderItems(f *File, w io.Writer) (isNull bool, err error) {
 	first := true
 	for _, code := range g.items {
-		if pt, ok := code.(token); ok && pt.typ == packageToken {
-			// Special case for package tokens in Qual groups - for dot-imports, the package token
-			// will be null, so will not render and will not be registered in the imports block.
-			// This ensures all packageTokens that are rendered are registered.
-			f.register(pt.content.(string))
-		}
 		if code == nil || code.isNull(f) {
 			// Null() token produces no output but also
 			// no separator. Empty() token products no
@@ -125,22 +112,9 @@ func (g *Group) renderItems(f *File, w io.Writer) (isNull bool, err error) {
 
 // Render renders the Group to the provided writer.
 func (g *Group) Render(writer io.Writer) error {
-	return g.RenderWithFile(writer, NewFile(""))
-}
-
-// GoString renders the Group for testing. Any error will cause a panic.
-func (g *Group) GoString() string {
-	buf := bytes.Buffer{}
-	if err := g.Render(&buf); err != nil {
-		panic(err)
-	}
-	return buf.String()
-}
-
-// RenderWithFile renders the Group to the provided writer, using imports from the provided file.
-func (g *Group) RenderWithFile(writer io.Writer, file *File) error {
+	f := NewFile("")
 	buf := &bytes.Buffer{}
-	if err := g.render(file, buf, nil); err != nil {
+	if err := g.render(f, buf, nil); err != nil {
 		return err
 	}
 	b, err := format.Source(buf.Bytes())
@@ -151,4 +125,13 @@ func (g *Group) RenderWithFile(writer io.Writer, file *File) error {
 		return err
 	}
 	return nil
+}
+
+// GoString renders the Group for testing. Any error will cause a panic.
+func (g *Group) GoString() string {
+	buf := bytes.Buffer{}
+	if err := g.Render(&buf); err != nil {
+		panic(err)
+	}
+	return buf.String()
 }
