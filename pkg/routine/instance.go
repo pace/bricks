@@ -6,11 +6,13 @@ package routine
 import (
 	"context"
 	"fmt"
-	"github.com/opentracing/opentracing-go"
 	"time"
 
-	exponential "github.com/jpillora/backoff"
 	"github.com/pace/bricks/maintenance/errors"
+	"github.com/pace/bricks/pkg/lock/redis"
+
+	exponential "github.com/jpillora/backoff"
+	"github.com/opentracing/opentracing-go"
 )
 
 type routineThatKeepsRunningOneInstance struct {
@@ -60,7 +62,7 @@ func (r *routineThatKeepsRunningOneInstance) singleRun(ctx context.Context) time
 	span, ctx := opentracing.StartSpanFromContext(ctx, fmt.Sprintf("Routine %s", r.Name))
 	defer span.Finish()
 
-	l := NewLock("routine:lock:"+r.Name, SetTTL(r.lockTTL))
+	l := redis.NewLock("routine:lock:"+r.Name, redis.SetTTL(r.lockTTL))
 	lockCtx, cancel, err := l.AcquireAndKeepUp(ctx)
 	defer cancel()
 	if err != nil {
