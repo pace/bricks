@@ -11,11 +11,11 @@ import (
 	"sync"
 	"time"
 
-	"github.com/bsm/redislock"
-	"github.com/go-redis/redis/v7"
 	redisbackend "github.com/pace/bricks/backend/redis"
 	pberrors "github.com/pace/bricks/maintenance/errors"
-	"github.com/pace/bricks/pkg/routine"
+
+	"github.com/bsm/redislock"
+	"github.com/go-redis/redis/v7"
 	"github.com/rs/zerolog/log"
 )
 
@@ -120,21 +120,19 @@ func (l *Lock) AcquireAndKeepUp(ctx context.Context) (context.Context, context.C
 	}
 
 	// Keep up lock, cancel lockCtx otherwise.
-	// To pass the detached context from the goroutine we need to pass it through a channel in the parent goroutine
-	lockCtxChan := make(chan context.Context)
-	cancel := routine.Run(ctx, func(ctx context.Context) {
+	lockCtx, cancelLock := context.WithCancel(ctx)
+	go func() {
 		defer pberrors.HandleWithCtx(ctx, fmt.Sprintf("keep up lock %q", l.Name)) // handle panics
+		defer cancelLock()
 
-		lockCtxChan <- ctx
-
-		keepUpLock(ctx, lock, l.lockTTL)
+		keepUpLock(lockCtx, lock, l.lockTTL)
 		err := lock.Release()
 		if err != nil && err != redislock.ErrLockNotHeld {
-			log.Ctx(ctx).Debug().Err(err).Msgf("could not release lock %q", l.Name)
+			log.Ctx(lockCtx).Debug().Err(err).Msgf("could not release lock %q", l.Name)
 		}
-	})
+	}()
 
-	return <-lockCtxChan, cancel, nil
+	return lockCtx, cancelLock, nil
 }
 
 // Try to keep up a lock for as long as the context is valid. Return once the
