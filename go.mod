@@ -1,6 +1,6 @@
 module github.com/pace/bricks
 
-go 1.19
+go 1.20
 
 require (
 	github.com/PuerkitoBio/rehttp v1.1.0
