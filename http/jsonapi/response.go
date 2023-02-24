@@ -56,17 +56,16 @@ var (
 // Many Example: you could pass it, w, your http.ResponseWriter, and, models, a
 // slice of Blog struct instance pointers to be written to the response body:
 //
-//	 func ListBlogs(w http.ResponseWriter, r *http.Request) {
-//     blogs := []*Blog{}
+//		 func ListBlogs(w http.ResponseWriter, r *http.Request) {
+//	    blogs := []*Blog{}
 //
-//		 w.Header().Set("Content-Type", jsonapi.MediaType)
-//		 w.WriteHeader(http.StatusOK)
+//			 w.Header().Set("Content-Type", jsonapi.MediaType)
+//			 w.WriteHeader(http.StatusOK)
 //
-//		 if err := jsonapi.MarshalPayload(w, blogs); err != nil {
-//			 http.Error(w, err.Error(), http.StatusInternalServerError)
+//			 if err := jsonapi.MarshalPayload(w, blogs); err != nil {
+//				 http.Error(w, err.Error(), http.StatusInternalServerError)
+//			 }
 //		 }
-//	 }
-//
 func MarshalPayload(w io.Writer, models interface{}) error {
 	payload, err := Marshal(models)
 	if err != nil {
@@ -317,6 +316,26 @@ func visitModelNode(model interface{}, included *map[string]*Node,
 					return nil, fmt.Errorf("decimal.MarshalJSONWithoutQuotes needs to be turned on to export decimals as numbers")
 				}
 				node.Attributes[args[1]] = json.RawMessage(d.String())
+			} else if fieldValue.Type() == reflect.TypeOf(new(decimal.Decimal)) {
+				// A decimal pointer may be nil
+				if fieldValue.IsNil() {
+					if omitEmpty {
+						continue
+					}
+
+					node.Attributes[args[1]] = []byte("null")
+				} else {
+					d := fieldValue.Interface().(*decimal.Decimal)
+
+					if d.IsZero() && omitEmpty {
+						continue
+					}
+
+					if !decimal.MarshalJSONWithoutQuotes {
+						return nil, fmt.Errorf("decimal.MarshalJSONWithoutQuotes needs to be turned on to export decimals as numbers")
+					}
+					node.Attributes[args[1]] = json.RawMessage(d.String())
+				}
 			} else if fieldValue.Type() == reflect.TypeOf(time.Time{}) {
 				t := fieldValue.Interface().(time.Time)
 
@@ -365,9 +384,23 @@ func visitModelNode(model interface{}, included *map[string]*Node,
 					continue
 				}
 
-				strAttr, ok := fieldValue.Interface().(string)
-				if ok {
+				if strAttr, ok := fieldValue.Interface().(string); ok {
 					node.Attributes[args[1]], err = json.Marshal(strAttr)
+				} else if fieldValue.Type().Kind() == reflect.Struct {
+					// We need to pass a pointer value
+					ptr := reflect.New(fieldValue.Type())
+					ptr.Elem().Set(fieldValue)
+					n, err := visitModelNode(ptr.Interface(), nil, false)
+					if err != nil {
+						return nil, err
+					}
+					node.Attributes[args[1]], err = json.Marshal(n.Attributes)
+				} else if fieldValue.Type().Kind() == reflect.Ptr && fieldValue.Elem().Kind() == reflect.Struct {
+					n, err := visitModelNode(fieldValue.Interface(), nil, false)
+					if err != nil {
+						return nil, err
+					}
+					node.Attributes[args[1]], err = json.Marshal(n.Attributes)
 				} else {
 					node.Attributes[args[1]], err = json.Marshal(fieldValue.Interface())
 				}

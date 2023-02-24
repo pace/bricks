@@ -13,6 +13,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/pace/bricks/pkg/isotime"
+
 	"github.com/shopspring/decimal"
 )
 
@@ -544,6 +546,91 @@ func TestMarshalISO8601TimePointer(t *testing.T) {
 
 	if !bytes.Equal(data.Attributes["next"], json.RawMessage(`"2016-08-17T08:27:12Z"`)) {
 		t.Fatalf("Next was not serialised into ISO8601 correctly got: %q", string(data.Attributes["next"]))
+	}
+}
+
+func TestMarshalUnmarshalStructWithNestedFields(t *testing.T) {
+	ts, err := isotime.ParseISO8601("2022-11-17T22:22:25.841137+01:00")
+	s := &StructWithNestedFields{
+		Timestamp:           ts,
+		NestedStructPointer: &NestedField{NestedTimestamp: ts},
+		NestedStruct:        NestedField{NestedTimestamp: ts},
+	}
+
+	in := new(bytes.Buffer)
+	if err = MarshalPayload(in, s); err != nil {
+		t.Fatal("Struct with nested fields errored while marshalling")
+	}
+
+	var out StructWithNestedFields
+	if err = UnmarshalPayload(in, &out); err != nil {
+		t.Fatal("Struct with nested fields errored while unmarshalling")
+	}
+
+	if !(out.Timestamp.Equal(out.NestedStructPointer.NestedTimestamp) &&
+		out.Timestamp.Equal(out.NestedStruct.NestedTimestamp) &&
+		out.NestedStruct.NestedTimestamp.Equal(out.NestedStructPointer.NestedTimestamp)) {
+		t.Fatal("Time values in struct with nested fields are not equal")
+	}
+}
+
+func TestMarshalDecimalPointer(t *testing.T) {
+	dec := decimal.NewFromFloat(1.23)
+
+	tcs := []struct {
+		name string
+		s    *StructWithNestedFields
+	}{
+		{
+			name: "with non nil decimal pointer",
+			s: &StructWithNestedFields{
+				DecimalPointer: &dec,
+			},
+		},
+		{
+			name: "with nil decimal pointer",
+			s: &StructWithNestedFields{
+				DecimalPointer: nil,
+			},
+		},
+		{
+			name: "with nil nested decimal pointer with omit empty",
+			s: &StructWithNestedFields{
+				NestedStructPointer: &NestedField{
+					DecimalPointerWithOmitEmpty: nil,
+				},
+			},
+		},
+		{
+			name: "with nested zero decimal pointer with omit empty",
+			s: &StructWithNestedFields{
+				NestedStructPointer: &NestedField{
+					DecimalPointerWithOmitEmpty: &decimal.Zero,
+				},
+			},
+		},
+		{
+			name: "with nested non nil decimal pointer with omit empty",
+			s: &StructWithNestedFields{
+				NestedStructPointer: &NestedField{
+					DecimalPointerWithOmitEmpty: &dec,
+				},
+			},
+		},
+	}
+
+	for _, tc := range tcs {
+		t.Run(tc.name, func(t *testing.T) {
+			in := new(bytes.Buffer)
+			if err := MarshalPayload(in, tc.s); err != nil {
+				t.Fatal("Struct with nested fields errored while marshalling")
+			}
+
+			var out StructWithNestedFields
+			if err := UnmarshalPayload(in, &out); err != nil {
+				t.Fatal("Struct with nested fields errored while unmarshalling")
+			}
+		})
 	}
 }
 
