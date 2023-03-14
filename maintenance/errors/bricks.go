@@ -6,6 +6,8 @@
 package errors
 
 import (
+	"strconv"
+
 	uuid "github.com/satori/go.uuid"
 
 	"github.com/pace/bricks/http/jsonapi/runtime"
@@ -22,8 +24,8 @@ type BricksError struct {
 	// detail - an application-specific error code, expressed as a string value.
 	detail string
 	// status - // the HTTP status code applicable to this problem, expressed as
-	// a string value. This SHOULD be provided.
-	status string
+	// an int value. This SHOULD be provided.
+	status int
 	// code - application specific error code
 	code string
 }
@@ -40,12 +42,16 @@ func (e *BricksError) Error() string {
 	return e.code
 }
 
+func (e *BricksError) Status() int {
+	return e.status
+}
+
 // AsRuntimeError - returns the BricksError as bricks runtime.Error which aligns
 // with a JSON error object
 func (e *BricksError) AsRuntimeError() *runtime.Error {
 	j := &runtime.Error{
 		ID:     uuid.NewV4().String(),
-		Status: e.status,
+		Status: strconv.Itoa(e.status),
 		Code:   e.code,
 		Title:  e.title,
 		Detail: e.detail,
@@ -78,7 +84,7 @@ func WithCode(s string) BricksErrorOption {
 	}
 }
 
-func WithStatus(s string) BricksErrorOption {
+func WithStatus(s int) BricksErrorOption {
 	return func(e *BricksError) {
 		e.status = s
 	}

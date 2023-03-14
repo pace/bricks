@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"net/url"
 	"os"
+	"strconv"
 	"strings"
 
 	"github.com/dave/jennifer/jen"
@@ -87,13 +88,18 @@ func (g *Generator) BuildDefinitions(errors runtime.Errors, packagePath, package
 			continue
 		}
 
+		httpStatusCode, err := strconv.Atoi(jsonError.Status)
+		if err != nil {
+			return "", fmt.Errorf("%w: unable to parse given http status code")
+		}
+
 		g.goSource.Func().Id(fmt.Sprintf("%s", jsonError.Code)).Params(
 			jen.Id("opts").Op("...").Qual(pkgBricksErrors, "BricksErrorOption"),
 		).Params(
 			jen.Op("*").Qual(pkgBricksErrors, "BricksError"),
 		).Block(
 			jen.Id("o").Op(":=").Index().Qual(pkgBricksErrors, "BricksErrorOption").Values(
-				jen.Qual(pkgBricksErrors, "WithStatus").Call(jen.Lit(jsonError.Status)),
+				jen.Qual(pkgBricksErrors, "WithStatus").Call(jen.Lit(httpStatusCode)),
 				jen.Qual(pkgBricksErrors, "WithCode").Call(jen.Lit(jsonError.Code)),
 				jen.Qual(pkgBricksErrors, "WithTitle").Call(jen.Lit(jsonError.Title))),
 			jen.Id("o").Op("=").Id("append").Call(jen.Id("o"), jen.Id("opts").Op("...")),
