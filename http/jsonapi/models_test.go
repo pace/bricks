@@ -200,3 +200,15 @@ type CustomAttributeTypes struct {
 	Float  CustomFloatType  `jsonapi:"attr,float"`
 	String CustomStringType `jsonapi:"attr,string"`
 }
+
+type StructWithNestedFields struct {
+	Timestamp           time.Time        `jsonapi:"attr,timestamp,iso8601"`
+	NestedStructPointer *NestedField     `jsonapi:"attr,nestedStructPointer,omitempty"`
+	NestedStruct        NestedField      `jsonapi:"attr,nestedStruct,omitempty"`
+	DecimalPointer      *decimal.Decimal `jsonapi:"attr,decimalPointer"`
+}
+
+type NestedField struct {
+	NestedTimestamp             time.Time        `json:"nestedTimestamp" jsonapi:"attr,nestedTimestamp,iso8601"`
+	DecimalPointerWithOmitEmpty *decimal.Decimal `jsonapi:"attr,decimalPointerWithOmitEmpty,omitempty"`
+}
