@@ -60,7 +60,15 @@ func (f *File) Render(w io.Writer) error {
 			return err
 		}
 	}
-	if _, err := fmt.Fprintf(source, "package %s\n\n", f.name); err != nil {
+	if _, err := fmt.Fprintf(source, "package %s", f.name); err != nil {
+		return err
+	}
+	if f.CanonicalPath != "" {
+		if _, err := fmt.Fprintf(source, " // import %q", f.CanonicalPath); err != nil {
+			return err
+		}
+	}
+	if _, err := fmt.Fprint(source, "\n\n"); err != nil {
 		return err
 	}
 	if err := f.renderImports(source); err != nil {
@@ -69,11 +77,17 @@ func (f *File) Render(w io.Writer) error {
 	if _, err := source.Write(body.Bytes()); err != nil {
 		return err
 	}
-	formatted, err := format.Source(source.Bytes())
-	if err != nil {
-		return fmt.Errorf("Error %s while formatting source:\n%s", err, source.String())
+	var output []byte
+	if f.NoFormat {
+		output = source.Bytes()
+	} else {
+		var err error
+		output, err = format.Source(source.Bytes())
+		if err != nil {
+			return fmt.Errorf("Error %s while formatting source:\n%s", err, source.String())
+		}
 	}
-	if _, err := w.Write(formatted); err != nil {
+	if _, err := w.Write(output); err != nil {
 		return err
 	}
 	return nil
