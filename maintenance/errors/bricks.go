@@ -42,6 +42,18 @@ func (e *BricksError) Error() string {
 	return e.code
 }
 
+func (e *BricksError) Title() string {
+	return e.title
+}
+
+func (e *BricksError) Detail() string {
+	return e.detail
+}
+
+func (e *BricksError) Code() string {
+	return e.code
+}
+
 func (e *BricksError) Status() int {
 	return e.status
 }
@@ -57,11 +69,6 @@ func (e *BricksError) AsRuntimeError() *runtime.Error {
 		Detail: e.detail,
 	}
 	return j
-}
-
-// Equals - verifies if the given runtime.Error code equals the BricksError code
-func (e *BricksError) Equals(re *runtime.Error) bool {
-	return re.Code == e.code
 }
 
 type BricksErrorOption func(e *BricksError)

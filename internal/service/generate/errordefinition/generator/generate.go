@@ -81,6 +81,24 @@ func (g *Generator) BuildDefinitions(errors runtime.Errors, packagePath, package
 
 	g.serviceName = packageName
 
+	// create a error code const for easier runtime error comparison
+
+	var constObjects []jen.Code
+	for _, jsonError := range errors {
+
+		// skip example if given
+		if jsonError.Code == "EXAMPLE" {
+			continue
+		}
+
+		constObjects = append(constObjects, jen.Id(fmt.Sprintf("ERR_CODE_%s", jsonError.Code)).Op("=").Lit(fmt.Sprintf("%s", jsonError.Code)))
+
+	}
+
+	if len(constObjects) > 0 {
+		g.goSource.Const().Defs(constObjects...)
+	}
+
 	for _, jsonError := range errors {
 
 		// skip example if given
@@ -90,21 +108,23 @@ func (g *Generator) BuildDefinitions(errors runtime.Errors, packagePath, package
 
 		httpStatusCode, err := strconv.Atoi(jsonError.Status)
 		if err != nil {
-			return "", fmt.Errorf("%w: unable to parse given http status code")
+			return "", fmt.Errorf("%w: unable to parse given http status code", err)
 		}
 
-		g.goSource.Func().Id(fmt.Sprintf("%s", jsonError.Code)).Params(
+		// create the err function
+
+		g.goSource.Func().Id(fmt.Sprintf("ERR_%s", jsonError.Code)).Params(
 			jen.Id("opts").Op("...").Qual(pkgBricksErrors, "BricksErrorOption"),
 		).Params(
 			jen.Op("*").Qual(pkgBricksErrors, "BricksError"),
 		).Block(
-			jen.Id("o").Op(":=").Index().Qual(pkgBricksErrors, "BricksErrorOption").Values(
+			jen.Id("defaultOpts").Op(":=").Index().Qual(pkgBricksErrors, "BricksErrorOption").Values(
 				jen.Qual(pkgBricksErrors, "WithStatus").Call(jen.Lit(httpStatusCode)),
-				jen.Qual(pkgBricksErrors, "WithCode").Call(jen.Lit(jsonError.Code)),
+				jen.Qual(pkgBricksErrors, "WithCode").Call(jen.Id(fmt.Sprintf("ERR_CODE_%s", jsonError.Code))),
 				jen.Qual(pkgBricksErrors, "WithTitle").Call(jen.Lit(jsonError.Title))),
-			jen.Id("o").Op("=").Id("append").Call(jen.Id("o"), jen.Id("opts").Op("...")),
+			jen.Id("defaultOpts").Op("=").Id("append").Call(jen.Id("defaultOpts"), jen.Id("opts").Op("...")),
 			jen.Return(
-				jen.Qual(pkgBricksErrors, "NewBricksError").Call(jen.Id("o").Op("...")),
+				jen.Qual(pkgBricksErrors, "NewBricksError").Call(jen.Id("defaultOpts").Op("...")),
 			),
 		)
 
