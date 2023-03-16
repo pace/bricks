@@ -4,10 +4,11 @@
 package main
 
 import (
+	"github.com/spf13/cobra"
+
 	"github.com/pace/bricks/internal/service"
 	"github.com/pace/bricks/internal/service/generate"
 	"github.com/pace/bricks/maintenance/log"
-	"github.com/spf13/cobra"
 )
 
 func main() {
@@ -163,4 +164,22 @@ func addServiceGenerateCommands(rootCmdGenerate *cobra.Command) {
 	}
 	cmdMakefile.Flags().StringVar(&makefilePath, "path", "./Makefile", "path to Makefile location")
 	rootCmdGenerate.AddCommand(cmdMakefile)
+
+	var errorsDefinitionsPkgName, errorsDefinitionsPath, errorsDefinitionsSource string
+
+	cmdErrorDefinitions := &cobra.Command{
+		Use:   "error-definitions",
+		Short: "generate BricksErrors based on an array of JSON error objects",
+		Run: func(cmd *cobra.Command, args []string) {
+			generate.ErrorDefinitionFile(generate.ErrorDefinitionFileOptions{
+				PkgName: errorsDefinitionsPkgName,
+				Path:    errorsDefinitionsPath,
+				Source:  errorsDefinitionsSource,
+			})
+		},
+	}
+	cmdErrorDefinitions.Flags().StringVar(&errorsDefinitionsPkgName, "pkg", "", "name for the generated go package")
+	cmdErrorDefinitions.Flags().StringVar(&errorsDefinitionsPath, "path", "", "path for generated file")
+	cmdErrorDefinitions.Flags().StringVar(&errorsDefinitionsSource, "source", "", "JSONAPI conform error definitions source to use for generation")
+	rootCmdGenerate.AddCommand(cmdErrorDefinitions)
 }
