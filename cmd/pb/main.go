@@ -182,4 +182,20 @@ func addServiceGenerateCommands(rootCmdGenerate *cobra.Command) {
 	cmdErrorDefinitions.Flags().StringVar(&errorsDefinitionsPath, "path", "", "path for generated file")
 	cmdErrorDefinitions.Flags().StringVar(&errorsDefinitionsSource, "source", "", "JSONAPI conform error definitions source to use for generation")
 	rootCmdGenerate.AddCommand(cmdErrorDefinitions)
+	addErrorDefinitionsCommands(cmdErrorDefinitions)
+}
+
+func addErrorDefinitionsCommands(rootCmdErrorDefinitions *cobra.Command) {
+	var inputPath, outputPath string
+
+	cmdMarkdown := &cobra.Command{
+		Use:   "markdown",
+		Short: "generate error definitions markdown from yaml file",
+		Run: func(cmd *cobra.Command, args []string) {
+			generate.ErrorDefinitionsMarkdown(inputPath, outputPath)
+		},
+	}
+	cmdMarkdown.Flags().StringVarP(&inputPath, "input", "i", "", "path for the yaml file")
+	cmdMarkdown.Flags().StringVarP(&outputPath, "output", "o", "", "path for the generated markdown file")
+	rootCmdErrorDefinitions.AddCommand(cmdMarkdown)
 }

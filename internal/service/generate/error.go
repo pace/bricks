@@ -8,6 +8,7 @@ import (
 	"os"
 
 	"github.com/pace/bricks/internal/service/generate/errordefinition/generator"
+	markdown "github.com/pace/bricks/internal/service/generate/errormarkdown/generator"
 )
 
 // ErrorDefinitionFileOptions options that change the rendering of the error definition file
@@ -34,6 +35,28 @@ func ErrorDefinitionFile(options ErrorDefinitionFileOptions) {
 
 	// write file
 	_, err = file.WriteString(result)
+	if err != nil {
+		log.Fatal(err)
+	}
+}
+
+func ErrorDefinitionsMarkdown(inputPath, outputPath string) {
+	input, err := os.Open(inputPath)
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer input.Close() // nolint: errcheck
+
+	g := markdown.Generator{}
+	res, err := g.Generate(input)
+
+	output, err := os.Create(outputPath)
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer output.Close() // nolint: errcheck
+
+	_, err = output.WriteString(res)
 	if err != nil {
 		log.Fatal(err)
 	}
