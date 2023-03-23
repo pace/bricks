@@ -64,12 +64,12 @@ func (r *routineThatKeepsRunningOneInstance) singleRun(ctx context.Context) time
 
 	l := redis.NewLock("routine:lock:"+r.Name, redis.SetTTL(r.lockTTL))
 	lockCtx, cancel, err := l.AcquireAndKeepUp(ctx)
-	defer cancel()
 	if err != nil {
 		go errors.Handle(ctx, err) // report error to Sentry, non-blocking
 		return r.backoff.Duration("lock")
 	}
 	if lockCtx != nil {
+		defer cancel()
 		routinePanicked := true
 		func() {
 			defer errors.HandleWithCtx(ctx, fmt.Sprintf("routine %d", r.num)) // handle panics
