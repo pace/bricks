@@ -8,7 +8,6 @@ import (
 	"os"
 
 	"github.com/pace/bricks/internal/service/generate/errordefinition/generator"
-	markdown "github.com/pace/bricks/internal/service/generate/errormarkdown/generator"
 )
 
 // ErrorDefinitionFileOptions options that change the rendering of the error definition file
@@ -26,8 +25,22 @@ func ErrorDefinitionFile(options ErrorDefinitionFileOptions) {
 		log.Fatal(err)
 	}
 
+	writeResult(result, options.Path)
+}
+
+func ErrorDefinitionsMarkdown(options ErrorDefinitionFileOptions) {
+	g := generator.Generator{}
+	result, err := g.BuildMarkdown(options.Source)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	writeResult(result, options.Path)
+}
+
+func writeResult(result, path string) {
 	// create file
-	file, err := os.Create(options.Path)
+	file, err := os.Create(path)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -35,28 +48,6 @@ func ErrorDefinitionFile(options ErrorDefinitionFileOptions) {
 
 	// write file
 	_, err = file.WriteString(result)
-	if err != nil {
-		log.Fatal(err)
-	}
-}
-
-func ErrorDefinitionsMarkdown(inputPath, outputPath string) {
-	input, err := os.Open(inputPath)
-	if err != nil {
-		log.Fatal(err)
-	}
-	defer input.Close() // nolint: errcheck
-
-	g := markdown.Generator{}
-	res, err := g.Generate(input)
-
-	output, err := os.Create(outputPath)
-	if err != nil {
-		log.Fatal(err)
-	}
-	defer output.Close() // nolint: errcheck
-
-	_, err = output.WriteString(res)
 	if err != nil {
 		log.Fatal(err)
 	}

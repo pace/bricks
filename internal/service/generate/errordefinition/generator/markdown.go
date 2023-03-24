@@ -1,9 +1,8 @@
 package generator
 
 import (
+	"encoding/json"
 	"fmt"
-	"gopkg.in/yaml.v3"
-	"io"
 	"strings"
 )
 
@@ -21,34 +20,41 @@ type GroupedErrorDetails struct {
 	Title string
 }
 
-type Generator struct{}
+func (g *Generator) BuildMarkdown(source string) (string, error) {
+	data, err := loadDefinitionData(source)
+	if err != nil {
+		return "", err
+	}
 
-func (g *Generator) Generate(in io.Reader) (string, error) {
-	eds := g.parseInput(in)
+	// parse definitions
+	eds, err := g.parseDefinitions(data)
+	if err != nil {
+		return "", err
+	}
+
 	return g.generateMarkdown(eds)
 }
 
-func (g *Generator) parseInput(r io.Reader) ErrorDefinitions {
-	dec := yaml.NewDecoder(r)
-
-	eds := make(ErrorDefinitions)
-	for {
-		var ed ErrorDefinition
-		if dec.Decode(&ed) != nil {
-			break
-		}
-
-		if _, ok := eds[ed.Service]; ok {
-			eds[ed.Service][ed.Status] = append(eds[ed.Service][ed.Status], GroupedErrorDetails{
-				Code:  ed.Code,
-				Title: ed.Title,
-			})
-		} else {
-			eds[ed.Service] = make(map[string][]GroupedErrorDetails)
-		}
+func (g *Generator) parseDefinitions(data []byte) (ErrorDefinitions, error) {
+	var parsedData []ErrorDefinition
+	err := json.Unmarshal(data, &parsedData)
+	if err != nil {
+		return nil, err
 	}
 
-	return eds
+	eds := make(ErrorDefinitions)
+	for _, ed := range parsedData {
+		if _, ok := eds[ed.Service]; !ok {
+			eds[ed.Service] = make(map[string][]GroupedErrorDetails)
+		}
+
+		eds[ed.Service][ed.Status] = append(eds[ed.Service][ed.Status], GroupedErrorDetails{
+			Code:  ed.Code,
+			Title: ed.Title,
+		})
+	}
+
+	return eds, nil
 }
 
 func (g *Generator) generateMarkdown(eds ErrorDefinitions) (string, error) {
