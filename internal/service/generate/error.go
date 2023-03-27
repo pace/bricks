@@ -25,8 +25,22 @@ func ErrorDefinitionFile(options ErrorDefinitionFileOptions) {
 		log.Fatal(err)
 	}
 
+	writeResult(result, options.Path)
+}
+
+func ErrorDefinitionsMarkdown(options ErrorDefinitionFileOptions) {
+	g := generator.Generator{}
+	result, err := g.BuildMarkdown(options.Source)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	writeResult(result, options.Path)
+}
+
+func writeResult(result, path string) {
 	// create file
-	file, err := os.Create(options.Path)
+	file, err := os.Create(path)
 	if err != nil {
 		log.Fatal(err)
 	}

@@ -25,6 +25,30 @@ type Generator struct {
 	serviceName string
 }
 
+func loadDefinitionData(source string) ([]byte, error) {
+	var data []byte
+	if strings.HasPrefix(source, "http://") || strings.HasPrefix(source, "https://") {
+		loc, err := url.Parse(source)
+		if err != nil {
+			return nil, err
+		}
+
+		data, err = loadDefinitionDataFromURI(loc)
+		if err != nil {
+			return nil, err
+		}
+	} else {
+		// read definition file from disk
+		var err error
+		data, err = os.ReadFile(source) // nolint: gosec
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	return data, nil
+}
+
 func loadDefinitionDataFromURI(url *url.URL) ([]byte, error) {
 	resp, err := http.Get(url.String())
 	if err != nil {
@@ -42,31 +66,14 @@ func loadDefinitionDataFromURI(url *url.URL) ([]byte, error) {
 // BuildSource generates the go code in the specified path with specified package name
 // based on the passed schema source (url or file path)
 func (g *Generator) BuildSource(source, packagePath, packageName string) (string, error) {
-
-	var data []byte
-	if strings.HasPrefix(source, "http://") || strings.HasPrefix(source, "https://") {
-		loc, err := url.Parse(source)
-		if err != nil {
-			return "", err
-		}
-
-		data, err = loadDefinitionDataFromURI(loc)
-		if err != nil {
-			return "", err
-		}
-	} else {
-		// read definition file from disk
-		var err error
-		data, err = os.ReadFile(source) // nolint: gosec
-		if err != nil {
-			return "", err
-		}
-
+	data, err := loadDefinitionData(source)
+	if err != nil {
+		return "", err
 	}
 
 	// parse definition
 	var errors runtime.Errors
-	err := json.Unmarshal(data, &errors)
+	err = json.Unmarshal(data, &errors)
 	if err != nil {
 		return "", err
 	}

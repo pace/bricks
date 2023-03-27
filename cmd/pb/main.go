@@ -4,6 +4,7 @@
 package main
 
 import (
+	"errors"
 	"github.com/spf13/cobra"
 
 	"github.com/pace/bricks/internal/service"
@@ -107,6 +108,31 @@ func addRootCommands(rootCmd *cobra.Command) {
 	addServiceGenerateCommands(rootCmdGenerate)
 }
 
+type errorDefinitionsOutputFlag string
+
+const (
+	goOutputFlag errorDefinitionsOutputFlag = "go"
+	mdOutputFlag errorDefinitionsOutputFlag = "md"
+)
+
+func (e *errorDefinitionsOutputFlag) String() string {
+	return string(*e)
+}
+
+func (e *errorDefinitionsOutputFlag) Set(v string) error {
+	switch v {
+	case "go", "md":
+		*e = errorDefinitionsOutputFlag(v)
+		return nil
+	default:
+		return errors.New(`must be "go" or "md"`)
+	}
+}
+
+func (e *errorDefinitionsOutputFlag) Type() string {
+	return "errorDefinitionsOutputFlag"
+}
+
 // pace service generate ...
 func addServiceGenerateCommands(rootCmdGenerate *cobra.Command) {
 	var pkgName, path, source string
@@ -166,20 +192,29 @@ func addServiceGenerateCommands(rootCmdGenerate *cobra.Command) {
 	rootCmdGenerate.AddCommand(cmdMakefile)
 
 	var errorsDefinitionsPkgName, errorsDefinitionsPath, errorsDefinitionsSource string
-
+	errorDefinitionsOutput := goOutputFlag
 	cmdErrorDefinitions := &cobra.Command{
 		Use:   "error-definitions",
 		Short: "generate BricksErrors based on an array of JSON error objects",
 		Run: func(cmd *cobra.Command, args []string) {
-			generate.ErrorDefinitionFile(generate.ErrorDefinitionFileOptions{
-				PkgName: errorsDefinitionsPkgName,
-				Path:    errorsDefinitionsPath,
-				Source:  errorsDefinitionsSource,
-			})
+			switch errorDefinitionsOutput {
+			case goOutputFlag:
+				generate.ErrorDefinitionFile(generate.ErrorDefinitionFileOptions{
+					PkgName: errorsDefinitionsPkgName,
+					Path:    errorsDefinitionsPath,
+					Source:  errorsDefinitionsSource,
+				})
+			case mdOutputFlag:
+				generate.ErrorDefinitionsMarkdown(generate.ErrorDefinitionFileOptions{
+					Path:   errorsDefinitionsPath,
+					Source: errorsDefinitionsSource,
+				})
+			}
 		},
 	}
 	cmdErrorDefinitions.Flags().StringVar(&errorsDefinitionsPkgName, "pkg", "", "name for the generated go package")
 	cmdErrorDefinitions.Flags().StringVar(&errorsDefinitionsPath, "path", "", "path for generated file")
 	cmdErrorDefinitions.Flags().StringVar(&errorsDefinitionsSource, "source", "", "JSONAPI conform error definitions source to use for generation")
+	cmdErrorDefinitions.Flags().VarP(&errorDefinitionsOutput, "output", "o", "go code or markdown documentation")
 	rootCmdGenerate.AddCommand(cmdErrorDefinitions)
 }
