@@ -2,6 +2,8 @@ module github.com/pace/bricks
 
 go 1.20
 
+replace github.com/asaskevich/govalidator => github.com/pieceofsoul/govalidator v0.0.0-20230607103513-8dce951b10b8
+
 require (
 	github.com/PuerkitoBio/rehttp v1.1.0
 	github.com/adjust/rmq/v3 v3.0.0
@@ -34,7 +36,7 @@ require (
 	github.com/shopspring/decimal v0.0.0-20200105231215-408a2507e114
 	github.com/sony/gobreaker v0.4.1
 	github.com/spf13/cobra v1.6.1
-	github.com/stretchr/testify v1.8.1
+	github.com/stretchr/testify v1.8.2
 	github.com/uber/jaeger-client-go v2.14.0+incompatible
 	github.com/uber/jaeger-lib v1.5.0
 	github.com/zenazn/goji v0.9.0
@@ -207,7 +209,7 @@ require (
 	go.uber.org/atomic v1.7.0 // indirect
 	go.uber.org/multierr v1.6.0 // indirect
 	go.uber.org/zap v1.17.0 // indirect
-	golang.org/x/crypto v0.5.0 // indirect
+	golang.org/x/crypto v0.7.0 // indirect
 	golang.org/x/exp v0.0.0-20220722155223-a9213eeb770e // indirect
 	golang.org/x/exp/typeparams v0.0.0-20230203172020-98cc5a0785f9 // indirect
 	golang.org/x/mod v0.9.0 // indirect

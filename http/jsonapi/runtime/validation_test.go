@@ -6,9 +6,12 @@ package runtime
 import (
 	"encoding/json"
 	"fmt"
+	"net/http"
 	"net/http/httptest"
 	"reflect"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
 func TestValidateParametersWithError(t *testing.T) {
@@ -74,16 +77,68 @@ func TestValidateParametersWithError(t *testing.T) {
 }
 
 func TestValidateRequest(t *testing.T) {
+
 	rec := httptest.NewRecorder()
 	req := httptest.NewRequest("POST", "/", nil)
 
-	val := struct {
-		UUID string `valid:"uuid"`
-	}{"cb855aff-f03c-4307-9a22-ab5fcc6b6d7c"}
-
-	ok := ValidateRequest(rec, req, &val)
-
-	if !ok {
-		t.Error("expected to succeed with the validation")
+	type args struct {
+		w    http.ResponseWriter
+		r    *http.Request
+		data interface{}
+	}
+	tests := []struct {
+		name string
+		args args
+		want bool
+	}{
+		{
+			name: "uuid lowercase",
+			args: args{
+				w: rec,
+				r: req,
+				data: struct {
+					UUID string `valid:"uuid"`
+				}{"cb855aff-f03c-4307-9a22-ab5fcc6b6d7c"},
+			},
+			want: true,
+		},
+		{
+			name: "uuid uppercase",
+			args: args{
+				w: rec,
+				r: req,
+				data: struct {
+					UUID string `valid:"uuid"`
+				}{"CB855AFF-F03C-4307-9A22-AB5FCC6B6D7C"},
+			},
+			want: true,
+		},
+		{
+			name: "uuid mixed lower / uppercase",
+			args: args{
+				w: rec,
+				r: req,
+				data: struct {
+					UUID string `valid:"uuid"`
+				}{"CB855AFF-F03C-4307-9a22-ab5fcc6b6d7c"},
+			},
+			want: true,
+		},
+		{
+			name: "invalid uuid",
+			args: args{
+				w: rec,
+				r: req,
+				data: struct {
+					UUID string `valid:"uuid"`
+				}{"hey-uuid"},
+			},
+			want: false,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			assert.Equalf(t, tt.want, ValidateRequest(tt.args.w, tt.args.r, tt.args.data), "ValidateRequest(%v, %v, %v)", tt.args.w, tt.args.r, tt.args.data)
+		})
 	}
 }
