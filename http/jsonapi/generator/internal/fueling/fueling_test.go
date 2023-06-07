@@ -10,7 +10,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	runtime "github.com/pace/bricks/http/jsonapi/runtime"
+	"github.com/pace/bricks/http/jsonapi/runtime"
 )
 
 type testService struct {

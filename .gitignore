@@ -13,3 +13,6 @@
 
 # tempfiles
 tmp/*
+
+# ignore goland project files
+.idea/
