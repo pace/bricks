@@ -12,6 +12,7 @@ import (
 	"github.com/caarlos0/env"
 	"github.com/go-pg/pg"
 	"github.com/go-pg/pg/orm"
+
 	"github.com/pace/bricks/maintenance/log"
 )
 
@@ -102,12 +103,7 @@ func ReadURLQueryParameters(r *http.Request, mapper ColumnMapper, sanitizer Valu
 // AddToQuery adds filter, sorting and pagination to a orm.Query
 func (u *UrlQueryParameters) AddToQuery(query *orm.Query) *orm.Query {
 	if u.HasPagination {
-		if u.PageNr == 0 {
-			query.Offset(0)
-		} else {
-			query.Offset((u.PageSize * u.PageNr) - 1)
-		}
-		query.Limit(u.PageSize)
+		query.Offset(u.PageSize * u.PageNr).Limit(u.PageSize)
 	}
 	for name, filterValues := range u.Filter {
 		if len(filterValues) == 0 {
