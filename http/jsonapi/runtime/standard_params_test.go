@@ -11,10 +11,11 @@ import (
 
 	"github.com/go-pg/pg"
 	"github.com/go-pg/pg/orm"
+	"github.com/stretchr/testify/assert"
+
 	"github.com/pace/bricks/backend/postgres"
 	"github.com/pace/bricks/http/jsonapi/runtime"
 	"github.com/pace/bricks/maintenance/log"
-	"github.com/stretchr/testify/assert"
 )
 
 type TestModel struct {
@@ -35,6 +36,12 @@ func TestIntegrationFilterParameter(t *testing.T) {
 	// Setup
 	a := assert.New(t)
 	db := setupDatabase(a)
+	defer func() {
+		// Tear Down
+		err := db.DropTable(&TestModel{}, &orm.DropTableOptions{})
+		assert.NoError(t, err)
+	}()
+
 	mappingNames := map[string]string{
 		"test": "filter_name",
 	}
@@ -65,7 +72,7 @@ func TestIntegrationFilterParameter(t *testing.T) {
 	a.Equal("b", modelsFilter2[1].FilterName)
 
 	// Paging
-	r = httptest.NewRequest("GET", "http://abc.de/whatEver?page[number]=3&page[size]=2", nil)
+	r = httptest.NewRequest("GET", "http://abc.de/whatEver?page[number]=1&page[size]=2", nil)
 	urlParams, err = runtime.ReadURLQueryParameters(r, mapper, &testValueSanitizer{})
 	assert.NoError(t, err)
 	var modelsPaging []TestModel
@@ -73,7 +80,11 @@ func TestIntegrationFilterParameter(t *testing.T) {
 	q = urlParams.AddToQuery(q)
 	err = q.Select()
 	a.NoError(err)
-	a.Equal(0, len(modelsPaging))
+	sort.Slice(modelsPaging, func(i, j int) bool {
+		return modelsPaging[i].FilterName < modelsPaging[j].FilterName
+	})
+	a.Equal("c", modelsPaging[0].FilterName)
+	a.Equal("d", modelsPaging[1].FilterName)
 
 	// Sorting
 	r = httptest.NewRequest("GET", "http://abc.de/whatEver?sort=-test", nil)
@@ -84,13 +95,16 @@ func TestIntegrationFilterParameter(t *testing.T) {
 	q = urlParams.AddToQuery(q)
 	err = q.Select()
 	a.NoError(err)
-	a.Equal(3, len(modelsSort))
-	a.Equal("c", modelsSort[0].FilterName)
-	a.Equal("b", modelsSort[1].FilterName)
-	a.Equal("a", modelsSort[2].FilterName)
+	a.Equal(6, len(modelsSort))
+	a.Equal("f", modelsSort[0].FilterName)
+	a.Equal("e", modelsSort[1].FilterName)
+	a.Equal("d", modelsSort[2].FilterName)
+	a.Equal("c", modelsSort[3].FilterName)
+	a.Equal("b", modelsSort[4].FilterName)
+	a.Equal("a", modelsSort[5].FilterName)
 
 	// Combine all
-	r = httptest.NewRequest("GET", "http://abc.de/whatEver?sort=-test&filter[test]=a,b&page[number]=0&page[size]=1", nil)
+	r = httptest.NewRequest("GET", "http://abc.de/whatEver?sort=-test&filter[test]=a,b,e,f&page[number]=1&page[size]=2", nil)
 	urlParams, err = runtime.ReadURLQueryParameters(r, mapper, &testValueSanitizer{})
 	assert.NoError(t, err)
 	var modelsCombined []TestModel
@@ -98,31 +112,46 @@ func TestIntegrationFilterParameter(t *testing.T) {
 	q = urlParams.AddToQuery(q)
 	err = q.Select()
 	assert.NoError(t, err)
-	a.Equal(1, len(modelsCombined))
+	a.Equal(2, len(modelsCombined))
 	a.Equal("b", modelsCombined[0].FilterName)
-	// Tear Down
-	err = db.DropTable(&TestModel{}, &orm.DropTableOptions{
-		IfExists: true,
-	})
-	assert.NoError(t, err)
+	a.Equal("a", modelsCombined[1].FilterName)
 }
 
 func setupDatabase(a *assert.Assertions) *pg.DB {
 	dB := postgres.DefaultConnectionPool()
 	dB = dB.WithContext(log.WithContext(context.Background()))
 
-	a.NoError(dB.CreateTable(&TestModel{}, &orm.CreateTableOptions{IfNotExists: true}))
-	_, err := dB.Model(&TestModel{
+	err := dB.CreateTable(&TestModel{}, &orm.CreateTableOptions{})
+	a.NoError(err)
+	_, err = dB.Model(&TestModel{
 		FilterName: "a",
 	}).Insert()
 	a.NoError(err)
+
 	_, err = dB.Model(&TestModel{
 		FilterName: "b",
 	}).Insert()
 	a.NoError(err)
+
 	_, err = dB.Model(&TestModel{
 		FilterName: "c",
 	}).Insert()
 	a.NoError(err)
+
+	_, err = dB.Model(&TestModel{
+		FilterName: "d",
+	}).Insert()
+	a.NoError(err)
+
+	_, err = dB.Model(&TestModel{
+		FilterName: "e",
+	}).Insert()
+	a.NoError(err)
+
+	_, err = dB.Model(&TestModel{
+		FilterName: "f",
+	}).Insert()
+	a.NoError(err)
+
 	return dB
 }
