@@ -12,11 +12,12 @@ import (
 	"testing"
 
 	"github.com/gorilla/mux"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+
 	"github.com/pace/bricks/http/transport"
 	"github.com/pace/bricks/maintenance/errors/raven"
 	"github.com/pace/bricks/maintenance/log"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 )
 
 // Note: Tests that there is no panic if there are no
@@ -258,14 +259,15 @@ func TestHandlerWithLogSink(t *testing.T) {
 	assert.NotContains(t, string(sink2LogLines[0]), "ONLY FOR SINK1", "unexpected log line found")
 
 	assert.Contains(t, string(sink2LogLines[0]), "https://www.pace.car/de", "missing log line")
-	assert.Contains(t, string(sink2LogLines[1]), "http://localhost/fail", "missing log line")
+	assert.Contains(t, string(sink2LogLines[1]), "https://www.pace.car/de", "missing log line")
+	assert.Contains(t, string(sink2LogLines[2]), "http://localhost/fail", "missing log line")
 
-	assert.Contains(t, string(sink2LogLines[2]), "sentry:category", "missing log line")
-	assert.Contains(t, string(sink2LogLines[2]), "redis", "missing log line")
-	assert.Contains(t, string(sink2LogLines[2]), "sentry:type", "missing log line")
-	assert.Contains(t, string(sink2LogLines[2]), "error", "missing log line")
-	assert.Contains(t, string(sink2LogLines[2]), "ONLY FOR SINK2", "missing log line")
+	assert.Contains(t, string(sink2LogLines[3]), "sentry:category", "missing log line")
+	assert.Contains(t, string(sink2LogLines[3]), "redis", "missing log line")
+	assert.Contains(t, string(sink2LogLines[3]), "sentry:type", "missing log line")
+	assert.Contains(t, string(sink2LogLines[3]), "error", "missing log line")
+	assert.Contains(t, string(sink2LogLines[3]), "ONLY FOR SINK2", "missing log line")
 
-	assert.Contains(t, string(sink2LogLines[3]), "Sink2 Test Error, IGNORE", "missing log line")
+	assert.Contains(t, string(sink2LogLines[4]), "Sink2 Test Error, IGNORE", "missing log line")
 
 }
