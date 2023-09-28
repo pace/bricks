@@ -6,7 +6,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        go: [ '1.21.0' ]
+        go: [ '1.21.1' ]
     steps:
     - uses: actions/checkout@v2
     - uses: actions/setup-go@v2
