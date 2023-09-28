@@ -260,11 +260,12 @@ func TestWithOmitsEmptyAnnotationOnAttribute(t *testing.T) {
 	type Tags map[string]int
 
 	type Author struct {
-		ID      int      `jsonapi:"primary,authors"`
-		Name    string   `jsonapi:"attr,title"`
-		Phones  []*Phone `jsonapi:"attr,phones,omitempty"`
-		Address *Address `jsonapi:"attr,address,omitempty"`
-		Tags    Tags     `jsonapi:"attr,tags,omitempty"`
+		ID      int              `jsonapi:"primary,authors"`
+		Name    string           `jsonapi:"attr,title"`
+		Phones  []*Phone         `jsonapi:"attr,phones,omitempty"`
+		Address *Address         `jsonapi:"attr,address,omitempty"`
+		Tags    Tags             `jsonapi:"attr,tags,omitempty"`
+		Account *decimal.Decimal `jsonapi:"attr,account,omitempty"`
 	}
 
 	author := &Author{
@@ -273,6 +274,7 @@ func TestWithOmitsEmptyAnnotationOnAttribute(t *testing.T) {
 		Phones:  nil,                        // should be omitted
 		Address: nil,                        // should be omitted
 		Tags:    Tags{"dogs": 1, "cats": 2}, // should not be omitted
+		Account: &decimal.Zero,
 	}
 
 	out := bytes.NewBuffer(nil)
@@ -299,6 +301,9 @@ func TestWithOmitsEmptyAnnotationOnAttribute(t *testing.T) {
 	}
 	if _, ok := attributes["tags"]; !ok {
 		t.Fatal("Was expecting the data.attributes.tags to have NOT been omitted")
+	}
+	if _, ok := attributes["account"]; !ok {
+		t.Fatal("Was expecting the data.attributes.account to have NOT been omitted")
 	}
 }
 

@@ -308,10 +308,6 @@ func visitModelNode(model interface{}, included *map[string]*Node,
 			if fieldValue.Type() == reflect.TypeOf(decimal.Decimal{}) {
 				d := fieldValue.Interface().(decimal.Decimal)
 
-				if d.IsZero() {
-					continue
-				}
-
 				if !decimal.MarshalJSONWithoutQuotes {
 					return nil, fmt.Errorf("decimal.MarshalJSONWithoutQuotes needs to be turned on to export decimals as numbers")
 				}
@@ -326,10 +322,6 @@ func visitModelNode(model interface{}, included *map[string]*Node,
 					node.Attributes[args[1]] = []byte("null")
 				} else {
 					d := fieldValue.Interface().(*decimal.Decimal)
-
-					if d.IsZero() && omitEmpty {
-						continue
-					}
 
 					if !decimal.MarshalJSONWithoutQuotes {
 						return nil, fmt.Errorf("decimal.MarshalJSONWithoutQuotes needs to be turned on to export decimals as numbers")
