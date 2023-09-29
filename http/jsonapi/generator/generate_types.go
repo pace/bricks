@@ -246,6 +246,17 @@ func (g *Generator) structJSONAPI(prefix string, stmt *jen.Statement, schema *op
 		fields = append(fields, attrFields...)
 	}
 
+	// add links attribute
+	links := schema.Properties["links"]
+	if links != nil {
+		linksAttr := jen.Id("Links")
+		err := g.buildTypeStruct(prefix+"Links", linksAttr, links.Value, true)
+		if err != nil {
+			return err
+		}
+		fields = append(fields, linksAttr)
+	}
+
 	// att meta attribute
 	meta := schema.Properties["meta"]
 	if meta != nil {

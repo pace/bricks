@@ -52,6 +52,42 @@
                         "description": "Not found"
                     }
                 }
+            },
+            "get": {
+                "tags": [
+                    "Article"
+                ],
+                "operationId": "getArticleComments",
+                "summary": "Gets the Article's Comments",
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "uuid",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "Article ID"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Comments",
+                        "content": {
+                            "application/vnd.api+json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Comments"
+                                }
+                            }
+                        }
+                    },
+                    "204": {
+                        "description": "No content"
+                    },
+                    "404": {
+                        "description": "Not found"
+                    }
+                }
             }
         },
         "/api/articles/{uuid}/relationships/inline": {
@@ -178,6 +214,16 @@
                     "id": {
                         "type": "string",
                         "format": "uuid"
+                    },
+                    "links": {
+                        "type": "object",
+                        "properties": {
+                            "href": {
+                                "type": "string",
+                                "example": "https://example.com",
+                                "description": "Link to comment"
+                            }
+                        }
                     },
                     "attributes": {
                         "type": "object",
