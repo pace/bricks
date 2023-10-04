@@ -13,11 +13,17 @@ import (
 	"reflect"
 )
 
+// CommentLinks ...
+type CommentLinks struct {
+	Href string `json:"href,omitempty" jsonapi:"attr,href,omitempty" valid:"optional"` // Link to comment
+}
+
 // Comment ...
 type Comment struct {
-	ID   string `jsonapi:"primary,Comment,omitempty" valid:"uuid,optional"`
-	Text string `json:"text,omitempty" jsonapi:"attr,text,omitempty" valid:"required"`
-	User string `json:"user,omitempty" jsonapi:"attr,user,omitempty" valid:"required"`
+	ID    string `jsonapi:"primary,Comment,omitempty" valid:"uuid,optional"`
+	Text  string `json:"text,omitempty" jsonapi:"attr,text,omitempty" valid:"required"`
+	User  string `json:"user,omitempty" jsonapi:"attr,user,omitempty" valid:"required"`
+	Links *CommentLinks
 }
 
 // Comments ...
@@ -48,6 +54,61 @@ type MapTypeNumber map[string]float32
 
 // MapTypeString ...
 type MapTypeString map[string]string
+
+/*
+GetArticleCommentsHandler handles request/response marshaling and validation for
+
+	Get /api/articles/{uuid}/relationships/comments
+*/
+func GetArticleCommentsHandler(service GetArticleCommentsHandlerService) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		defer errors.HandleRequest("GetArticleCommentsHandler", w, r)
+
+		// Trace the service function handler execution
+		handlerSpan, ctx := opentracing.StartSpanFromContext(r.Context(), "GetArticleCommentsHandler")
+		defer handlerSpan.Finish()
+
+		// Setup context, response writer and request type
+		writer := getArticleCommentsResponseWriter{
+			ResponseWriter: metrics.NewMetric("articles", "/api/articles/{uuid}/relationships/comments", w, r),
+		}
+		request := GetArticleCommentsRequest{
+			Request: r.WithContext(ctx),
+		}
+
+		// Scan and validate incoming request parameters
+		vars := mux.Vars(r)
+		if !runtime.ScanParameters(w, r, &runtime.ScanParameter{
+			Data:     &request.ParamUuid,
+			Location: runtime.ScanInPath,
+			Input:    vars["uuid"],
+			Name:     "uuid",
+		}) {
+			return
+		}
+		if !runtime.ValidateParameters(w, r, &request) {
+			return // invalid request stop further processing
+		}
+
+		// Invoke service that implements the business logic
+		err := service.GetArticleComments(ctx, &writer, &request)
+		select {
+		case <-ctx.Done():
+			if ctx.Err() != nil {
+				// Context cancellation should not be reported if it's the request context
+				w.WriteHeader(499)
+				if err != nil && !(errors1.Is(err, context.Canceled) || errors1.Is(err, context.DeadlineExceeded)) {
+					// Report unclean error handling (err != context err) to sentry
+					errors.Handle(ctx, err)
+				}
+			}
+		default:
+			if err != nil {
+				errors.HandleError(err, "GetArticleCommentsHandler", w, r)
+			}
+		}
+	})
+}
 
 /*
 UpdateArticleCommentsHandler handles request/response marshaling and validation for
@@ -229,6 +290,45 @@ func UpdateArticleInlineRefHandler(service UpdateArticleInlineRefHandlerService)
 }
 
 /*
+GetArticleCommentsResponseWriter is a standard http.ResponseWriter extended with methods
+to generate the respective responses easily
+*/
+type GetArticleCommentsResponseWriter interface {
+	http.ResponseWriter
+	Comments(Comments)
+	NoContent()
+	NotFound(error)
+}
+type getArticleCommentsResponseWriter struct {
+	http.ResponseWriter
+}
+
+// NotFound responds with jsonapi error (HTTP code 404)
+func (w *getArticleCommentsResponseWriter) NotFound(err error) {
+	runtime.WriteError(w, 404, err)
+}
+
+// NoContent responds with empty response (HTTP code 204)
+func (w *getArticleCommentsResponseWriter) NoContent() {
+	w.Header().Set("Content-Type", "application/vnd.api+json")
+	w.WriteHeader(204)
+}
+
+// Comments responds with jsonapi marshaled data (HTTP code 200)
+func (w *getArticleCommentsResponseWriter) Comments(data Comments) {
+	runtime.Marshal(w, data, 200)
+}
+
+/*
+GetArticleCommentsRequest is a standard http.Request extended with the
+un-marshaled content object
+*/
+type GetArticleCommentsRequest struct {
+	Request   *http.Request `valid:"-"`
+	ParamUuid string        `valid:"required"`
+}
+
+/*
 UpdateArticleCommentsResponseWriter is a standard http.ResponseWriter extended with methods
 to generate the respective responses easily
 */
@@ -341,6 +441,12 @@ type UpdateArticleInlineRefRequest struct {
 	ParamUuid string                        `valid:"required"`
 }
 
+// Service interface for GetArticleCommentsHandler handler
+type GetArticleCommentsHandlerService interface {
+	// GetArticleComments Gets the Article's Comments
+	GetArticleComments(context.Context, GetArticleCommentsResponseWriter, *GetArticleCommentsRequest) error
+}
+
 // Service interface for UpdateArticleCommentsHandler handler
 type UpdateArticleCommentsHandlerService interface {
 	// UpdateArticleComments Updates the Article with Comment relationships
@@ -362,9 +468,19 @@ type UpdateArticleInlineRefHandlerService interface {
 // Legacy Interface.
 // Use this if you want to fully implement a service.
 type Service interface {
+	GetArticleCommentsHandlerService
 	UpdateArticleCommentsHandlerService
 	UpdateArticleInlineTypeHandlerService
 	UpdateArticleInlineRefHandlerService
+}
+
+// GetArticleCommentsHandlerWithFallbackHelper helper that checks if the given service fulfills the interface. Returns fallback handler if not, otherwise returns matching handler.
+func GetArticleCommentsHandlerWithFallbackHelper(service interface{}, fallback http.Handler) http.Handler {
+	if service, ok := service.(GetArticleCommentsHandlerService); ok {
+		return GetArticleCommentsHandler(service)
+	} else {
+		return fallback
+	}
 }
 
 // UpdateArticleCommentsHandlerWithFallbackHelper helper that checks if the given service fulfills the interface. Returns fallback handler if not, otherwise returns matching handler.
@@ -403,6 +519,7 @@ func Router(service interface{}) *mux.Router {
 	router := mux.NewRouter()
 	// Subrouter s1 - Path:
 	s1 := router.PathPrefix("").Subrouter()
+	s1.Methods("GET").Path("/api/articles/{uuid}/relationships/comments").Name("GetArticleComments").Handler(GetArticleCommentsHandlerWithFallbackHelper(service, router.NotFoundHandler))
 	s1.Methods("PATCH").Path("/api/articles/{uuid}/relationships/comments").Name("UpdateArticleComments").Handler(UpdateArticleCommentsHandlerWithFallbackHelper(service, router.NotFoundHandler))
 	s1.Methods("PATCH").Path("/api/articles/{uuid}/relationships/inline").Name("UpdateArticleInlineType").Handler(UpdateArticleInlineTypeHandlerWithFallbackHelper(service, router.NotFoundHandler))
 	s1.Methods("PATCH").Path("/api/articles/{uuid}/relationships/inlineref").Name("UpdateArticleInlineRef").Handler(UpdateArticleInlineRefHandlerWithFallbackHelper(service, router.NotFoundHandler))
@@ -418,6 +535,7 @@ func RouterWithFallback(service interface{}, fallback http.Handler) *mux.Router 
 	router := mux.NewRouter()
 	// Subrouter s1 - Path:
 	s1 := router.PathPrefix("").Subrouter()
+	s1.Methods("GET").Path("/api/articles/{uuid}/relationships/comments").Name("GetArticleComments").Handler(GetArticleCommentsHandlerWithFallbackHelper(service, fallback))
 	s1.Methods("PATCH").Path("/api/articles/{uuid}/relationships/comments").Name("UpdateArticleComments").Handler(UpdateArticleCommentsHandlerWithFallbackHelper(service, fallback))
 	s1.Methods("PATCH").Path("/api/articles/{uuid}/relationships/inline").Name("UpdateArticleInlineType").Handler(UpdateArticleInlineTypeHandlerWithFallbackHelper(service, fallback))
 	s1.Methods("PATCH").Path("/api/articles/{uuid}/relationships/inlineref").Name("UpdateArticleInlineRef").Handler(UpdateArticleInlineRefHandlerWithFallbackHelper(service, fallback))
