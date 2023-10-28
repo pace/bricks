@@ -143,7 +143,6 @@ func init() {
 	if cfg.ApplicationName == "-" {
 		names := []string{
 			os.Getenv("JAEGER_SERVICE_NAME"),
-			os.Getenv("SERVICE_NAME"),
 			filepath.Base(os.Args[0]),
 		}
 		for _, name := range names {
