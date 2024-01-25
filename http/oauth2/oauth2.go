@@ -9,10 +9,9 @@ package oauth2
 import (
 	"context"
 	"errors"
-	"net/http"
-
 	"github.com/opentracing/opentracing-go"
 	olog "github.com/opentracing/opentracing-go/log"
+	"net/http"
 
 	"github.com/pace/bricks/http/security"
 	"github.com/pace/bricks/maintenance/log"
@@ -46,6 +45,7 @@ type token struct {
 	value    string
 	userID   string
 	clientID string
+	authTime int64
 	scope    Scope
 	backend  interface{}
 }
@@ -102,6 +102,7 @@ func fromIntrospectResponse(s *IntrospectResponse, tokenValue string) token {
 	t := token{
 		userID:   s.UserID,
 		value:    tokenValue,
+		authTime: s.AuthTime,
 		clientID: s.ClientID,
 		backend:  s.Backend,
 	}
@@ -139,6 +140,16 @@ func UserID(ctx context.Context) (string, bool) {
 		return "", false
 	}
 	return oauth2token.userID, true
+}
+
+// AuthTime returns the auth time stored in ctx as unix timestamp
+func AuthTime(ctx context.Context) (int64, bool) {
+	tok, _ := security.GetTokenFromContext(ctx)
+	oauth2token, ok := tok.(*token)
+	if !ok {
+		return 0, false
+	}
+	return oauth2token.authTime, true
 }
 
 // Scopes returns the scopes stored in ctx
