@@ -64,11 +64,11 @@ services:
       - "3000:3000"
       - "3001:3001"
     environment:
+      - ENVIRONMENT=development
       - JAEGER_AGENT_HOST=jaeger
       - JAEGER_SAMPLER_TYPE=const
       - JAEGER_SAMPLER_PARAM=1
       - JAEGER_SERVICE_NAME=testserver
-      - SENTRY_ENVIRONMENT=development
       - SENTRY_RELEASE=HEAD
       - PACE_LIVETEST_INTERVAL=10s
       - LOG_FORMAT=console
