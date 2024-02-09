@@ -9,9 +9,9 @@
 
 ## Environment based configuration
 
+* `ENVIRONMENT`
+    * Default environment of sentry reported in the dashboard
 * `SENTRY_DSN`
     * URL of the sentry DSN
-* `SENTRY_ENVIRONMENT`
-    * Environment of sentry reported in the dashboard
 * `SENTRY_RELEASE`
     * Name of the release e.g. git commit or similar

@@ -376,7 +376,7 @@ func newClient(tags map[string]string) *Client {
 		log.Warnf("DSN environment was set to %q but failed: %v", dsn, err)
 	}
 	client.SetRelease(os.Getenv("SENTRY_RELEASE"))
-	client.SetEnvironment(os.Getenv("SENTRY_ENVIRONMENT"))
+	client.SetEnvironment(os.Getenv("ENVIRONMENT"))
 	return client
 }
 
