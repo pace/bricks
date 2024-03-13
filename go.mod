@@ -45,7 +45,7 @@ require (
 	golang.org/x/vuln v0.0.0-20220922014440-c4543efbee9e
 	google.golang.org/grpc v1.60.1
 	google.golang.org/grpc/cmd/protoc-gen-go-grpc v1.1.0
-	google.golang.org/protobuf v1.31.0
+	google.golang.org/protobuf v1.33.0
 )
 
 require (
