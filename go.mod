@@ -33,7 +33,7 @@ require (
 	github.com/prometheus/client_golang v1.19.0
 	github.com/rs/xid v1.5.0
 	github.com/rs/zerolog v1.32.0
-	github.com/shopspring/decimal v0.0.0-20200105231215-408a2507e114
+	github.com/shopspring/decimal v1.3.1
 	github.com/sony/gobreaker v0.4.1
 	github.com/spf13/cobra v1.6.1
 	github.com/stretchr/testify v1.8.2
