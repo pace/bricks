@@ -17,7 +17,7 @@ require (
 	github.com/go-kivik/kivik/v3 v3.2.3
 	github.com/go-pg/pg v6.14.5+incompatible
 	github.com/go-redis/redis/v7 v7.4.1
-	github.com/golang-jwt/jwt v3.2.2+incompatible
+	github.com/golang-jwt/jwt/v5 v5.2.1
 	github.com/golangci/golangci-lint v1.51.2
 	github.com/google/uuid v1.6.0
 	github.com/gorilla/mux v1.8.0
