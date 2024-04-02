@@ -15,9 +15,9 @@ import (
 	"github.com/pace/bricks/locale"
 	"github.com/pace/bricks/maintenance/log"
 
+	grpc_prometheus "github.com/grpc-ecosystem/go-grpc-middleware/providers/prometheus"
 	grpc_retry "github.com/grpc-ecosystem/go-grpc-middleware/retry"
 	grpc_opentracing "github.com/grpc-ecosystem/go-grpc-middleware/tracing/opentracing"
-	grpc_prometheus "github.com/grpc-ecosystem/go-grpc-prometheus"
 )
 
 func DialContext(ctx context.Context, addr string) (*grpc.ClientConn, error) {
@@ -30,13 +30,16 @@ func Dial(addr string) (*grpc.ClientConn, error) {
 
 func dialCtx(ctx context.Context, addr string) (*grpc.ClientConn, error) {
 	var conn *grpc.ClientConn
+
+	clientMetrics := grpc_prometheus.NewClientMetrics()
+
 	opts := []grpc_retry.CallOption{
 		grpc_retry.WithBackoff(grpc_retry.BackoffLinear(100 * time.Millisecond)),
 	}
 	conn, err := grpc.DialContext(ctx, addr, grpc.WithTransportCredentials(insecure.NewCredentials()),
 		grpc.WithChainStreamInterceptor(
 			grpc_opentracing.StreamClientInterceptor(),
-			grpc_prometheus.StreamClientInterceptor,
+			grpc_opentracing.StreamClientInterceptor(),
 			grpc_retry.StreamClientInterceptor(opts...),
 			func(ctx context.Context, desc *grpc.StreamDesc, cc *grpc.ClientConn, method string, streamer grpc.Streamer, opts ...grpc.CallOption) (grpc.ClientStream, error) {
 				start := time.Now()
@@ -51,7 +54,7 @@ func dialCtx(ctx context.Context, addr string) (*grpc.ClientConn, error) {
 		),
 		grpc.WithChainUnaryInterceptor(
 			grpc_opentracing.UnaryClientInterceptor(),
-			grpc_prometheus.UnaryClientInterceptor,
+			clientMetrics.UnaryClientInterceptor(),
 			grpc_retry.UnaryClientInterceptor(opts...),
 			func(ctx context.Context, method string, req, reply interface{}, cc *grpc.ClientConn, invoker grpc.UnaryInvoker, opts ...grpc.CallOption) error {
 				start := time.Now()
