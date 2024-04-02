@@ -19,6 +19,7 @@ require (
 	github.com/go-redis/redis/v7 v7.4.1
 	github.com/golang-jwt/jwt v3.2.2+incompatible
 	github.com/golangci/golangci-lint v1.51.2
+	github.com/google/uuid v1.6.0
 	github.com/gorilla/mux v1.8.0
 	github.com/grpc-ecosystem/go-grpc-middleware v1.3.0
 	github.com/grpc-ecosystem/go-grpc-prometheus v1.2.0
@@ -32,7 +33,6 @@ require (
 	github.com/prometheus/client_golang v1.12.1
 	github.com/rs/xid v1.2.1
 	github.com/rs/zerolog v1.17.2
-	github.com/satori/go.uuid v1.2.0
 	github.com/shopspring/decimal v0.0.0-20200105231215-408a2507e114
 	github.com/sony/gobreaker v0.4.1
 	github.com/spf13/cobra v1.6.1
@@ -108,7 +108,6 @@ require (
 	github.com/golangci/revgrep v0.0.0-20220804021717-745bb2f7c2e6 // indirect
 	github.com/golangci/unconvert v0.0.0-20180507085042-28b1c447d1f4 // indirect
 	github.com/google/go-cmp v0.5.9 // indirect
-	github.com/google/uuid v1.3.1 // indirect
 	github.com/gordonklaus/ineffassign v0.0.0-20230107090616-13ace0543b28 // indirect
 	github.com/gostaticanalysis/analysisutil v0.7.1 // indirect
 	github.com/gostaticanalysis/comment v1.4.2 // indirect
