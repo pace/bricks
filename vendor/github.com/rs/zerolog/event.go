@@ -1,6 +1,7 @@
 package zerolog
 
 import (
+	"context"
 	"fmt"
 	"net"
 	"os"
@@ -20,12 +21,14 @@ var eventPool = &sync.Pool{
 // Event represents a log event. It is instanced by one of the level method of
 // Logger and finalized by the Msg or Msgf method.
 type Event struct {
-	buf   []byte
-	w     LevelWriter
-	level Level
-	done  func(msg string)
-	stack bool   // enable error stack trace
-	ch    []Hook // hooks from context
+	buf       []byte
+	w         LevelWriter
+	level     Level
+	done      func(msg string)
+	stack     bool            // enable error stack trace
+	ch        []Hook          // hooks from context
+	skipFrame int             // The number of additional frames to skip when printing the caller.
+	ctx       context.Context // Optional Go context for event
 }
 
 func putEvent(e *Event) {
@@ -61,6 +64,8 @@ func newEvent(w LevelWriter, level Level) *Event {
 	e.buf = enc.AppendBeginMarker(e.buf)
 	e.w = w
 	e.level = level
+	e.stack = false
+	e.skipFrame = 0
 	return e
 }
 
@@ -126,6 +131,13 @@ func (e *Event) Msgf(format string, v ...interface{}) {
 	e.msg(fmt.Sprintf(format, v...))
 }
 
+func (e *Event) MsgFunc(createMsg func() string) {
+	if e == nil {
+		return
+	}
+	e.msg(createMsg())
+}
+
 func (e *Event) msg(msg string) {
 	for _, hook := range e.ch {
 		hook.Run(e, e.level, msg)
@@ -145,12 +157,14 @@ func (e *Event) msg(msg string) {
 	}
 }
 
-// Fields is a helper function to use a map to set fields using type assertion.
-func (e *Event) Fields(fields map[string]interface{}) *Event {
+// Fields is a helper function to use a map or slice to set fields using type assertion.
+// Only map[string]interface{} and []interface{} are accepted. []interface{} must
+// alternate string keys and arbitrary values, and extraneous ones are ignored.
+func (e *Event) Fields(fields interface{}) *Event {
 	if e == nil {
 		return e
 	}
-	e.buf = appendFields(e.buf, fields)
+	e.buf = appendFields(e.buf, fields, e.stack)
 	return e
 }
 
@@ -204,13 +218,30 @@ func (e *Event) Object(key string, obj LogObjectMarshaler) *Event {
 		return e
 	}
 	e.buf = enc.AppendKey(e.buf, key)
+	if obj == nil {
+		e.buf = enc.AppendNil(e.buf)
+
+		return e
+	}
+
 	e.appendObject(obj)
+	return e
+}
+
+// Func allows an anonymous func to run only if the event is enabled.
+func (e *Event) Func(f func(e *Event)) *Event {
+	if e != nil && e.Enabled() {
+		f(e)
+	}
 	return e
 }
 
 // EmbedObject marshals an object that implement the LogObjectMarshaler interface.
 func (e *Event) EmbedObject(obj LogObjectMarshaler) *Event {
 	if e == nil {
+		return e
+	}
+	if obj == nil {
 		return e
 	}
 	obj.MarshalZerologObject(e)
@@ -232,6 +263,27 @@ func (e *Event) Strs(key string, vals []string) *Event {
 		return e
 	}
 	e.buf = enc.AppendStrings(enc.AppendKey(e.buf, key), vals)
+	return e
+}
+
+// Stringer adds the field key with val.String() (or null if val is nil)
+// to the *Event context.
+func (e *Event) Stringer(key string, val fmt.Stringer) *Event {
+	if e == nil {
+		return e
+	}
+	e.buf = enc.AppendStringer(enc.AppendKey(e.buf, key), val)
+	return e
+}
+
+// Stringers adds the field key with vals where each individual val
+// is used as val.String() (or null if val is empty) to the *Event
+// context.
+func (e *Event) Stringers(key string, vals []fmt.Stringer) *Event {
+	if e == nil {
+		return e
+	}
+	e.buf = enc.AppendStringers(enc.AppendKey(e.buf, key), vals)
 	return e
 }
 
@@ -268,6 +320,18 @@ func (e *Event) RawJSON(key string, b []byte) *Event {
 	return e
 }
 
+// RawCBOR adds already encoded CBOR to the log line under key.
+//
+// No sanity check is performed on b
+// Note: The full featureset of CBOR is supported as data will not be mapped to json but stored as data-url
+func (e *Event) RawCBOR(key string, b []byte) *Event {
+	if e == nil {
+		return e
+	}
+	e.buf = appendCBOR(enc.AppendKey(e.buf, key), b)
+	return e
+}
+
 // AnErr adds the field key with serialized err to the *Event context.
 // If err is nil, no field is added.
 func (e *Event) AnErr(key string, err error) *Event {
@@ -280,7 +344,11 @@ func (e *Event) AnErr(key string, err error) *Event {
 	case LogObjectMarshaler:
 		return e.Object(key, m)
 	case error:
-		return e.Str(key, m.Error())
+		if m == nil || isNilValue(m) {
+			return e
+		} else {
+			return e.Str(key, m.Error())
+		}
 	case string:
 		return e.Str(key, m)
 	default:
@@ -313,7 +381,6 @@ func (e *Event) Errs(key string, errs []error) *Event {
 
 // Err adds the field "error" with serialized err to the *Event context.
 // If err is nil, no field is added.
-// To customize the key name, change zerolog.ErrorFieldName.
 //
 // To customize the key name, change zerolog.ErrorFieldName.
 //
@@ -330,7 +397,9 @@ func (e *Event) Err(err error) *Event {
 		case LogObjectMarshaler:
 			e.Object(ErrorStackFieldName, m)
 		case error:
-			e.Str(ErrorStackFieldName, m.Error())
+			if m != nil && !isNilValue(m) {
+				e.Str(ErrorStackFieldName, m.Error())
+			}
 		case string:
 			e.Str(ErrorStackFieldName, m)
 		default:
@@ -348,6 +417,28 @@ func (e *Event) Stack() *Event {
 		e.stack = true
 	}
 	return e
+}
+
+// Ctx adds the Go Context to the *Event context.  The context is not rendered
+// in the output message, but is available to hooks and to Func() calls via the
+// GetCtx() accessor. A typical use case is to extract tracing information from
+// the Go Ctx.
+func (e *Event) Ctx(ctx context.Context) *Event {
+	if e != nil {
+		e.ctx = ctx
+	}
+	return e
+}
+
+// GetCtx retrieves the Go context.Context which is optionally stored in the
+// Event.  This allows Hooks and functions passed to Func() to retrieve values
+// which are stored in the context.Context.  This can be useful in tracing,
+// where span information is commonly propagated in the context.Context.
+func (e *Event) GetCtx() context.Context {
+	if e == nil || e.ctx == nil {
+		return context.Background()
+	}
+	return e.ctx
 }
 
 // Bool adds the field key with val as a bool to the *Event context.
@@ -597,7 +688,7 @@ func (e *Event) Timestamp() *Event {
 	return e
 }
 
-// Time adds the field key with t formated as string using zerolog.TimeFieldFormat.
+// Time adds the field key with t formatted as string using zerolog.TimeFieldFormat.
 func (e *Event) Time(key string, t time.Time) *Event {
 	if e == nil {
 		return e
@@ -606,7 +697,7 @@ func (e *Event) Time(key string, t time.Time) *Event {
 	return e
 }
 
-// Times adds the field key with t formated as string using zerolog.TimeFieldFormat.
+// Times adds the field key with t formatted as string using zerolog.TimeFieldFormat.
 func (e *Event) Times(key string, t []time.Time) *Event {
 	if e == nil {
 		return e
@@ -652,6 +743,11 @@ func (e *Event) TimeDiff(key string, t time.Time, start time.Time) *Event {
 	return e
 }
 
+// Any is a wrapper around Event.Interface.
+func (e *Event) Any(key string, i interface{}) *Event {
+	return e.Interface(key, i)
+}
+
 // Interface adds the field key with i marshaled using reflection.
 func (e *Event) Interface(key string, i interface{}) *Event {
 	if e == nil {
@@ -661,6 +757,25 @@ func (e *Event) Interface(key string, i interface{}) *Event {
 		return e.Object(key, obj)
 	}
 	e.buf = enc.AppendInterface(enc.AppendKey(e.buf, key), i)
+	return e
+}
+
+// Type adds the field key with val's type using reflection.
+func (e *Event) Type(key string, val interface{}) *Event {
+	if e == nil {
+		return e
+	}
+	e.buf = enc.AppendType(enc.AppendKey(e.buf, key), val)
+	return e
+}
+
+// CallerSkipFrame instructs any future Caller calls to skip the specified number of frames.
+// This includes those added via hooks from the context.
+func (e *Event) CallerSkipFrame(skip int) *Event {
+	if e == nil {
+		return e
+	}
+	e.skipFrame += skip
 	return e
 }
 
@@ -679,11 +794,11 @@ func (e *Event) caller(skip int) *Event {
 	if e == nil {
 		return e
 	}
-	_, file, line, ok := runtime.Caller(skip)
+	pc, file, line, ok := runtime.Caller(skip + e.skipFrame)
 	if !ok {
 		return e
 	}
-	e.buf = enc.AppendString(enc.AppendKey(e.buf, CallerFieldName), CallerMarshalFunc(file, line))
+	e.buf = enc.AppendString(enc.AppendKey(e.buf, CallerFieldName), CallerMarshalFunc(pc, file, line))
 	return e
 }
 
