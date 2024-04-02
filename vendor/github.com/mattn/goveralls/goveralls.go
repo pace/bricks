@@ -248,7 +248,9 @@ func processParallelFinish(jobID, token string) error {
 
 	params := make(url.Values)
 	params.Set("repo_token", token)
-	params.Set("repo_name", name)
+	if name != "" {
+		params.Set("repo_name", name)
+	}
 	params.Set("payload[build_num]", jobID)
 	params.Set("payload[status]", "done")
 	res, err := http.PostForm(*endpoint+"/webhook", params)
@@ -268,12 +270,23 @@ func processParallelFinish(jobID, token string) error {
 		return fmt.Errorf("unable to read response body from coveralls: %s", err)
 	}
 
-	if res.StatusCode >= http.StatusInternalServerError && *shallow {
-		fmt.Println("coveralls server failed internally")
-		return nil
+	if *shallow {
+		if res.StatusCode >= http.StatusInternalServerError {
+			fmt.Println("coveralls server failed internally")
+			return nil
+		}
+
+		// XXX: It looks that Coveralls is under maintenance.
+		// Coveralls serves the maintenance page as a static HTML hosting,
+		// and the maintenance page doesn't accept POST method.
+		// See https://github.com/mattn/goveralls/issues/204
+		if res.StatusCode == http.StatusMethodNotAllowed {
+			fmt.Println("it looks that Coveralls is under maintenance. visit https://status.coveralls.io/")
+			return nil
+		}
 	}
 
-	if res.StatusCode != 200 {
+	if res.StatusCode != http.StatusOK {
 		return fmt.Errorf("bad response status from coveralls: %d\n%s", res.StatusCode, bodyBytes)
 	}
 
@@ -379,6 +392,9 @@ func process() error {
 	if prNumber := os.Getenv("CIRCLE_PR_NUMBER"); prNumber != "" {
 		// for Circle CI (pull request from forked repo)
 		pullRequest = prNumber
+	} else if prURL := os.Getenv("CIRCLE_PULL_REQUEST"); prURL != "" {
+		// for Circle CI (all other pull requests)
+		pullRequest = regexp.MustCompile(`[0-9]+$`).FindString(prURL)
 	} else if prNumber := os.Getenv("TRAVIS_PULL_REQUEST"); prNumber != "" && prNumber != "false" {
 		pullRequest = prNumber
 	} else if prNumber := os.Getenv("APPVEYOR_PULL_REQUEST_NUMBER"); prNumber != "" {
@@ -502,9 +518,20 @@ func process() error {
 		return fmt.Errorf("unable to read response body from coveralls: %s", err)
 	}
 
-	if res.StatusCode >= http.StatusInternalServerError && *shallow {
-		fmt.Println("coveralls server failed internally")
-		return nil
+	if *shallow {
+		if res.StatusCode >= http.StatusInternalServerError {
+			fmt.Println("coveralls server failed internally")
+			return nil
+		}
+
+		// XXX: It looks that Coveralls is under maintenance.
+		// Coveralls serves the maintenance page as a static HTML hosting,
+		// and the maintenance page doesn't accept POST method.
+		// See https://github.com/mattn/goveralls/issues/204
+		if res.StatusCode == http.StatusMethodNotAllowed {
+			fmt.Println("it looks that Coveralls is under maintenance. visit https://status.coveralls.io/")
+			return nil
+		}
 	}
 
 	if res.StatusCode != 200 {
