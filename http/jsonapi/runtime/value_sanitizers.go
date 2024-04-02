@@ -8,7 +8,7 @@ import (
 	"fmt"
 	"strconv"
 
-	uuid "github.com/satori/go.uuid"
+	uuid "github.com/google/uuid"
 	"github.com/shopspring/decimal"
 
 	"github.com/pace/bricks/pkg/isotime"
@@ -56,7 +56,7 @@ func (n noopSanitizer) SanitizeValue(fieldName string, value string) (interface{
 type uuidSanitizer struct{}
 
 func (u uuidSanitizer) SanitizeValue(fieldName string, value string) (interface{}, error) {
-	if _, err := uuid.FromString(value); err != nil {
+	if _, err := uuid.Parse(value); err != nil {
 		return nil, err
 	}
 	return value, nil

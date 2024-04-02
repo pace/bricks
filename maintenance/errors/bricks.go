@@ -8,7 +8,7 @@ package errors
 import (
 	"strconv"
 
-	uuid "github.com/satori/go.uuid"
+	uuid "github.com/google/uuid"
 
 	"github.com/pace/bricks/http/jsonapi/runtime"
 )
@@ -62,7 +62,7 @@ func (e *BricksError) Status() int {
 // with a JSON error object
 func (e *BricksError) AsRuntimeError() *runtime.Error {
 	j := &runtime.Error{
-		ID:     uuid.NewV4().String(),
+		ID:     uuid.NewString(),
 		Status: strconv.Itoa(e.status),
 		Code:   e.code,
 		Title:  e.title,
