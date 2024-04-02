@@ -320,7 +320,7 @@ github.com/gostaticanalysis/forcetypeassert
 # github.com/gostaticanalysis/nilerr v0.1.1
 ## explicit; go 1.15
 github.com/gostaticanalysis/nilerr
-# github.com/grpc-ecosystem/go-grpc-middleware v1.3.0
+# github.com/grpc-ecosystem/go-grpc-middleware v1.4.0
 ## explicit; go 1.14
 github.com/grpc-ecosystem/go-grpc-middleware
 github.com/grpc-ecosystem/go-grpc-middleware/auth
@@ -782,7 +782,7 @@ go.uber.org/atomic
 # go.uber.org/multierr v1.6.0
 ## explicit; go 1.12
 go.uber.org/multierr
-# go.uber.org/zap v1.17.0
+# go.uber.org/zap v1.18.1
 ## explicit; go 1.13
 go.uber.org/zap
 go.uber.org/zap/buffer
