@@ -919,9 +919,6 @@ golang.org/x/tools/internal/pkgbits
 golang.org/x/tools/internal/tokeninternal
 golang.org/x/tools/internal/typeparams
 golang.org/x/tools/internal/typesinternal
-# golang.org/x/tools/cmd/cover v0.1.0-deprecated
-## explicit; go 1.18
-golang.org/x/tools/cmd/cover
 # golang.org/x/vuln v0.0.0-20220922014440-c4543efbee9e
 ## explicit; go 1.18
 golang.org/x/vuln/client

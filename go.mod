@@ -41,7 +41,6 @@ require (
 	github.com/uber/jaeger-lib v1.5.0
 	github.com/zenazn/goji v1.0.1
 	golang.org/x/text v0.14.0
-	golang.org/x/tools/cmd/cover v0.1.0-deprecated
 	golang.org/x/vuln v0.0.0-20220922014440-c4543efbee9e
 	google.golang.org/grpc v1.60.1
 	google.golang.org/grpc/cmd/protoc-gen-go-grpc v1.1.0
