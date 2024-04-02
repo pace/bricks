@@ -29,7 +29,7 @@ github.com/Masterminds/semver
 # github.com/OpenPeeDeeP/depguard v1.1.1
 ## explicit; go 1.13
 github.com/OpenPeeDeeP/depguard
-# github.com/PuerkitoBio/rehttp v1.1.0
+# github.com/PuerkitoBio/rehttp v1.4.0
 ## explicit; go 1.16
 github.com/PuerkitoBio/rehttp
 # github.com/adjust/rmq/v3 v3.0.0
