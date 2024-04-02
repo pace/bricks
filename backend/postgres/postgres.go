@@ -15,7 +15,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/caarlos0/env"
+	"github.com/caarlos0/env/v10"
 	"github.com/go-pg/pg"
 	"github.com/opentracing/opentracing-go"
 	olog "github.com/opentracing/opentracing-go/log"
@@ -224,7 +224,8 @@ func ConnectionPool(opts ...ConfigOption) *pg.DB {
 //
 // Fot a health check for this connection a PgHealthCheck needs to
 // be registered:
-//  servicehealthcheck.RegisterHealthCheck(...)
+//
+//	servicehealthcheck.RegisterHealthCheck(...)
 func CustomConnectionPool(opts *pg.Options) *pg.DB {
 	log.Logger().Info().Str("addr", opts.Addr).
 		Str("user", opts.User).

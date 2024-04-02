@@ -6,7 +6,7 @@ package locale
 import (
 	"log"
 
-	"github.com/caarlos0/env"
+	"github.com/caarlos0/env/v10"
 )
 
 type config struct {

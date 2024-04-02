@@ -6,7 +6,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/caarlos0/env"
+	"github.com/caarlos0/env/v10"
 	"github.com/minio/minio-go/v7"
 	"github.com/minio/minio-go/v7/pkg/credentials"
 

@@ -7,7 +7,7 @@ import (
 	"log"
 	"time"
 
-	"github.com/caarlos0/env"
+	"github.com/caarlos0/env/v10"
 	"github.com/prometheus/client_golang/prometheus"
 )
 
