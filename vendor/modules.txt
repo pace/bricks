@@ -109,8 +109,8 @@ github.com/daixiang0/gci/pkg/parse
 github.com/daixiang0/gci/pkg/section
 github.com/daixiang0/gci/pkg/specificity
 github.com/daixiang0/gci/pkg/utils
-# github.com/dave/jennifer v1.0.2
-## explicit
+# github.com/dave/jennifer v1.4.1
+## explicit; go 1.15
 github.com/dave/jennifer/jen
 # github.com/davecgh/go-spew v1.1.1
 ## explicit

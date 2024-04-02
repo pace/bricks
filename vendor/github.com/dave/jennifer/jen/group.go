@@ -43,7 +43,6 @@ func (g *Group) render(f *File, w io.Writer, s *Statement) error {
 		if isGrp && grp.name == "case" || isTkn && tkn.content == "default" {
 			g.open = ""
 			g.close = ""
-			g.separator = "\n"
 		}
 	}
 	if g.open != "" {
@@ -79,6 +78,12 @@ func (g *Group) render(f *File, w io.Writer, s *Statement) error {
 func (g *Group) renderItems(f *File, w io.Writer) (isNull bool, err error) {
 	first := true
 	for _, code := range g.items {
+		if pt, ok := code.(token); ok && pt.typ == packageToken {
+			// Special case for package tokens in Qual groups - for dot-imports, the package token
+			// will be null, so will not render and will not be registered in the imports block.
+			// This ensures all packageTokens that are rendered are registered.
+			f.register(pt.content.(string))
+		}
 		if code == nil || code.isNull(f) {
 			// Null() token produces no output but also
 			// no separator. Empty() token products no
@@ -112,9 +117,22 @@ func (g *Group) renderItems(f *File, w io.Writer) (isNull bool, err error) {
 
 // Render renders the Group to the provided writer.
 func (g *Group) Render(writer io.Writer) error {
-	f := NewFile("")
+	return g.RenderWithFile(writer, NewFile(""))
+}
+
+// GoString renders the Group for testing. Any error will cause a panic.
+func (g *Group) GoString() string {
+	buf := bytes.Buffer{}
+	if err := g.Render(&buf); err != nil {
+		panic(err)
+	}
+	return buf.String()
+}
+
+// RenderWithFile renders the Group to the provided writer, using imports from the provided file.
+func (g *Group) RenderWithFile(writer io.Writer, file *File) error {
 	buf := &bytes.Buffer{}
-	if err := g.render(f, buf, nil); err != nil {
+	if err := g.render(file, buf, nil); err != nil {
 		return err
 	}
 	b, err := format.Source(buf.Bytes())
@@ -127,11 +145,3 @@ func (g *Group) Render(writer io.Writer) error {
 	return nil
 }
 
-// GoString renders the Group for testing. Any error will cause a panic.
-func (g *Group) GoString() string {
-	buf := bytes.Buffer{}
-	if err := g.Render(&buf); err != nil {
-		panic(err)
-	}
-	return buf.String()
-}

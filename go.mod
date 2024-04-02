@@ -11,7 +11,7 @@ require (
 	github.com/bsm/redislock v0.5.0
 	github.com/caarlos0/env/v10 v10.0.0
 	github.com/certifi/gocertifi v0.0.0-20210507211836-431795d63e8d
-	github.com/dave/jennifer v1.0.2
+	github.com/dave/jennifer v1.4.1
 	github.com/getkin/kin-openapi v0.0.0-20180813063848-e1956e8013e5
 	github.com/go-kivik/couchdb/v3 v3.2.6
 	github.com/go-kivik/kivik/v3 v3.2.3
