@@ -9,7 +9,7 @@ require (
 	github.com/adjust/rmq/v3 v3.0.0
 	github.com/asaskevich/govalidator v0.0.0-20210307081110-f21760c49a8d
 	github.com/bsm/redislock v0.5.0
-	github.com/caarlos0/env v3.3.0+incompatible
+	github.com/caarlos0/env/v10 v10.0.0
 	github.com/certifi/gocertifi v0.0.0-20180118203423-deb3ae2ef261
 	github.com/dave/jennifer v1.0.2
 	github.com/getkin/kin-openapi v0.0.0-20180813063848-e1956e8013e5

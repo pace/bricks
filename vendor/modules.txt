@@ -76,9 +76,9 @@ github.com/bsm/redislock
 github.com/butuzov/ireturn/analyzer
 github.com/butuzov/ireturn/config
 github.com/butuzov/ireturn/types
-# github.com/caarlos0/env v3.3.0+incompatible
-## explicit
-github.com/caarlos0/env
+# github.com/caarlos0/env/v10 v10.0.0
+## explicit; go 1.17
+github.com/caarlos0/env/v10
 # github.com/certifi/gocertifi v0.0.0-20180118203423-deb3ae2ef261
 ## explicit
 github.com/certifi/gocertifi
