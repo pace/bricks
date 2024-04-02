@@ -771,7 +771,7 @@ github.com/yagipy/maintidx/pkg/halstvol
 # github.com/yeya24/promlinter v0.2.0
 ## explicit; go 1.16
 github.com/yeya24/promlinter
-# github.com/zenazn/goji v0.9.0
+# github.com/zenazn/goji v1.0.1
 ## explicit
 github.com/zenazn/goji/web/mutil
 # gitlab.com/bosi/decorder v0.2.3

@@ -39,7 +39,7 @@ require (
 	github.com/stretchr/testify v1.9.0
 	github.com/uber/jaeger-client-go v2.14.0+incompatible
 	github.com/uber/jaeger-lib v1.5.0
-	github.com/zenazn/goji v0.9.0
+	github.com/zenazn/goji v1.0.1
 	golang.org/x/text v0.14.0
 	golang.org/x/tools/cmd/cover v0.1.0-deprecated
 	golang.org/x/vuln v0.0.0-20220922014440-c4543efbee9e
