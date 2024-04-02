@@ -304,8 +304,8 @@ github.com/google/uuid
 # github.com/gordonklaus/ineffassign v0.0.0-20230107090616-13ace0543b28
 ## explicit; go 1.14
 github.com/gordonklaus/ineffassign/pkg/ineffassign
-# github.com/gorilla/mux v1.8.0
-## explicit; go 1.12
+# github.com/gorilla/mux v1.8.1
+## explicit; go 1.20
 github.com/gorilla/mux
 # github.com/gostaticanalysis/analysisutil v0.7.1
 ## explicit; go 1.16
