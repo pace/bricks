@@ -278,7 +278,7 @@ func checkPrintfFwd(pass *analysis.Pass, w *printfWrapper, call *ast.CallExpr, k
 			// print/printf function can take, adding an ellipsis
 			// would break the program. For example:
 			//
-			//   func foo(arg1 string, arg2 ...interface{} {
+			//   func foo(arg1 string, arg2 ...interface{}) {
 			//       fmt.Printf("%s %v", arg1, arg2)
 			//   }
 			return
@@ -511,13 +511,8 @@ func isFormatter(typ types.Type) bool {
 	sig := fn.Type().(*types.Signature)
 	return sig.Params().Len() == 2 &&
 		sig.Results().Len() == 0 &&
-		isNamed(sig.Params().At(0).Type(), "fmt", "State") &&
+		analysisutil.IsNamedType(sig.Params().At(0).Type(), "fmt", "State") &&
 		types.Identical(sig.Params().At(1).Type(), types.Typ[types.Rune])
-}
-
-func isNamed(T types.Type, pkgpath, name string) bool {
-	named, ok := T.(*types.Named)
-	return ok && named.Obj().Pkg().Path() == pkgpath && named.Obj().Name() == name
 }
 
 // formatState holds the parsed representation of a printf directive such as "%3.*[4]d".
@@ -1056,7 +1051,7 @@ func checkPrint(pass *analysis.Pass, call *ast.CallExpr, fn *types.Func) {
 		if strings.Contains(s, "%") {
 			m := printFormatRE.FindStringSubmatch(s)
 			if m != nil {
-				pass.ReportRangef(call, "%s call has possible formatting directive %s", fn.FullName(), m[0])
+				pass.ReportRangef(call, "%s call has possible Printf formatting directive %s", fn.FullName(), m[0])
 			}
 		}
 	}
