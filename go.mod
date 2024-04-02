@@ -31,7 +31,7 @@ require (
 	github.com/pkg/errors v0.9.1
 	github.com/pmezard/go-difflib v1.0.0
 	github.com/prometheus/client_golang v1.19.0
-	github.com/rs/xid v1.2.1
+	github.com/rs/xid v1.5.0
 	github.com/rs/zerolog v1.17.2
 	github.com/shopspring/decimal v0.0.0-20200105231215-408a2507e114
 	github.com/sony/gobreaker v0.4.1

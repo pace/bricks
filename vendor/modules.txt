@@ -597,8 +597,8 @@ github.com/quasilyte/regex/syntax
 # github.com/quasilyte/stdinfo v0.0.0-20220114132959-f7386bf02567
 ## explicit; go 1.17
 github.com/quasilyte/stdinfo
-# github.com/rs/xid v1.2.1
-## explicit
+# github.com/rs/xid v1.5.0
+## explicit; go 1.12
 github.com/rs/xid
 # github.com/rs/zerolog v1.17.2
 ## explicit
