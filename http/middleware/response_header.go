@@ -8,7 +8,7 @@ import (
 	"net/http"
 	"strings"
 
-	jwt "github.com/golang-jwt/jwt"
+	jwt "github.com/golang-jwt/jwt/v5"
 )
 
 // ClientIDHeaderName name of the HTTP header that is used for reporting
@@ -34,6 +34,7 @@ func ClientID(next http.Handler) http.Handler {
 }
 
 type clientIDClaim struct {
+	jwt.MapClaims
 	AuthorizedParty string `json:"azp"`
 }
 
