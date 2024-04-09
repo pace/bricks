@@ -10,8 +10,8 @@ import (
 	"strings"
 
 	"github.com/caarlos0/env/v10"
-	"github.com/go-pg/pg"
-	"github.com/go-pg/pg/orm"
+	"github.com/go-pg/pg/v10"
+	"github.com/go-pg/pg/v10/orm"
 
 	"github.com/pace/bricks/maintenance/log"
 )

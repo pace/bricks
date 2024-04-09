@@ -7,7 +7,7 @@ import (
 	"context"
 	"time"
 
-	"github.com/go-pg/pg/orm"
+	"github.com/go-pg/pg/v10/orm"
 	"github.com/pace/bricks/maintenance/health/servicehealthcheck"
 )
 

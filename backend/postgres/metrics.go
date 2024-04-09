@@ -9,7 +9,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/go-pg/pg"
+	"github.com/go-pg/pg/v10"
 	"github.com/prometheus/client_golang/prometheus"
 )
 

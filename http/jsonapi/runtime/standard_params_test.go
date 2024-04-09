@@ -9,8 +9,8 @@ import (
 	"sort"
 	"testing"
 
-	"github.com/go-pg/pg"
-	"github.com/go-pg/pg/orm"
+	"github.com/go-pg/pg/v10"
+	"github.com/go-pg/pg/v10/orm"
 	"github.com/stretchr/testify/assert"
 
 	"github.com/pace/bricks/backend/postgres"
@@ -38,7 +38,7 @@ func TestIntegrationFilterParameter(t *testing.T) {
 	db := setupDatabase(a)
 	defer func() {
 		// Tear Down
-		err := db.DropTable(&TestModel{}, &orm.DropTableOptions{})
+		err := db.Model(&TestModel{}).DropTable(&orm.DropTableOptions{})
 		assert.NoError(t, err)
 	}()
 
@@ -118,40 +118,40 @@ func TestIntegrationFilterParameter(t *testing.T) {
 }
 
 func setupDatabase(a *assert.Assertions) *pg.DB {
-	dB := postgres.DefaultConnectionPool()
-	dB = dB.WithContext(log.WithContext(context.Background()))
+	db := postgres.DefaultConnectionPool()
+	db = db.WithContext(log.WithContext(context.Background()))
 
-	err := dB.CreateTable(&TestModel{}, &orm.CreateTableOptions{})
+	err := db.Model(&TestModel{}).CreateTable(&orm.CreateTableOptions{})
 	a.NoError(err)
-	_, err = dB.Model(&TestModel{
+	_, err = db.Model(&TestModel{
 		FilterName: "a",
 	}).Insert()
 	a.NoError(err)
 
-	_, err = dB.Model(&TestModel{
+	_, err = db.Model(&TestModel{
 		FilterName: "b",
 	}).Insert()
 	a.NoError(err)
 
-	_, err = dB.Model(&TestModel{
+	_, err = db.Model(&TestModel{
 		FilterName: "c",
 	}).Insert()
 	a.NoError(err)
 
-	_, err = dB.Model(&TestModel{
+	_, err = db.Model(&TestModel{
 		FilterName: "d",
 	}).Insert()
 	a.NoError(err)
 
-	_, err = dB.Model(&TestModel{
+	_, err = db.Model(&TestModel{
 		FilterName: "e",
 	}).Insert()
 	a.NoError(err)
 
-	_, err = dB.Model(&TestModel{
+	_, err = db.Model(&TestModel{
 		FilterName: "f",
 	}).Insert()
 	a.NoError(err)
 
-	return dB
+	return db
 }
