@@ -1,7 +1,9 @@
 package zerolog
 
 import (
-	"io/ioutil"
+	"context"
+	"fmt"
+	"io"
 	"math"
 	"net"
 	"time"
@@ -17,9 +19,11 @@ func (c Context) Logger() Logger {
 	return c.l
 }
 
-// Fields is a helper function to use a map to set fields using type assertion.
-func (c Context) Fields(fields map[string]interface{}) Context {
-	c.l.context = appendFields(c.l.context, fields)
+// Fields is a helper function to use a map or slice to set fields using type assertion.
+// Only map[string]interface{} and []interface{} are accepted. []interface{} must
+// alternate string keys and arbitrary values, and extraneous ones are ignored.
+func (c Context) Fields(fields interface{}) Context {
+	c.l.context = appendFields(c.l.context, fields, c.l.stack)
 	return c
 }
 
@@ -53,7 +57,7 @@ func (c Context) Array(key string, arr LogArrayMarshaler) Context {
 
 // Object marshals an object that implement the LogObjectMarshaler interface.
 func (c Context) Object(key string, obj LogObjectMarshaler) Context {
-	e := newEvent(levelWriterAdapter{ioutil.Discard}, 0)
+	e := newEvent(LevelWriterAdapter{io.Discard}, 0)
 	e.Object(key, obj)
 	c.l.context = enc.AppendObjectData(c.l.context, e.buf)
 	putEvent(e)
@@ -62,7 +66,7 @@ func (c Context) Object(key string, obj LogObjectMarshaler) Context {
 
 // EmbedObject marshals and Embeds an object that implement the LogObjectMarshaler interface.
 func (c Context) EmbedObject(obj LogObjectMarshaler) Context {
-	e := newEvent(levelWriterAdapter{ioutil.Discard}, 0)
+	e := newEvent(LevelWriterAdapter{io.Discard}, 0)
 	e.EmbedObject(obj)
 	c.l.context = enc.AppendObjectData(c.l.context, e.buf)
 	putEvent(e)
@@ -78,6 +82,17 @@ func (c Context) Str(key, val string) Context {
 // Strs adds the field key with val as a string to the logger context.
 func (c Context) Strs(key string, vals []string) Context {
 	c.l.context = enc.AppendStrings(enc.AppendKey(c.l.context, key), vals)
+	return c
+}
+
+// Stringer adds the field key with val.String() (or null if val is nil) to the logger context.
+func (c Context) Stringer(key string, val fmt.Stringer) Context {
+	if val != nil {
+		c.l.context = enc.AppendString(enc.AppendKey(c.l.context, key), val.String())
+		return c
+	}
+
+	c.l.context = enc.AppendInterface(enc.AppendKey(c.l.context, key), nil)
 	return c
 }
 
@@ -104,14 +119,17 @@ func (c Context) RawJSON(key string, b []byte) Context {
 
 // AnErr adds the field key with serialized err to the logger context.
 func (c Context) AnErr(key string, err error) Context {
-	marshaled := ErrorMarshalFunc(err)
-	switch m := marshaled.(type) {
+	switch m := ErrorMarshalFunc(err).(type) {
 	case nil:
 		return c
 	case LogObjectMarshaler:
 		return c.Object(key, m)
 	case error:
-		return c.Str(key, m.Error())
+		if m == nil || isNilValue(m) {
+			return c
+		} else {
+			return c.Str(key, m.Error())
+		}
 	case string:
 		return c.Str(key, m)
 	default:
@@ -124,12 +142,15 @@ func (c Context) AnErr(key string, err error) Context {
 func (c Context) Errs(key string, errs []error) Context {
 	arr := Arr()
 	for _, err := range errs {
-		marshaled := ErrorMarshalFunc(err)
-		switch m := marshaled.(type) {
+		switch m := ErrorMarshalFunc(err).(type) {
 		case LogObjectMarshaler:
 			arr = arr.Object(m)
 		case error:
-			arr = arr.Str(m.Error())
+			if m == nil || isNilValue(m) {
+				arr = arr.Interface(nil)
+			} else {
+				arr = arr.Str(m.Error())
+			}
 		case string:
 			arr = arr.Str(m)
 		default:
@@ -142,7 +163,32 @@ func (c Context) Errs(key string, errs []error) Context {
 
 // Err adds the field "error" with serialized err to the logger context.
 func (c Context) Err(err error) Context {
+	if c.l.stack && ErrorStackMarshaler != nil {
+		switch m := ErrorStackMarshaler(err).(type) {
+		case nil:
+		case LogObjectMarshaler:
+			c = c.Object(ErrorStackFieldName, m)
+		case error:
+			if m != nil && !isNilValue(m) {
+				c = c.Str(ErrorStackFieldName, m.Error())
+			}
+		case string:
+			c = c.Str(ErrorStackFieldName, m)
+		default:
+			c = c.Interface(ErrorStackFieldName, m)
+		}
+	}
+
 	return c.AnErr(ErrorFieldName, err)
+}
+
+// Ctx adds the context.Context to the logger context. The context.Context is
+// not rendered in the error message, but is made available for hooks to use.
+// A typical use case is to extract tracing information from the
+// context.Context.
+func (c Context) Ctx(ctx context.Context) Context {
+	c.l.ctx = ctx
+	return c
 }
 
 // Bool adds the field key with val as a bool to the logger context.
@@ -309,8 +355,9 @@ func (ts timestampHook) Run(e *Event, level Level, msg string) {
 
 var th = timestampHook{}
 
-// Timestamp adds the current local time as UNIX timestamp to the logger context with the "time" key.
+// Timestamp adds the current local time to the logger context with the "time" key, formatted using zerolog.TimeFieldFormat.
 // To customize the key name, change zerolog.TimestampFieldName.
+// To customize the time format, change zerolog.TimeFieldFormat.
 //
 // NOTE: It won't dedupe the "time" key if the *Context has one already.
 func (c Context) Timestamp() Context {
@@ -344,8 +391,22 @@ func (c Context) Durs(key string, d []time.Duration) Context {
 
 // Interface adds the field key with obj marshaled using reflection.
 func (c Context) Interface(key string, i interface{}) Context {
+	if obj, ok := i.(LogObjectMarshaler); ok {
+		return c.Object(key, obj)
+	}
 	c.l.context = enc.AppendInterface(enc.AppendKey(c.l.context, key), i)
 	return c
+}
+
+// Type adds the field key with val's type using reflection.
+func (c Context) Type(key string, val interface{}) Context {
+	c.l.context = enc.AppendType(enc.AppendKey(c.l.context, key), val)
+	return c
+}
+
+// Any is a wrapper around Context.Interface.
+func (c Context) Any(key string, i interface{}) Context {
+	return c.Interface(key, i)
 }
 
 type callerHook struct {
@@ -388,17 +449,9 @@ func (c Context) CallerWithSkipFrameCount(skipFrameCount int) Context {
 	return c
 }
 
-type stackTraceHook struct{}
-
-func (sh stackTraceHook) Run(e *Event, level Level, msg string) {
-	e.Stack()
-}
-
-var sh = stackTraceHook{}
-
 // Stack enables stack trace printing for the error passed to Err().
 func (c Context) Stack() Context {
-	c.l = c.l.Hook(sh)
+	c.l.stack = true
 	return c
 }
 

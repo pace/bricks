@@ -1,20 +1,47 @@
 package zerolog
 
 import (
+	"encoding/json"
 	"net"
 	"sort"
 	"time"
+	"unsafe"
 )
 
-func appendFields(dst []byte, fields map[string]interface{}) []byte {
-	keys := make([]string, 0, len(fields))
-	for key := range fields {
-		keys = append(keys, key)
+func isNilValue(i interface{}) bool {
+	return (*[2]uintptr)(unsafe.Pointer(&i))[1] == 0
+}
+
+func appendFields(dst []byte, fields interface{}, stack bool) []byte {
+	switch fields := fields.(type) {
+	case []interface{}:
+		if n := len(fields); n&0x1 == 1 { // odd number
+			fields = fields[:n-1]
+		}
+		dst = appendFieldList(dst, fields, stack)
+	case map[string]interface{}:
+		keys := make([]string, 0, len(fields))
+		for key := range fields {
+			keys = append(keys, key)
+		}
+		sort.Strings(keys)
+		kv := make([]interface{}, 2)
+		for _, key := range keys {
+			kv[0], kv[1] = key, fields[key]
+			dst = appendFieldList(dst, kv, stack)
+		}
 	}
-	sort.Strings(keys)
-	for _, key := range keys {
-		dst = enc.AppendKey(dst, key)
-		val := fields[key]
+	return dst
+}
+
+func appendFieldList(dst []byte, kvList []interface{}, stack bool) []byte {
+	for i, n := 0, len(kvList); i < n; i += 2 {
+		key, val := kvList[i], kvList[i+1]
+		if key, ok := key.(string); ok {
+			dst = enc.AppendKey(dst, key)
+		} else {
+			continue
+		}
 		if val, ok := val.(LogObjectMarshaler); ok {
 			e := newEvent(nil, 0)
 			e.buf = e.buf[:0]
@@ -29,8 +56,7 @@ func appendFields(dst []byte, fields map[string]interface{}) []byte {
 		case []byte:
 			dst = enc.AppendBytes(dst, val)
 		case error:
-			marshaled := ErrorMarshalFunc(val)
-			switch m := marshaled.(type) {
+			switch m := ErrorMarshalFunc(val).(type) {
 			case LogObjectMarshaler:
 				e := newEvent(nil, 0)
 				e.buf = e.buf[:0]
@@ -38,17 +64,35 @@ func appendFields(dst []byte, fields map[string]interface{}) []byte {
 				dst = append(dst, e.buf...)
 				putEvent(e)
 			case error:
-				dst = enc.AppendString(dst, m.Error())
+				if m == nil || isNilValue(m) {
+					dst = enc.AppendNil(dst)
+				} else {
+					dst = enc.AppendString(dst, m.Error())
+				}
 			case string:
 				dst = enc.AppendString(dst, m)
 			default:
 				dst = enc.AppendInterface(dst, m)
 			}
+
+			if stack && ErrorStackMarshaler != nil {
+				dst = enc.AppendKey(dst, ErrorStackFieldName)
+				switch m := ErrorStackMarshaler(val).(type) {
+				case nil:
+				case error:
+					if m != nil && !isNilValue(m) {
+						dst = enc.AppendString(dst, m.Error())
+					}
+				case string:
+					dst = enc.AppendString(dst, m)
+				default:
+					dst = enc.AppendInterface(dst, m)
+				}
+			}
 		case []error:
 			dst = enc.AppendArrayStart(dst)
 			for i, err := range val {
-				marshaled := ErrorMarshalFunc(err)
-				switch m := marshaled.(type) {
+				switch m := ErrorMarshalFunc(err).(type) {
 				case LogObjectMarshaler:
 					e := newEvent(nil, 0)
 					e.buf = e.buf[:0]
@@ -56,7 +100,11 @@ func appendFields(dst []byte, fields map[string]interface{}) []byte {
 					dst = append(dst, e.buf...)
 					putEvent(e)
 				case error:
-					dst = enc.AppendString(dst, m.Error())
+					if m == nil || isNilValue(m) {
+						dst = enc.AppendNil(dst)
+					} else {
+						dst = enc.AppendString(dst, m.Error())
+					}
 				case string:
 					dst = enc.AppendString(dst, m)
 				default:
@@ -234,6 +282,8 @@ func appendFields(dst []byte, fields map[string]interface{}) []byte {
 			dst = enc.AppendIPPrefix(dst, val)
 		case net.HardwareAddr:
 			dst = enc.AppendMACAddr(dst, val)
+		case json.RawMessage:
+			dst = appendJSON(dst, val)
 		default:
 			dst = enc.AppendInterface(dst, val)
 		}

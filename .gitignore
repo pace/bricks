@@ -16,3 +16,6 @@ tmp/*
 
 # ignore goland project files
 .idea/
+
+# Un-ignore anything in the vendor directory
+!vendor/**

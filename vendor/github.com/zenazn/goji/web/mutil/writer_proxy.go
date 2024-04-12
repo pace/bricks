@@ -1,3 +1,5 @@
+// +build !go1.8
+
 package mutil
 
 import (
@@ -39,6 +41,9 @@ func WrapWriter(w http.ResponseWriter) WriterProxy {
 	if cn && fl && hj && rf {
 		return &fancyWriter{bw}
 	}
+	if fl {
+		return &flushWriter{bw}
+	}
 	return &bw
 }
 
@@ -59,6 +64,7 @@ func (b *basicWriter) WriteHeader(code int) {
 		b.ResponseWriter.WriteHeader(code)
 	}
 }
+
 func (b *basicWriter) Write(buf []byte) (int, error) {
 	b.WriteHeader(http.StatusOK)
 	n, err := b.ResponseWriter.Write(buf)
@@ -72,20 +78,25 @@ func (b *basicWriter) Write(buf []byte) (int, error) {
 	b.bytes += n
 	return n, err
 }
+
 func (b *basicWriter) maybeWriteHeader() {
 	if !b.wroteHeader {
 		b.WriteHeader(http.StatusOK)
 	}
 }
+
 func (b *basicWriter) Status() int {
 	return b.code
 }
+
 func (b *basicWriter) BytesWritten() int {
 	return b.bytes
 }
+
 func (b *basicWriter) Tee(w io.Writer) {
 	b.tee = w
 }
+
 func (b *basicWriter) Unwrap() http.ResponseWriter {
 	return b.ResponseWriter
 }
@@ -102,14 +113,17 @@ func (f *fancyWriter) CloseNotify() <-chan bool {
 	cn := f.basicWriter.ResponseWriter.(http.CloseNotifier)
 	return cn.CloseNotify()
 }
+
 func (f *fancyWriter) Flush() {
 	fl := f.basicWriter.ResponseWriter.(http.Flusher)
 	fl.Flush()
 }
+
 func (f *fancyWriter) Hijack() (net.Conn, *bufio.ReadWriter, error) {
 	hj := f.basicWriter.ResponseWriter.(http.Hijacker)
 	return hj.Hijack()
 }
+
 func (f *fancyWriter) ReadFrom(r io.Reader) (int64, error) {
 	if f.basicWriter.tee != nil {
 		return io.Copy(&f.basicWriter, r)
@@ -119,7 +133,19 @@ func (f *fancyWriter) ReadFrom(r io.Reader) (int64, error) {
 	return rf.ReadFrom(r)
 }
 
-var _ http.CloseNotifier = &fancyWriter{}
-var _ http.Flusher = &fancyWriter{}
-var _ http.Hijacker = &fancyWriter{}
-var _ io.ReaderFrom = &fancyWriter{}
+type flushWriter struct {
+	basicWriter
+}
+
+func (f *flushWriter) Flush() {
+	fl := f.basicWriter.ResponseWriter.(http.Flusher)
+	fl.Flush()
+}
+
+var (
+	_ http.CloseNotifier = &fancyWriter{}
+	_ http.Flusher       = &fancyWriter{}
+	_ http.Hijacker      = &fancyWriter{}
+	_ io.ReaderFrom      = &fancyWriter{}
+	_ http.Flusher       = &flushWriter{}
+)

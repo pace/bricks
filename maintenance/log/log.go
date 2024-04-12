@@ -12,7 +12,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/caarlos0/env"
+	"github.com/caarlos0/env/v10"
 	"github.com/pace/bricks/maintenance/log/hlog"
 
 	"github.com/rs/zerolog"
