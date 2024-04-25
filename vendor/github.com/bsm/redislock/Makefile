@@ -1,14 +1,15 @@
-default: vet test
-
-vet:
-	go vet ./...
+default: test
 
 test:
 	go test ./...
 
-doc: README.md
+test-race:
+	go test ./... -race
 
-.PHONY: default test vet
+lint:
+	golangci-lint run
+
+doc: README.md
 
 README.md: README.md.tpl $(wildcard *.go)
 	becca -package $(subst $(GOPATH)/src/,,$(PWD))

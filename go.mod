@@ -6,9 +6,9 @@ replace github.com/asaskevich/govalidator => github.com/pieceofsoul/govalidator 
 
 require (
 	github.com/PuerkitoBio/rehttp v1.4.0
-	github.com/adjust/rmq/v3 v3.0.0
+	github.com/adjust/rmq/v5 v5.2.0
 	github.com/asaskevich/govalidator v0.0.0-20210307081110-f21760c49a8d
-	github.com/bsm/redislock v0.5.0
+	github.com/bsm/redislock v0.9.4
 	github.com/caarlos0/env/v10 v10.0.0
 	github.com/certifi/gocertifi v0.0.0-20210507211836-431795d63e8d
 	github.com/dave/jennifer v1.4.1
@@ -16,7 +16,6 @@ require (
 	github.com/go-kivik/couchdb/v3 v3.2.6
 	github.com/go-kivik/kivik/v3 v3.2.3
 	github.com/go-pg/pg/v10 v10.12.0
-	github.com/go-redis/redis/v7 v7.4.1
 	github.com/golang-jwt/jwt/v5 v5.2.1
 	github.com/golangci/golangci-lint v1.51.2
 	github.com/google/uuid v1.6.0
@@ -31,6 +30,7 @@ require (
 	github.com/pkg/errors v0.9.1
 	github.com/pmezard/go-difflib v1.0.0
 	github.com/prometheus/client_golang v1.19.0
+	github.com/redis/go-redis/v9 v9.5.1
 	github.com/rs/xid v1.5.0
 	github.com/rs/zerolog v1.32.0
 	github.com/shopspring/decimal v1.3.1
@@ -59,6 +59,8 @@ require (
 	github.com/Masterminds/semver v1.5.0 // indirect
 	github.com/OpenPeeDeeP/depguard v1.1.1 // indirect
 	github.com/alexkohler/prealloc v1.0.0 // indirect
+	github.com/alicebob/gopher-json v0.0.0-20230218143504-906a9b012302 // indirect
+	github.com/alicebob/miniredis/v2 v2.30.4 // indirect
 	github.com/alingse/asasalint v0.0.11 // indirect
 	github.com/ashanbrown/forbidigo v1.4.0 // indirect
 	github.com/ashanbrown/makezero v1.1.1 // indirect
@@ -77,6 +79,7 @@ require (
 	github.com/daixiang0/gci v0.9.1 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/denis-tingaikin/go-header v0.4.3 // indirect
+	github.com/dgryski/go-rendezvous v0.0.0-20200823014737-9f7001d12a5f // indirect
 	github.com/esimonov/ifshort v1.0.4 // indirect
 	github.com/ettle/strcase v0.1.1 // indirect
 	github.com/fatih/color v1.14.1 // indirect
@@ -209,6 +212,7 @@ require (
 	github.com/vmihailenco/tagparser/v2 v2.0.0 // indirect
 	github.com/yagipy/maintidx v1.0.0 // indirect
 	github.com/yeya24/promlinter v0.2.0 // indirect
+	github.com/yuin/gopher-lua v1.1.0 // indirect
 	gitlab.com/bosi/decorder v0.2.3 // indirect
 	go.uber.org/atomic v1.7.0 // indirect
 	go.uber.org/multierr v1.6.0 // indirect
