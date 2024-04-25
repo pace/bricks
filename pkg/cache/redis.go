@@ -8,7 +8,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/go-redis/redis/v7"
+	"github.com/redis/go-redis/v9"
 )
 
 var _ Cache = (*Redis)(nil)
@@ -32,7 +32,7 @@ func InRedis(client *redis.Client, prefix string) *Redis {
 // is given, the cache automatically forgets the value after the duration. If
 // ttl is zero then it is never automatically forgotten.
 func (c *Redis) Put(ctx context.Context, key string, value []byte, ttl time.Duration) error {
-	err := c.client.Set(c.prefix+key, value, ttl).Err()
+	err := c.client.Set(ctx, c.prefix+key, value, ttl).Err()
 	if err != nil {
 		return fmt.Errorf("%w: redis: %s", ErrBackend, err)
 	}
@@ -52,7 +52,7 @@ var redisGETAndPTTL = redis.NewScript(`return {
 // non-nil.
 func (c *Redis) Get(ctx context.Context, key string) ([]byte, time.Duration, error) {
 	key = c.prefix + key
-	r, err := redisGETAndPTTL.Run(c.client, []string{key}).Result()
+	r, err := redisGETAndPTTL.Run(ctx, c.client, []string{key}).Result()
 	if err != nil {
 		return nil, 0, fmt.Errorf("%w: redis: %s", ErrBackend, err)
 	}
@@ -87,7 +87,7 @@ func (c *Redis) Get(ctx context.Context, key string) ([]byte, time.Duration, err
 // Forget removes the value stored under the key. No error is returned if there
 // is no value stored.
 func (c *Redis) Forget(ctx context.Context, key string) error {
-	err := c.client.Del(c.prefix + key).Err()
+	err := c.client.Del(ctx, c.prefix+key).Err()
 	if err != nil {
 		return fmt.Errorf("%w: redis: %s", ErrBackend, err)
 	}

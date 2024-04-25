@@ -9,11 +9,11 @@ import (
 )
 
 func TestRedisClient(t *testing.T) {
-	c := WithContext(context.Background(), Client())
-	c.Ping()
+	c := Client()
+	c.Ping(context.Background())
 }
 
 func TestRedisClusterClient(t *testing.T) {
-	c := WithClusterContext(context.Background(), ClusterClient())
-	c.Ping()
+	c := ClusterClient()
+	c.Ping(context.Background())
 }

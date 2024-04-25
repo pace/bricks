@@ -114,7 +114,7 @@ func main() {
 
 		// do dummy redis query
 		crdb := redis.WithContext(ctx, rdb)
-		if err := crdb.Ping().Err(); err != nil {
+		if err := crdb.Ping(ctx).Err(); err != nil {
 			log.Ctx(ctx).Debug().Err(err).Msg("Ping failed")
 			return
 		}
