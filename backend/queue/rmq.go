@@ -12,7 +12,7 @@ import (
 	"github.com/pace/bricks/maintenance/log"
 	"github.com/pace/bricks/pkg/routine"
 
-	"github.com/adjust/rmq/v3"
+	"github.com/adjust/rmq/v5"
 )
 
 var (

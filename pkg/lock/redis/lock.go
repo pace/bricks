@@ -15,7 +15,7 @@ import (
 	pberrors "github.com/pace/bricks/maintenance/errors"
 
 	"github.com/bsm/redislock"
-	"github.com/go-redis/redis/v7"
+	"github.com/redis/go-redis/v9"
 	"github.com/rs/zerolog/log"
 )
 
@@ -63,10 +63,9 @@ func (l *Lock) Acquire(ctx context.Context) (bool, error) {
 
 	opts := &redislock.Options{
 		RetryStrategy: redislock.NoRetry(),
-		Context:       ctx,
 	}
 
-	lock, err := l.locker.Obtain(l.Name, l.lockTTL, opts)
+	lock, err := l.locker.Obtain(ctx, l.Name, l.lockTTL, opts)
 	if err != nil {
 		log.Ctx(ctx).Debug().Err(err).Str("lockName", l.Name).Msg("Could not acquire lock")
 		switch {
@@ -87,10 +86,9 @@ func (l *Lock) AcquireWait(ctx context.Context) error {
 
 	opts := &redislock.Options{
 		RetryStrategy: redislock.LinearBackoff(1 * time.Second),
-		Context:       ctx,
 	}
 
-	lock, err := l.locker.Obtain(l.Name, l.lockTTL, opts)
+	lock, err := l.locker.Obtain(ctx, l.Name, l.lockTTL, opts)
 	if err != nil {
 		log.Ctx(ctx).Debug().Err(err).Str("lockName", l.Name).Msg("Could not acquire lock")
 		return pberrors.Hide(ctx, err, ErrCouldNotLock)
@@ -106,10 +104,9 @@ func (l *Lock) AcquireWait(ctx context.Context) error {
 func (l *Lock) AcquireAndKeepUp(ctx context.Context) (context.Context, context.CancelFunc, error) {
 	opts := &redislock.Options{
 		RetryStrategy: redislock.NoRetry(),
-		Context:       ctx,
 	}
 
-	lock, err := l.locker.Obtain(l.Name, l.lockTTL, opts)
+	lock, err := l.locker.Obtain(ctx, l.Name, l.lockTTL, opts)
 	if err != nil {
 		switch {
 		case errors.Is(err, redislock.ErrNotObtained):
@@ -126,7 +123,7 @@ func (l *Lock) AcquireAndKeepUp(ctx context.Context) (context.Context, context.C
 		defer cancelLock()
 
 		keepUpLock(lockCtx, lock, l.lockTTL)
-		err := lock.Release()
+		err := lock.Release(ctx)
 		if err != nil && err != redislock.ErrLockNotHeld {
 			log.Ctx(lockCtx).Debug().Err(err).Msgf("could not release lock %q", l.Name)
 		}
@@ -153,10 +150,10 @@ func keepUpLock(ctx context.Context, lock *redislock.Lock, refreshTTL time.Durat
 		// Try to refresh lock.
 		case <-time.After(refreshInterval):
 		}
-		if err := lock.Refresh(refreshTTL, nil); err == redislock.ErrNotObtained {
+		if err := lock.Refresh(ctx, refreshTTL, nil); err == redislock.ErrNotObtained {
 			// Don't return just yet. Get the TTL of the lock and try to
 			// refresh for as long as the TTL is not over.
-			if lockRunsOutIn, err = lock.TTL(); err != nil {
+			if lockRunsOutIn, err = lock.TTL(ctx); err != nil {
 				log.Ctx(ctx).Debug().Err(err).Msg("could not get ttl of lock")
 				return // assuming we lost the lock
 			}
@@ -179,7 +176,7 @@ func (l *Lock) Release(ctx context.Context) error {
 		return nil
 	}
 
-	if err := l.lock.Release(); err != nil {
+	if err := l.lock.Release(ctx); err != nil {
 		log.Ctx(ctx).Debug().Err(err).Msg("error releasing redis lock")
 		switch {
 		case errors.Is(err, redislock.ErrLockNotHeld):

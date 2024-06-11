@@ -12,11 +12,11 @@ import (
 	"time"
 
 	"github.com/bsm/redislock"
-	"github.com/go-redis/redis/v7"
 	"github.com/pace/bricks/backend/k8sapi"
 	"github.com/pace/bricks/maintenance/errors"
 	"github.com/pace/bricks/maintenance/health"
 	"github.com/pace/bricks/maintenance/log"
+	"github.com/redis/go-redis/v9"
 )
 
 const waitRetry = time.Millisecond * 500
@@ -127,7 +127,7 @@ func (a *ActivePassive) Run(ctx context.Context) error {
 			return nil
 		case <-t.C:
 			if a.getState() == ACTIVE {
-				err := lock.Refresh(a.timeToFailover, &redislock.Options{
+				err := lock.Refresh(ctx, a.timeToFailover, &redislock.Options{
 					RetryStrategy: redislock.LimitRetry(redislock.LinearBackoff(a.timeToFailover/3), 3),
 				})
 				if err != nil {
@@ -139,7 +139,7 @@ func (a *ActivePassive) Run(ctx context.Context) error {
 			// try to acquire the lock, as we are not the active
 			if a.getState() != ACTIVE {
 				var err error
-				lock, err = a.locker.Obtain(lockName, a.timeToFailover, &redislock.Options{
+				lock, err = a.locker.Obtain(ctx, lockName, a.timeToFailover, &redislock.Options{
 					RetryStrategy: redislock.LimitRetry(redislock.LinearBackoff(a.timeToFailover/3), 3),
 				})
 				if err != nil {
@@ -157,7 +157,7 @@ func (a *ActivePassive) Run(ctx context.Context) error {
 				a.becomeActive(ctx)
 
 				// we are active, renew if required
-				d, err := lock.TTL()
+				d, err := lock.TTL(ctx)
 				if err != nil {
 					logger.Debug().Err(err).Msg("failed to get TTL")
 				}

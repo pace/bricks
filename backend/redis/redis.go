@@ -9,30 +9,29 @@ import (
 	"time"
 
 	"github.com/caarlos0/env/v10"
-	"github.com/go-redis/redis/v7"
 	"github.com/opentracing/opentracing-go"
 	olog "github.com/opentracing/opentracing-go/log"
 	"github.com/pace/bricks/maintenance/health/servicehealthcheck"
 	"github.com/pace/bricks/maintenance/log"
 	"github.com/prometheus/client_golang/prometheus"
+	"github.com/redis/go-redis/v9"
 )
 
 type config struct {
-	Addrs              []string      `env:"REDIS_HOSTS" envSeparator:"," envDefault:"redis:6379"`
-	Password           string        `env:"REDIS_PASSWORD"`
-	DB                 int           `env:"REDIS_DB"`
-	MaxRetries         int           `env:"REDIS_MAX_RETRIES"`
-	MinRetryBackoff    time.Duration `env:"REDIS_MIN_RETRY_BACKOFF"`
-	MaxRetryBackoff    time.Duration `env:"REDIS_MAX_RETRY_BACKOFF"`
-	DialTimeout        time.Duration `env:"REDIS_DIAL_TIMEOUT"`
-	ReadTimeout        time.Duration `env:"REDIS_READ_TIMEOUT"`
-	WriteTimeout       time.Duration `env:"REDIS_WRITE_TIMEOUT"`
-	PoolSize           int           `env:"REDIS_POOL_SIZE"`
-	MinIdleConns       int           `env:"REDIS_MIN_IDLE_CONNS"`
-	MaxConnAge         time.Duration `env:"REDIS_MAX_CONNAGE"`
-	PoolTimeout        time.Duration `env:"REDIS_POOL_TIMEOUT"`
-	IdleTimeout        time.Duration `env:"REDIS_IDLE_TIMEOUT"`
-	IdleCheckFrequency time.Duration `env:"REDIS_IDLE_CHECK_FREQUENCY"`
+	Addrs           []string      `env:"REDIS_HOSTS" envSeparator:"," envDefault:"redis:6379"`
+	Password        string        `env:"REDIS_PASSWORD"`
+	DB              int           `env:"REDIS_DB"`
+	MaxRetries      int           `env:"REDIS_MAX_RETRIES"`
+	MinRetryBackoff time.Duration `env:"REDIS_MIN_RETRY_BACKOFF"`
+	MaxRetryBackoff time.Duration `env:"REDIS_MAX_RETRY_BACKOFF"`
+	DialTimeout     time.Duration `env:"REDIS_DIAL_TIMEOUT"`
+	ReadTimeout     time.Duration `env:"REDIS_READ_TIMEOUT"`
+	WriteTimeout    time.Duration `env:"REDIS_WRITE_TIMEOUT"`
+	PoolSize        int           `env:"REDIS_POOL_SIZE"`
+	MinIdleConns    int           `env:"REDIS_MIN_IDLE_CONNS"`
+	MaxConnAge      time.Duration `env:"REDIS_MAX_CONNAGE"`
+	PoolTimeout     time.Duration `env:"REDIS_POOL_TIMEOUT"`
+	IdleTimeout     time.Duration `env:"REDIS_IDLE_TIMEOUT"`
 	// Name of the key that is written to check, if redis is healthy
 	HealthCheckKey string `env:"REDIS_HEALTH_CHECK_KEY" envDefault:"healthy"`
 	// Amount of time to cache the last health check result
@@ -85,21 +84,20 @@ func init() {
 // Client with environment based configuration
 func Client(overwriteOpts ...func(*redis.Options)) *redis.Client {
 	opts := &redis.Options{
-		Addr:               cfg.Addrs[0],
-		Password:           cfg.Password,
-		DB:                 cfg.DB,
-		MaxRetries:         cfg.MaxRetries,
-		MinRetryBackoff:    cfg.MinRetryBackoff,
-		MaxRetryBackoff:    cfg.MaxRetryBackoff,
-		DialTimeout:        cfg.DialTimeout,
-		ReadTimeout:        cfg.ReadTimeout,
-		WriteTimeout:       cfg.WriteTimeout,
-		PoolSize:           cfg.PoolSize,
-		MinIdleConns:       cfg.MinIdleConns,
-		MaxConnAge:         cfg.MaxConnAge,
-		PoolTimeout:        cfg.PoolTimeout,
-		IdleTimeout:        cfg.IdleTimeout,
-		IdleCheckFrequency: cfg.IdleCheckFrequency,
+		Addr:            cfg.Addrs[0],
+		Password:        cfg.Password,
+		DB:              cfg.DB,
+		MaxRetries:      cfg.MaxRetries,
+		MinRetryBackoff: cfg.MinRetryBackoff,
+		MaxRetryBackoff: cfg.MaxRetryBackoff,
+		DialTimeout:     cfg.DialTimeout,
+		ReadTimeout:     cfg.ReadTimeout,
+		WriteTimeout:    cfg.WriteTimeout,
+		PoolSize:        cfg.PoolSize,
+		MinIdleConns:    cfg.MinIdleConns,
+		ConnMaxLifetime: cfg.MaxConnAge,
+		PoolTimeout:     cfg.PoolTimeout,
+		ConnMaxIdleTime: cfg.IdleTimeout,
 	}
 
 	for _, o := range overwriteOpts {
@@ -119,20 +117,19 @@ func CustomClient(opts *redis.Options) *redis.Client {
 // ClusterClient with environment based configuration
 func ClusterClient() *redis.ClusterClient {
 	return CustomClusterClient(&redis.ClusterOptions{
-		Addrs:              cfg.Addrs,
-		Password:           cfg.Password,
-		MaxRetries:         cfg.MaxRetries,
-		MinRetryBackoff:    cfg.MinRetryBackoff,
-		MaxRetryBackoff:    cfg.MaxRetryBackoff,
-		DialTimeout:        cfg.DialTimeout,
-		ReadTimeout:        cfg.ReadTimeout,
-		WriteTimeout:       cfg.WriteTimeout,
-		PoolSize:           cfg.PoolSize,
-		MinIdleConns:       cfg.MinIdleConns,
-		MaxConnAge:         cfg.MaxConnAge,
-		PoolTimeout:        cfg.PoolTimeout,
-		IdleTimeout:        cfg.IdleTimeout,
-		IdleCheckFrequency: cfg.IdleCheckFrequency,
+		Addrs:           cfg.Addrs,
+		Password:        cfg.Password,
+		MaxRetries:      cfg.MaxRetries,
+		MinRetryBackoff: cfg.MinRetryBackoff,
+		MaxRetryBackoff: cfg.MaxRetryBackoff,
+		DialTimeout:     cfg.DialTimeout,
+		ReadTimeout:     cfg.ReadTimeout,
+		WriteTimeout:    cfg.WriteTimeout,
+		PoolSize:        cfg.PoolSize,
+		MinIdleConns:    cfg.MinIdleConns,
+		ConnMaxLifetime: cfg.MaxConnAge,
+		PoolTimeout:     cfg.PoolTimeout,
+		ConnMaxIdleTime: cfg.IdleTimeout,
 	})
 }
 
@@ -145,14 +142,12 @@ func CustomClusterClient(opts *redis.ClusterOptions) *redis.ClusterClient {
 
 // WithContext adds a logging and tracing wrapper to the passed client
 func WithContext(ctx context.Context, c *redis.Client) *redis.Client {
-	c = c.WithContext(ctx)
 	c.AddHook(&logtracer{})
 	return c
 }
 
 // WithClusterContext adds a logging and tracing wrapper to the passed client
 func WithClusterContext(ctx context.Context, c *redis.ClusterClient) *redis.ClusterClient {
-	c = c.WithContext(ctx)
 	c.AddHook(&logtracer{})
 	return c
 }
@@ -166,54 +161,56 @@ type logtracerValues struct {
 	span      opentracing.Span
 }
 
-func (lt *logtracer) BeforeProcess(ctx context.Context, cmd redis.Cmder) (context.Context, error) {
-	startedAt := time.Now()
-
-	span, _ := opentracing.StartSpanFromContext(ctx, "redis: "+cmd.Name())
-	span.LogFields(olog.String("cmd", cmd.Name()))
-	defer span.Finish()
-
-	span.SetTag("db.system", "redis")
-
-	paceRedisCmdTotal.With(prometheus.Labels{
-		"method": cmd.Name(),
-	}).Inc()
-
-	return context.WithValue(ctx, logtracerKey{}, &logtracerValues{
-		startedAt: startedAt,
-		span:      span,
-	}), nil
+func (lt *logtracer) DialHook(next redis.DialHook) redis.DialHook {
+	return next
 }
 
-func (l *logtracer) AfterProcess(ctx context.Context, cmd redis.Cmder) error {
-	vals := ctx.Value(logtracerKey{}).(*logtracerValues)
-	le := log.Ctx(ctx).Debug().Str("cmd", cmd.Name()).Str("sentry:category", "redis")
+func (lt *logtracer) ProcessHook(next redis.ProcessHook) redis.ProcessHook {
+	return func(ctx context.Context, cmd redis.Cmder) error {
+		startedAt := time.Now()
 
-	// add error
-	cmdErr := cmd.Err()
-	if cmdErr != nil {
-		vals.span.LogFields(olog.Error(cmdErr))
-		le = le.Err(cmdErr)
-		paceRedisCmdFailed.With(prometheus.Labels{
+		span, _ := opentracing.StartSpanFromContext(ctx, "redis: "+cmd.Name())
+		span.LogFields(olog.String("cmd", cmd.Name()))
+		defer span.Finish()
+
+		span.SetTag("db.system", "redis")
+
+		paceRedisCmdTotal.With(prometheus.Labels{
 			"method": cmd.Name(),
 		}).Inc()
+
+		ctx = context.WithValue(ctx, logtracerKey{}, &logtracerValues{
+			startedAt: startedAt,
+			span:      span,
+		})
+
+		next(ctx, cmd)
+
+		vals := ctx.Value(logtracerKey{}).(*logtracerValues)
+		le := log.Ctx(ctx).Debug().Str("cmd", cmd.Name()).Str("sentry:category", "redis")
+
+		// add error
+		cmdErr := cmd.Err()
+		if cmdErr != nil {
+			vals.span.LogFields(olog.Error(cmdErr))
+			le = le.Err(cmdErr)
+			paceRedisCmdFailed.With(prometheus.Labels{
+				"method": cmd.Name(),
+			}).Inc()
+		}
+
+		// do log statement
+		dur := float64(time.Since(vals.startedAt)) / float64(time.Millisecond)
+		le.Float64("duration", dur).Msg("Redis query")
+
+		paceRedisCmdDurationSeconds.With(prometheus.Labels{
+			"method": cmd.Name(),
+		}).Observe(dur)
+
+		return nil
 	}
-
-	// do log statement
-	dur := float64(time.Since(vals.startedAt)) / float64(time.Millisecond)
-	le.Float64("duration", dur).Msg("Redis query")
-
-	paceRedisCmdDurationSeconds.With(prometheus.Labels{
-		"method": cmd.Name(),
-	}).Observe(dur)
-
-	return nil
 }
 
-func (l *logtracer) BeforeProcessPipeline(ctx context.Context, cmds []redis.Cmder) (context.Context, error) {
-	return ctx, nil
-}
-
-func (l *logtracer) AfterProcessPipeline(ctx context.Context, cmds []redis.Cmder) error {
-	return nil
+func (l *logtracer) ProcessPipelineHook(next redis.ProcessPipelineHook) redis.ProcessPipelineHook {
+	return next
 }
