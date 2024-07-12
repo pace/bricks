@@ -1,5 +1,4 @@
 // Copyright © 2018 by PACE Telematics GmbH. All rights reserved.
-// Created at 2018/09/05 by Vincent Landgraf
 
 // Package health implements simple checks for readiness and liveness
 // that will be invoked by the loadbalancer frequently

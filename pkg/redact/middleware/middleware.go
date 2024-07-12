@@ -1,5 +1,4 @@
 // Copyright © 2020 by PACE Telematics GmbH. All rights reserved.
-// Created at 2020/12/18 by Vincent Landgraf
 
 package middleware
 

@@ -1,5 +1,4 @@
 // Copyright © 2021 by PACE Telematics GmbH. All rights reserved.
-// Created at 2021/02/08 by Vincent Landgraf
 
 package couchdb
 

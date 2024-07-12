@@ -1,5 +1,4 @@
 // Copyright © 2019 by PACE Telematics GmbH. All rights reserved.
-// Created at 2019/03/16 by Florian Hübsch
 
 package transport
 

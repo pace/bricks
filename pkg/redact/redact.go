@@ -1,5 +1,4 @@
 // Copyright © 2020 by PACE Telematics GmbH. All rights reserved.
-// Created at 2020/12/16 by Florian S.
 
 package redact
 

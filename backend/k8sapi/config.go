@@ -1,5 +1,4 @@
 // Copyright © 2022 by PACE Telematics GmbH. All rights reserved.
-// Created at 2022/01/24 by Vincent Landgraf
 
 package k8sapi
 

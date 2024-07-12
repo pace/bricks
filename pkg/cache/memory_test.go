@@ -1,5 +1,4 @@
 // Copyright © 2020 by PACE Telematics GmbH. All rights reserved.
-// Created at 2020/08/12 by Marius Neugebauer
 
 package cache_test
 
