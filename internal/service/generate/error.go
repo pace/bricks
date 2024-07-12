@@ -1,5 +1,4 @@
 // Copyright © 2023 by PACE Telematics GmbH. All rights reserved.
-// Created at 2023/01/18 by Sascha Voth
 
 package generate
 

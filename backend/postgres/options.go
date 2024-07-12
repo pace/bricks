@@ -1,5 +1,4 @@
 // Copyright © 2022 by PACE Telematics GmbH. All rights reserved.
-// Created at 2022/03/09 by Sascha Voth
 
 package postgres
 

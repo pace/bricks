@@ -1,5 +1,4 @@
 // Copyright © 2020 by PACE Telematics GmbH. All rights reserved.
-// Created at 2021/04/12 by Florian Schäfer
 // Locking code is taken in part from github.com/pace/bricks/pkg/routine/redis_lock.go@v0.1.69
 
 package redis
