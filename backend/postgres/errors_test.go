@@ -4,9 +4,9 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"net"
 	"testing"
 
-	"github.com/go-pg/pg/v10"
 	"github.com/stretchr/testify/require"
 
 	pbpostgres "github.com/pace/bricks/backend/postgres"
@@ -19,8 +19,7 @@ func TestIsErrConnectionFailed(t *testing.T) {
 	})
 
 	t.Run("connection failed (net.Error)", func(t *testing.T) {
-		db := pbpostgres.CustomConnectionPool(&pg.Options{}) // invalid connection
-		_, err := db.Exec("")
+		err := &net.DNSError{}
 		require.True(t, pbpostgres.IsErrConnectionFailed(err))
 	})
 
