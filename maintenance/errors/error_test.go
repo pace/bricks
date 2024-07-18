@@ -9,13 +9,14 @@ import (
 	"net/http/httptest"
 	"strings"
 	"testing"
+	"time"
 
+	"github.com/getsentry/sentry-go"
 	"github.com/gorilla/mux"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	"github.com/pace/bricks/http/transport"
-	"github.com/pace/bricks/maintenance/errors/raven"
 	"github.com/pace/bricks/maintenance/log"
 )
 
@@ -61,28 +62,14 @@ func TestWrapWithExtra(t *testing.T) {
 	}
 }
 
-func TestStackTrace(t *testing.T) {
-	e := sentryEvent{
-		ctx:         context.Background(),
-		handlerName: "TestStackTrace",
-		r:           nil,
-		level:       1,
-		req:         nil,
-	}
-	pak := e.build()
-
-	d, err := pak.JSON()
-	assert.NoError(t, err)
-
-	assert.NotContains(t, string(d), `"module":"testing"`)
-	assert.NotContains(t, string(d), `"filename":"testing/testing.go"`)
-}
-
 func Test_createBreadcrumb(t *testing.T) {
+	tm, err := time.Parse(time.RFC3339, "2020-02-27T10:19:28+01:00")
+	require.NoError(t, err)
+
 	tests := []struct {
 		name    string
 		data    map[string]interface{}
-		want    *raven.Breadcrumb
+		want    *sentry.Breadcrumb
 		wantErr bool
 	}{
 		{
@@ -93,10 +80,10 @@ func Test_createBreadcrumb(t *testing.T) {
 				"time":    "2020-02-27T10:19:28+01:00",
 				"req_id":  "bpboj6bipt34r4teo7g0",
 			},
-			want: &raven.Breadcrumb{
+			want: &sentry.Breadcrumb{
 				Level:     "error",
 				Message:   "this is an error message",
-				Timestamp: 1582795168,
+				Timestamp: tm,
 				Data:      map[string]interface{}{},
 			},
 		},
@@ -115,11 +102,11 @@ func Test_createBreadcrumb(t *testing.T) {
 				"url":             "https://www.pace.car/",
 				"req_id":          "bpboj6bipt34r4teo7g0",
 			},
-			want: &raven.Breadcrumb{
+			want: &sentry.Breadcrumb{
 				Category:  "http",
 				Level:     "debug",
 				Message:   "HTTPS GET www.pace.car",
-				Timestamp: 1582795168,
+				Timestamp: tm,
 				Type:      "http",
 				Data: map[string]interface{}{
 					"method":      "GET",
@@ -137,11 +124,11 @@ func Test_createBreadcrumb(t *testing.T) {
 				"message": "this is a panic message",
 				"time":    "2020-02-27T10:19:28+01:00",
 			},
-			want: &raven.Breadcrumb{
+			want: &sentry.Breadcrumb{
 				Level:     "fatal",
 				Type:      "error",
 				Message:   "this is a panic message",
-				Timestamp: 1582795168,
+				Timestamp: tm,
 				Data:      map[string]interface{}{},
 			},
 		},
@@ -155,10 +142,10 @@ func Test_createBreadcrumb(t *testing.T) {
 				"time":            "2020-02-27T10:19:28+01:00",
 				"req_id":          "bpboj6bipt34r4teo7g0",
 			},
-			want: &raven.Breadcrumb{
+			want: &sentry.Breadcrumb{
 				Category:  "redis",
 				Level:     "info",
-				Timestamp: 1582795168,
+				Timestamp: tm,
 				Message:   "this is an error message",
 				Type:      "error",
 				Data:      map[string]interface{}{},
