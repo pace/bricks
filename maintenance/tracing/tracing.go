@@ -4,34 +4,14 @@ package tracing
 
 import (
 	"net/http"
-	"os"
 	"strings"
 
 	"github.com/getsentry/sentry-go"
-	"github.com/pace/bricks/maintenance/log"
 	"github.com/pace/bricks/maintenance/util"
 	"github.com/zenazn/goji/web/mutil"
+
+	_ "github.com/pace/bricks/internal/sentry"
 )
-
-func init() {
-	err := sentry.Init(sentry.ClientOptions{
-		Dsn:              os.Getenv("SENTRY_DSN"),
-		Environment:      os.Getenv("ENVIRONMENT"),
-		EnableTracing:    true,
-		TracesSampleRate: 1.0,
-		BeforeSendTransaction: func(event *sentry.Event, hint *sentry.EventHint) *sentry.Event {
-			// Drop request body.
-			if event.Request != nil {
-				event.Request.Data = ""
-			}
-
-			return event
-		},
-	})
-	if err != nil {
-		log.Fatalf("sentry.Init: %v", err)
-	}
-}
 
 type traceHandler struct {
 	next http.Handler
