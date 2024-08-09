@@ -6,7 +6,9 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"os"
 
+	"github.com/getsentry/sentry-go"
 	opentracing "github.com/opentracing/opentracing-go"
 	olog "github.com/opentracing/opentracing-go/log"
 	"github.com/pace/bricks/maintenance/log"
@@ -41,6 +43,32 @@ func init() {
 	opentracing.SetGlobalTracer(Tracer)
 	if err != nil {
 		log.Fatal(err)
+	}
+
+	err = sentry.Init(sentry.ClientOptions{
+		Dsn:         os.Getenv("SENTRY_DSN"),
+		Environment: os.Getenv("ENVIRONMENT"),
+		Release:     os.Getenv("SENTRY_RELEASE"),
+		// Enable printing of SDK debug messages.
+		// Useful when getting started or trying to figure something out.
+		Debug: true, EnableTracing: true,
+
+		// Specify a fixed sample rate:
+		// We recommend adjusting this value in production
+		TracesSampleRate: 1.0,
+
+		// Or provide a custom sample rate:
+		TracesSampler: func(ctx sentry.SamplingContext) float64 {
+			// As an example, this does not send some
+			// transactions to Sentry based on their name.
+			if ctx.Span.Name == "GET /health" {
+				return 0.0
+			}
+			return 1.0
+		},
+	})
+	if err != nil {
+		log.Fatalf("sentry.Init: %s", err)
 	}
 }
 

@@ -4,6 +4,8 @@ package securitytest
 import (
 	"context"
 	errors1 "errors"
+	"fmt"
+	sentrygo "github.com/getsentry/sentry-go"
 	mux "github.com/gorilla/mux"
 	opentracing "github.com/opentracing/opentracing-go"
 	oauth2 "github.com/pace/bricks/http/oauth2"
@@ -69,6 +71,16 @@ func GetTestHandler(service GetTestHandlerService, authBackend AuthorizationBack
 		// Trace the service function handler execution
 		handlerSpan, ctx := opentracing.StartSpanFromContext(r.Context(), "GetTestHandler")
 		defer handlerSpan.Finish()
+		hub := sentrygo.GetHubFromContext(ctx)
+		if hub == nil {
+			hub = sentrygo.CurrentHub().Clone()
+			ctx = sentrygo.SetHubOnContext(ctx, hub)
+		}
+		transactionOptions := []sentrygo.SpanOption{sentrygo.WithOpName("GetTestHandler"), sentrygo.ContinueFromRequest(r), sentrygo.WithTransactionSource(sentrygo.SourceURL)}
+		sentryTransaction := sentrygo.StartTransaction(ctx, fmt.Sprintf("%s %s", r.Method, r.URL.Path), transactionOptions...)
+		defer sentryTransaction.Finish()
+		ctx = sentryTransaction.Context()
+		r = r.WithContext(ctx)
 
 		// Setup context, response writer and request type
 		writer := getTestResponseWriter{
