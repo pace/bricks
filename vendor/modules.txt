@@ -32,8 +32,6 @@ github.com/OpenPeeDeeP/depguard
 # github.com/PuerkitoBio/rehttp v1.4.0
 ## explicit; go 1.16
 github.com/PuerkitoBio/rehttp
-# github.com/adjust/rmq/v3 v3.0.0
-## explicit; go 1.13
 # github.com/adjust/rmq/v5 v5.2.0
 ## explicit; go 1.17
 github.com/adjust/rmq/v5
@@ -177,20 +175,16 @@ github.com/go-kivik/couchdb/v3/chttp
 github.com/go-kivik/kivik/v3
 github.com/go-kivik/kivik/v3/driver
 github.com/go-kivik/kivik/v3/internal/registry
-# github.com/go-pg/pg/v10 v10.12.0
-## explicit; go 1.19
-github.com/go-pg/pg/v10
-github.com/go-pg/pg/v10/internal
-github.com/go-pg/pg/v10/internal/parser
-github.com/go-pg/pg/v10/internal/pool
-github.com/go-pg/pg/v10/orm
-github.com/go-pg/pg/v10/pgjson
-github.com/go-pg/pg/v10/types
+# github.com/go-pg/pg v6.14.5+incompatible
+## explicit
+github.com/go-pg/pg
+github.com/go-pg/pg/internal
+github.com/go-pg/pg/internal/parser
+github.com/go-pg/pg/internal/pool
+github.com/go-pg/pg/orm
+github.com/go-pg/pg/types
 # github.com/go-pg/zerochecker v0.2.0
 ## explicit; go 1.13
-github.com/go-pg/zerochecker
-# github.com/go-redis/redis/v7 v7.4.1
-## explicit; go 1.11
 # github.com/go-toolsmith/astcast v1.1.0
 ## explicit; go 1.16
 github.com/go-toolsmith/astcast
@@ -741,7 +735,6 @@ github.com/timonwong/loggercheck/internal/sets
 github.com/timonwong/loggercheck/internal/stringutil
 # github.com/tmthrgd/go-hex v0.0.0-20190904060850-447a3041c3bc
 ## explicit
-github.com/tmthrgd/go-hex
 # github.com/tomarrell/wrapcheck/v2 v2.8.0
 ## explicit; go 1.18
 github.com/tomarrell/wrapcheck/v2/wrapcheck
@@ -785,21 +778,12 @@ github.com/ultraware/whitespace
 github.com/uudashr/gocognit
 # github.com/vmihailenco/bufpool v0.1.11
 ## explicit; go 1.13
-github.com/vmihailenco/bufpool
 # github.com/vmihailenco/msgpack/v5 v5.3.4
 ## explicit; go 1.11
-github.com/vmihailenco/msgpack/v5
-github.com/vmihailenco/msgpack/v5/msgpcode
 # github.com/vmihailenco/tagparser v0.1.2
 ## explicit; go 1.13
-github.com/vmihailenco/tagparser
-github.com/vmihailenco/tagparser/internal
-github.com/vmihailenco/tagparser/internal/parser
 # github.com/vmihailenco/tagparser/v2 v2.0.0
 ## explicit; go 1.15
-github.com/vmihailenco/tagparser/v2
-github.com/vmihailenco/tagparser/v2/internal
-github.com/vmihailenco/tagparser/v2/internal/parser
 # github.com/yagipy/maintidx v1.0.0
 ## explicit; go 1.17
 github.com/yagipy/maintidx
@@ -838,7 +822,6 @@ go.uber.org/zap/zapcore
 ## explicit; go 1.18
 golang.org/x/crypto/argon2
 golang.org/x/crypto/blake2b
-golang.org/x/crypto/pbkdf2
 # golang.org/x/exp v0.0.0-20220722155223-a9213eeb770e
 ## explicit; go 1.18
 golang.org/x/exp/constraints
@@ -1128,7 +1111,6 @@ honnef.co/go/tools/stylecheck
 honnef.co/go/tools/unused
 # mellium.im/sasl v0.3.1
 ## explicit; go 1.18
-mellium.im/sasl
 # mvdan.cc/gofumpt v0.4.0
 ## explicit; go 1.18
 mvdan.cc/gofumpt/format

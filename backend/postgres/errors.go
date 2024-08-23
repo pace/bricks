@@ -7,7 +7,7 @@ import (
 	"io"
 	"net"
 
-	"github.com/go-pg/pg/v10"
+	"github.com/go-pg/pg"
 )
 
 var (

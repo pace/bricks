@@ -6,6 +6,10 @@ package postgres
 import (
 	"context"
 	"fmt"
+	"github.com/opentracing/opentracing-go"
+	olog "github.com/opentracing/opentracing-go/log"
+	"github.com/rs/zerolog"
+	"math"
 	"os"
 	"path/filepath"
 	"regexp"
@@ -14,7 +18,7 @@ import (
 	"time"
 
 	"github.com/caarlos0/env/v10"
-	"github.com/go-pg/pg/v10"
+	"github.com/go-pg/pg"
 	"github.com/prometheus/client_golang/prometheus"
 
 	"github.com/pace/bricks/maintenance/health/servicehealthcheck"
@@ -229,13 +233,15 @@ func CustomConnectionPool(opts *pg.Options) *pg.DB {
 		Msg("PostgreSQL connection pool created")
 	db := pg.Connect(opts)
 	if cfg.LogWrite || cfg.LogRead {
-		db.AddQueryHook(QueryLogger{})
+		db.OnQueryProcessed(queryLogger)
 	} else {
 		log.Logger().Warn().Msg("Connection pool has logging queries disabled completely")
 	}
 
-	db.AddQueryHook(OpenTracingAdapter{})
-	db.AddQueryHook(MetricsAdapter{opts})
+	db.OnQueryProcessed(openTracingAdapter)
+	db.OnQueryProcessed(func(event *pg.QueryProcessedEvent) {
+		metricsAdapter(event, opts)
+	})
 
 	return db
 }
@@ -256,6 +262,57 @@ func determineQueryMode(qry string) queryMode {
 	return writeMode
 }
 
+func queryLogger(event *pg.QueryProcessedEvent) {
+	q, qe := event.UnformattedQuery()
+	if qe == nil {
+		if !(cfg.LogRead || cfg.LogWrite) {
+			return
+		}
+		// we can only and should only perfom the following check if we have the information availaible
+		mode := determineQueryMode(q)
+		if mode == readMode && !cfg.LogRead {
+			return
+		}
+		if mode == writeMode && !cfg.LogWrite {
+			return
+		}
+
+	}
+	ctx := event.DB.Context()
+	dur := float64(time.Since(event.StartTime)) / float64(time.Millisecond)
+
+	// check if log context is given
+	var logger *zerolog.Logger
+	if ctx != nil {
+		logger = log.Ctx(ctx)
+	} else {
+		logger = log.Logger()
+	}
+
+	// add general info
+	le := logger.Debug().
+		Str("file", event.File).
+		Int("line", event.Line).
+		Str("func", event.Func).
+		Int("attempt", event.Attempt).
+		Float64("duration", dur).
+		Str("sentry:category", "postgres")
+
+	// add error or result set info
+	if event.Error != nil {
+		le = le.Err(event.Error)
+	} else {
+		le = le.Int("affected", event.Result.RowsAffected()).
+			Int("rows", event.Result.RowsReturned())
+	}
+
+	if qe != nil {
+		// this is only a display issue not a "real" issue
+		le.Msgf("%v", qe)
+	}
+	le.Msg(q)
+}
+
 var reQueryType = regexp.MustCompile(`(\s)`)
 var reQueryTypeCleanup = regexp.MustCompile(`(?m)(\s+|\n)`)
 
@@ -268,4 +325,56 @@ func getQueryType(s string) string {
 		return strings.ToUpper(s[:p[0]])
 	}
 	return strings.ToUpper(s)
+}
+
+func openTracingAdapter(event *pg.QueryProcessedEvent) {
+	// start span with general info
+	q, qe := event.UnformattedQuery()
+	if qe != nil {
+		// this is only a display issue not a "real" issue
+		q = qe.Error()
+	}
+
+	span, _ := opentracing.StartSpanFromContext(event.DB.Context(), "sql: "+getQueryType(q),
+		opentracing.StartTime(event.StartTime))
+
+	span.SetTag("db.system", "postgres")
+
+	fields := []olog.Field{
+		olog.String("file", event.File),
+		olog.Int("line", event.Line),
+		olog.String("func", event.Func),
+		olog.Int("attempt", event.Attempt),
+		olog.String("query", q),
+	}
+
+	// add error or result set info
+	if event.Error != nil {
+		fields = append(fields, olog.Error(event.Error))
+	} else {
+		fields = append(fields,
+			olog.Int("affected", event.Result.RowsAffected()),
+			olog.Int("rows", event.Result.RowsReturned()))
+	}
+
+	span.LogFields(fields...)
+	span.Finish()
+}
+
+func metricsAdapter(event *pg.QueryProcessedEvent, opts *pg.Options) {
+	dur := float64(time.Since(event.StartTime)) / float64(time.Millisecond)
+	labels := prometheus.Labels{
+		"database": opts.Addr + "/" + opts.Database,
+	}
+
+	metricQueryTotal.With(labels).Inc()
+
+	if event.Error != nil {
+		metricQueryFailed.With(labels).Inc()
+	} else {
+		r := event.Result
+		metricQueryRowsTotal.With(labels).Add(float64(r.RowsReturned()))
+		metricQueryAffectedTotal.With(labels).Add(math.Max(0, float64(r.RowsAffected())))
+	}
+	metricQueryDurationSeconds.With(labels).Observe(dur)
 }

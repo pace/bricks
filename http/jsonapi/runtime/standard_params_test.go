@@ -8,8 +8,8 @@ import (
 	"sort"
 	"testing"
 
-	"github.com/go-pg/pg/v10"
-	"github.com/go-pg/pg/v10/orm"
+	"github.com/go-pg/pg"
+	"github.com/go-pg/pg/orm"
 	"github.com/stretchr/testify/assert"
 
 	"github.com/pace/bricks/backend/postgres"
@@ -37,7 +37,7 @@ func TestIntegrationFilterParameter(t *testing.T) {
 	db := setupDatabase(a)
 	defer func() {
 		// Tear Down
-		err := db.Model(&TestModel{}).DropTable(&orm.DropTableOptions{})
+		err := db.DropTable(&TestModel{}, &orm.DropTableOptions{})
 		assert.NoError(t, err)
 	}()
 
@@ -120,7 +120,7 @@ func setupDatabase(a *assert.Assertions) *pg.DB {
 	db := postgres.DefaultConnectionPool()
 	db = db.WithContext(log.WithContext(context.Background()))
 
-	err := db.Model(&TestModel{}).CreateTable(&orm.CreateTableOptions{})
+	err := db.CreateTable(&TestModel{}, &orm.CreateTableOptions{})
 	a.NoError(err)
 	_, err = db.Model(&TestModel{
 		FilterName: "a",
