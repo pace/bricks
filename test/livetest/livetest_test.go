@@ -13,7 +13,6 @@ import (
 )
 
 func TestIntegrationExample(t *testing.T) {
-	t.Skip()
 	if testing.Short() {
 		t.Skip()
 		return
