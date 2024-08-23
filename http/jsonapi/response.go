@@ -382,15 +382,15 @@ func visitModelNode(model interface{}, included *map[string]*Node,
 					// We need to pass a pointer value
 					ptr := reflect.New(fieldValue.Type())
 					ptr.Elem().Set(fieldValue)
-					n, err := visitModelNode(ptr.Interface(), nil, false)
-					if err != nil {
-						return nil, err
+					n, err1 := visitModelNode(ptr.Interface(), nil, false)
+					if err1 != nil {
+						return nil, err1
 					}
 					node.Attributes[args[1]], err = json.Marshal(n.Attributes)
 				} else if fieldValue.Type().Kind() == reflect.Ptr && fieldValue.Elem().Kind() == reflect.Struct {
-					n, err := visitModelNode(fieldValue.Interface(), nil, false)
-					if err != nil {
-						return nil, err
+					n, err1 := visitModelNode(fieldValue.Interface(), nil, false)
+					if err1 != nil {
+						return nil, err1
 					}
 					node.Attributes[args[1]], err = json.Marshal(n.Attributes)
 				} else {

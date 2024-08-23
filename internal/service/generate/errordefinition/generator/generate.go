@@ -98,7 +98,7 @@ func (g *Generator) BuildDefinitions(errors runtime.Errors, packagePath, package
 			continue
 		}
 
-		constObjects = append(constObjects, jen.Id(fmt.Sprintf("ERR_CODE_%s", jsonError.Code)).Op("=").Lit(fmt.Sprintf("%s", jsonError.Code)))
+		constObjects = append(constObjects, jen.Id(fmt.Sprintf("ERR_CODE_%s", jsonError.Code)).Op("=").Lit(jsonError.Code))
 
 	}
 

@@ -70,9 +70,9 @@ func (g *Generator) generateMarkdown(eds ErrorDefinitions) (string, error) {
 			if err != nil {
 				return "", err
 			}
-			_, err = output.WriteString(fmt.Sprint(`|Code|Title|
+			_, err = output.WriteString(`|Code|Title|
 |-----------|-----------|
-`))
+`)
 			if err != nil {
 				panic(err)
 			}

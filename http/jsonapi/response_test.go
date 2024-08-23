@@ -7,6 +7,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"github.com/stretchr/testify/require"
 	"reflect"
 	"sort"
 	"strings"
@@ -556,6 +557,8 @@ func TestMarshalISO8601TimePointer(t *testing.T) {
 
 func TestMarshalUnmarshalStructWithNestedFields(t *testing.T) {
 	ts, err := isotime.ParseISO8601("2022-11-17T22:22:25.841137+01:00")
+	require.NoError(t, err)
+
 	s := &StructWithNestedFields{
 		Timestamp:           ts,
 		NestedStructPointer: &NestedField{NestedTimestamp: ts},
