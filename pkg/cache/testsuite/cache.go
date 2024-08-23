@@ -116,7 +116,7 @@ func (suite *CacheTestSuite) TestGet() {
 
 	suite.Run("returns not found if ttl ran out", func() {
 		_ = c.Put(ctx, "foo", []byte("bar"), 1) // minimum ttl
-		<-time.After(1)
+		<-time.After(2)
 		_, _, err := c.Get(ctx, "foo")
 		suite.True(errors.Is(err, cache.ErrNotFound))
 	})
