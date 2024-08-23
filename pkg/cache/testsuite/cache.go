@@ -119,7 +119,6 @@ func (suite *CacheTestSuite) TestGet() {
 		suite.NoError(err)
 		<-time.After(2 * time.Millisecond)
 		_, _, err = c.Get(ctx, "foo")
-		suite.NoError(err, "key should not be found anymore")
 		suite.True(errors.Is(err, cache.ErrNotFound))
 	})
 	_ = c.Forget(ctx, "foo") // clean up
