@@ -26,7 +26,7 @@ jobs:
         sudo apt-get update
         sudo apt-get install -y docker-compose
     - name: Integration tests
-      run: docker-compose run testserver make integration
+      run: docker-compose run testserver make ci
     - name: Send coverage
       uses: shogo82148/actions-goveralls@v1
       with:
