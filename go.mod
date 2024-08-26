@@ -1,6 +1,6 @@
 module github.com/pace/bricks
 
-go 1.21
+go 1.21.0
 
 replace github.com/asaskevich/govalidator => github.com/pieceofsoul/govalidator v0.0.0-20230607103513-8dce951b10b8
 
