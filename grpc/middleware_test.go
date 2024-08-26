@@ -1,5 +1,4 @@
-//  Copyright © 2021  by PACE Telematics GmbH. All rights reserved.
-//  Created at 2021/12/10  by Julius Foitzik
+// Copyright © 2021  by PACE Telematics GmbH. All rights reserved.
 
 package grpc
 

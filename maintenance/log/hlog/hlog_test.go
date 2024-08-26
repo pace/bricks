@@ -1,5 +1,4 @@
-//  Copyright © 2022  by PACE Telematics GmbH. All rights reserved.
-//  Created at 2022/1/13  by Julius Foitzik
+// Copyright © 2022  by PACE Telematics GmbH. All rights reserved.
 
 package hlog
 
