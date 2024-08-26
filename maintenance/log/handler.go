@@ -37,6 +37,7 @@ func Handler(silentPrefixes ...string) func(http.Handler) http.Handler {
 			handlerWithSink(silentPrefixes...)(
 				hlog.AccessHandler(requestCompleted)(
 					RequestIDHandler("req_id", RequestIDHeader)(next))))
+
 	}
 }
 

@@ -186,11 +186,9 @@ type Employee struct {
 	HiredAt   *time.Time `jsonapi:"attr,hired-at,iso8601"`
 }
 
-type (
-	CustomIntType    int
-	CustomFloatType  float64
-	CustomStringType string
-)
+type CustomIntType int
+type CustomFloatType float64
+type CustomStringType string
 
 type CustomAttributeTypes struct {
 	ID string `jsonapi:"primary,customtypes"`

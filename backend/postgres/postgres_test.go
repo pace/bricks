@@ -3,9 +3,8 @@
 package postgres
 
 import (
-	"testing"
-
 	"github.com/stretchr/testify/require"
+	"testing"
 )
 
 func TestIntegrationConnectionPool(t *testing.T) {

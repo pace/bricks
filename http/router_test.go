@@ -98,4 +98,5 @@ func TestCustomRoutes(t *testing.T) {
 	err := json.NewDecoder(resp.Body).Decode(&e)
 	require.NoError(t, err)
 	require.NotEmptyf(t, e.List[0].ID, "Expected first error to contain request ID, got: %#v", e.List[0])
+
 }

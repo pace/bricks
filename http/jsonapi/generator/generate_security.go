@@ -101,8 +101,7 @@ func (g *Generator) buildSecurityConfigs(schema *openapi3.Swagger) error {
 					"AuthorizationCode": value.Value.Flows.AuthorizationCode,
 					"ClientCredentials": value.Value.Flows.ClientCredentials,
 					"Implicit":          value.Value.Flows.Implicit,
-					"Password":          value.Value.Flows.Password,
-				}
+					"Password":          value.Value.Flows.Password}
 				for flowname, flow := range flows {
 					if flow != nil {
 						instanceVal[jen.Id(flowname)] = jen.Op("&").Qual(pkgOAuth2, "Flow").Values(getValuesFromFlow(flow))

@@ -31,6 +31,7 @@ func TestLoggingRoundTripper(t *testing.T) {
 		l.SetTransport(&transportWithResponse{statusCode: 200})
 
 		_, err = l.RoundTrip(req)
+
 		if err != nil {
 			t.Fatalf("Expected err to be nil, got %#v", err)
 		}
@@ -55,6 +56,7 @@ func TestLoggingRoundTripper(t *testing.T) {
 		l.Final(&retriedTransport{statusCodes: []int{502, 503, 408, 202}})
 
 		_, err = l.RoundTrip(req)
+
 		if err != nil {
 			t.Fatalf("Expected err to be nil, got %#v", err)
 		}

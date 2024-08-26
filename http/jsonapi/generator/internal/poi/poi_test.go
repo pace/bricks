@@ -26,11 +26,9 @@ type testService struct {
 func (s *testService) DeduplicatePoi(context.Context, DeduplicatePoiResponseWriter, *DeduplicatePoiRequest) error {
 	return nil
 }
-
 func (s *testService) MovePoiAtPosition(context.Context, MovePoiAtPositionResponseWriter, *MovePoiAtPositionRequest) error {
 	return nil
 }
-
 func (s *testService) CheckForPaceApp(ctx context.Context, w CheckForPaceAppResponseWriter, r *CheckForPaceAppRequest) error {
 	if r.ParamFilterLatitude != 41.859194 {
 		s.t.Errorf("expected ParamLatitude to be %f, got: %f", 41.859194, r.ParamFilterLatitude)
@@ -56,7 +54,6 @@ func (s *testService) CheckForPaceApp(ctx context.Context, w CheckForPaceAppResp
 
 	return nil
 }
-
 func (s *testService) GetApps(ctx context.Context, w GetAppsResponseWriter, r *GetAppsRequest) error {
 	t := time.Date(2020, 5, 6, 12, 22, 54, 888456, time.UTC)
 	if !r.ParamFilterSince.Equal(t) {
@@ -77,11 +74,9 @@ func (s *testService) GetApps(ctx context.Context, w GetAppsResponseWriter, r *G
 
 	return nil
 }
-
 func (s *testService) CreateApp(context.Context, CreateAppResponseWriter, *CreateAppRequest) error {
 	return nil
 }
-
 func (s *testService) DeleteApp(context.Context, DeleteAppResponseWriter, *DeleteAppRequest) error {
 	return nil
 }
@@ -89,55 +84,42 @@ func (s *testService) GetApp(context.Context, GetAppResponseWriter, *GetAppReque
 func (s *testService) UpdateApp(context.Context, UpdateAppResponseWriter, *UpdateAppRequest) error {
 	return nil
 }
-
 func (s *testService) GetAppPOIsRelationships(context.Context, GetAppPOIsRelationshipsResponseWriter, *GetAppPOIsRelationshipsRequest) error {
 	return nil
 }
-
 func (s *testService) UpdateAppPOIsRelationships(context.Context, UpdateAppPOIsRelationshipsResponseWriter, *UpdateAppPOIsRelationshipsRequest) error {
 	return nil
 }
-
 func (s *testService) GetDuplicatesKML(context.Context, GetDuplicatesKMLResponseWriter, *GetDuplicatesKMLRequest) error {
 	return nil
 }
-
 func (s *testService) GetPoisDump(context.Context, GetPoisDumpResponseWriter, *GetPoisDumpRequest) error {
 	return nil
 }
-
 func (s *testService) DeleteGasStationReferenceStatus(context.Context, DeleteGasStationReferenceStatusResponseWriter, *DeleteGasStationReferenceStatusRequest) error {
 	return nil
 }
-
 func (s *testService) PutGasStationReferenceStatus(context.Context, PutGasStationReferenceStatusResponseWriter, *PutGasStationReferenceStatusRequest) error {
 	return nil
 }
-
 func (s *testService) GetEvents(context.Context, GetEventsResponseWriter, *GetEventsRequest) error {
 	return nil
 }
-
 func (s *testService) GetGasStations(context.Context, GetGasStationsResponseWriter, *GetGasStationsRequest) error {
 	return nil
 }
-
 func (s *testService) GetGasStation(context.Context, GetGasStationResponseWriter, *GetGasStationRequest) error {
 	return nil
 }
-
 func (s *testService) GetPriceHistory(context.Context, GetPriceHistoryResponseWriter, *GetPriceHistoryRequest) error {
 	return nil
 }
-
 func (s *testService) GetGasStationFuelTypeNameMapping(context.Context, GetGasStationFuelTypeNameMappingResponseWriter, *GetGasStationFuelTypeNameMappingRequest) error {
 	return nil
 }
-
 func (s *testService) GetMetadataFilters(context.Context, GetMetadataFiltersResponseWriter, *GetMetadataFiltersRequest) error {
 	return nil
 }
-
 func (s *testService) GetPois(context.Context, GetPoisResponseWriter, *GetPoisRequest) error {
 	return nil
 }
@@ -145,11 +127,9 @@ func (s *testService) GetPoi(context.Context, GetPoiResponseWriter, *GetPoiReque
 func (s *testService) ChangePoi(context.Context, ChangePoiResponseWriter, *ChangePoiRequest) error {
 	return nil
 }
-
 func (s *testService) GetPolicies(context.Context, GetPoliciesResponseWriter, *GetPoliciesRequest) error {
 	return nil
 }
-
 func (s *testService) CreatePolicy(ctx context.Context, w CreatePolicyResponseWriter, r *CreatePolicyRequest) error {
 	if r.Content.Rules[0].Priorities[0].SourceID != "f106ac99-213c-4cf7-8c1b-1e841516026b" {
 		return fmt.Errorf("Expected first rule first property source id to equal %q", "f106ac99-213c-4cf7-8c1b-1e841516026b")
@@ -157,35 +137,27 @@ func (s *testService) CreatePolicy(ctx context.Context, w CreatePolicyResponseWr
 
 	return nil
 }
-
 func (s *testService) GetPolicy(context.Context, GetPolicyResponseWriter, *GetPolicyRequest) error {
 	return nil
 }
-
 func (s *testService) GetRegionalPrices(context.Context, GetRegionalPricesResponseWriter, *GetRegionalPricesRequest) error {
 	return nil
 }
-
 func (s *testService) GetSources(context.Context, GetSourcesResponseWriter, *GetSourcesRequest) error {
 	return nil
 }
-
 func (s *testService) CreateSource(context.Context, CreateSourceResponseWriter, *CreateSourceRequest) error {
 	return nil
 }
-
 func (s *testService) DeleteSource(context.Context, DeleteSourceResponseWriter, *DeleteSourceRequest) error {
 	return nil
 }
-
 func (s *testService) GetSource(context.Context, GetSourceResponseWriter, *GetSourceRequest) error {
 	return nil
 }
-
 func (s *testService) UpdateSource(context.Context, UpdateSourceResponseWriter, *UpdateSourceRequest) error {
 	return nil
 }
-
 func (s *testService) GetSubscriptions(context.Context, GetSubscriptionsResponseWriter, *GetSubscriptionsRequest) error {
 	return nil
 }
@@ -202,7 +174,8 @@ func (s *testService) GetTiles(context.Context, GetTilesResponseWriter, *GetTile
 	return nil
 }
 
-type testAuthBackend struct{}
+type testAuthBackend struct {
+}
 
 func (s testAuthBackend) AuthorizeDeviceID(r *http.Request, w http.ResponseWriter) (context.Context, bool) {
 	return r.Context(), true

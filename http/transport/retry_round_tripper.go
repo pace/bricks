@@ -99,6 +99,7 @@ func (l *RetryRoundTripper) RoundTrip(req *http.Request) (*http.Response, error)
 	}
 	retryTransport.RoundTripper = wrappedTransport
 	resp, err := retryTransport.RoundTrip(req)
+
 	if err != nil {
 		return nil, err
 	}

@@ -389,8 +389,8 @@ func unmarshalAttribute(
 	rawAttribute json.RawMessage,
 	args []string,
 	structField reflect.StructField,
-	fieldValue reflect.Value,
-) (value reflect.Value, err error) {
+	fieldValue reflect.Value) (value reflect.Value, err error) {
+
 	var attribute interface{}
 	err = json.Unmarshal(rawAttribute, &attribute)
 	if err != nil {
@@ -524,8 +524,7 @@ func handleTime(attribute interface{}, args []string, fieldValue reflect.Value) 
 func handleNumeric(
 	attribute interface{},
 	fieldType reflect.Type,
-	fieldValue reflect.Value,
-) (reflect.Value, error) {
+	fieldValue reflect.Value) (reflect.Value, error) {
 	v := reflect.ValueOf(attribute)
 	floatValue := v.Interface().(float64)
 
@@ -587,8 +586,7 @@ func handlePointer(
 	args []string,
 	fieldType reflect.Type,
 	fieldValue reflect.Value,
-	structField reflect.StructField,
-) (reflect.Value, error) {
+	structField reflect.StructField) (reflect.Value, error) {
 	t := fieldValue.Type()
 	var concreteVal reflect.Value
 
@@ -626,8 +624,8 @@ func handlePointer(
 
 func handleStruct(
 	attribute interface{},
-	fieldValue reflect.Value,
-) (reflect.Value, error) {
+	fieldValue reflect.Value) (reflect.Value, error) {
+
 	data, err := json.Marshal(attribute)
 	if err != nil {
 		return reflect.Value{}, err

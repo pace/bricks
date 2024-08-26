@@ -8,10 +8,9 @@ package oauth2
 import (
 	"context"
 	"errors"
-	"net/http"
-
 	"github.com/opentracing/opentracing-go"
 	olog "github.com/opentracing/opentracing-go/log"
+	"net/http"
 
 	"github.com/pace/bricks/http/security"
 	"github.com/pace/bricks/maintenance/log"
@@ -180,6 +179,7 @@ func ClientID(ctx context.Context) (string, bool) {
 		return "", false
 	}
 	return oauth2token.clientID, true
+
 }
 
 // Backend returns the backend stored in the context. It identifies the

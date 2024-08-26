@@ -191,10 +191,8 @@ func splitFunctionName(name string) (string, string) {
 	return pack, name
 }
 
-var (
-	fileCacheLock sync.Mutex
-	fileCache     = make(map[string][][]byte)
-)
+var fileCacheLock sync.Mutex
+var fileCache = make(map[string][][]byte)
 
 func fileContext(filename string, line, context int) ([][]byte, int) {
 	fileCacheLock.Lock()

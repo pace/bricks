@@ -4,10 +4,9 @@ package transport
 
 import (
 	"fmt"
-	"net/http"
-
 	"github.com/pace/bricks/maintenance/log"
 	"github.com/pace/bricks/maintenance/tracing/wire"
+	"net/http"
 
 	"github.com/opentracing/opentracing-go"
 	olog "github.com/opentracing/opentracing-go/log"

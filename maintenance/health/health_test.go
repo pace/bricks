@@ -50,4 +50,5 @@ func checkResult(rec *httptest.ResponseRecorder, expCode int, expBody string, t 
 	data, err := io.ReadAll(resp.Body)
 	require.NoError(t, err)
 	require.Equal(t, expBody, string(data))
+
 }

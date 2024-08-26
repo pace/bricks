@@ -22,6 +22,7 @@ func TestJaegerRoundTripper(t *testing.T) {
 
 		req := httptest.NewRequest("GET", "/foo", nil)
 		_, err := l.RoundTrip(req)
+
 		if err != nil {
 			t.Fatalf("Expected err to be nil, got %#v", err)
 		}
@@ -66,6 +67,7 @@ func TestJaegerRoundTripper(t *testing.T) {
 
 		req := httptest.NewRequest("GET", "/bar", nil)
 		_, err := l.RoundTrip(req)
+
 		if err != nil {
 			t.Fatalf("Expected err to be nil, got %#v", err)
 		}

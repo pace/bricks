@@ -99,23 +99,20 @@ func TestAuthenticatorWithSuccess(t *testing.T) {
 		clientId       string
 		userId         string
 	}{
-		{
-			desc:       "Tests a valid Request with OAuth2 Authentication without Scope checking",
+		{desc: "Tests a valid Request with OAuth2 Authentication without Scope checking",
 			active:     true,
 			userScopes: "ABC DHHG kjdk",
 			clientId:   "ClientId",
 			userId:     "UserId",
 		},
-		{
-			desc:           "Tests a valid Request with OAuth2 Authentication and one scope to check",
+		{desc: "Tests a valid Request with OAuth2 Authentication and one scope to check",
 			active:         true,
 			userScopes:     "ABC DHHG kjdk",
 			clientId:       "ClientId",
 			userId:         "UserId",
 			expectedScopes: "ABC",
 		},
-		{
-			desc:           "Tests a valid Request with OAuth2 Authentication and two scope to check",
+		{desc: "Tests a valid Request with OAuth2 Authentication and two scope to check",
 			active:         true,
 			userScopes:     "ABC DHHG kjdk",
 			clientId:       "ClientId",
@@ -283,7 +280,7 @@ func Example() {
 }
 
 func TestRequest(t *testing.T) {
-	to := token{
+	var to = token{
 		value:    "somevalue",
 		userID:   "someuserid",
 		clientID: "someclientid",
@@ -319,7 +316,7 @@ func TestSuccessfulAccessors(t *testing.T) {
 	expectedBackend := "some-backend"
 	expectedScopes := Scope("scope1 scope2")
 
-	to := token{
+	var to = token{
 		value:    expectedBearerToken,
 		userID:   expectedUserID,
 		clientID: expectedClientID,

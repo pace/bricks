@@ -243,6 +243,7 @@ func TestNewDumpRoundTripperSimple(t *testing.T) {
 }
 
 func TestNewDumpRoundTripperContextOptionsOverwrite(t *testing.T) {
+
 	rt, err := NewDumpRoundTripper(
 		RoundTripConfig(
 			DumpRoundTripperOptionRequest,
@@ -288,6 +289,7 @@ func TestNewDumpRoundTripperContextOptionsOverwrite(t *testing.T) {
 }
 
 func TestNewDumpRoundTripperContextOptionsOverwriteBody(t *testing.T) {
+
 	rt, err := NewDumpRoundTripper(
 		RoundTripConfig(
 			DumpRoundTripperOptionRequest,

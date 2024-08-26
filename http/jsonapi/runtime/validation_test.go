@@ -76,6 +76,7 @@ func TestValidateParametersWithError(t *testing.T) {
 }
 
 func TestValidateRequest(t *testing.T) {
+
 	rec := httptest.NewRecorder()
 	req := httptest.NewRequest("POST", "/", nil)
 

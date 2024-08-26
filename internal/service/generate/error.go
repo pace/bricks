@@ -16,6 +16,7 @@ type ErrorDefinitionFileOptions struct {
 
 // ErrorDefinitionFile builds a file with error definitions
 func ErrorDefinitionFile(options ErrorDefinitionFileOptions) {
+
 	// generate error definition
 	g := generator.Generator{}
 	result, err := g.BuildSource(options.Source, options.Path, options.PkgName)

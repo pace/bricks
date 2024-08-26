@@ -17,6 +17,7 @@ const (
 )
 
 func TestClientID(t *testing.T) {
+
 	t.Run("empty", func(t *testing.T) {
 		rec := httptest.NewRecorder()
 		req := httptest.NewRequest(http.MethodGet, "/", nil)

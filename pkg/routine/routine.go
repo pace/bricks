@@ -6,13 +6,12 @@ package routine
 import (
 	"context"
 	"fmt"
+	"github.com/opentracing/opentracing-go"
 	"os"
 	"os/signal"
 	"sync"
 	"sync/atomic"
 	"syscall"
-
-	"github.com/opentracing/opentracing-go"
 
 	"github.com/pace/bricks/maintenance/errors"
 	"github.com/pace/bricks/maintenance/log"

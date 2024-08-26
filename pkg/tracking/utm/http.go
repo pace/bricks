@@ -59,10 +59,8 @@ func Middleware() func(http.Handler) http.Handler {
 	}
 }
 
-var (
-	_ http.RoundTripper               = (*RoundTripper)(nil)
-	_ transport.ChainableRoundTripper = (*RoundTripper)(nil)
-)
+var _ http.RoundTripper = (*RoundTripper)(nil)
+var _ transport.ChainableRoundTripper = (*RoundTripper)(nil)
 
 type RoundTripper struct {
 	transport http.RoundTripper

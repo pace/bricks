@@ -9,9 +9,8 @@ package terminationlog
 
 import (
 	"fmt"
-	"os"
-
 	"github.com/rs/zerolog/log"
+	"os"
 )
 
 var logFile *os.File
