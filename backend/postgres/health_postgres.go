@@ -56,7 +56,6 @@ func (h *HealthCheck) HealthCheck(ctx context.Context) servicehealthcheck.Health
 	// If no error occurred set the State of this Health Check to healthy
 	h.state.SetHealthy()
 	return h.state.GetState()
-
 }
 
 // CleanUp drops the test table.

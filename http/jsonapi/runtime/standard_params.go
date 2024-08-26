@@ -78,7 +78,6 @@ func ReadURLQueryParameters(r *http.Request, mapper ColumnMapper, sanitizer Valu
 	var errs []error
 	if err := result.readPagination(r); err != nil {
 		errs = append(errs, err)
-
 	}
 	if err := result.readSorting(r, mapper); err != nil {
 		errs = append(errs, err)
@@ -119,7 +118,6 @@ func (u *UrlQueryParameters) AddToQuery(query *orm.Query) *orm.Query {
 		query.Order(val)
 	}
 	return query
-
 }
 
 func (u *UrlQueryParameters) readPagination(r *http.Request) error {

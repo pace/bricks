@@ -44,10 +44,11 @@ func (a *testAuthBackend) AuthorizeProfileKey(r *http.Request, w http.ResponseWr
 }
 
 func (testAuthBackend) InitOAuth2(cfgOAuth2 *oauth2.Config) {
-	//NoOp
+	// NoOp
 }
+
 func (testAuthBackend) InitProfileKey(cfgProfileKey *apikey.Config) {
-	//NoOp
+	// NoOp
 }
 
 func TestSecurityBothAuthenticationMethods(t *testing.T) {
@@ -101,5 +102,4 @@ func TestSecurityBothAuthenticationMethods(t *testing.T) {
 	result = w.Result()
 	// Alphabetic order => get the error of the alphabetic first security scheme
 	require.Equal(t, http.StatusBadRequest, result.StatusCode)
-
 }

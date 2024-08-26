@@ -13,7 +13,8 @@ import (
 
 /*
 GetTestHandler handles request/response marshaling and validation for
- Get /beta/test
+
+	Get /beta/test
 */
 func GetTestHandler(service GetTestHandlerService) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {

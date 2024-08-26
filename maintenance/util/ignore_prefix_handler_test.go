@@ -12,7 +12,6 @@ import (
 )
 
 func TestMiddlewareWithBlacklist(t *testing.T) {
-
 	// setup the router
 	handler := handlerWithStatusCode(http.StatusOK)
 	thisHandler := handlerWithStatusCode(http.StatusInternalServerError)

@@ -19,23 +19,23 @@ func TestErrorMarshaling(t *testing.T) {
 		result     []*Error
 	}{
 		{"Simple Error", http.StatusBadRequest, fmt.Errorf("Failed"), []*Error{
-			&Error{Title: "Failed", Status: "400"},
+			{Title: "Failed", Status: "400"},
 		}},
 		{"Other StatusCode", http.StatusUnauthorized, fmt.Errorf("Unauthorized"), []*Error{
-			&Error{Title: "Unauthorized", Status: "401"},
+			{Title: "Unauthorized", Status: "401"},
 		}},
 		{"Error Object", http.StatusUnauthorized, Error{Title: "foo", Detail: "bar"}, []*Error{
-			&Error{Title: "foo", Detail: "bar", Status: "401"},
+			{Title: "foo", Detail: "bar", Status: "401"},
 		}},
 		{"Error Object reference", http.StatusUnauthorized, &Error{Title: "foo", Detail: "bar"}, []*Error{
-			&Error{Title: "foo", Detail: "bar", Status: "401"},
+			{Title: "foo", Detail: "bar", Status: "401"},
 		}},
 		{"Error Object List", http.StatusUnauthorized, Errors{
 			&Error{Title: "foo", Detail: "bar"},
 			&Error{Title: "foo2", Detail: "bar2"},
 		}, []*Error{
-			&Error{Title: "foo", Detail: "bar", Status: "401"},
-			&Error{Title: "foo2", Detail: "bar2", Status: "401"},
+			{Title: "foo", Detail: "bar", Status: "401"},
+			{Title: "foo2", Detail: "bar2", Status: "401"},
 		}},
 	}
 

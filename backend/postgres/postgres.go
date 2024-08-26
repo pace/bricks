@@ -6,9 +6,6 @@ package postgres
 import (
 	"context"
 	"fmt"
-	"github.com/opentracing/opentracing-go"
-	olog "github.com/opentracing/opentracing-go/log"
-	"github.com/rs/zerolog"
 	"math"
 	"os"
 	"path/filepath"
@@ -16,6 +13,10 @@ import (
 	"strings"
 	"sync"
 	"time"
+
+	"github.com/opentracing/opentracing-go"
+	olog "github.com/opentracing/opentracing-go/log"
+	"github.com/rs/zerolog"
 
 	"github.com/caarlos0/env/v10"
 	"github.com/go-pg/pg"
@@ -189,7 +190,6 @@ func DefaultConnectionPool() *pg.DB {
 // Used Config is taken from the env and it's default values. These
 // values can be overwritten by the use of ConfigOption.
 func ConnectionPool(opts ...ConfigOption) *pg.DB {
-
 	// apply functional options if given to overwrite the default config / env config
 	for _, f := range opts {
 		f(&cfg)
@@ -313,8 +313,10 @@ func queryLogger(event *pg.QueryProcessedEvent) {
 	le.Msg(q)
 }
 
-var reQueryType = regexp.MustCompile(`(\s)`)
-var reQueryTypeCleanup = regexp.MustCompile(`(?m)(\s+|\n)`)
+var (
+	reQueryType        = regexp.MustCompile(`(\s)`)
+	reQueryTypeCleanup = regexp.MustCompile(`(?m)(\s+|\n)`)
+)
 
 func getQueryType(s string) string {
 	s = reQueryTypeCleanup.ReplaceAllString(s, " ")

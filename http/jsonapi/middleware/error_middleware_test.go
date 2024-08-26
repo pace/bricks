@@ -61,7 +61,6 @@ func TestErrorMiddleware(t *testing.T) {
 				}
 			}
 		}
-
 	}
 }
 

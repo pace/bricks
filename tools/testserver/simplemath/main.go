@@ -53,7 +53,6 @@ func (*SimpleMathServer) Substract(ctx context.Context, i *math.Input) (*math.Ou
 }
 
 func main() {
-
 	ms := &SimpleMathServer{}
 	gs := grpc.Server(&GrpcAuthBackend{})
 	math.RegisterMathServiceServer(gs, ms)

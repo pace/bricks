@@ -197,7 +197,8 @@ func MarshalOnePayloadEmbedded(w io.Writer, model interface{}) error {
 }
 
 func visitModelNode(model interface{}, included *map[string]*Node,
-	sideload bool) (*Node, error) {
+	sideload bool,
+) (*Node, error) {
 	node := new(Node)
 
 	var er error
@@ -403,7 +404,7 @@ func visitModelNode(model interface{}, included *map[string]*Node,
 		} else if annotation == annotationRelation {
 			var omitEmpty bool
 
-			//add support for 'omitempty' struct tag for marshaling as absent
+			// add support for 'omitempty' struct tag for marshaling as absent
 			if len(args) > 2 {
 				omitEmpty = args[2] == annotationOmitEmpty
 			}
@@ -526,7 +527,8 @@ func toShallowNode(node *Node) *Node {
 }
 
 func visitModelNodeRelationships(models reflect.Value, included *map[string]*Node,
-	sideload bool) (*RelationshipManyNode, error) {
+	sideload bool,
+) (*RelationshipManyNode, error) {
 	nodes := []*Node{}
 
 	for i := 0; i < models.Len(); i++ {

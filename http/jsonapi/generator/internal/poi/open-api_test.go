@@ -184,13 +184,13 @@ type LocationBasedApp struct {
 	AndroidInstantAppURL string `json:"androidInstantAppUrl,omitempty" jsonapi:"attr,androidInstantAppUrl,omitempty" valid:"optional"` // Android instant app URL
 	AppType              string `json:"appType,omitempty" jsonapi:"attr,appType,omitempty" valid:"optional,in(fueling|)"`
 	Cache                string `json:"cache,omitempty" jsonapi:"attr,cache,omitempty" valid:"optional,in(approaching|preload|)"` /*
-	A location-based app is by default loaded on `approaching`. Some apps should be loaded in advance. They have the cache set to `preload`.
+		A location-based app is by default loaded on `approaching`. Some apps should be loaded in advance. They have the cache set to `preload`.
 	*/
 	CreatedAt *time.Time `json:"createdAt,omitempty" jsonapi:"attr,createdAt,omitempty,iso8601" valid:"optional"` // Time of LocationBasedApp creation (iso8601 without time zone)
 	DeletedAt *time.Time `json:"deletedAt,omitempty" jsonapi:"attr,deletedAt,omitempty,iso8601" valid:"optional"` // Time of LocationBasedApp deletion (iso8601 without time zone)
 	LogoURL   string     `json:"logoUrl,omitempty" jsonapi:"attr,logoUrl,omitempty" valid:"optional"`             // Logo URL
 	PwaURL    string     `json:"pwaUrl,omitempty" jsonapi:"attr,pwaUrl,omitempty" valid:"optional"`               /*
-	Progressive web application URL. The URL satisfies the following criteria: <li>The URL responds with `text/html` on a GET request</li> <li>The response contains HTTP caching headers e.g. `Cache-Control` and `ETag`</li> <li>HTTP GET request on the URL with an `ETag` will return `304` (`Not Modified`), if the content didn't change</li> <li>If `503` (`Service Unavailable`) is returned the request should be retried later</li> <li>If `404` (`Not Found`) is returned the URL is invalidated and a new app should be requested</li>
+		Progressive web application URL. The URL satisfies the following criteria: <li>The URL responds with `text/html` on a GET request</li> <li>The response contains HTTP caching headers e.g. `Cache-Control` and `ETag`</li> <li>HTTP GET request on the URL with an `ETag` will return `304` (`Not Modified`), if the content didn't change</li> <li>If `503` (`Service Unavailable`) is returned the request should be retried later</li> <li>If `404` (`Not Found`) is returned the URL is invalidated and a new app should be requested</li>
 	*/
 	Subtitle  string     `json:"subtitle,omitempty" jsonapi:"attr,subtitle,omitempty" valid:"optional"`           // Example: "Zahle bargeldlos mit der PACE Fueling App"
 	Title     string     `json:"title,omitempty" jsonapi:"attr,title,omitempty" valid:"optional"`                 // Example: "PACE Fueling App"
@@ -203,13 +203,13 @@ type LocationBasedAppWithRefs struct {
 	AndroidInstantAppURL string `json:"androidInstantAppUrl,omitempty" jsonapi:"attr,androidInstantAppUrl,omitempty" valid:"optional"` // Android instant app URL
 	AppType              string `json:"appType,omitempty" jsonapi:"attr,appType,omitempty" valid:"optional,in(fueling|)"`
 	Cache                string `json:"cache,omitempty" jsonapi:"attr,cache,omitempty" valid:"optional,in(approaching|preload|)"` /*
-	A location-based app is by default loaded on `approaching`. Some apps should be loaded in advance. They have the cache set to `preload`.
+		A location-based app is by default loaded on `approaching`. Some apps should be loaded in advance. They have the cache set to `preload`.
 	*/
 	CreatedAt *time.Time `json:"createdAt,omitempty" jsonapi:"attr,createdAt,omitempty,iso8601" valid:"optional"` // Time of LocationBasedApp creation (iso8601 without time zone)
 	DeletedAt *time.Time `json:"deletedAt,omitempty" jsonapi:"attr,deletedAt,omitempty,iso8601" valid:"optional"` // Time of LocationBasedApp deletion (iso8601 without time zone)
 	LogoURL   string     `json:"logoUrl,omitempty" jsonapi:"attr,logoUrl,omitempty" valid:"optional"`             // Logo URL
 	PwaURL    string     `json:"pwaUrl,omitempty" jsonapi:"attr,pwaUrl,omitempty" valid:"optional"`               /*
-	Progressive web application URL. The URL satisfies the following criteria: <li>The URL responds with `text/html` on a GET request</li> <li>The response contains HTTP caching headers e.g. `Cache-Control` and `ETag`</li> <li>HTTP GET request on the URL with an `ETag` will return `304` (`Not Modified`), if the content didn't change</li> <li>If `503` (`Service Unavailable`) is returned the request should be retried later</li> <li>If `404` (`Not Found`) is returned the URL is invalidated and a new app should be requested</li>
+		Progressive web application URL. The URL satisfies the following criteria: <li>The URL responds with `text/html` on a GET request</li> <li>The response contains HTTP caching headers e.g. `Cache-Control` and `ETag`</li> <li>HTTP GET request on the URL with an `ETag` will return `304` (`Not Modified`), if the content didn't change</li> <li>If `503` (`Service Unavailable`) is returned the request should be retried later</li> <li>If `404` (`Not Found`) is returned the URL is invalidated and a new app should be requested</li>
 	*/
 	References []string   `json:"references,omitempty" jsonapi:"attr,references,omitempty" valid:"optional"`       // References are PRNs to external and internal resources that are related to the query
 	Subtitle   string     `json:"subtitle,omitempty" jsonapi:"attr,subtitle,omitempty" valid:"optional"`           // Example: "Zahle bargeldlos mit der PACE Fueling App"
@@ -333,7 +333,7 @@ type Sources []*Source
 // SubscriptionConditionsFuelPrice Condition on the fuelPrice of a gas station.
 type SubscriptionConditionsFuelPrice struct {
 	Lt float64 `json:"lt" jsonapi:"attr,lt" valid:"optional"` /*
-	Fuel price is less then given amount. Amount is always given in the currency of the gas station. The units are not scaled, for `EUR`, the value 1.3 means 1 euro and 30 cents.
+		Fuel price is less then given amount. Amount is always given in the currency of the gas station. The units are not scaled, for `EUR`, the value 1.3 means 1 euro and 30 cents.
 	*/
 }
 
@@ -355,8 +355,8 @@ type SubscriptionConditions struct {
 type Subscription struct {
 	ID         string                 `jsonapi:"primary,subscription,omitempty" valid:"uuid,optional"`                   // POI Subscription ID
 	Conditions SubscriptionConditions `json:"conditions,omitempty" jsonapi:"attr,conditions,omitempty" valid:"optional"` /*
-	Optional conditions to reduce the number of notifications to the device. For a notification to be fired, all conditions need to be true.
-	The example reads as `fuelPrice < 1.3 && fuelType == "diesel"`. For or conditions use multiple subscriptions.
+		Optional conditions to reduce the number of notifications to the device. For a notification to be fired, all conditions need to be true.
+		The example reads as `fuelPrice < 1.3 && fuelType == "diesel"`. For or conditions use multiple subscriptions.
 	*/
 	CreatedAt    *time.Time `json:"createdAt,omitempty" jsonapi:"attr,createdAt,omitempty,iso8601" valid:"optional"`    // Time of subscription creation (iso8601 without time zone)
 	ExpiresAt    *time.Time `json:"expiresAt,omitempty" jsonapi:"attr,expiresAt,omitempty,iso8601" valid:"optional"`    // Time when the subscription will expire, must not be more then 60 days in the future (iso8601 without time zone)
@@ -3855,8 +3855,8 @@ type GetSubscriptionsContent []*GetSubscriptionsContentItem
 type GetSubscriptionsContentItem struct {
 	ID         string                            `jsonapi:"primary,subscription,omitempty" valid:"uuid,optional"`                   // POI Subscription ID
 	Conditions GetSubscriptionsContentConditions `json:"conditions,omitempty" jsonapi:"attr,conditions,omitempty" valid:"optional"` /*
-	Optional conditions to reduce the number of notifications to the device. For a notification to be fired, all conditions need to be true.
-	The example reads as `fuelPrice < 1.3 && fuelType == "diesel"`. For or conditions use multiple subscriptions.
+		Optional conditions to reduce the number of notifications to the device. For a notification to be fired, all conditions need to be true.
+		The example reads as `fuelPrice < 1.3 && fuelType == "diesel"`. For or conditions use multiple subscriptions.
 	*/
 	CreatedAt    *time.Time `json:"createdAt,omitempty" jsonapi:"attr,createdAt,omitempty,iso8601" valid:"optional"`    // Time of subscription creation (iso8601 without time zone)
 	ExpiresAt    *time.Time `json:"expiresAt,omitempty" jsonapi:"attr,expiresAt,omitempty,iso8601" valid:"optional"`    // Time when the subscription will expire, must not be more then 60 days in the future (iso8601 without time zone)
@@ -3868,7 +3868,7 @@ type GetSubscriptionsContentItem struct {
 // GetSubscriptionsContentConditionsFuelPrice Condition on the fuelPrice of a gas station.
 type GetSubscriptionsContentConditionsFuelPrice struct {
 	Lt float64 `json:"lt" jsonapi:"attr,lt" valid:"optional"` /*
-	Fuel price is less then given amount. Amount is always given in the currency of the gas station. The units are not scaled, for `EUR`, the value 1.3 means 1 euro and 30 cents.
+		Fuel price is less then given amount. Amount is always given in the currency of the gas station. The units are not scaled, for `EUR`, the value 1.3 means 1 euro and 30 cents.
 	*/
 }
 
