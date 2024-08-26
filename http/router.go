@@ -3,9 +3,10 @@
 package http
 
 import (
-	"github.com/pace/bricks/maintenance/tracing"
 	"net/http"
 	"net/http/pprof"
+
+	"github.com/pace/bricks/maintenance/tracing"
 
 	"github.com/gorilla/mux"
 	"github.com/pace/bricks/http/middleware"

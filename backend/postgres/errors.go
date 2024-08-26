@@ -10,9 +10,7 @@ import (
 	"github.com/go-pg/pg"
 )
 
-var (
-	ErrNotUnique = errors.New("not unique")
-)
+var ErrNotUnique = errors.New("not unique")
 
 func IsErrConnectionFailed(err error) bool {
 	// go-pg has this check internally for network errors

@@ -268,5 +268,4 @@ func TestHandlerWithLogSink(t *testing.T) {
 	assert.Contains(t, string(sink2LogLines[3]), "ONLY FOR SINK2", "missing log line")
 
 	assert.Contains(t, string(sink2LogLines[4]), "Sink2 Test Error, IGNORE", "missing log line")
-
 }

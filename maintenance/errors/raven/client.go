@@ -316,6 +316,7 @@ func (c *context) setTags(t map[string]string) {
 		c.tags[k] = v
 	}
 }
+
 func (c *context) clear() {
 	c.user = nil
 	c.http = nil

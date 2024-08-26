@@ -21,8 +21,7 @@ type TestModel struct {
 	FilterName string
 }
 
-type testValueSanitizer struct {
-}
+type testValueSanitizer struct{}
 
 func (t *testValueSanitizer) SanitizeValue(fieldName string, value string) (interface{}, error) {
 	return value, nil

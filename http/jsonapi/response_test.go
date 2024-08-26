@@ -7,12 +7,13 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"github.com/stretchr/testify/require"
 	"reflect"
 	"sort"
 	"strings"
 	"testing"
 	"time"
+
+	"github.com/stretchr/testify/require"
 
 	"github.com/pace/bricks/pkg/isotime"
 
@@ -63,7 +64,6 @@ func TestMarshalPayload(t *testing.T) {
 }
 
 func TestMarshalPayloadWithNulls(t *testing.T) {
-
 	books := []*Book{nil, {ID: 101}, nil}
 	var jsonData map[string]interface{}
 
@@ -990,8 +990,7 @@ func TestMarshalMany_SliceOfInterfaceAndSliceOfStructsSameJSON(t *testing.T) {
 	}
 
 	// Generic JSON Unmarshal
-	structsData, interfacesData :=
-		make(map[string]interface{}), make(map[string]interface{})
+	structsData, interfacesData := make(map[string]interface{}), make(map[string]interface{})
 	if err := json.Unmarshal(structsOut.Bytes(), &structsData); err != nil {
 		t.Fatal(err)
 	}

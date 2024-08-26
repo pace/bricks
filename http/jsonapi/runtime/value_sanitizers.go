@@ -13,16 +13,16 @@ import (
 	"github.com/pace/bricks/pkg/isotime"
 )
 
-var _ ValueSanitizer = (*datetimeSanitizer)(nil)
-var _ ValueSanitizer = (*intSanitizer)(nil)
-var _ ValueSanitizer = (*decimalSanitizer)(nil)
-var _ ValueSanitizer = (*noopSanitizer)(nil)
-var _ ValueSanitizer = (*uuidSanitizer)(nil)
-var _ ValueSanitizer = (*composableAndFieldRestrictedSanitizer)(nil)
-
 var (
-	ErrInvalidFieldname = errors.New("invalid fieldName, not registered in sanitizer")
+	_ ValueSanitizer = (*datetimeSanitizer)(nil)
+	_ ValueSanitizer = (*intSanitizer)(nil)
+	_ ValueSanitizer = (*decimalSanitizer)(nil)
+	_ ValueSanitizer = (*noopSanitizer)(nil)
+	_ ValueSanitizer = (*uuidSanitizer)(nil)
+	_ ValueSanitizer = (*composableAndFieldRestrictedSanitizer)(nil)
 )
+
+var ErrInvalidFieldname = errors.New("invalid fieldName, not registered in sanitizer")
 
 type datetimeSanitizer struct{}
 
@@ -82,12 +82,15 @@ func NewDatetimeSanitizer() ValueSanitizer {
 func NewIntSanitizer() ValueSanitizer {
 	return &intSanitizer{}
 }
+
 func NewNoopSanitizer() ValueSanitizer {
 	return &noopSanitizer{}
 }
+
 func NewUUIDSanitizer() ValueSanitizer {
 	return &uuidSanitizer{}
 }
+
 func NewDecimalSanitizer() ValueSanitizer {
 	return &decimalSanitizer{}
 }

@@ -9,7 +9,6 @@ import (
 )
 
 func TestWaitGroupOk(t *testing.T) {
-
 	var wg1 WaitGroup
 
 	wg1.Add(1)
@@ -30,7 +29,6 @@ func TestWaitGroupOk(t *testing.T) {
 }
 
 func TestWaitGroupFail(t *testing.T) {
-
 	var wg1 WaitGroup
 
 	wg1.Add(1)

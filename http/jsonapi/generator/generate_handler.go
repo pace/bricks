@@ -31,9 +31,11 @@ const (
 	pkgDecimal        = "github.com/shopspring/decimal"
 )
 
-const serviceInterface = "Service"
-const rootRouterName = "router"
-const jsonapiContent = "application/vnd.api+json"
+const (
+	serviceInterface = "Service"
+	rootRouterName   = "router"
+	jsonapiContent   = "application/vnd.api+json"
+)
 
 var noValidation = map[string]string{"valid": "-"}
 
@@ -363,7 +365,6 @@ func (g *Generator) buildRouter(routes []*route, schema *openapi3.Swagger) error
 	if hasSecuritySchema(schema) {
 		g.goSource.Func().Id("Router").Params(
 			serviceInterfaceVariable, jen.Id("authBackend").Id(authBackendInterface)).Op("*").Qual(pkgGorillaMux, "Router").Block(routerBody...)
-
 	} else {
 		g.goSource.Func().Id("Router").Params(
 			serviceInterfaceVariable).Op("*").Qual(pkgGorillaMux, "Router").Block(routerBody...)
@@ -381,7 +382,6 @@ func (g *Generator) buildRouterWithFallbackAsArg(routes []*route, schema *openap
 	if hasSecuritySchema(schema) {
 		g.goSource.Func().Id("RouterWithFallback").Params(
 			serviceInterfaceVariable, jen.Id("authBackend").Id(authBackendInterface), jen.Id("fallback").Qual("net/http", "Handler")).Op("*").Qual(pkgGorillaMux, "Router").Block(routerBody...)
-
 	} else {
 		g.goSource.Func().Id("RouterWithFallback").Params(
 			serviceInterfaceVariable, jen.Id("fallback").Qual("net/http", "Handler")).Op("*").Qual(pkgGorillaMux, "Router").Block(routerBody...)
@@ -460,7 +460,6 @@ func (g *Generator) buildRouterBodyWithFallback(routes []*route, schema *openapi
 		}
 	} else {
 		routeStmts = make([]jen.Code, 1, (len(routes)+2)*len(schema.Servers)+1)
-
 	}
 	// create new router
 	routeStmts[startInd] = jen.Id(rootRouterName).Op(":=").Qual(pkgGorillaMux, "NewRouter").Call()

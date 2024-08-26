@@ -24,7 +24,7 @@ func TestErrorObjectWritesExpectedErrorMessage(t *testing.T) {
 }
 
 func TestMarshalErrorsWritesTheExpectedPayload(t *testing.T) {
-	var marshalErrorsTableTasts = []struct {
+	marshalErrorsTableTasts := []struct {
 		Title string
 		In    []*ErrorObject
 		Out   map[string]interface{}
