@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"log"
 	"os"
-	"os/user"
 	"path/filepath"
 	"time"
 
@@ -104,11 +103,5 @@ func copyright() string {
 	stmt := ""
 	now := time.Now()
 	stmt += fmt.Sprintf("// Copyright © %04d by PACE Telematics GmbH. All rights reserved.\n", now.Year())
-
-	u, err := user.Current()
-	if err != nil {
-		log.Fatal(err)
-	}
-	stmt += fmt.Sprintf("// Created at %04d/%02d/%02d by %s\n\n", now.Year(), now.Month(), now.Day(), u.Name)
 	return stmt
 }

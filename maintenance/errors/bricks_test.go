@@ -1,7 +1,4 @@
-/*
- * Copyright © 2023 by PACE Telematics GmbH. All rights reserved.
- * Created at 2023/1/20 by Sascha Voth
- */
+// Copyright © 2023 by PACE Telematics GmbH. All rights reserved.
 
 package errors
 
