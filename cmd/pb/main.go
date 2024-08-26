@@ -4,6 +4,7 @@ package main
 
 import (
 	"errors"
+
 	"github.com/spf13/cobra"
 
 	"github.com/pace/bricks/internal/service"

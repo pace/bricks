@@ -6,7 +6,7 @@ import (
 	"context"
 	"time"
 
-	"github.com/go-pg/pg/v10/orm"
+	"github.com/go-pg/pg/orm"
 	"github.com/pace/bricks/maintenance/health/servicehealthcheck"
 )
 
@@ -56,7 +56,6 @@ func (h *HealthCheck) HealthCheck(ctx context.Context) servicehealthcheck.Health
 	// If no error occurred set the State of this Health Check to healthy
 	h.state.SetHealthy()
 	return h.state.GetState()
-
 }
 
 // CleanUp drops the test table.

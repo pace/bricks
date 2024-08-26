@@ -38,7 +38,6 @@ func TestCircuitBreakerTripper(t *testing.T) {
 		assert.Panics(t, assert.PanicTestFunc(func() {
 			NewDefaultCircuitBreakerTripper("")
 		}), "NewDefaultCircuitBreakerTripper did not panic on empty name")
-
 	})
 
 	t.Run("resp_object_untouched", func(t *testing.T) {

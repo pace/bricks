@@ -13,6 +13,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/stretchr/testify/require"
+
 	"github.com/pace/bricks/pkg/isotime"
 
 	"github.com/shopspring/decimal"
@@ -62,7 +64,6 @@ func TestMarshalPayload(t *testing.T) {
 }
 
 func TestMarshalPayloadWithNulls(t *testing.T) {
-
 	books := []*Book{nil, {ID: 101}, nil}
 	var jsonData map[string]interface{}
 
@@ -556,6 +557,8 @@ func TestMarshalISO8601TimePointer(t *testing.T) {
 
 func TestMarshalUnmarshalStructWithNestedFields(t *testing.T) {
 	ts, err := isotime.ParseISO8601("2022-11-17T22:22:25.841137+01:00")
+	require.NoError(t, err)
+
 	s := &StructWithNestedFields{
 		Timestamp:           ts,
 		NestedStructPointer: &NestedField{NestedTimestamp: ts},
@@ -987,8 +990,7 @@ func TestMarshalMany_SliceOfInterfaceAndSliceOfStructsSameJSON(t *testing.T) {
 	}
 
 	// Generic JSON Unmarshal
-	structsData, interfacesData :=
-		make(map[string]interface{}), make(map[string]interface{})
+	structsData, interfacesData := make(map[string]interface{}), make(map[string]interface{})
 	if err := json.Unmarshal(structsOut.Bytes(), &structsData); err != nil {
 		t.Fatal(err)
 	}

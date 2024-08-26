@@ -43,18 +43,23 @@ func (s *testService) CreatePaymentMethodSEPA(ctx context.Context, w CreatePayme
 
 	return nil
 }
+
 func (s *testService) DeletePaymentMethod(context.Context, DeletePaymentMethodResponseWriter, *DeletePaymentMethodRequest) error {
 	return nil
 }
+
 func (s *testService) AuthorizePaymentMethod(context.Context, AuthorizePaymentMethodResponseWriter, *AuthorizePaymentMethodRequest) error {
 	return nil
 }
+
 func (s *testService) DeletePaymentToken(context.Context, DeletePaymentTokenResponseWriter, *DeletePaymentTokenRequest) error {
 	return nil
 }
+
 func (s *testService) GetPaymentMethodsIncludingCreditCheck(context.Context, GetPaymentMethodsIncludingCreditCheckResponseWriter, *GetPaymentMethodsIncludingCreditCheckRequest) error {
 	return nil
 }
+
 func (s *testService) GetPaymentMethodsIncludingPaymentToken(context.Context, GetPaymentMethodsIncludingPaymentTokenResponseWriter, *GetPaymentMethodsIncludingPaymentTokenRequest) error {
 	return fmt.Errorf("Some other error")
 }
@@ -96,8 +101,7 @@ func (s *testService) ProcessPayment(ctx context.Context, w ProcessPaymentRespon
 	return nil
 }
 
-type testAuthBackend struct {
-}
+type testAuthBackend struct{}
 
 func (s testAuthBackend) CanAuthorizeOAuth2(r *http.Request) bool {
 	return true

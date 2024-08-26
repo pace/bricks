@@ -93,7 +93,7 @@ func WriteError(w http.ResponseWriter, code int, err error) {
 		errList.List = v
 	default:
 		errList.List = []*Error{
-			&Error{Title: err.Error()},
+			{Title: err.Error()},
 		}
 	}
 

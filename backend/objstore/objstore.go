@@ -105,7 +105,6 @@ func registerHealthchecks() {
 		servicehealthcheck.RegisterHealthCheck("objstore", &HealthCheck{
 			Client: client,
 		})
-
 	})
 }
 

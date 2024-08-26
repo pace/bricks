@@ -16,7 +16,6 @@ import (
 )
 
 func TestRetryRoundTripper(t *testing.T) {
-
 	type args struct {
 		requestBody []byte
 		statuses    []int
@@ -78,7 +77,6 @@ func TestRetryRoundTripper(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-
 			rt := NewDefaultRetryRoundTripper()
 			tr := &retriedTransport{
 				statusCodes: tt.args.statuses,

@@ -19,12 +19,10 @@ import (
 	"github.com/rs/zerolog"
 )
 
-var (
-	paceHTTPPanicCounter = prometheus.NewGauge(prometheus.GaugeOpts{
-		Name: "pace_http_panic_total",
-		Help: "A counter for panics intercepted while handling a request",
-	})
-)
+var paceHTTPPanicCounter = prometheus.NewGauge(prometheus.GaugeOpts{
+	Name: "pace_http_panic_total",
+	Help: "A counter for panics intercepted while handling a request",
+})
 
 func init() {
 	prometheus.MustRegister(paceHTTPPanicCounter)

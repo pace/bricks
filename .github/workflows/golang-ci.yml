@@ -6,7 +6,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        go: [ '1.21.3' ]
+        go: [ '1.21.12' ]
     steps:
     - uses: actions/checkout@v2
     - uses: actions/setup-go@v2
@@ -17,12 +17,18 @@ jobs:
       with:
         username: ${{ secrets.DOCKERHUB_USERNAME }}
         password: ${{ secrets.DOCKERHUB_TOKEN }}
+    - name: Linting
+      run: make lint
     - name: Unit tests
       run: make test
     - name: (Experimental) Vulnerability Scan
       run: make vuln-scan
+    - name: Install Docker Compose
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y docker-compose
     - name: Integration tests
-      run: docker-compose run testserver make ci
+      run: docker-compose run testserver make integration
     - name: Send coverage
       uses: shogo82148/actions-goveralls@v1
       with:

@@ -183,7 +183,7 @@ func (lt *logtracer) ProcessHook(next redis.ProcessHook) redis.ProcessHook {
 			span:      span,
 		})
 
-		next(ctx, cmd)
+		_ = next(ctx, cmd)
 
 		vals := ctx.Value(logtracerKey{}).(*logtracerValues)
 		le := log.Ctx(ctx).Debug().Str("cmd", cmd.Name()).Str("sentry:category", "redis")

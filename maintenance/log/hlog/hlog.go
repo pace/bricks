@@ -123,8 +123,10 @@ func RefererHandler(fieldKey string) func(next http.Handler) http.Handler {
 	}
 }
 
-type idKey struct{}
-type traceIdKey struct{}
+type (
+	idKey      struct{}
+	traceIdKey struct{}
+)
 
 // IDFromRequest returns the unique id associated to the request if any.
 func IDFromRequest(r *http.Request) (id xid.ID, ok bool) {

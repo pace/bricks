@@ -5,8 +5,10 @@ import (
 	"errors"
 )
 
-var _ Initializable = (*mockHealthCheck)(nil)
-var _ HealthCheck = (*mockHealthCheck)(nil)
+var (
+	_ Initializable = (*mockHealthCheck)(nil)
+	_ HealthCheck   = (*mockHealthCheck)(nil)
+)
 
 type mockHealthCheck struct {
 	initErr         bool

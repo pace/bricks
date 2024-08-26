@@ -19,7 +19,7 @@ func NewDumpOptions(opts ...DumpOption) (DumpOptions, error) {
 type DumpOptions map[string]bool
 
 func (o DumpOptions) IsEnabled(option string) bool {
-	isEnabled, _ := o[option]
+	isEnabled := o[option]
 	return isEnabled
 }
 

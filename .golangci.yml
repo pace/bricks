@@ -1,0 +1,11 @@
+# for further options, see https://github.com/golangci/golangci-lint/blob/master/.golangci.example.yml
+run:
+  modules-download-mode: vendor
+  timeout: 4m
+issues:
+  include:
+    - EXC0005
+linters:
+  enable:
+    - gofumpt
+linters-settings:

@@ -60,6 +60,7 @@ func TestApiKeyAuthenticationError(t *testing.T) {
 		t.Errorf("Expected error massage %q, got %q", ex, got)
 	}
 }
+
 func TestApiKeyAuthenticationNoKey(t *testing.T) {
 	auth := NewAuthorizer(&Config{Name: "Authorization"}, "testkey")
 

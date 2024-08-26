@@ -50,6 +50,6 @@ var (
 	// PatternJWT JsonWebToken
 	PatternJWT = regexp.MustCompile(`(?:ey[a-zA-Z0-9=_-]+\.){2}[a-zA-Z0-9=_-]+`)
 
-	//PatternBasicAuthBase match any: Basic YW55IGNhcm5hbCBwbGVhcw== does not validate base64 string
+	// PatternBasicAuthBase match any: Basic YW55IGNhcm5hbCBwbGVhcw== does not validate base64 string
 	PatternBasicAuthBase64 = regexp.MustCompile(`Authorization: Basic ([a-zA-Z0-9=]*)`)
 )

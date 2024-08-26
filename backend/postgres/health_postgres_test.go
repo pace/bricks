@@ -11,7 +11,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/go-pg/pg/v10/orm"
+	"github.com/go-pg/pg/orm"
 	http2 "github.com/pace/bricks/http"
 	"github.com/pace/bricks/maintenance/errors"
 	"github.com/pace/bricks/maintenance/health/servicehealthcheck"

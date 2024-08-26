@@ -51,7 +51,6 @@ func TestRoundTripperChaining(t *testing.T) {
 		req := httptest.NewRequest("GET", url, nil)
 
 		_, err := c.RoundTrip(req)
-
 		if err != nil {
 			t.Fatalf("Expected err to be nil, got %#v", err)
 		}
@@ -72,7 +71,6 @@ func TestRoundTripperChaining(t *testing.T) {
 		req := httptest.NewRequest("GET", url, nil)
 
 		_, err := c.RoundTrip(req)
-
 		if err != nil {
 			t.Fatalf("Expected err to be nil, got %#v", err)
 		}
@@ -98,7 +96,6 @@ func TestRoundTripperChaining(t *testing.T) {
 		req := httptest.NewRequest("GET", url, nil)
 
 		_, err := c.RoundTrip(req)
-
 		if err != nil {
 			t.Fatalf("Expected err to be nil, got %#v", err)
 		}

@@ -34,7 +34,8 @@ func TestReadableHealthHandler(t *testing.T) {
 				"WithWarning                                                OK    ",
 				"WithErr                                                    ERR   healthCheckErr",
 				"WithInitErr                                                ERR   initError",
-				"veryveryveryveryveryveryveryveryveryveryveryverylongname   OK    "},
+				"veryveryveryveryveryveryveryveryveryveryveryverylongname   OK    ",
+			},
 		},
 		{
 			title:   "Test health check readable all optional",
@@ -45,7 +46,8 @@ func TestReadableHealthHandler(t *testing.T) {
 				"WithWarning                                                OK    ",
 				"WithErr                                                    ERR   healthCheckErr",
 				"WithInitErr                                                ERR   initError",
-				"veryveryveryveryveryveryveryveryveryveryveryverylongname   OK    "},
+				"veryveryveryveryveryveryveryveryveryveryveryverylongname   OK    ",
+			},
 		},
 		{
 			title:   "Test health check readable ok, all duplicated and with warning",

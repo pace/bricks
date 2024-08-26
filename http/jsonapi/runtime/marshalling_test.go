@@ -28,6 +28,7 @@ func TestUnmarshalAccept(t *testing.T) {
 		t.Errorf("Expected status code %d got: %d", http.StatusNotAcceptable, resp.StatusCode)
 	}
 }
+
 func TestUnmarshalContentType(t *testing.T) {
 	rec := httptest.NewRecorder()
 	req := httptest.NewRequest("POST", "/", nil)
@@ -44,6 +45,7 @@ func TestUnmarshalContentType(t *testing.T) {
 		t.Errorf("Expected status code %d got: %d", http.StatusUnsupportedMediaType, resp.StatusCode)
 	}
 }
+
 func TestUnmarshalContent(t *testing.T) {
 	rec := httptest.NewRecorder()
 	req := httptest.NewRequest("POST", "/", strings.NewReader(`{"data": 1}`))
@@ -158,11 +160,11 @@ func TestUnmarshalArticles(t *testing.T) {
 		t.Errorf("Expected 2 articles, got %d", len(articles))
 	}
 	expected := []*Article{
-		&Article{
+		{
 			ID:    "82180c8d-0ab6-4946-9298-61d3c8d13da4",
 			Title: "This is the first article",
 		},
-		&Article{
+		{
 			ID:    "f3bbdbac-903c-4f2f-9721-600a1201ee41",
 			Title: "This is the second article",
 		},
@@ -176,7 +178,6 @@ func TestUnmarshalArticles(t *testing.T) {
 			t.Errorf("article.ID expected \"%s\" got: %q", expected[i].ID, got.Title)
 		}
 	}
-
 }
 
 func TestMarshalArticle(t *testing.T) {
@@ -222,15 +223,13 @@ func TestMarshalPanic(t *testing.T) {
 	Marshal(rec, make(chan int), http.StatusOK)
 }
 
-type writer struct {
-}
+type writer struct{}
 
 func (writer) Header() http.Header {
 	return http.Header{}
 }
 
 func (writer) WriteHeader(statusCode int) {
-
 }
 
 func (writer) Write(buf []byte) (int, error) {
