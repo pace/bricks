@@ -73,13 +73,13 @@ func dialCtx(ctx context.Context, addr string) (*grpc.ClientConn, error) {
 
 func prepareClientContext(ctx context.Context) context.Context {
 	if loc, ok := locale.FromCtx(ctx); ok {
-		ctx = metadata.AppendToOutgoingContext(ctx, "locale", loc.Serialize())
+		ctx = metadata.AppendToOutgoingContext(ctx, MetadataKeyLocale, loc.Serialize())
 	}
 	if token, ok := security.GetTokenFromContext(ctx); ok {
-		ctx = metadata.AppendToOutgoingContext(ctx, "bearer_token", token.GetValue())
+		ctx = metadata.AppendToOutgoingContext(ctx, MetadataKeyBearerToken, token.GetValue())
 	}
 	if reqID := log.RequestIDFromContext(ctx); reqID != "" {
-		ctx = metadata.AppendToOutgoingContext(ctx, "req_id", reqID)
+		ctx = metadata.AppendToOutgoingContext(ctx, MetadataKeyRequestID, reqID)
 	}
 	ctx = EncodeContextWithUTMData(ctx)
 

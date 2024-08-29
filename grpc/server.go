@@ -152,7 +152,7 @@ func prepareContext(ctx context.Context) (context.Context, metadata.MD) {
 
 	// add request context if req_id is given
 	var reqID xid.ID
-	if ri := md.Get("req_id"); len(ri) > 0 {
+	if ri := md.Get(MetadataKeyRequestID); len(ri) > 0 {
 		var err error
 		reqID, err = xid.FromString(ri[0])
 		if err != nil {
@@ -175,7 +175,7 @@ func prepareContext(ctx context.Context) (context.Context, metadata.MD) {
 	})
 
 	// handle locale
-	if l := md.Get("locale"); len(l) > 0 {
+	if l := md.Get(MetadataKeyLocale); len(l) > 0 {
 		loc, err := locale.ParseLocale(l[0])
 		if err != nil {
 			log.Ctx(ctx).Debug().Err(err).Msgf("unable to parse locale: %v", err)
@@ -187,7 +187,7 @@ func prepareContext(ctx context.Context) (context.Context, metadata.MD) {
 	ctx = ContextWithUTMFromMetadata(ctx, md)
 
 	// add security context if bearer token is given
-	if bt := md.Get("bearer_token"); len(bt) > 0 {
+	if bt := md.Get(MetadataKeyBearerToken); len(bt) > 0 {
 		ctx = security.ContextWithToken(ctx, security.TokenString(bt[0]))
 	}
 
@@ -200,10 +200,10 @@ func prepareContext(ctx context.Context) (context.Context, metadata.MD) {
 
 	ctx = middleware.ContextWithExternalDependency(ctx, &externalDependencyContext)
 
-	delete(md, "content-type")
-	delete(md, "locale")
-	delete(md, "bearer_token")
-	delete(md, "req_id")
+	delete(md, MetadataKeyContentType)
+	delete(md, MetadataKeyLocale)
+	delete(md, MetadataKeyBearerToken)
+	delete(md, MetadataKeyRequestID)
 	delete(md, MetadataKeyExternalDependencies)
 
 	return ctx, md

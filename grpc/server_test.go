@@ -29,14 +29,14 @@ func TestPrepareContext(t *testing.T) {
 
 	// remote site is providing data using a bearer token
 	ctx = metadata.NewIncomingContext(ctx, metadata.MD{
-		"req_id":       []string{"c690uu0ta2rv348epm8g"},
-		"locale":       []string{"fr-CH, fr;q=0.9, en;q=0.8, de;q=0.7, *;q=0.5|Europe/Paris"},
-		"bearer_token": []string{"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c"},
+		MetadataKeyRequestID:   []string{"c690uu0ta2rv348epm8g"},
+		MetadataKeyLocale:      []string{"fr-CH, fr;q=0.9, en;q=0.8, de;q=0.7, *;q=0.5|Europe/Paris"},
+		MetadataKeyBearerToken: []string{"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c"},
 	})
 
 	ctx1, md := prepareContext(ctx)
-	assert.Len(t, md.Get("req_id"), 0)
-	assert.Len(t, md.Get("bearer_token"), 0)
+	assert.Len(t, md.Get(MetadataKeyRequestID), 0)
+	assert.Len(t, md.Get(MetadataKeyBearerToken), 0)
 	assert.Equal(t, "c690uu0ta2rv348epm8g", log.RequestIDFromContext(ctx1))
 	loc, ok := locale.FromCtx(ctx1)
 	assert.True(t, ok)
@@ -51,13 +51,13 @@ func TestPrepareContext(t *testing.T) {
 
 	// remote site is providing data using a bearer token
 	ctx = metadata.NewIncomingContext(ctx, metadata.MD{
-		"req_id":       []string{"c690uu0ta2rv348epm8g"},
-		"bearer_token": []string{"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9"},
+		MetadataKeyRequestID:   []string{"c690uu0ta2rv348epm8g"},
+		MetadataKeyBearerToken: []string{"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9"},
 	})
 
 	ctx2, md := prepareContext(ctx)
-	assert.Len(t, md.Get("req_id"), 0)
-	assert.Len(t, md.Get("bearer_token"), 0)
+	assert.Len(t, md.Get(MetadataKeyRequestID), 0)
+	assert.Len(t, md.Get(MetadataKeyBearerToken), 0)
 	assert.Equal(t, "c690uu0ta2rv348epm8g", log.RequestIDFromContext(ctx1))
 
 	var buf2 bytes.Buffer
@@ -67,4 +67,5 @@ func TestPrepareContext(t *testing.T) {
 	assert.Contains(t, buf2.String(), ",\"message\":\"test\"}\n")
 	_, ok = locale.FromCtx(ctx2)
 	assert.False(t, ok)
+
 }
