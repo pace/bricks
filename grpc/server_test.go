@@ -7,9 +7,11 @@ import (
 	"context"
 	"testing"
 
+	"github.com/pace/bricks/http/middleware"
 	"github.com/pace/bricks/locale"
 	"github.com/pace/bricks/maintenance/log"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"google.golang.org/grpc/metadata"
 )
 
@@ -68,4 +70,23 @@ func TestPrepareContext(t *testing.T) {
 	_, ok = locale.FromCtx(ctx2)
 	assert.False(t, ok)
 
+	ctx = metadata.NewIncomingContext(ctx, metadata.MD{
+		MetadataKeyExternalDependencies: []string{"foo:60000,bar:1000"},
+	})
+
+	ctx3, md := prepareContext(ctx)
+	assert.Len(t, md.Get(MetadataKeyExternalDependencies), 0)
+
+	externalDependencyContext := middleware.ExternalDependencyContextFromContext(ctx3)
+	require.NotNil(t, externalDependencyContext)
+	assert.Equal(t, "foo:60000,bar:1000", externalDependencyContext.String())
+
+	ctx = metadata.NewIncomingContext(context.Background(), metadata.MD{})
+
+	ctx4, md := prepareContext(ctx)
+	assert.Len(t, md.Get(MetadataKeyExternalDependencies), 0)
+
+	externalDependencyContext = middleware.ExternalDependencyContextFromContext(ctx4)
+	require.NotNil(t, externalDependencyContext)
+	assert.Empty(t, externalDependencyContext.String())
 }
