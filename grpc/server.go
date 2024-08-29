@@ -14,6 +14,7 @@ import (
 	grpc_prometheus "github.com/grpc-ecosystem/go-grpc-middleware/providers/prometheus"
 	grpc_ctxtags "github.com/grpc-ecosystem/go-grpc-middleware/tags"
 	grpc_opentracing "github.com/grpc-ecosystem/go-grpc-middleware/tracing/opentracing"
+	"github.com/pace/bricks/http/middleware"
 	"github.com/pace/bricks/http/security"
 	"github.com/pace/bricks/locale"
 	"github.com/pace/bricks/maintenance/errors"
@@ -189,10 +190,21 @@ func prepareContext(ctx context.Context) (context.Context, metadata.MD) {
 	if bt := md.Get("bearer_token"); len(bt) > 0 {
 		ctx = security.ContextWithToken(ctx, security.TokenString(bt[0]))
 	}
+
+	// add external dependencies to context
+	externalDependencyContext := middleware.ExternalDependencyContext{}
+
+	if externalDependencies := md.Get(MetadataKeyExternalDependencies); len(externalDependencies) > 0 {
+		externalDependencyContext.Parse(externalDependencies[0])
+	}
+
+	ctx = middleware.ContextWithExternalDependency(ctx, &externalDependencyContext)
+
 	delete(md, "content-type")
 	delete(md, "locale")
 	delete(md, "bearer_token")
 	delete(md, "req_id")
+	delete(md, MetadataKeyExternalDependencies)
 
 	return ctx, md
 }

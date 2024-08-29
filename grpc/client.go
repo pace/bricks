@@ -10,6 +10,7 @@ import (
 	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/grpc/metadata"
 
+	"github.com/pace/bricks/http/middleware"
 	"github.com/pace/bricks/http/security"
 	"github.com/pace/bricks/locale"
 	"github.com/pace/bricks/maintenance/log"
@@ -81,5 +82,10 @@ func prepareClientContext(ctx context.Context) context.Context {
 		ctx = metadata.AppendToOutgoingContext(ctx, "req_id", reqID)
 	}
 	ctx = EncodeContextWithUTMData(ctx)
+
+	if dep := middleware.ExternalDependencyContextFromContext(ctx); dep != nil {
+		ctx = metadata.AppendToOutgoingContext(ctx, MetadataKeyExternalDependencies, dep.String())
+	}
+
 	return ctx
 }
