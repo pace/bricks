@@ -10,6 +10,7 @@ import (
 	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/grpc/metadata"
 
+	"github.com/pace/bricks/http/middleware"
 	"github.com/pace/bricks/http/security"
 	"github.com/pace/bricks/locale"
 	"github.com/pace/bricks/maintenance/log"
@@ -72,14 +73,19 @@ func dialCtx(ctx context.Context, addr string) (*grpc.ClientConn, error) {
 
 func prepareClientContext(ctx context.Context) context.Context {
 	if loc, ok := locale.FromCtx(ctx); ok {
-		ctx = metadata.AppendToOutgoingContext(ctx, "locale", loc.Serialize())
+		ctx = metadata.AppendToOutgoingContext(ctx, MetadataKeyLocale, loc.Serialize())
 	}
 	if token, ok := security.GetTokenFromContext(ctx); ok {
-		ctx = metadata.AppendToOutgoingContext(ctx, "bearer_token", token.GetValue())
+		ctx = metadata.AppendToOutgoingContext(ctx, MetadataKeyBearerToken, token.GetValue())
 	}
 	if reqID := log.RequestIDFromContext(ctx); reqID != "" {
-		ctx = metadata.AppendToOutgoingContext(ctx, "req_id", reqID)
+		ctx = metadata.AppendToOutgoingContext(ctx, MetadataKeyRequestID, reqID)
 	}
 	ctx = EncodeContextWithUTMData(ctx)
+
+	if dep := middleware.ExternalDependencyContextFromContext(ctx); dep != nil {
+		ctx = metadata.AppendToOutgoingContext(ctx, MetadataKeyExternalDependencies, dep.String())
+	}
+
 	return ctx
 }
