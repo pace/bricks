@@ -28,7 +28,10 @@ func Transfer(in context.Context) context.Context {
 	out = utm.ContextTransfer(in, out)
 	out = hlog.ContextTransfer(in, out)
 	out = TransferTracingContext(in, out)
-	return locale.ContextTransfer(in, out)
+	out = locale.ContextTransfer(in, out)
+	out = TransferExternalDependencyContext(in, out)
+
+	return out
 }
 
 func TransferTracingContext(in, out context.Context) context.Context {
