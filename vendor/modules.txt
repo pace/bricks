@@ -78,7 +78,7 @@ github.com/breml/bidichk/pkg/bidichk
 # github.com/breml/errchkjson v0.3.0
 ## explicit; go 1.17
 github.com/breml/errchkjson
-# github.com/bsm/redislock v0.9.4
+# github.com/bsm/redislock v0.9.3
 ## explicit; go 1.17
 github.com/bsm/redislock
 # github.com/butuzov/ireturn v0.1.1
