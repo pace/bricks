@@ -4,6 +4,8 @@ package poi
 import (
 	"context"
 	errors1 "errors"
+	"fmt"
+	sentrygo "github.com/getsentry/sentry-go"
 	mux "github.com/gorilla/mux"
 	opentracing "github.com/opentracing/opentracing-go"
 	runtime "github.com/pace/bricks/http/jsonapi/runtime"
@@ -438,6 +440,16 @@ func DeduplicatePoiHandler(service DeduplicatePoiHandlerService, authBackend Aut
 		// Trace the service function handler execution
 		handlerSpan, ctx := opentracing.StartSpanFromContext(r.Context(), "DeduplicatePoiHandler")
 		defer handlerSpan.Finish()
+		hub := sentrygo.GetHubFromContext(ctx)
+		if hub == nil {
+			hub = sentrygo.CurrentHub().Clone()
+			ctx = sentrygo.SetHubOnContext(ctx, hub)
+		}
+		transactionOptions := []sentrygo.SpanOption{sentrygo.WithOpName("DeduplicatePoiHandler"), sentrygo.ContinueFromRequest(r), sentrygo.WithTransactionSource(sentrygo.SourceURL)}
+		sentryTransaction := sentrygo.StartTransaction(ctx, fmt.Sprintf("%s %s", r.Method, r.URL.Path), transactionOptions...)
+		defer sentryTransaction.Finish()
+		ctx = sentryTransaction.Context()
+		r = r.WithContext(ctx)
 
 		// Setup context, response writer and request type
 		writer := deduplicatePoiResponseWriter{
@@ -493,6 +505,16 @@ func MovePoiAtPositionHandler(service MovePoiAtPositionHandlerService, authBacke
 		// Trace the service function handler execution
 		handlerSpan, ctx := opentracing.StartSpanFromContext(r.Context(), "MovePoiAtPositionHandler")
 		defer handlerSpan.Finish()
+		hub := sentrygo.GetHubFromContext(ctx)
+		if hub == nil {
+			hub = sentrygo.CurrentHub().Clone()
+			ctx = sentrygo.SetHubOnContext(ctx, hub)
+		}
+		transactionOptions := []sentrygo.SpanOption{sentrygo.WithOpName("MovePoiAtPositionHandler"), sentrygo.ContinueFromRequest(r), sentrygo.WithTransactionSource(sentrygo.SourceURL)}
+		sentryTransaction := sentrygo.StartTransaction(ctx, fmt.Sprintf("%s %s", r.Method, r.URL.Path), transactionOptions...)
+		defer sentryTransaction.Finish()
+		ctx = sentryTransaction.Context()
+		r = r.WithContext(ctx)
 
 		// Setup context, response writer and request type
 		writer := movePoiAtPositionResponseWriter{
@@ -548,6 +570,16 @@ func GetAppsHandler(service GetAppsHandlerService, authBackend AuthorizationBack
 		// Trace the service function handler execution
 		handlerSpan, ctx := opentracing.StartSpanFromContext(r.Context(), "GetAppsHandler")
 		defer handlerSpan.Finish()
+		hub := sentrygo.GetHubFromContext(ctx)
+		if hub == nil {
+			hub = sentrygo.CurrentHub().Clone()
+			ctx = sentrygo.SetHubOnContext(ctx, hub)
+		}
+		transactionOptions := []sentrygo.SpanOption{sentrygo.WithOpName("GetAppsHandler"), sentrygo.ContinueFromRequest(r), sentrygo.WithTransactionSource(sentrygo.SourceURL)}
+		sentryTransaction := sentrygo.StartTransaction(ctx, fmt.Sprintf("%s %s", r.Method, r.URL.Path), transactionOptions...)
+		defer sentryTransaction.Finish()
+		ctx = sentryTransaction.Context()
+		r = r.WithContext(ctx)
 
 		// Setup context, response writer and request type
 		writer := getAppsResponseWriter{
@@ -623,6 +655,16 @@ func CreateAppHandler(service CreateAppHandlerService, authBackend Authorization
 		// Trace the service function handler execution
 		handlerSpan, ctx := opentracing.StartSpanFromContext(r.Context(), "CreateAppHandler")
 		defer handlerSpan.Finish()
+		hub := sentrygo.GetHubFromContext(ctx)
+		if hub == nil {
+			hub = sentrygo.CurrentHub().Clone()
+			ctx = sentrygo.SetHubOnContext(ctx, hub)
+		}
+		transactionOptions := []sentrygo.SpanOption{sentrygo.WithOpName("CreateAppHandler"), sentrygo.ContinueFromRequest(r), sentrygo.WithTransactionSource(sentrygo.SourceURL)}
+		sentryTransaction := sentrygo.StartTransaction(ctx, fmt.Sprintf("%s %s", r.Method, r.URL.Path), transactionOptions...)
+		defer sentryTransaction.Finish()
+		ctx = sentryTransaction.Context()
+		r = r.WithContext(ctx)
 
 		// Setup context, response writer and request type
 		writer := createAppResponseWriter{
@@ -678,6 +720,16 @@ func CheckForPaceAppHandler(service CheckForPaceAppHandlerService, authBackend A
 		// Trace the service function handler execution
 		handlerSpan, ctx := opentracing.StartSpanFromContext(r.Context(), "CheckForPaceAppHandler")
 		defer handlerSpan.Finish()
+		hub := sentrygo.GetHubFromContext(ctx)
+		if hub == nil {
+			hub = sentrygo.CurrentHub().Clone()
+			ctx = sentrygo.SetHubOnContext(ctx, hub)
+		}
+		transactionOptions := []sentrygo.SpanOption{sentrygo.WithOpName("CheckForPaceAppHandler"), sentrygo.ContinueFromRequest(r), sentrygo.WithTransactionSource(sentrygo.SourceURL)}
+		sentryTransaction := sentrygo.StartTransaction(ctx, fmt.Sprintf("%s %s", r.Method, r.URL.Path), transactionOptions...)
+		defer sentryTransaction.Finish()
+		ctx = sentryTransaction.Context()
+		r = r.WithContext(ctx)
 
 		// Setup context, response writer and request type
 		writer := checkForPaceAppResponseWriter{
@@ -745,6 +797,16 @@ func DeleteAppHandler(service DeleteAppHandlerService, authBackend Authorization
 		// Trace the service function handler execution
 		handlerSpan, ctx := opentracing.StartSpanFromContext(r.Context(), "DeleteAppHandler")
 		defer handlerSpan.Finish()
+		hub := sentrygo.GetHubFromContext(ctx)
+		if hub == nil {
+			hub = sentrygo.CurrentHub().Clone()
+			ctx = sentrygo.SetHubOnContext(ctx, hub)
+		}
+		transactionOptions := []sentrygo.SpanOption{sentrygo.WithOpName("DeleteAppHandler"), sentrygo.ContinueFromRequest(r), sentrygo.WithTransactionSource(sentrygo.SourceURL)}
+		sentryTransaction := sentrygo.StartTransaction(ctx, fmt.Sprintf("%s %s", r.Method, r.URL.Path), transactionOptions...)
+		defer sentryTransaction.Finish()
+		ctx = sentryTransaction.Context()
+		r = r.WithContext(ctx)
 
 		// Setup context, response writer and request type
 		writer := deleteAppResponseWriter{
@@ -806,6 +868,16 @@ func GetAppHandler(service GetAppHandlerService, authBackend AuthorizationBacken
 		// Trace the service function handler execution
 		handlerSpan, ctx := opentracing.StartSpanFromContext(r.Context(), "GetAppHandler")
 		defer handlerSpan.Finish()
+		hub := sentrygo.GetHubFromContext(ctx)
+		if hub == nil {
+			hub = sentrygo.CurrentHub().Clone()
+			ctx = sentrygo.SetHubOnContext(ctx, hub)
+		}
+		transactionOptions := []sentrygo.SpanOption{sentrygo.WithOpName("GetAppHandler"), sentrygo.ContinueFromRequest(r), sentrygo.WithTransactionSource(sentrygo.SourceURL)}
+		sentryTransaction := sentrygo.StartTransaction(ctx, fmt.Sprintf("%s %s", r.Method, r.URL.Path), transactionOptions...)
+		defer sentryTransaction.Finish()
+		ctx = sentryTransaction.Context()
+		r = r.WithContext(ctx)
 
 		// Setup context, response writer and request type
 		writer := getAppResponseWriter{
@@ -867,6 +939,16 @@ func UpdateAppHandler(service UpdateAppHandlerService, authBackend Authorization
 		// Trace the service function handler execution
 		handlerSpan, ctx := opentracing.StartSpanFromContext(r.Context(), "UpdateAppHandler")
 		defer handlerSpan.Finish()
+		hub := sentrygo.GetHubFromContext(ctx)
+		if hub == nil {
+			hub = sentrygo.CurrentHub().Clone()
+			ctx = sentrygo.SetHubOnContext(ctx, hub)
+		}
+		transactionOptions := []sentrygo.SpanOption{sentrygo.WithOpName("UpdateAppHandler"), sentrygo.ContinueFromRequest(r), sentrygo.WithTransactionSource(sentrygo.SourceURL)}
+		sentryTransaction := sentrygo.StartTransaction(ctx, fmt.Sprintf("%s %s", r.Method, r.URL.Path), transactionOptions...)
+		defer sentryTransaction.Finish()
+		ctx = sentryTransaction.Context()
+		r = r.WithContext(ctx)
 
 		// Setup context, response writer and request type
 		writer := updateAppResponseWriter{
@@ -931,6 +1013,16 @@ func GetAppPOIsRelationshipsHandler(service GetAppPOIsRelationshipsHandlerServic
 		// Trace the service function handler execution
 		handlerSpan, ctx := opentracing.StartSpanFromContext(r.Context(), "GetAppPOIsRelationshipsHandler")
 		defer handlerSpan.Finish()
+		hub := sentrygo.GetHubFromContext(ctx)
+		if hub == nil {
+			hub = sentrygo.CurrentHub().Clone()
+			ctx = sentrygo.SetHubOnContext(ctx, hub)
+		}
+		transactionOptions := []sentrygo.SpanOption{sentrygo.WithOpName("GetAppPOIsRelationshipsHandler"), sentrygo.ContinueFromRequest(r), sentrygo.WithTransactionSource(sentrygo.SourceURL)}
+		sentryTransaction := sentrygo.StartTransaction(ctx, fmt.Sprintf("%s %s", r.Method, r.URL.Path), transactionOptions...)
+		defer sentryTransaction.Finish()
+		ctx = sentryTransaction.Context()
+		r = r.WithContext(ctx)
 
 		// Setup context, response writer and request type
 		writer := getAppPOIsRelationshipsResponseWriter{
@@ -992,6 +1084,16 @@ func UpdateAppPOIsRelationshipsHandler(service UpdateAppPOIsRelationshipsHandler
 		// Trace the service function handler execution
 		handlerSpan, ctx := opentracing.StartSpanFromContext(r.Context(), "UpdateAppPOIsRelationshipsHandler")
 		defer handlerSpan.Finish()
+		hub := sentrygo.GetHubFromContext(ctx)
+		if hub == nil {
+			hub = sentrygo.CurrentHub().Clone()
+			ctx = sentrygo.SetHubOnContext(ctx, hub)
+		}
+		transactionOptions := []sentrygo.SpanOption{sentrygo.WithOpName("UpdateAppPOIsRelationshipsHandler"), sentrygo.ContinueFromRequest(r), sentrygo.WithTransactionSource(sentrygo.SourceURL)}
+		sentryTransaction := sentrygo.StartTransaction(ctx, fmt.Sprintf("%s %s", r.Method, r.URL.Path), transactionOptions...)
+		defer sentryTransaction.Finish()
+		ctx = sentryTransaction.Context()
+		r = r.WithContext(ctx)
 
 		// Setup context, response writer and request type
 		writer := updateAppPOIsRelationshipsResponseWriter{
@@ -1056,6 +1158,16 @@ func GetDuplicatesKMLHandler(service GetDuplicatesKMLHandlerService, authBackend
 		// Trace the service function handler execution
 		handlerSpan, ctx := opentracing.StartSpanFromContext(r.Context(), "GetDuplicatesKMLHandler")
 		defer handlerSpan.Finish()
+		hub := sentrygo.GetHubFromContext(ctx)
+		if hub == nil {
+			hub = sentrygo.CurrentHub().Clone()
+			ctx = sentrygo.SetHubOnContext(ctx, hub)
+		}
+		transactionOptions := []sentrygo.SpanOption{sentrygo.WithOpName("GetDuplicatesKMLHandler"), sentrygo.ContinueFromRequest(r), sentrygo.WithTransactionSource(sentrygo.SourceURL)}
+		sentryTransaction := sentrygo.StartTransaction(ctx, fmt.Sprintf("%s %s", r.Method, r.URL.Path), transactionOptions...)
+		defer sentryTransaction.Finish()
+		ctx = sentryTransaction.Context()
+		r = r.WithContext(ctx)
 
 		// Setup context, response writer and request type
 		writer := getDuplicatesKMLResponseWriter{
@@ -1117,6 +1229,16 @@ func GetPoisDumpHandler(service GetPoisDumpHandlerService, authBackend Authoriza
 		// Trace the service function handler execution
 		handlerSpan, ctx := opentracing.StartSpanFromContext(r.Context(), "GetPoisDumpHandler")
 		defer handlerSpan.Finish()
+		hub := sentrygo.GetHubFromContext(ctx)
+		if hub == nil {
+			hub = sentrygo.CurrentHub().Clone()
+			ctx = sentrygo.SetHubOnContext(ctx, hub)
+		}
+		transactionOptions := []sentrygo.SpanOption{sentrygo.WithOpName("GetPoisDumpHandler"), sentrygo.ContinueFromRequest(r), sentrygo.WithTransactionSource(sentrygo.SourceURL)}
+		sentryTransaction := sentrygo.StartTransaction(ctx, fmt.Sprintf("%s %s", r.Method, r.URL.Path), transactionOptions...)
+		defer sentryTransaction.Finish()
+		ctx = sentryTransaction.Context()
+		r = r.WithContext(ctx)
 
 		// Setup context, response writer and request type
 		writer := getPoisDumpResponseWriter{
@@ -1176,6 +1298,16 @@ func DeleteGasStationReferenceStatusHandler(service DeleteGasStationReferenceSta
 		// Trace the service function handler execution
 		handlerSpan, ctx := opentracing.StartSpanFromContext(r.Context(), "DeleteGasStationReferenceStatusHandler")
 		defer handlerSpan.Finish()
+		hub := sentrygo.GetHubFromContext(ctx)
+		if hub == nil {
+			hub = sentrygo.CurrentHub().Clone()
+			ctx = sentrygo.SetHubOnContext(ctx, hub)
+		}
+		transactionOptions := []sentrygo.SpanOption{sentrygo.WithOpName("DeleteGasStationReferenceStatusHandler"), sentrygo.ContinueFromRequest(r), sentrygo.WithTransactionSource(sentrygo.SourceURL)}
+		sentryTransaction := sentrygo.StartTransaction(ctx, fmt.Sprintf("%s %s", r.Method, r.URL.Path), transactionOptions...)
+		defer sentryTransaction.Finish()
+		ctx = sentryTransaction.Context()
+		r = r.WithContext(ctx)
 
 		// Setup context, response writer and request type
 		writer := deleteGasStationReferenceStatusResponseWriter{
@@ -1242,6 +1374,16 @@ func PutGasStationReferenceStatusHandler(service PutGasStationReferenceStatusHan
 		// Trace the service function handler execution
 		handlerSpan, ctx := opentracing.StartSpanFromContext(r.Context(), "PutGasStationReferenceStatusHandler")
 		defer handlerSpan.Finish()
+		hub := sentrygo.GetHubFromContext(ctx)
+		if hub == nil {
+			hub = sentrygo.CurrentHub().Clone()
+			ctx = sentrygo.SetHubOnContext(ctx, hub)
+		}
+		transactionOptions := []sentrygo.SpanOption{sentrygo.WithOpName("PutGasStationReferenceStatusHandler"), sentrygo.ContinueFromRequest(r), sentrygo.WithTransactionSource(sentrygo.SourceURL)}
+		sentryTransaction := sentrygo.StartTransaction(ctx, fmt.Sprintf("%s %s", r.Method, r.URL.Path), transactionOptions...)
+		defer sentryTransaction.Finish()
+		ctx = sentryTransaction.Context()
+		r = r.WithContext(ctx)
 
 		// Setup context, response writer and request type
 		writer := putGasStationReferenceStatusResponseWriter{
@@ -1311,6 +1453,16 @@ func GetEventsHandler(service GetEventsHandlerService, authBackend Authorization
 		// Trace the service function handler execution
 		handlerSpan, ctx := opentracing.StartSpanFromContext(r.Context(), "GetEventsHandler")
 		defer handlerSpan.Finish()
+		hub := sentrygo.GetHubFromContext(ctx)
+		if hub == nil {
+			hub = sentrygo.CurrentHub().Clone()
+			ctx = sentrygo.SetHubOnContext(ctx, hub)
+		}
+		transactionOptions := []sentrygo.SpanOption{sentrygo.WithOpName("GetEventsHandler"), sentrygo.ContinueFromRequest(r), sentrygo.WithTransactionSource(sentrygo.SourceURL)}
+		sentryTransaction := sentrygo.StartTransaction(ctx, fmt.Sprintf("%s %s", r.Method, r.URL.Path), transactionOptions...)
+		defer sentryTransaction.Finish()
+		ctx = sentryTransaction.Context()
+		r = r.WithContext(ctx)
 
 		// Setup context, response writer and request type
 		writer := getEventsResponseWriter{
@@ -1382,6 +1534,16 @@ func GetGasStationsHandler(service GetGasStationsHandlerService, authBackend Aut
 		// Trace the service function handler execution
 		handlerSpan, ctx := opentracing.StartSpanFromContext(r.Context(), "GetGasStationsHandler")
 		defer handlerSpan.Finish()
+		hub := sentrygo.GetHubFromContext(ctx)
+		if hub == nil {
+			hub = sentrygo.CurrentHub().Clone()
+			ctx = sentrygo.SetHubOnContext(ctx, hub)
+		}
+		transactionOptions := []sentrygo.SpanOption{sentrygo.WithOpName("GetGasStationsHandler"), sentrygo.ContinueFromRequest(r), sentrygo.WithTransactionSource(sentrygo.SourceURL)}
+		sentryTransaction := sentrygo.StartTransaction(ctx, fmt.Sprintf("%s %s", r.Method, r.URL.Path), transactionOptions...)
+		defer sentryTransaction.Finish()
+		ctx = sentryTransaction.Context()
+		r = r.WithContext(ctx)
 
 		// Setup context, response writer and request type
 		writer := getGasStationsResponseWriter{
@@ -1477,6 +1639,16 @@ func GetGasStationHandler(service GetGasStationHandlerService, authBackend Autho
 		// Trace the service function handler execution
 		handlerSpan, ctx := opentracing.StartSpanFromContext(r.Context(), "GetGasStationHandler")
 		defer handlerSpan.Finish()
+		hub := sentrygo.GetHubFromContext(ctx)
+		if hub == nil {
+			hub = sentrygo.CurrentHub().Clone()
+			ctx = sentrygo.SetHubOnContext(ctx, hub)
+		}
+		transactionOptions := []sentrygo.SpanOption{sentrygo.WithOpName("GetGasStationHandler"), sentrygo.ContinueFromRequest(r), sentrygo.WithTransactionSource(sentrygo.SourceURL)}
+		sentryTransaction := sentrygo.StartTransaction(ctx, fmt.Sprintf("%s %s", r.Method, r.URL.Path), transactionOptions...)
+		defer sentryTransaction.Finish()
+		ctx = sentryTransaction.Context()
+		r = r.WithContext(ctx)
 
 		// Setup context, response writer and request type
 		writer := getGasStationResponseWriter{
@@ -1542,6 +1714,16 @@ func GetPriceHistoryHandler(service GetPriceHistoryHandlerService, authBackend A
 		// Trace the service function handler execution
 		handlerSpan, ctx := opentracing.StartSpanFromContext(r.Context(), "GetPriceHistoryHandler")
 		defer handlerSpan.Finish()
+		hub := sentrygo.GetHubFromContext(ctx)
+		if hub == nil {
+			hub = sentrygo.CurrentHub().Clone()
+			ctx = sentrygo.SetHubOnContext(ctx, hub)
+		}
+		transactionOptions := []sentrygo.SpanOption{sentrygo.WithOpName("GetPriceHistoryHandler"), sentrygo.ContinueFromRequest(r), sentrygo.WithTransactionSource(sentrygo.SourceURL)}
+		sentryTransaction := sentrygo.StartTransaction(ctx, fmt.Sprintf("%s %s", r.Method, r.URL.Path), transactionOptions...)
+		defer sentryTransaction.Finish()
+		ctx = sentryTransaction.Context()
+		r = r.WithContext(ctx)
 
 		// Setup context, response writer and request type
 		writer := getPriceHistoryResponseWriter{
@@ -1620,6 +1802,16 @@ func GetGasStationFuelTypeNameMappingHandler(service GetGasStationFuelTypeNameMa
 		// Trace the service function handler execution
 		handlerSpan, ctx := opentracing.StartSpanFromContext(r.Context(), "GetGasStationFuelTypeNameMappingHandler")
 		defer handlerSpan.Finish()
+		hub := sentrygo.GetHubFromContext(ctx)
+		if hub == nil {
+			hub = sentrygo.CurrentHub().Clone()
+			ctx = sentrygo.SetHubOnContext(ctx, hub)
+		}
+		transactionOptions := []sentrygo.SpanOption{sentrygo.WithOpName("GetGasStationFuelTypeNameMappingHandler"), sentrygo.ContinueFromRequest(r), sentrygo.WithTransactionSource(sentrygo.SourceURL)}
+		sentryTransaction := sentrygo.StartTransaction(ctx, fmt.Sprintf("%s %s", r.Method, r.URL.Path), transactionOptions...)
+		defer sentryTransaction.Finish()
+		ctx = sentryTransaction.Context()
+		r = r.WithContext(ctx)
 
 		// Setup context, response writer and request type
 		writer := getGasStationFuelTypeNameMappingResponseWriter{
@@ -1685,6 +1877,16 @@ func GetMetadataFiltersHandler(service GetMetadataFiltersHandlerService, authBac
 		// Trace the service function handler execution
 		handlerSpan, ctx := opentracing.StartSpanFromContext(r.Context(), "GetMetadataFiltersHandler")
 		defer handlerSpan.Finish()
+		hub := sentrygo.GetHubFromContext(ctx)
+		if hub == nil {
+			hub = sentrygo.CurrentHub().Clone()
+			ctx = sentrygo.SetHubOnContext(ctx, hub)
+		}
+		transactionOptions := []sentrygo.SpanOption{sentrygo.WithOpName("GetMetadataFiltersHandler"), sentrygo.ContinueFromRequest(r), sentrygo.WithTransactionSource(sentrygo.SourceURL)}
+		sentryTransaction := sentrygo.StartTransaction(ctx, fmt.Sprintf("%s %s", r.Method, r.URL.Path), transactionOptions...)
+		defer sentryTransaction.Finish()
+		ctx = sentryTransaction.Context()
+		r = r.WithContext(ctx)
 
 		// Setup context, response writer and request type
 		writer := getMetadataFiltersResponseWriter{
@@ -1748,6 +1950,16 @@ func GetPoisHandler(service GetPoisHandlerService, authBackend AuthorizationBack
 		// Trace the service function handler execution
 		handlerSpan, ctx := opentracing.StartSpanFromContext(r.Context(), "GetPoisHandler")
 		defer handlerSpan.Finish()
+		hub := sentrygo.GetHubFromContext(ctx)
+		if hub == nil {
+			hub = sentrygo.CurrentHub().Clone()
+			ctx = sentrygo.SetHubOnContext(ctx, hub)
+		}
+		transactionOptions := []sentrygo.SpanOption{sentrygo.WithOpName("GetPoisHandler"), sentrygo.ContinueFromRequest(r), sentrygo.WithTransactionSource(sentrygo.SourceURL)}
+		sentryTransaction := sentrygo.StartTransaction(ctx, fmt.Sprintf("%s %s", r.Method, r.URL.Path), transactionOptions...)
+		defer sentryTransaction.Finish()
+		ctx = sentryTransaction.Context()
+		r = r.WithContext(ctx)
 
 		// Setup context, response writer and request type
 		writer := getPoisResponseWriter{
@@ -1819,6 +2031,16 @@ func GetPoiHandler(service GetPoiHandlerService, authBackend AuthorizationBacken
 		// Trace the service function handler execution
 		handlerSpan, ctx := opentracing.StartSpanFromContext(r.Context(), "GetPoiHandler")
 		defer handlerSpan.Finish()
+		hub := sentrygo.GetHubFromContext(ctx)
+		if hub == nil {
+			hub = sentrygo.CurrentHub().Clone()
+			ctx = sentrygo.SetHubOnContext(ctx, hub)
+		}
+		transactionOptions := []sentrygo.SpanOption{sentrygo.WithOpName("GetPoiHandler"), sentrygo.ContinueFromRequest(r), sentrygo.WithTransactionSource(sentrygo.SourceURL)}
+		sentryTransaction := sentrygo.StartTransaction(ctx, fmt.Sprintf("%s %s", r.Method, r.URL.Path), transactionOptions...)
+		defer sentryTransaction.Finish()
+		ctx = sentryTransaction.Context()
+		r = r.WithContext(ctx)
 
 		// Setup context, response writer and request type
 		writer := getPoiResponseWriter{
@@ -1880,6 +2102,16 @@ func ChangePoiHandler(service ChangePoiHandlerService, authBackend Authorization
 		// Trace the service function handler execution
 		handlerSpan, ctx := opentracing.StartSpanFromContext(r.Context(), "ChangePoiHandler")
 		defer handlerSpan.Finish()
+		hub := sentrygo.GetHubFromContext(ctx)
+		if hub == nil {
+			hub = sentrygo.CurrentHub().Clone()
+			ctx = sentrygo.SetHubOnContext(ctx, hub)
+		}
+		transactionOptions := []sentrygo.SpanOption{sentrygo.WithOpName("ChangePoiHandler"), sentrygo.ContinueFromRequest(r), sentrygo.WithTransactionSource(sentrygo.SourceURL)}
+		sentryTransaction := sentrygo.StartTransaction(ctx, fmt.Sprintf("%s %s", r.Method, r.URL.Path), transactionOptions...)
+		defer sentryTransaction.Finish()
+		ctx = sentryTransaction.Context()
+		r = r.WithContext(ctx)
 
 		// Setup context, response writer and request type
 		writer := changePoiResponseWriter{
@@ -1944,6 +2176,16 @@ func GetPoliciesHandler(service GetPoliciesHandlerService, authBackend Authoriza
 		// Trace the service function handler execution
 		handlerSpan, ctx := opentracing.StartSpanFromContext(r.Context(), "GetPoliciesHandler")
 		defer handlerSpan.Finish()
+		hub := sentrygo.GetHubFromContext(ctx)
+		if hub == nil {
+			hub = sentrygo.CurrentHub().Clone()
+			ctx = sentrygo.SetHubOnContext(ctx, hub)
+		}
+		transactionOptions := []sentrygo.SpanOption{sentrygo.WithOpName("GetPoliciesHandler"), sentrygo.ContinueFromRequest(r), sentrygo.WithTransactionSource(sentrygo.SourceURL)}
+		sentryTransaction := sentrygo.StartTransaction(ctx, fmt.Sprintf("%s %s", r.Method, r.URL.Path), transactionOptions...)
+		defer sentryTransaction.Finish()
+		ctx = sentryTransaction.Context()
+		r = r.WithContext(ctx)
 
 		// Setup context, response writer and request type
 		writer := getPoliciesResponseWriter{
@@ -2019,6 +2261,16 @@ func CreatePolicyHandler(service CreatePolicyHandlerService, authBackend Authori
 		// Trace the service function handler execution
 		handlerSpan, ctx := opentracing.StartSpanFromContext(r.Context(), "CreatePolicyHandler")
 		defer handlerSpan.Finish()
+		hub := sentrygo.GetHubFromContext(ctx)
+		if hub == nil {
+			hub = sentrygo.CurrentHub().Clone()
+			ctx = sentrygo.SetHubOnContext(ctx, hub)
+		}
+		transactionOptions := []sentrygo.SpanOption{sentrygo.WithOpName("CreatePolicyHandler"), sentrygo.ContinueFromRequest(r), sentrygo.WithTransactionSource(sentrygo.SourceURL)}
+		sentryTransaction := sentrygo.StartTransaction(ctx, fmt.Sprintf("%s %s", r.Method, r.URL.Path), transactionOptions...)
+		defer sentryTransaction.Finish()
+		ctx = sentryTransaction.Context()
+		r = r.WithContext(ctx)
 
 		// Setup context, response writer and request type
 		writer := createPolicyResponseWriter{
@@ -2074,6 +2326,16 @@ func GetPolicyHandler(service GetPolicyHandlerService, authBackend Authorization
 		// Trace the service function handler execution
 		handlerSpan, ctx := opentracing.StartSpanFromContext(r.Context(), "GetPolicyHandler")
 		defer handlerSpan.Finish()
+		hub := sentrygo.GetHubFromContext(ctx)
+		if hub == nil {
+			hub = sentrygo.CurrentHub().Clone()
+			ctx = sentrygo.SetHubOnContext(ctx, hub)
+		}
+		transactionOptions := []sentrygo.SpanOption{sentrygo.WithOpName("GetPolicyHandler"), sentrygo.ContinueFromRequest(r), sentrygo.WithTransactionSource(sentrygo.SourceURL)}
+		sentryTransaction := sentrygo.StartTransaction(ctx, fmt.Sprintf("%s %s", r.Method, r.URL.Path), transactionOptions...)
+		defer sentryTransaction.Finish()
+		ctx = sentryTransaction.Context()
+		r = r.WithContext(ctx)
 
 		// Setup context, response writer and request type
 		writer := getPolicyResponseWriter{
@@ -2129,6 +2391,16 @@ func GetRegionalPricesHandler(service GetRegionalPricesHandlerService, authBacke
 		// Trace the service function handler execution
 		handlerSpan, ctx := opentracing.StartSpanFromContext(r.Context(), "GetRegionalPricesHandler")
 		defer handlerSpan.Finish()
+		hub := sentrygo.GetHubFromContext(ctx)
+		if hub == nil {
+			hub = sentrygo.CurrentHub().Clone()
+			ctx = sentrygo.SetHubOnContext(ctx, hub)
+		}
+		transactionOptions := []sentrygo.SpanOption{sentrygo.WithOpName("GetRegionalPricesHandler"), sentrygo.ContinueFromRequest(r), sentrygo.WithTransactionSource(sentrygo.SourceURL)}
+		sentryTransaction := sentrygo.StartTransaction(ctx, fmt.Sprintf("%s %s", r.Method, r.URL.Path), transactionOptions...)
+		defer sentryTransaction.Finish()
+		ctx = sentryTransaction.Context()
+		r = r.WithContext(ctx)
 
 		// Setup context, response writer and request type
 		writer := getRegionalPricesResponseWriter{
@@ -2192,6 +2464,16 @@ func GetSourcesHandler(service GetSourcesHandlerService, authBackend Authorizati
 		// Trace the service function handler execution
 		handlerSpan, ctx := opentracing.StartSpanFromContext(r.Context(), "GetSourcesHandler")
 		defer handlerSpan.Finish()
+		hub := sentrygo.GetHubFromContext(ctx)
+		if hub == nil {
+			hub = sentrygo.CurrentHub().Clone()
+			ctx = sentrygo.SetHubOnContext(ctx, hub)
+		}
+		transactionOptions := []sentrygo.SpanOption{sentrygo.WithOpName("GetSourcesHandler"), sentrygo.ContinueFromRequest(r), sentrygo.WithTransactionSource(sentrygo.SourceURL)}
+		sentryTransaction := sentrygo.StartTransaction(ctx, fmt.Sprintf("%s %s", r.Method, r.URL.Path), transactionOptions...)
+		defer sentryTransaction.Finish()
+		ctx = sentryTransaction.Context()
+		r = r.WithContext(ctx)
 
 		// Setup context, response writer and request type
 		writer := getSourcesResponseWriter{
@@ -2263,6 +2545,16 @@ func CreateSourceHandler(service CreateSourceHandlerService, authBackend Authori
 		// Trace the service function handler execution
 		handlerSpan, ctx := opentracing.StartSpanFromContext(r.Context(), "CreateSourceHandler")
 		defer handlerSpan.Finish()
+		hub := sentrygo.GetHubFromContext(ctx)
+		if hub == nil {
+			hub = sentrygo.CurrentHub().Clone()
+			ctx = sentrygo.SetHubOnContext(ctx, hub)
+		}
+		transactionOptions := []sentrygo.SpanOption{sentrygo.WithOpName("CreateSourceHandler"), sentrygo.ContinueFromRequest(r), sentrygo.WithTransactionSource(sentrygo.SourceURL)}
+		sentryTransaction := sentrygo.StartTransaction(ctx, fmt.Sprintf("%s %s", r.Method, r.URL.Path), transactionOptions...)
+		defer sentryTransaction.Finish()
+		ctx = sentryTransaction.Context()
+		r = r.WithContext(ctx)
 
 		// Setup context, response writer and request type
 		writer := createSourceResponseWriter{
@@ -2318,6 +2610,16 @@ func DeleteSourceHandler(service DeleteSourceHandlerService, authBackend Authori
 		// Trace the service function handler execution
 		handlerSpan, ctx := opentracing.StartSpanFromContext(r.Context(), "DeleteSourceHandler")
 		defer handlerSpan.Finish()
+		hub := sentrygo.GetHubFromContext(ctx)
+		if hub == nil {
+			hub = sentrygo.CurrentHub().Clone()
+			ctx = sentrygo.SetHubOnContext(ctx, hub)
+		}
+		transactionOptions := []sentrygo.SpanOption{sentrygo.WithOpName("DeleteSourceHandler"), sentrygo.ContinueFromRequest(r), sentrygo.WithTransactionSource(sentrygo.SourceURL)}
+		sentryTransaction := sentrygo.StartTransaction(ctx, fmt.Sprintf("%s %s", r.Method, r.URL.Path), transactionOptions...)
+		defer sentryTransaction.Finish()
+		ctx = sentryTransaction.Context()
+		r = r.WithContext(ctx)
 
 		// Setup context, response writer and request type
 		writer := deleteSourceResponseWriter{
@@ -2379,6 +2681,16 @@ func GetSourceHandler(service GetSourceHandlerService, authBackend Authorization
 		// Trace the service function handler execution
 		handlerSpan, ctx := opentracing.StartSpanFromContext(r.Context(), "GetSourceHandler")
 		defer handlerSpan.Finish()
+		hub := sentrygo.GetHubFromContext(ctx)
+		if hub == nil {
+			hub = sentrygo.CurrentHub().Clone()
+			ctx = sentrygo.SetHubOnContext(ctx, hub)
+		}
+		transactionOptions := []sentrygo.SpanOption{sentrygo.WithOpName("GetSourceHandler"), sentrygo.ContinueFromRequest(r), sentrygo.WithTransactionSource(sentrygo.SourceURL)}
+		sentryTransaction := sentrygo.StartTransaction(ctx, fmt.Sprintf("%s %s", r.Method, r.URL.Path), transactionOptions...)
+		defer sentryTransaction.Finish()
+		ctx = sentryTransaction.Context()
+		r = r.WithContext(ctx)
 
 		// Setup context, response writer and request type
 		writer := getSourceResponseWriter{
@@ -2440,6 +2752,16 @@ func UpdateSourceHandler(service UpdateSourceHandlerService, authBackend Authori
 		// Trace the service function handler execution
 		handlerSpan, ctx := opentracing.StartSpanFromContext(r.Context(), "UpdateSourceHandler")
 		defer handlerSpan.Finish()
+		hub := sentrygo.GetHubFromContext(ctx)
+		if hub == nil {
+			hub = sentrygo.CurrentHub().Clone()
+			ctx = sentrygo.SetHubOnContext(ctx, hub)
+		}
+		transactionOptions := []sentrygo.SpanOption{sentrygo.WithOpName("UpdateSourceHandler"), sentrygo.ContinueFromRequest(r), sentrygo.WithTransactionSource(sentrygo.SourceURL)}
+		sentryTransaction := sentrygo.StartTransaction(ctx, fmt.Sprintf("%s %s", r.Method, r.URL.Path), transactionOptions...)
+		defer sentryTransaction.Finish()
+		ctx = sentryTransaction.Context()
+		r = r.WithContext(ctx)
 
 		// Setup context, response writer and request type
 		writer := updateSourceResponseWriter{
@@ -2504,6 +2826,16 @@ func GetSubscriptionsHandler(service GetSubscriptionsHandlerService, authBackend
 		// Trace the service function handler execution
 		handlerSpan, ctx := opentracing.StartSpanFromContext(r.Context(), "GetSubscriptionsHandler")
 		defer handlerSpan.Finish()
+		hub := sentrygo.GetHubFromContext(ctx)
+		if hub == nil {
+			hub = sentrygo.CurrentHub().Clone()
+			ctx = sentrygo.SetHubOnContext(ctx, hub)
+		}
+		transactionOptions := []sentrygo.SpanOption{sentrygo.WithOpName("GetSubscriptionsHandler"), sentrygo.ContinueFromRequest(r), sentrygo.WithTransactionSource(sentrygo.SourceURL)}
+		sentryTransaction := sentrygo.StartTransaction(ctx, fmt.Sprintf("%s %s", r.Method, r.URL.Path), transactionOptions...)
+		defer sentryTransaction.Finish()
+		ctx = sentryTransaction.Context()
+		r = r.WithContext(ctx)
 
 		// Setup context, response writer and request type
 		writer := getSubscriptionsResponseWriter{
@@ -2559,6 +2891,16 @@ func DeleteSubscriptionHandler(service DeleteSubscriptionHandlerService, authBac
 		// Trace the service function handler execution
 		handlerSpan, ctx := opentracing.StartSpanFromContext(r.Context(), "DeleteSubscriptionHandler")
 		defer handlerSpan.Finish()
+		hub := sentrygo.GetHubFromContext(ctx)
+		if hub == nil {
+			hub = sentrygo.CurrentHub().Clone()
+			ctx = sentrygo.SetHubOnContext(ctx, hub)
+		}
+		transactionOptions := []sentrygo.SpanOption{sentrygo.WithOpName("DeleteSubscriptionHandler"), sentrygo.ContinueFromRequest(r), sentrygo.WithTransactionSource(sentrygo.SourceURL)}
+		sentryTransaction := sentrygo.StartTransaction(ctx, fmt.Sprintf("%s %s", r.Method, r.URL.Path), transactionOptions...)
+		defer sentryTransaction.Finish()
+		ctx = sentryTransaction.Context()
+		r = r.WithContext(ctx)
 
 		// Setup context, response writer and request type
 		writer := deleteSubscriptionResponseWriter{
@@ -2608,6 +2950,16 @@ func StoreSubscriptionHandler(service StoreSubscriptionHandlerService, authBacke
 		// Trace the service function handler execution
 		handlerSpan, ctx := opentracing.StartSpanFromContext(r.Context(), "StoreSubscriptionHandler")
 		defer handlerSpan.Finish()
+		hub := sentrygo.GetHubFromContext(ctx)
+		if hub == nil {
+			hub = sentrygo.CurrentHub().Clone()
+			ctx = sentrygo.SetHubOnContext(ctx, hub)
+		}
+		transactionOptions := []sentrygo.SpanOption{sentrygo.WithOpName("StoreSubscriptionHandler"), sentrygo.ContinueFromRequest(r), sentrygo.WithTransactionSource(sentrygo.SourceURL)}
+		sentryTransaction := sentrygo.StartTransaction(ctx, fmt.Sprintf("%s %s", r.Method, r.URL.Path), transactionOptions...)
+		defer sentryTransaction.Finish()
+		ctx = sentryTransaction.Context()
+		r = r.WithContext(ctx)
 
 		// Setup context, response writer and request type
 		writer := storeSubscriptionResponseWriter{
@@ -2663,6 +3015,16 @@ func GetTilesHandler(service GetTilesHandlerService, authBackend AuthorizationBa
 		// Trace the service function handler execution
 		handlerSpan, ctx := opentracing.StartSpanFromContext(r.Context(), "GetTilesHandler")
 		defer handlerSpan.Finish()
+		hub := sentrygo.GetHubFromContext(ctx)
+		if hub == nil {
+			hub = sentrygo.CurrentHub().Clone()
+			ctx = sentrygo.SetHubOnContext(ctx, hub)
+		}
+		transactionOptions := []sentrygo.SpanOption{sentrygo.WithOpName("GetTilesHandler"), sentrygo.ContinueFromRequest(r), sentrygo.WithTransactionSource(sentrygo.SourceURL)}
+		sentryTransaction := sentrygo.StartTransaction(ctx, fmt.Sprintf("%s %s", r.Method, r.URL.Path), transactionOptions...)
+		defer sentryTransaction.Finish()
+		ctx = sentryTransaction.Context()
+		r = r.WithContext(ctx)
 
 		// Setup context, response writer and request type
 		writer := getTilesResponseWriter{

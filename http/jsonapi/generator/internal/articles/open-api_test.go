@@ -4,6 +4,8 @@ package articles
 import (
 	"context"
 	errors1 "errors"
+	"fmt"
+	sentrygo "github.com/getsentry/sentry-go"
 	mux "github.com/gorilla/mux"
 	opentracing "github.com/opentracing/opentracing-go"
 	runtime "github.com/pace/bricks/http/jsonapi/runtime"
@@ -67,6 +69,16 @@ func GetArticleCommentsHandler(service GetArticleCommentsHandlerService) http.Ha
 		// Trace the service function handler execution
 		handlerSpan, ctx := opentracing.StartSpanFromContext(r.Context(), "GetArticleCommentsHandler")
 		defer handlerSpan.Finish()
+		hub := sentrygo.GetHubFromContext(ctx)
+		if hub == nil {
+			hub = sentrygo.CurrentHub().Clone()
+			ctx = sentrygo.SetHubOnContext(ctx, hub)
+		}
+		transactionOptions := []sentrygo.SpanOption{sentrygo.WithOpName("GetArticleCommentsHandler"), sentrygo.ContinueFromRequest(r), sentrygo.WithTransactionSource(sentrygo.SourceURL)}
+		sentryTransaction := sentrygo.StartTransaction(ctx, fmt.Sprintf("%s %s", r.Method, r.URL.Path), transactionOptions...)
+		defer sentryTransaction.Finish()
+		ctx = sentryTransaction.Context()
+		r = r.WithContext(ctx)
 
 		// Setup context, response writer and request type
 		writer := getArticleCommentsResponseWriter{
@@ -122,6 +134,16 @@ func UpdateArticleCommentsHandler(service UpdateArticleCommentsHandlerService) h
 		// Trace the service function handler execution
 		handlerSpan, ctx := opentracing.StartSpanFromContext(r.Context(), "UpdateArticleCommentsHandler")
 		defer handlerSpan.Finish()
+		hub := sentrygo.GetHubFromContext(ctx)
+		if hub == nil {
+			hub = sentrygo.CurrentHub().Clone()
+			ctx = sentrygo.SetHubOnContext(ctx, hub)
+		}
+		transactionOptions := []sentrygo.SpanOption{sentrygo.WithOpName("UpdateArticleCommentsHandler"), sentrygo.ContinueFromRequest(r), sentrygo.WithTransactionSource(sentrygo.SourceURL)}
+		sentryTransaction := sentrygo.StartTransaction(ctx, fmt.Sprintf("%s %s", r.Method, r.URL.Path), transactionOptions...)
+		defer sentryTransaction.Finish()
+		ctx = sentryTransaction.Context()
+		r = r.WithContext(ctx)
 
 		// Setup context, response writer and request type
 		writer := updateArticleCommentsResponseWriter{
@@ -185,6 +207,16 @@ func UpdateArticleInlineTypeHandler(service UpdateArticleInlineTypeHandlerServic
 		// Trace the service function handler execution
 		handlerSpan, ctx := opentracing.StartSpanFromContext(r.Context(), "UpdateArticleInlineTypeHandler")
 		defer handlerSpan.Finish()
+		hub := sentrygo.GetHubFromContext(ctx)
+		if hub == nil {
+			hub = sentrygo.CurrentHub().Clone()
+			ctx = sentrygo.SetHubOnContext(ctx, hub)
+		}
+		transactionOptions := []sentrygo.SpanOption{sentrygo.WithOpName("UpdateArticleInlineTypeHandler"), sentrygo.ContinueFromRequest(r), sentrygo.WithTransactionSource(sentrygo.SourceURL)}
+		sentryTransaction := sentrygo.StartTransaction(ctx, fmt.Sprintf("%s %s", r.Method, r.URL.Path), transactionOptions...)
+		defer sentryTransaction.Finish()
+		ctx = sentryTransaction.Context()
+		r = r.WithContext(ctx)
 
 		// Setup context, response writer and request type
 		writer := updateArticleInlineTypeResponseWriter{
@@ -243,6 +275,16 @@ func UpdateArticleInlineRefHandler(service UpdateArticleInlineRefHandlerService)
 		// Trace the service function handler execution
 		handlerSpan, ctx := opentracing.StartSpanFromContext(r.Context(), "UpdateArticleInlineRefHandler")
 		defer handlerSpan.Finish()
+		hub := sentrygo.GetHubFromContext(ctx)
+		if hub == nil {
+			hub = sentrygo.CurrentHub().Clone()
+			ctx = sentrygo.SetHubOnContext(ctx, hub)
+		}
+		transactionOptions := []sentrygo.SpanOption{sentrygo.WithOpName("UpdateArticleInlineRefHandler"), sentrygo.ContinueFromRequest(r), sentrygo.WithTransactionSource(sentrygo.SourceURL)}
+		sentryTransaction := sentrygo.StartTransaction(ctx, fmt.Sprintf("%s %s", r.Method, r.URL.Path), transactionOptions...)
+		defer sentryTransaction.Finish()
+		ctx = sentryTransaction.Context()
+		r = r.WithContext(ctx)
 
 		// Setup context, response writer and request type
 		writer := updateArticleInlineRefResponseWriter{
