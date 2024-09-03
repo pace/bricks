@@ -14,7 +14,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestJaegerRoundTripper(t *testing.T) {
+func TestTracingRoundTripper(t *testing.T) {
 	err := sentry.Init(sentry.ClientOptions{
 		EnableTracing:    true,
 		TracesSampleRate: 1.0,
@@ -22,7 +22,7 @@ func TestJaegerRoundTripper(t *testing.T) {
 	require.NoError(t, err)
 
 	t.Run("With successful response", func(t *testing.T) {
-		l := &JaegerRoundTripper{}
+		l := &TracingRoundTripper{}
 		tr := &recordingTransportWithResponse{statusCode: 202}
 		l.SetTransport(tr)
 
@@ -44,7 +44,7 @@ func TestJaegerRoundTripper(t *testing.T) {
 	})
 
 	t.Run("With error response", func(t *testing.T) {
-		l := &JaegerRoundTripper{}
+		l := &TracingRoundTripper{}
 		e := errors.New("some error")
 		tr := &recordingTransportWithError{err: e}
 		l.SetTransport(tr)
@@ -62,7 +62,7 @@ func TestJaegerRoundTripper(t *testing.T) {
 
 	t.Run("With retries", func(t *testing.T) {
 		tr := &retriedTransport{statusCodes: []int{502, 503, 200}}
-		l := Chain(NewDefaultRetryRoundTripper(), &JaegerRoundTripper{})
+		l := Chain(NewDefaultRetryRoundTripper(), &TracingRoundTripper{})
 		l.Final(tr)
 
 		req := httptest.NewRequest("GET", "/bar", nil)

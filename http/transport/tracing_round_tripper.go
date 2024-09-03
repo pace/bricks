@@ -9,23 +9,23 @@ import (
 	"github.com/getsentry/sentry-go"
 )
 
-// JaegerRoundTripper implements a chainable round tripper for tracing
-type JaegerRoundTripper struct {
+// TracingRoundTripper implements a chainable round tripper for tracing
+type TracingRoundTripper struct {
 	transport http.RoundTripper
 }
 
 // Transport returns the RoundTripper to make HTTP requests
-func (l *JaegerRoundTripper) Transport() http.RoundTripper {
+func (l *TracingRoundTripper) Transport() http.RoundTripper {
 	return l.transport
 }
 
 // SetTransport sets the RoundTripper to make HTTP requests
-func (l *JaegerRoundTripper) SetTransport(rt http.RoundTripper) {
+func (l *TracingRoundTripper) SetTransport(rt http.RoundTripper) {
 	l.transport = rt
 }
 
 // RoundTrip executes a HTTP request with distributed tracing
-func (l *JaegerRoundTripper) RoundTrip(req *http.Request) (*http.Response, error) {
+func (l *TracingRoundTripper) RoundTrip(req *http.Request) (*http.Response, error) {
 	ctx := req.Context()
 
 	hub := sentry.GetHubFromContext(ctx)
