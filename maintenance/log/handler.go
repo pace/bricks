@@ -8,8 +8,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/opentracing/opentracing-go"
-	"github.com/uber/jaeger-client-go"
+	"github.com/getsentry/sentry-go"
 
 	"github.com/pace/bricks/maintenance/log/hlog"
 	"github.com/rs/xid"
@@ -43,12 +42,13 @@ func Handler(silentPrefixes ...string) func(http.Handler) http.Handler {
 // requestCompleted logs all request related information once
 // at the end of the request
 var requestCompleted = func(r *http.Request, status, size int, duration time.Duration) {
-	span := opentracing.SpanFromContext(r.Context())
-	var traceId string
+	ctx := r.Context()
+
+	var traceID string
+
+	span := sentry.SpanFromContext(ctx)
 	if span != nil {
-		if sc, ok := span.Context().(jaeger.SpanContext); ok {
-			traceId = sc.String()
-		}
+		traceID = span.TraceID.String()
 	}
 
 	hlog.FromRequest(r).Info().
@@ -61,7 +61,7 @@ var requestCompleted = func(r *http.Request, status, size int, duration time.Dur
 		Str("ip", ProxyAwareRemote(r)).
 		Str("referer", r.Header.Get("Referer")).
 		Str("user_agent", r.Header.Get("User-Agent")).
-		Str("trace_id", traceId).
+		Str("trace_id", traceID).
 		Msg("Request Completed")
 }
 

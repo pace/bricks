@@ -4,40 +4,45 @@ package transport
 
 import (
 	"errors"
-	"fmt"
 	"net/http"
 	"net/http/httptest"
-	"strings"
 	"testing"
 
-	"github.com/opentracing/opentracing-go"
+	"github.com/getsentry/sentry-go"
 	_ "github.com/pace/bricks/maintenance/tracing"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestJaegerRoundTripper(t *testing.T) {
+	err := sentry.Init(sentry.ClientOptions{
+		EnableTracing:    true,
+		TracesSampleRate: 1.0,
+	})
+	require.NoError(t, err)
+
 	t.Run("With successful response", func(t *testing.T) {
 		l := &JaegerRoundTripper{}
 		tr := &recordingTransportWithResponse{statusCode: 202}
 		l.SetTransport(tr)
 
 		req := httptest.NewRequest("GET", "/foo", nil)
+
 		_, err := l.RoundTrip(req)
-		if err != nil {
-			t.Fatalf("Expected err to be nil, got %#v", err)
-		}
+		require.NoError(t, err)
 
-		spanString := fmt.Sprintf("%#v", tr.span)
+		require.NotNil(t, tr.span)
 
-		if strings.Contains(spanString, "attempt") {
-			t.Errorf("Expected attempt to not be included in span %q", spanString)
-		}
-		exs := []string{`operationName:"GET /foo"`, "numericVal:202"}
-		for _, ex := range exs {
-			if !strings.Contains(spanString, ex) {
-				t.Errorf("Expected %q to be included in span %q", ex, spanString)
-			}
-		}
+		_, ok := tr.span.Data["attempt"]
+		assert.False(t, ok)
+
+		code, ok := tr.span.Data["code"]
+		assert.True(t, ok)
+		assert.Equal(t, 202, code)
+
+		assert.Equal(t, "GET /foo", tr.span.Name)
 	})
+
 	t.Run("With error response", func(t *testing.T) {
 		l := &JaegerRoundTripper{}
 		e := errors.New("some error")
@@ -47,59 +52,54 @@ func TestJaegerRoundTripper(t *testing.T) {
 		req := httptest.NewRequest("GET", "/bar", nil)
 		_, err := l.RoundTrip(req)
 
-		if got, ex := err.Error(), e.Error(); got != ex {
-			t.Fatalf("Expected error %q to be returned, got %q", ex, got)
-		}
+		assert.Equal(t, err, e)
+		assert.Equal(t, "GET /bar", tr.span.Name)
 
-		spanString := fmt.Sprintf("%#v", tr.span)
-		exs := []string{`operationName:"GET /bar"`, `log.Field{key:"error"`}
-		for _, ex := range exs {
-			if !strings.Contains(spanString, ex) {
-				t.Errorf("Expected %q to be included in span %v", ex, spanString)
-			}
-		}
+		val, ok := tr.span.Data["error"]
+		assert.True(t, ok)
+		assert.Equal(t, val, e)
 	})
+
 	t.Run("With retries", func(t *testing.T) {
 		tr := &retriedTransport{statusCodes: []int{502, 503, 200}}
 		l := Chain(NewDefaultRetryRoundTripper(), &JaegerRoundTripper{})
 		l.Final(tr)
 
 		req := httptest.NewRequest("GET", "/bar", nil)
-		_, err := l.RoundTrip(req)
-		if err != nil {
-			t.Fatalf("Expected err to be nil, got %#v", err)
-		}
 
-		span := opentracing.SpanFromContext(tr.ctx)
-		spanString := fmt.Sprintf("%#v", span)
-		exs := []string{`operationName:"GET /bar"`, `log.Field{key:"attempt", fieldType:2, numericVal:3`}
-		for _, ex := range exs {
-			if !strings.Contains(spanString, ex) {
-				t.Errorf("Expected %q to be included in span %v", ex, spanString)
-			}
-		}
+		_, err := l.RoundTrip(req)
+		require.NoError(t, err)
+
+		span := sentry.TransactionFromContext(tr.ctx)
+		require.NotNil(t, span)
+
+		assert.Equal(t, "GET /bar", span.Name)
+
+		val, ok := span.Data["attempt"]
+		assert.True(t, ok)
+		assert.Equal(t, 3, val)
 	})
 }
 
 type recordingTransportWithResponse struct {
-	span       opentracing.Span
+	span       *sentry.Span
 	statusCode int
 }
 
 func (t *recordingTransportWithResponse) RoundTrip(req *http.Request) (*http.Response, error) {
-	t.span = opentracing.SpanFromContext(req.Context())
+	t.span = sentry.TransactionFromContext(req.Context())
 	resp := &http.Response{StatusCode: t.statusCode}
 
 	return resp, nil
 }
 
 type recordingTransportWithError struct {
-	span opentracing.Span
+	span *sentry.Span
 	err  error
 }
 
 func (t *recordingTransportWithError) RoundTrip(req *http.Request) (*http.Response, error) {
-	t.span = opentracing.SpanFromContext(req.Context())
+	t.span = sentry.TransactionFromContext(req.Context())
 
 	return nil, t.err
 }

@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/getsentry/sentry-go"
 	"github.com/pace/bricks/grpc"
 	"github.com/pace/bricks/http/security"
 	"github.com/pace/bricks/http/transport"
@@ -17,8 +18,6 @@ import (
 	"github.com/pace/bricks/maintenance/failover"
 	"github.com/pace/bricks/maintenance/health/servicehealthcheck"
 
-	"github.com/opentracing/opentracing-go"
-	olog "github.com/opentracing/opentracing-go/log"
 	"github.com/pace/bricks/backend/couchdb"
 	"github.com/pace/bricks/backend/objstore"
 	"github.com/pace/bricks/backend/postgres"
@@ -96,8 +95,12 @@ func main() {
 	h.Handle("/pay/beta/test", simple.Router(new(TestService)))
 
 	h.HandleFunc("/test", func(w http.ResponseWriter, r *http.Request) {
-		handlerSpan, ctx := opentracing.StartSpanFromContext(r.Context(), "TestHandler")
-		defer handlerSpan.Finish()
+		ctx := r.Context()
+
+		span := sentry.StartSpan(ctx, "TestHandler")
+		defer span.Finish()
+
+		ctx = span.Context()
 
 		// do dummy database query
 		cdb := db.WithContext(ctx)
@@ -232,9 +235,13 @@ func main() {
 }
 
 func fetchSunsetandSunrise(ctx context.Context) string {
-	span, ctx := opentracing.StartSpanFromContext(ctx, "fetchSunsetandSunrise")
+	span := sentry.StartSpan(ctx, "fetchSunsetandSunrise")
 	defer span.Finish()
-	span.LogFields(olog.Float64("lat", lat), olog.Float64("lon", lon))
+
+	ctx = span.Context()
+
+	span.SetData("lat", lat)
+	span.SetData("lon", lon)
 
 	url := fmt.Sprintf("https://api.sunrise-sunset.org/json?lat=%f&lng=%f&date=today", lat, lon)
 	req, err := http.NewRequestWithContext(ctx, "GET", url, nil)

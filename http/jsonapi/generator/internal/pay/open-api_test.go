@@ -4,10 +4,8 @@ package pay
 import (
 	"context"
 	errors1 "errors"
-	"fmt"
-	sentrygo "github.com/getsentry/sentry-go"
+	sentry "github.com/getsentry/sentry-go"
 	mux "github.com/gorilla/mux"
-	opentracing "github.com/opentracing/opentracing-go"
 	runtime "github.com/pace/bricks/http/jsonapi/runtime"
 	oauth2 "github.com/pace/bricks/http/oauth2"
 	oidc "github.com/pace/bricks/http/oidc"
@@ -164,17 +162,10 @@ func GetPaymentMethodsHandler(service GetPaymentMethodsHandlerService, authBacke
 		defer errors.HandleRequest("GetPaymentMethodsHandler", w, r)
 
 		// Trace the service function handler execution
-		handlerSpan, ctx := opentracing.StartSpanFromContext(r.Context(), "GetPaymentMethodsHandler")
-		defer handlerSpan.Finish()
-		hub := sentrygo.GetHubFromContext(ctx)
-		if hub == nil {
-			hub = sentrygo.CurrentHub().Clone()
-			ctx = sentrygo.SetHubOnContext(ctx, hub)
-		}
-		transactionOptions := []sentrygo.SpanOption{sentrygo.WithOpName("GetPaymentMethodsHandler"), sentrygo.ContinueFromRequest(r), sentrygo.WithTransactionSource(sentrygo.SourceURL)}
-		sentryTransaction := sentrygo.StartTransaction(ctx, fmt.Sprintf("%s %s", r.Method, r.URL.Path), transactionOptions...)
-		defer sentryTransaction.Finish()
-		ctx = sentryTransaction.Context()
+		span := sentry.StartSpan(r.Context(), "http.server", sentry.WithDescription("GetPaymentMethodsHandler"))
+		defer span.Finish()
+
+		ctx := span.Context()
 		r = r.WithContext(ctx)
 
 		// Setup context, response writer and request type
@@ -243,17 +234,10 @@ func CreatePaymentMethodSEPAHandler(service CreatePaymentMethodSEPAHandlerServic
 		r = r.WithContext(ctx)
 
 		// Trace the service function handler execution
-		handlerSpan, ctx := opentracing.StartSpanFromContext(r.Context(), "CreatePaymentMethodSEPAHandler")
-		defer handlerSpan.Finish()
-		hub := sentrygo.GetHubFromContext(ctx)
-		if hub == nil {
-			hub = sentrygo.CurrentHub().Clone()
-			ctx = sentrygo.SetHubOnContext(ctx, hub)
-		}
-		transactionOptions := []sentrygo.SpanOption{sentrygo.WithOpName("CreatePaymentMethodSEPAHandler"), sentrygo.ContinueFromRequest(r), sentrygo.WithTransactionSource(sentrygo.SourceURL)}
-		sentryTransaction := sentrygo.StartTransaction(ctx, fmt.Sprintf("%s %s", r.Method, r.URL.Path), transactionOptions...)
-		defer sentryTransaction.Finish()
-		ctx = sentryTransaction.Context()
+		span := sentry.StartSpan(r.Context(), "http.server", sentry.WithDescription("CreatePaymentMethodSEPAHandler"))
+		defer span.Finish()
+
+		ctx = span.Context()
 		r = r.WithContext(ctx)
 
 		// Setup context, response writer and request type
@@ -322,17 +306,10 @@ func DeletePaymentMethodHandler(service DeletePaymentMethodHandlerService, authB
 		r = r.WithContext(ctx)
 
 		// Trace the service function handler execution
-		handlerSpan, ctx := opentracing.StartSpanFromContext(r.Context(), "DeletePaymentMethodHandler")
-		defer handlerSpan.Finish()
-		hub := sentrygo.GetHubFromContext(ctx)
-		if hub == nil {
-			hub = sentrygo.CurrentHub().Clone()
-			ctx = sentrygo.SetHubOnContext(ctx, hub)
-		}
-		transactionOptions := []sentrygo.SpanOption{sentrygo.WithOpName("DeletePaymentMethodHandler"), sentrygo.ContinueFromRequest(r), sentrygo.WithTransactionSource(sentrygo.SourceURL)}
-		sentryTransaction := sentrygo.StartTransaction(ctx, fmt.Sprintf("%s %s", r.Method, r.URL.Path), transactionOptions...)
-		defer sentryTransaction.Finish()
-		ctx = sentryTransaction.Context()
+		span := sentry.StartSpan(r.Context(), "http.server", sentry.WithDescription("DeletePaymentMethodHandler"))
+		defer span.Finish()
+
+		ctx = span.Context()
 		r = r.WithContext(ctx)
 
 		// Setup context, response writer and request type
@@ -387,17 +364,10 @@ func AuthorizePaymentMethodHandler(service AuthorizePaymentMethodHandlerService,
 		defer errors.HandleRequest("AuthorizePaymentMethodHandler", w, r)
 
 		// Trace the service function handler execution
-		handlerSpan, ctx := opentracing.StartSpanFromContext(r.Context(), "AuthorizePaymentMethodHandler")
-		defer handlerSpan.Finish()
-		hub := sentrygo.GetHubFromContext(ctx)
-		if hub == nil {
-			hub = sentrygo.CurrentHub().Clone()
-			ctx = sentrygo.SetHubOnContext(ctx, hub)
-		}
-		transactionOptions := []sentrygo.SpanOption{sentrygo.WithOpName("AuthorizePaymentMethodHandler"), sentrygo.ContinueFromRequest(r), sentrygo.WithTransactionSource(sentrygo.SourceURL)}
-		sentryTransaction := sentrygo.StartTransaction(ctx, fmt.Sprintf("%s %s", r.Method, r.URL.Path), transactionOptions...)
-		defer sentryTransaction.Finish()
-		ctx = sentryTransaction.Context()
+		span := sentry.StartSpan(r.Context(), "http.server", sentry.WithDescription("AuthorizePaymentMethodHandler"))
+		defer span.Finish()
+
+		ctx := span.Context()
 		r = r.WithContext(ctx)
 
 		// Setup context, response writer and request type
@@ -455,17 +425,10 @@ func DeletePaymentTokenHandler(service DeletePaymentTokenHandlerService, authBac
 		defer errors.HandleRequest("DeletePaymentTokenHandler", w, r)
 
 		// Trace the service function handler execution
-		handlerSpan, ctx := opentracing.StartSpanFromContext(r.Context(), "DeletePaymentTokenHandler")
-		defer handlerSpan.Finish()
-		hub := sentrygo.GetHubFromContext(ctx)
-		if hub == nil {
-			hub = sentrygo.CurrentHub().Clone()
-			ctx = sentrygo.SetHubOnContext(ctx, hub)
-		}
-		transactionOptions := []sentrygo.SpanOption{sentrygo.WithOpName("DeletePaymentTokenHandler"), sentrygo.ContinueFromRequest(r), sentrygo.WithTransactionSource(sentrygo.SourceURL)}
-		sentryTransaction := sentrygo.StartTransaction(ctx, fmt.Sprintf("%s %s", r.Method, r.URL.Path), transactionOptions...)
-		defer sentryTransaction.Finish()
-		ctx = sentryTransaction.Context()
+		span := sentry.StartSpan(r.Context(), "http.server", sentry.WithDescription("DeletePaymentTokenHandler"))
+		defer span.Finish()
+
+		ctx := span.Context()
 		r = r.WithContext(ctx)
 
 		// Setup context, response writer and request type
@@ -525,17 +488,10 @@ func GetPaymentMethodsIncludingCreditCheckHandler(service GetPaymentMethodsInclu
 		defer errors.HandleRequest("GetPaymentMethodsIncludingCreditCheckHandler", w, r)
 
 		// Trace the service function handler execution
-		handlerSpan, ctx := opentracing.StartSpanFromContext(r.Context(), "GetPaymentMethodsIncludingCreditCheckHandler")
-		defer handlerSpan.Finish()
-		hub := sentrygo.GetHubFromContext(ctx)
-		if hub == nil {
-			hub = sentrygo.CurrentHub().Clone()
-			ctx = sentrygo.SetHubOnContext(ctx, hub)
-		}
-		transactionOptions := []sentrygo.SpanOption{sentrygo.WithOpName("GetPaymentMethodsIncludingCreditCheckHandler"), sentrygo.ContinueFromRequest(r), sentrygo.WithTransactionSource(sentrygo.SourceURL)}
-		sentryTransaction := sentrygo.StartTransaction(ctx, fmt.Sprintf("%s %s", r.Method, r.URL.Path), transactionOptions...)
-		defer sentryTransaction.Finish()
-		ctx = sentryTransaction.Context()
+		span := sentry.StartSpan(r.Context(), "http.server", sentry.WithDescription("GetPaymentMethodsIncludingCreditCheckHandler"))
+		defer span.Finish()
+
+		ctx := span.Context()
 		r = r.WithContext(ctx)
 
 		// Setup context, response writer and request type
@@ -588,17 +544,10 @@ func GetPaymentMethodsIncludingPaymentTokenHandler(service GetPaymentMethodsIncl
 		defer errors.HandleRequest("GetPaymentMethodsIncludingPaymentTokenHandler", w, r)
 
 		// Trace the service function handler execution
-		handlerSpan, ctx := opentracing.StartSpanFromContext(r.Context(), "GetPaymentMethodsIncludingPaymentTokenHandler")
-		defer handlerSpan.Finish()
-		hub := sentrygo.GetHubFromContext(ctx)
-		if hub == nil {
-			hub = sentrygo.CurrentHub().Clone()
-			ctx = sentrygo.SetHubOnContext(ctx, hub)
-		}
-		transactionOptions := []sentrygo.SpanOption{sentrygo.WithOpName("GetPaymentMethodsIncludingPaymentTokenHandler"), sentrygo.ContinueFromRequest(r), sentrygo.WithTransactionSource(sentrygo.SourceURL)}
-		sentryTransaction := sentrygo.StartTransaction(ctx, fmt.Sprintf("%s %s", r.Method, r.URL.Path), transactionOptions...)
-		defer sentryTransaction.Finish()
-		ctx = sentryTransaction.Context()
+		span := sentry.StartSpan(r.Context(), "http.server", sentry.WithDescription("GetPaymentMethodsIncludingPaymentTokenHandler"))
+		defer span.Finish()
+
+		ctx := span.Context()
 		r = r.WithContext(ctx)
 
 		// Setup context, response writer and request type
@@ -651,17 +600,10 @@ func ProcessPaymentHandler(service ProcessPaymentHandlerService, authBackend Aut
 		defer errors.HandleRequest("ProcessPaymentHandler", w, r)
 
 		// Trace the service function handler execution
-		handlerSpan, ctx := opentracing.StartSpanFromContext(r.Context(), "ProcessPaymentHandler")
-		defer handlerSpan.Finish()
-		hub := sentrygo.GetHubFromContext(ctx)
-		if hub == nil {
-			hub = sentrygo.CurrentHub().Clone()
-			ctx = sentrygo.SetHubOnContext(ctx, hub)
-		}
-		transactionOptions := []sentrygo.SpanOption{sentrygo.WithOpName("ProcessPaymentHandler"), sentrygo.ContinueFromRequest(r), sentrygo.WithTransactionSource(sentrygo.SourceURL)}
-		sentryTransaction := sentrygo.StartTransaction(ctx, fmt.Sprintf("%s %s", r.Method, r.URL.Path), transactionOptions...)
-		defer sentryTransaction.Finish()
-		ctx = sentryTransaction.Context()
+		span := sentry.StartSpan(r.Context(), "http.server", sentry.WithDescription("ProcessPaymentHandler"))
+		defer span.Finish()
+
+		ctx := span.Context()
 		r = r.WithContext(ctx)
 
 		// Setup context, response writer and request type

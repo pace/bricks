@@ -14,8 +14,8 @@ import (
 	"sync"
 	"time"
 
-	"github.com/opentracing/opentracing-go"
-	olog "github.com/opentracing/opentracing-go/log"
+	"github.com/getsentry/sentry-go"
+
 	"github.com/rs/zerolog"
 
 	"github.com/caarlos0/env/v10"
@@ -238,7 +238,7 @@ func CustomConnectionPool(opts *pg.Options) *pg.DB {
 		log.Logger().Warn().Msg("Connection pool has logging queries disabled completely")
 	}
 
-	db.OnQueryProcessed(openTracingAdapter)
+	db.OnQueryProcessed(tracingAdapter)
 	db.OnQueryProcessed(func(event *pg.QueryProcessedEvent) {
 		metricsAdapter(event, opts)
 	})
@@ -329,7 +329,7 @@ func getQueryType(s string) string {
 	return strings.ToUpper(s)
 }
 
-func openTracingAdapter(event *pg.QueryProcessedEvent) {
+func tracingAdapter(event *pg.QueryProcessedEvent) {
 	// start span with general info
 	q, qe := event.UnformattedQuery()
 	if qe != nil {
@@ -337,30 +337,26 @@ func openTracingAdapter(event *pg.QueryProcessedEvent) {
 		q = qe.Error()
 	}
 
-	span, _ := opentracing.StartSpanFromContext(event.DB.Context(), "sql: "+getQueryType(q),
-		opentracing.StartTime(event.StartTime))
+	span := sentry.StartSpan(event.DB.Context(), "db.sql.query", sentry.WithDescription(getQueryType(q)))
+	defer span.Finish()
+
+	span.StartTime = event.StartTime
 
 	span.SetTag("db.system", "postgres")
 
-	fields := []olog.Field{
-		olog.String("file", event.File),
-		olog.Int("line", event.Line),
-		olog.String("func", event.Func),
-		olog.Int("attempt", event.Attempt),
-		olog.String("query", q),
-	}
+	span.SetData("file", event.File)
+	span.SetData("line", event.Line)
+	span.SetData("func", event.Func)
+	span.SetData("attempt", event.Attempt)
+	span.SetData("query", q)
 
 	// add error or result set info
 	if event.Error != nil {
-		fields = append(fields, olog.Error(event.Error))
+		span.SetData("error", event.Error)
 	} else {
-		fields = append(fields,
-			olog.Int("affected", event.Result.RowsAffected()),
-			olog.Int("rows", event.Result.RowsReturned()))
+		span.SetData("affected", event.Result.RowsAffected())
+		span.SetData("rows", event.Result.RowsReturned())
 	}
-
-	span.LogFields(fields...)
-	span.Finish()
 }
 
 func metricsAdapter(event *pg.QueryProcessedEvent, opts *pg.Options) {

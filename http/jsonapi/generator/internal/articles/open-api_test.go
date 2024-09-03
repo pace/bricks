@@ -4,10 +4,8 @@ package articles
 import (
 	"context"
 	errors1 "errors"
-	"fmt"
-	sentrygo "github.com/getsentry/sentry-go"
+	sentry "github.com/getsentry/sentry-go"
 	mux "github.com/gorilla/mux"
-	opentracing "github.com/opentracing/opentracing-go"
 	runtime "github.com/pace/bricks/http/jsonapi/runtime"
 	errors "github.com/pace/bricks/maintenance/errors"
 	metrics "github.com/pace/bricks/maintenance/metric/jsonapi"
@@ -67,17 +65,10 @@ func GetArticleCommentsHandler(service GetArticleCommentsHandlerService) http.Ha
 		defer errors.HandleRequest("GetArticleCommentsHandler", w, r)
 
 		// Trace the service function handler execution
-		handlerSpan, ctx := opentracing.StartSpanFromContext(r.Context(), "GetArticleCommentsHandler")
-		defer handlerSpan.Finish()
-		hub := sentrygo.GetHubFromContext(ctx)
-		if hub == nil {
-			hub = sentrygo.CurrentHub().Clone()
-			ctx = sentrygo.SetHubOnContext(ctx, hub)
-		}
-		transactionOptions := []sentrygo.SpanOption{sentrygo.WithOpName("GetArticleCommentsHandler"), sentrygo.ContinueFromRequest(r), sentrygo.WithTransactionSource(sentrygo.SourceURL)}
-		sentryTransaction := sentrygo.StartTransaction(ctx, fmt.Sprintf("%s %s", r.Method, r.URL.Path), transactionOptions...)
-		defer sentryTransaction.Finish()
-		ctx = sentryTransaction.Context()
+		span := sentry.StartSpan(r.Context(), "http.server", sentry.WithDescription("GetArticleCommentsHandler"))
+		defer span.Finish()
+
+		ctx := span.Context()
 		r = r.WithContext(ctx)
 
 		// Setup context, response writer and request type
@@ -132,17 +123,10 @@ func UpdateArticleCommentsHandler(service UpdateArticleCommentsHandlerService) h
 		defer errors.HandleRequest("UpdateArticleCommentsHandler", w, r)
 
 		// Trace the service function handler execution
-		handlerSpan, ctx := opentracing.StartSpanFromContext(r.Context(), "UpdateArticleCommentsHandler")
-		defer handlerSpan.Finish()
-		hub := sentrygo.GetHubFromContext(ctx)
-		if hub == nil {
-			hub = sentrygo.CurrentHub().Clone()
-			ctx = sentrygo.SetHubOnContext(ctx, hub)
-		}
-		transactionOptions := []sentrygo.SpanOption{sentrygo.WithOpName("UpdateArticleCommentsHandler"), sentrygo.ContinueFromRequest(r), sentrygo.WithTransactionSource(sentrygo.SourceURL)}
-		sentryTransaction := sentrygo.StartTransaction(ctx, fmt.Sprintf("%s %s", r.Method, r.URL.Path), transactionOptions...)
-		defer sentryTransaction.Finish()
-		ctx = sentryTransaction.Context()
+		span := sentry.StartSpan(r.Context(), "http.server", sentry.WithDescription("UpdateArticleCommentsHandler"))
+		defer span.Finish()
+
+		ctx := span.Context()
 		r = r.WithContext(ctx)
 
 		// Setup context, response writer and request type
@@ -205,17 +189,10 @@ func UpdateArticleInlineTypeHandler(service UpdateArticleInlineTypeHandlerServic
 		defer errors.HandleRequest("UpdateArticleInlineTypeHandler", w, r)
 
 		// Trace the service function handler execution
-		handlerSpan, ctx := opentracing.StartSpanFromContext(r.Context(), "UpdateArticleInlineTypeHandler")
-		defer handlerSpan.Finish()
-		hub := sentrygo.GetHubFromContext(ctx)
-		if hub == nil {
-			hub = sentrygo.CurrentHub().Clone()
-			ctx = sentrygo.SetHubOnContext(ctx, hub)
-		}
-		transactionOptions := []sentrygo.SpanOption{sentrygo.WithOpName("UpdateArticleInlineTypeHandler"), sentrygo.ContinueFromRequest(r), sentrygo.WithTransactionSource(sentrygo.SourceURL)}
-		sentryTransaction := sentrygo.StartTransaction(ctx, fmt.Sprintf("%s %s", r.Method, r.URL.Path), transactionOptions...)
-		defer sentryTransaction.Finish()
-		ctx = sentryTransaction.Context()
+		span := sentry.StartSpan(r.Context(), "http.server", sentry.WithDescription("UpdateArticleInlineTypeHandler"))
+		defer span.Finish()
+
+		ctx := span.Context()
 		r = r.WithContext(ctx)
 
 		// Setup context, response writer and request type
@@ -273,17 +250,10 @@ func UpdateArticleInlineRefHandler(service UpdateArticleInlineRefHandlerService)
 		defer errors.HandleRequest("UpdateArticleInlineRefHandler", w, r)
 
 		// Trace the service function handler execution
-		handlerSpan, ctx := opentracing.StartSpanFromContext(r.Context(), "UpdateArticleInlineRefHandler")
-		defer handlerSpan.Finish()
-		hub := sentrygo.GetHubFromContext(ctx)
-		if hub == nil {
-			hub = sentrygo.CurrentHub().Clone()
-			ctx = sentrygo.SetHubOnContext(ctx, hub)
-		}
-		transactionOptions := []sentrygo.SpanOption{sentrygo.WithOpName("UpdateArticleInlineRefHandler"), sentrygo.ContinueFromRequest(r), sentrygo.WithTransactionSource(sentrygo.SourceURL)}
-		sentryTransaction := sentrygo.StartTransaction(ctx, fmt.Sprintf("%s %s", r.Method, r.URL.Path), transactionOptions...)
-		defer sentryTransaction.Finish()
-		ctx = sentryTransaction.Context()
+		span := sentry.StartSpan(r.Context(), "http.server", sentry.WithDescription("UpdateArticleInlineRefHandler"))
+		defer span.Finish()
+
+		ctx := span.Context()
 		r = r.WithContext(ctx)
 
 		// Setup context, response writer and request type

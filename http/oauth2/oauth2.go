@@ -10,8 +10,7 @@ import (
 	"errors"
 	"net/http"
 
-	"github.com/opentracing/opentracing-go"
-	olog "github.com/opentracing/opentracing-go/log"
+	"github.com/getsentry/sentry-go"
 
 	"github.com/pace/bricks/http/security"
 	"github.com/pace/bricks/maintenance/log"
@@ -64,14 +63,18 @@ func (t *token) GetValue() string {
 // with more details and returns nil and false if any error occurs during the introspection
 func introspectRequest(r *http.Request, w http.ResponseWriter, tokenIntro TokenIntrospecter) (context.Context, bool) {
 	// Setup tracing
-	span, ctx := opentracing.StartSpanFromContext(r.Context(), "Oauth2")
+	span := sentry.StartSpan(r.Context(), "function", sentry.WithDescription("introspectRequest"))
 	defer span.Finish()
+
+	ctx := span.Context()
+	r = r.WithContext(ctx)
 
 	tok := security.GetBearerTokenFromHeader(r.Header.Get(oAuth2Header))
 	if tok == "" {
 		http.Error(w, "Unauthorized", http.StatusUnauthorized)
 		return nil, false
 	}
+
 	s, err := tokenIntro.IntrospectToken(ctx, tok)
 	if err != nil {
 		switch {
@@ -88,13 +91,18 @@ func introspectRequest(r *http.Request, w http.ResponseWriter, tokenIntro TokenI
 		log.Req(r).Info().Msg(err.Error())
 		return nil, false
 	}
+
 	t := fromIntrospectResponse(s, tok)
 	ctx = security.ContextWithToken(ctx, &t)
+
 	log.Req(r).Info().
 		Str("client_id", t.clientID).
 		Str("user_id", t.userID).
 		Msg("Oauth2")
-	span.LogFields(olog.String("client_id", t.clientID), olog.String("user_id", t.userID))
+
+	span.SetData("client_id", t.clientID)
+	span.SetData("user_id", t.userID)
+
 	return ctx, true
 }
 

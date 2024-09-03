@@ -6,11 +6,7 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/pace/bricks/maintenance/log"
-	"github.com/pace/bricks/maintenance/tracing/wire"
-
-	"github.com/opentracing/opentracing-go"
-	olog "github.com/opentracing/opentracing-go/log"
+	"github.com/getsentry/sentry-go"
 )
 
 // JaegerRoundTripper implements a chainable round tripper for tracing
@@ -30,27 +26,40 @@ func (l *JaegerRoundTripper) SetTransport(rt http.RoundTripper) {
 
 // RoundTrip executes a HTTP request with distributed tracing
 func (l *JaegerRoundTripper) RoundTrip(req *http.Request) (*http.Response, error) {
-	operationName := fmt.Sprintf("%s %s", req.Method, req.URL.Path)
-	span, ctx := opentracing.StartSpanFromContext(req.Context(), operationName)
-	defer span.Finish()
+	ctx := req.Context()
 
-	err := wire.ToWire(span.Context(), req)
-	if err != nil {
-		log.Ctx(ctx).Info().Err(err).Msg("unable to serialize tracing context")
+	hub := sentry.GetHubFromContext(ctx)
+	if hub == nil {
+		// Check the concurrency guide for more details: https://docs.sentry.io/platforms/go/concurrency/
+		hub = sentry.CurrentHub().Clone()
+		ctx = sentry.SetHubOnContext(ctx, hub)
 	}
 
-	resp, err := l.Transport().RoundTrip(req.WithContext(ctx))
+	options := []sentry.SpanOption{
+		// Set the OP based on values from https://develop.sentry.dev/sdk/performance/span-operations/
+		sentry.WithOpName("http.client"),
+		sentry.ContinueFromRequest(req),
+		sentry.WithTransactionSource(sentry.SourceURL),
+	}
+
+	span := sentry.StartTransaction(ctx, fmt.Sprintf("%s %s", req.Method, req.URL.Path), options...)
+	defer span.Finish()
+
+	ctx = span.Context()
+	req = req.WithContext(ctx)
+
+	resp, err := l.Transport().RoundTrip(req)
 
 	attempt := attemptFromCtx(ctx)
 	if attempt > 0 {
-		span.LogFields(olog.Int("attempt", int(attempt)))
+		span.SetData("attempt", int(attempt))
 	}
 	if err != nil {
-		span.LogFields(olog.Error(err))
+		span.SetData("error", err)
 		return nil, err
 	}
 
-	span.LogFields(olog.Int("code", resp.StatusCode))
+	span.SetData("code", resp.StatusCode)
 
 	return resp, nil
 }

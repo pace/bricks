@@ -8,12 +8,12 @@ import (
 	"time"
 
 	"github.com/caarlos0/env/v10"
-	"github.com/opentracing/opentracing-go"
-	olog "github.com/opentracing/opentracing-go/log"
-	"github.com/pace/bricks/maintenance/health/servicehealthcheck"
-	"github.com/pace/bricks/maintenance/log"
+	"github.com/getsentry/sentry-go"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/redis/go-redis/v9"
+
+	"github.com/pace/bricks/maintenance/health/servicehealthcheck"
+	"github.com/pace/bricks/maintenance/log"
 )
 
 type config struct {
@@ -157,7 +157,7 @@ type logtracerKey struct{}
 
 type logtracerValues struct {
 	startedAt time.Time
-	span      opentracing.Span
+	span      *sentry.Span
 }
 
 func (lt *logtracer) DialHook(next redis.DialHook) redis.DialHook {
@@ -168,11 +168,12 @@ func (lt *logtracer) ProcessHook(next redis.ProcessHook) redis.ProcessHook {
 	return func(ctx context.Context, cmd redis.Cmder) error {
 		startedAt := time.Now()
 
-		span, _ := opentracing.StartSpanFromContext(ctx, "redis: "+cmd.Name())
-		span.LogFields(olog.String("cmd", cmd.Name()))
+		span := sentry.StartSpan(ctx, "db.redis", sentry.WithDescription(cmd.Name()))
 		defer span.Finish()
 
 		span.SetTag("db.system", "redis")
+
+		span.SetData("cmd", cmd.Name())
 
 		paceRedisCmdTotal.With(prometheus.Labels{
 			"method": cmd.Name(),
@@ -191,7 +192,7 @@ func (lt *logtracer) ProcessHook(next redis.ProcessHook) redis.ProcessHook {
 		// add error
 		cmdErr := cmd.Err()
 		if cmdErr != nil {
-			vals.span.LogFields(olog.Error(cmdErr))
+			vals.span.SetData("error", cmdErr)
 			le = le.Err(cmdErr)
 			paceRedisCmdFailed.With(prometheus.Labels{
 				"method": cmd.Name(),

@@ -24,7 +24,6 @@ const (
 	pkgJSONAPIRuntime = "github.com/pace/bricks/http/jsonapi/runtime"
 	pkgJSONAPIMetrics = "github.com/pace/bricks/maintenance/metric/jsonapi"
 	pkgMaintErrors    = "github.com/pace/bricks/maintenance/errors"
-	pkgOpentracing    = "github.com/opentracing/opentracing-go"
 	pkgSentry         = "github.com/getsentry/sentry-go"
 	pkgOAuth2         = "github.com/pace/bricks/http/oauth2"
 	pkgOIDC           = "github.com/pace/bricks/http/oidc"
@@ -599,36 +598,18 @@ func (g *Generator) buildHandler(method string, op *openapi3.Operation, pattern 
 				g.Add(auth)
 				// set tracing context
 				g.Line().Comment("Trace the service function handler execution")
-				g.List(jen.Id("handlerSpan"), jen.Id("ctx")).Op(":=").Qual(pkgOpentracing, "StartSpanFromContext").Call(
-					jen.Id("r").Dot("Context").Call(), jen.Lit(handler))
-				g.Defer().Id("handlerSpan").Dot("Finish").Call()
+				g.Id("span").Op(":=").Qual(pkgSentry, "StartSpan").Call(
+					jen.Id("r").Dot("Context").Call(), jen.Lit("http.server"), jen.Qual(pkgSentry, "WithDescription").Call(jen.Lit(handler)))
+				g.Defer().Id("span").Dot("Finish").Call()
+				g.Line().Empty()
 
-				g.Id("hub").Op(":=").Qual(pkgSentry, "GetHubFromContext").Call(
-					jen.Id("ctx"))
-				g.If().Id("hub").Op("==").Nil().Block(
-					jen.Id("hub").Op("=").Qual(pkgSentry, "CurrentHub").Call().Dot("Clone").Call(),
-					jen.Id("ctx").Op("=").Qual(pkgSentry, "SetHubOnContext").Call(jen.Id("ctx"), jen.Id("hub")),
-				)
+				operator := ":="
 
-				g.Id("transactionOptions").Op(":=").Index().Qual(pkgSentry, "SpanOption").Values(
-					jen.Qual(pkgSentry, "WithOpName").Call(jen.Lit(handler)),
-					jen.Qual(pkgSentry, "ContinueFromRequest").Call(jen.Id("r")),
-					jen.Qual(pkgSentry, "WithTransactionSource").Call(jen.Qual(pkgSentry, "SourceURL")),
-				)
+				if auth != nil {
+					operator = "="
+				}
 
-				g.Id("sentryTransaction").Op(":=").Qual(pkgSentry, "StartTransaction").Call(
-					jen.Id("ctx"),
-					jen.Qual("fmt", "Sprintf").Call(
-						jen.Lit("%s %s"),
-						jen.Id("r").Dot("Method"),
-						jen.Id("r").Dot("URL").Dot("Path"),
-					),
-					jen.Id("transactionOptions").Op("..."),
-				)
-
-				g.Defer().Id("sentryTransaction").Dot("Finish").Call()
-
-				g.Id("ctx").Op("=").Id("sentryTransaction").Dot("Context").Call()
+				g.Id("ctx").Op(operator).Id("span").Dot("Context").Call()
 
 				g.Id("r").Op("=").Id("r.WithContext").Call(jen.Id("ctx"))
 

@@ -3,12 +3,10 @@
 package tracing
 
 import (
-	"context"
 	"net/http"
 	"net/http/httptest"
 	"testing"
 
-	"github.com/opentracing/opentracing-go"
 	"github.com/pace/bricks/maintenance/util"
 	"github.com/stretchr/testify/require"
 
@@ -41,19 +39,4 @@ func TestHandler(t *testing.T) {
 
 	// This test does not tests the tracing
 	require.Equal(t, 200, rec.Result().StatusCode)
-}
-
-func TestRequest(t *testing.T) {
-	r := Request(httptest.NewRequest("GET", "/test", nil))
-	// check that header is empty
-	if len(r.Header["Uber-Trace-Id"]) != 0 {
-		t.Errorf("expected no tracing id but got one")
-	}
-
-	r = httptest.NewRequest("GET", "/test", nil)
-	_, ctx := opentracing.StartSpanFromContext(context.Background(), "foo")
-	r = Request(r.WithContext(ctx))
-	if len(r.Header["Uber-Trace-Id"]) != 1 {
-		t.Errorf("expected one tracing id but got none (JAEGER_SERVICE_NAME not in env?)")
-	}
 }

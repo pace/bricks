@@ -12,7 +12,7 @@ import (
 	"sync/atomic"
 	"syscall"
 
-	"github.com/opentracing/opentracing-go"
+	"github.com/getsentry/sentry-go"
 
 	"github.com/pace/bricks/maintenance/errors"
 	"github.com/pace/bricks/maintenance/log"
@@ -93,8 +93,12 @@ func Run(parentCtx context.Context, routine func(context.Context)) (cancel conte
 
 	// add routine number to context and logger
 	num := atomic.AddInt64(&ctr, 1)
-	span, ctx := opentracing.StartSpanFromContext(ctx, fmt.Sprintf("Routine %d", num))
+
+	span := sentry.StartTransaction(ctx, fmt.Sprintf("Routine %d", num), sentry.WithOpName("function"))
 	defer span.Finish()
+
+	ctx = span.Context()
+
 	ctx = context.WithValue(ctx, ctxNumKey{}, num)
 	logger := log.Ctx(ctx).With().Int64("routine", num).Logger()
 	ctx = logger.WithContext(ctx)
