@@ -6,12 +6,12 @@ package vulncheck
 
 import (
 	"go/token"
-	"sort"
+	"os"
+	"path/filepath"
+	"strings"
 
 	"golang.org/x/tools/go/packages"
-	"golang.org/x/vuln/internal"
 	"golang.org/x/vuln/internal/govulncheck"
-	"golang.org/x/vuln/internal/osv"
 )
 
 // emitOSVs emits all OSV vuln entries in modVulns to handler.
@@ -33,7 +33,7 @@ func emitModuleFindings(handler govulncheck.Handler, affVulns affectingVulns) er
 			if err := handler.Finding(&govulncheck.Finding{
 				OSV:          osv.ID,
 				FixedVersion: FixedVersion(modPath(vuln.Module), modVersion(vuln.Module), osv.Affected),
-				Trace:        []*govulncheck.Frame{frameFromModule(vuln.Module, osv.Affected)},
+				Trace:        []*govulncheck.Frame{frameFromModule(vuln.Module)},
 			}); err != nil {
 				return err
 			}
@@ -63,10 +63,6 @@ func emitCallFindings(handler govulncheck.Handler, callstacks map[*Vuln]CallStac
 	for v := range callstacks {
 		vulns = append(vulns, v)
 	}
-
-	sort.SliceStable(vulns, func(i, j int) bool {
-		return vulns[i].Symbol < vulns[j].Symbol
-	})
 
 	for _, vuln := range vulns {
 		stack := callstacks[vuln]
@@ -104,25 +100,73 @@ func traceFromEntries(vcs CallStack) []*govulncheck.Frame {
 
 func posFromStackEntry(e StackEntry, sink bool) *govulncheck.Position {
 	var p *token.Position
+	var f *FuncNode
 	if sink && e.Function != nil && e.Function.Pos != nil {
 		// For sinks, i.e., vulns we take the position
 		// of the symbol.
 		p = e.Function.Pos
+		f = e.Function
 	} else if e.Call != nil && e.Call.Pos != nil {
 		// Otherwise, we take the position of
 		// the call statement.
 		p = e.Call.Pos
+		f = e.Call.Parent
 	}
 
 	if p == nil {
 		return nil
 	}
 	return &govulncheck.Position{
-		Filename: p.Filename,
+		Filename: pathRelativeToMod(p.Filename, f),
 		Offset:   p.Offset,
 		Line:     p.Line,
 		Column:   p.Column,
 	}
+}
+
+// pathRelativeToMod computes a version of path
+// relative to the module of f. If it does not
+// have all the necessary information, returns
+// an empty string.
+//
+// The returned paths always use slash as separator
+// so they can work across different platforms.
+func pathRelativeToMod(path string, f *FuncNode) string {
+	if path == "" || f == nil || f.Package == nil { // sanity
+		return ""
+	}
+
+	mod := f.Package.Module
+	if mod.Replace != nil {
+		mod = mod.Replace // for replace directive
+	}
+
+	modDir := modDirWithVendor(mod.Dir, path, mod.Path)
+	p, err := filepath.Rel(modDir, path)
+	if err != nil {
+		return ""
+	}
+	// make sure paths are portable.
+	return filepath.ToSlash(p)
+}
+
+// modDirWithVendor returns modDir if modDir is not empty.
+// Otherwise, the module might be located in the vendor
+// directory. This function attempts to reconstruct the
+// vendored module directory from path and module. It
+// returns an empty string if reconstruction fails.
+func modDirWithVendor(modDir, path, module string) string {
+	if modDir != "" {
+		return modDir
+	}
+
+	sep := string(os.PathSeparator)
+	vendor := sep + "vendor" + sep
+	vendorIndex := strings.Index(path, vendor)
+	if vendorIndex == -1 {
+		return ""
+	}
+	return filepath.Join(path[:vendorIndex], "vendor", filepath.FromSlash(module))
 }
 
 func frameFromPackage(pkg *packages.Package) *govulncheck.Frame {
@@ -139,19 +183,10 @@ func frameFromPackage(pkg *packages.Package) *govulncheck.Frame {
 	return fr
 }
 
-func frameFromModule(mod *packages.Module, affected []osv.Affected) *govulncheck.Frame {
+func frameFromModule(mod *packages.Module) *govulncheck.Frame {
 	fr := &govulncheck.Frame{
 		Module:  mod.Path,
 		Version: mod.Version,
-	}
-
-	if mod.Path == internal.GoStdModulePath {
-		for _, a := range affected {
-			if a.Module.Path != mod.Path {
-				continue
-			}
-			fr.Package = a.EcosystemSpecific.Packages[0].Path
-		}
 	}
 
 	if mod.Replace != nil {

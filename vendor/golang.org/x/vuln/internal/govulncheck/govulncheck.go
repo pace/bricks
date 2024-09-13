@@ -37,10 +37,15 @@ const (
 // Message is an entry in the output stream. It will always have exactly one
 // field filled in.
 type Message struct {
-	Config   *Config    `json:"config,omitempty"`
-	Progress *Progress  `json:"progress,omitempty"`
-	OSV      *osv.Entry `json:"osv,omitempty"`
-	Finding  *Finding   `json:"finding,omitempty"`
+	Config   *Config   `json:"config,omitempty"`
+	Progress *Progress `json:"progress,omitempty"`
+	// OSV is emitted for every vulnerability in the current database
+	// that applies to user modules regardless of their version. If a
+	// module is being used at a vulnerable version, the corresponding
+	// OSV will be referenced in Findings depending on the type of usage
+	// and the desired scan level.
+	OSV     *osv.Entry `json:"osv,omitempty"`
+	Finding *Finding   `json:"finding,omitempty"`
 }
 
 // Config must occur as the first message of a stream and informs the client
@@ -73,6 +78,11 @@ type Config struct {
 	// ScanLevel instructs govulncheck to analyze at a specific level of detail.
 	// Valid values include module, package and symbol.
 	ScanLevel ScanLevel `json:"scan_level,omitempty"`
+
+	// ScanMode instructs govulncheck how to interpret the input and
+	// what to do with it. Valid values are source, binary, query,
+	// and extract.
+	ScanMode ScanMode `json:"scan_mode,omitempty"`
 }
 
 // Progress messages are informational only, intended to allow users to monitor
@@ -156,6 +166,10 @@ type Frame struct {
 	// Position describes an arbitrary source position
 	// including the file, line, and column location.
 	// A Position is valid if the line number is > 0.
+	//
+	// The filenames are relative to the directory of
+	// the enclosing module and always use "/" for
+	// portability.
 	Position *Position `json:"position,omitempty"`
 }
 
@@ -181,9 +195,23 @@ const (
 )
 
 // WantSymbols can be used to check whether the scan level is one that is able
-// to generate symbols called findings.
+// to generate symbol-level findings.
 func (l ScanLevel) WantSymbols() bool { return l == ScanLevelSymbol }
 
 // WantPackages can be used to check whether the scan level is one that is able
-// to generate package
+// to generate package-level findings.
 func (l ScanLevel) WantPackages() bool { return l == ScanLevelPackage || l == ScanLevelSymbol }
+
+// ScanMode represents the mode in which a scan occurred. This can
+// be necessary to correctly to interpret findings. For instance,
+// a binary can be checked for vulnerabilities or the user just wants
+// to extract minimal data necessary for the vulnerability check.
+type ScanMode string
+
+const (
+	ScanModeSource  = "source"
+	ScanModeBinary  = "binary"
+	ScanModeConvert = "convert"
+	ScanModeQuery   = "query"
+	ScanModeExtract = "extract" // currently, only binary extraction is supported
+)
