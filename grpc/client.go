@@ -20,15 +20,17 @@ import (
 	grpc_opentracing "github.com/grpc-ecosystem/go-grpc-middleware/tracing/opentracing"
 )
 
-func DialContext(ctx context.Context, addr string) (*grpc.ClientConn, error) {
-	return dialCtx(ctx, addr)
+// Deprecated: Use NewClient instead.
+func DialContext(_ context.Context, addr string) (*grpc.ClientConn, error) {
+	return NewClient(addr)
 }
 
+// Deprecated: Use NewClient instead.
 func Dial(addr string) (*grpc.ClientConn, error) {
-	return dialCtx(context.Background(), addr)
+	return NewClient(addr)
 }
 
-func dialCtx(ctx context.Context, addr string) (*grpc.ClientConn, error) {
+func NewClient(addr string) (*grpc.ClientConn, error) {
 	var conn *grpc.ClientConn
 
 	clientMetrics := grpc_prometheus.NewClientMetrics()
@@ -36,7 +38,9 @@ func dialCtx(ctx context.Context, addr string) (*grpc.ClientConn, error) {
 	opts := []grpc_retry.CallOption{
 		grpc_retry.WithBackoff(grpc_retry.BackoffLinear(100 * time.Millisecond)),
 	}
-	conn, err := grpc.DialContext(ctx, addr, grpc.WithTransportCredentials(insecure.NewCredentials()),
+
+	conn, err := grpc.NewClient(addr,
+		grpc.WithTransportCredentials(insecure.NewCredentials()),
 		grpc.WithChainStreamInterceptor(
 			grpc_opentracing.StreamClientInterceptor(),
 			grpc_opentracing.StreamClientInterceptor(),

@@ -130,7 +130,7 @@ func main() {
 	h.HandleFunc("/grpc", func(rw http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
 
-		conn, err := grpc.DialContext(ctx, ":3001")
+		conn, err := grpc.NewClient(":3001")
 		if err != nil {
 			log.Fatalf("did not connect: %s", err)
 		}
