@@ -9,8 +9,7 @@ import (
 	"strings"
 
 	"github.com/caarlos0/env/v10"
-	"github.com/go-pg/pg"
-	"github.com/go-pg/pg/orm"
+	"github.com/uptrace/bun"
 
 	"github.com/pace/bricks/maintenance/log"
 )
@@ -68,7 +67,7 @@ type UrlQueryParameters struct {
 	PageNr        int
 	PageSize      int
 	Order         []string
-	Filter        map[string][]interface{}
+	Filter        map[string][]any
 }
 
 // ReadURLQueryParameters reads sorting, filter and pagination from requests and return a UrlQueryParameters object,
@@ -98,11 +97,12 @@ func ReadURLQueryParameters(r *http.Request, mapper ColumnMapper, sanitizer Valu
 	return result, fmt.Errorf("reading URL Query Parameters cased multiple errors: %v", strings.Join(errAggregate, ","))
 }
 
-// AddToQuery adds filter, sorting and pagination to a orm.Query
-func (u *UrlQueryParameters) AddToQuery(query *orm.Query) *orm.Query {
+// AddToQuery adds filter, sorting and pagination to a query.
+func (u *UrlQueryParameters) AddToQuery(query *bun.SelectQuery) *bun.SelectQuery {
 	if u.HasPagination {
 		query.Offset(u.PageSize * u.PageNr).Limit(u.PageSize)
 	}
+
 	for name, filterValues := range u.Filter {
 		if len(filterValues) == 0 {
 			continue
@@ -112,11 +112,14 @@ func (u *UrlQueryParameters) AddToQuery(query *orm.Query) *orm.Query {
 			query.Where(name+" = ?", filterValues[0])
 			continue
 		}
-		query.Where(name+" IN (?)", pg.In(filterValues))
+
+		query.Where(name+" IN (?)", bun.In(filterValues))
 	}
+
 	for _, val := range u.Order {
 		query.Order(val)
 	}
+
 	return query
 }
 
