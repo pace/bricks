@@ -1,12 +1,12 @@
 package postgres_test
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"io"
 	"testing"
 
-	"github.com/go-pg/pg"
 	"github.com/stretchr/testify/require"
 
 	pbpostgres "github.com/pace/bricks/backend/postgres"
@@ -19,13 +19,10 @@ func TestIsErrConnectionFailed(t *testing.T) {
 	})
 
 	t.Run("connection failed (net.Error)", func(t *testing.T) {
-		db := pbpostgres.CustomConnectionPool(&pg.Options{}) // invalid connection
-		_, err := db.Exec("")
-		require.True(t, pbpostgres.IsErrConnectionFailed(err))
-	})
+		ctx := context.Background()
 
-	t.Run("connection failed (pg.Error)", func(t *testing.T) {
-		err := error(mockPGError{m: map[byte]string{'C': "08000"}})
+		db := pbpostgres.NewDB(ctx, pbpostgres.WithHost("foobar")) // invalid connection
+		_, err := db.Exec("")
 		require.True(t, pbpostgres.IsErrConnectionFailed(err))
 	})
 
@@ -34,11 +31,3 @@ func TestIsErrConnectionFailed(t *testing.T) {
 		require.False(t, pbpostgres.IsErrConnectionFailed(err))
 	})
 }
-
-type mockPGError struct {
-	m map[byte]string
-}
-
-func (err mockPGError) Field(k byte) string      { return err.m[k] }
-func (err mockPGError) IntegrityViolation() bool { return false }
-func (err mockPGError) Error() string            { return fmt.Sprintf("%+v", err.m) }

@@ -65,7 +65,7 @@ func (*TestService) GetTest(ctx context.Context, w simple.GetTestResponseWriter,
 }
 
 func main() {
-	db := postgres.DefaultConnectionPool()
+	db := postgres.NewDB(context.Background())
 	rdb := redis.Client()
 	cdb, err := couchdb.DefaultDatabase()
 	if err != nil {
@@ -103,16 +103,22 @@ func main() {
 		ctx = span.Context()
 
 		// do dummy database query
-		cdb := db.WithContext(ctx)
 		var result struct {
 			Calc int //nolint
 		}
-		res, err := cdb.QueryOne(&result, `SELECT ? + ? AS Calc`, 10, 10)
+		res, err := db.NewSelect().Model(&result).ColumnExpr("? + ? AS Calc", 10, 10).Exec(ctx)
 		if err != nil {
 			log.Ctx(ctx).Debug().Err(err).Msg("Calc failed")
 			return
 		}
-		log.Ctx(ctx).Debug().Int("rows_affected", res.RowsAffected()).Msg("Calc done")
+
+		count, err := res.RowsAffected()
+		if err != nil {
+			log.Ctx(ctx).Debug().Err(err).Msg("RowsAffected failed")
+			return
+		}
+
+		log.Ctx(ctx).Debug().Int64("rows_affected", count).Msg("Calc done")
 
 		// do dummy redis query
 		crdb := redis.WithContext(ctx, rdb)

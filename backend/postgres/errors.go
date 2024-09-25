@@ -7,7 +7,7 @@ import (
 	"io"
 	"net"
 
-	"github.com/go-pg/pg"
+	"github.com/uptrace/bun/driver/pgdriver"
 )
 
 var ErrNotUnique = errors.New("not unique")
@@ -25,14 +25,16 @@ func IsErrConnectionFailed(err error) bool {
 	}
 
 	// go-pg has similar check for integrity violation issues, here we check network issues
-	pgErr, ok := err.(pg.Error)
-	if ok {
+	var pgErr pgdriver.Error
+
+	if errors.As(err, &pgErr) {
 		code := pgErr.Field('C')
 		// We check on error codes of Class 08 — Connection Exception.
 		// https://www.postgresql.org/docs/10/errcodes-appendix.html
-		if code[0:2] == "08" {
+		if len(code) > 2 && code[0:2] == "08" {
 			return true
 		}
 	}
+
 	return false
 }
