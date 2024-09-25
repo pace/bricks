@@ -4,6 +4,7 @@ package postgres
 
 import (
 	"context"
+	"database/sql"
 	"io"
 	"net/http"
 	"net/http/httptest"
@@ -11,12 +12,12 @@ import (
 	"testing"
 	"time"
 
-	"github.com/go-pg/pg/orm"
+	"github.com/stretchr/testify/require"
+
 	http2 "github.com/pace/bricks/http"
 	"github.com/pace/bricks/maintenance/errors"
 	"github.com/pace/bricks/maintenance/health/servicehealthcheck"
 	"github.com/pace/bricks/maintenance/log"
-	"github.com/stretchr/testify/require"
 )
 
 func setup() *http.Response {
@@ -52,7 +53,7 @@ type testPool struct {
 	err error
 }
 
-func (t *testPool) Exec(ctx context.Context, query interface{}, params ...interface{}) (res orm.Result, err error) {
+func (t *testPool) Exec(ctx context.Context, dest ...any) (sql.Result, error) {
 	return nil, t.err
 }
 
@@ -63,16 +64,25 @@ func TestHealthCheckCaching(t *testing.T) {
 	cfg.HealthCheckResultTTL = time.Minute
 	requiredErr := errors.New("TestHealthCheckCaching")
 	pool := &testPool{err: requiredErr}
-	h := &HealthCheck{Pool: pool}
+	h := &HealthCheck{
+		createTableQueryExecutor: pool,
+		deleteQueryExecutor:      pool,
+		dropTableQueryExecutor:   pool,
+		insertQueryExecutor:      pool,
+		selectQueryExecutor:      pool,
+	}
+
 	res := h.HealthCheck(ctx)
 	// get the error for the first time
 	require.Equal(t, servicehealthcheck.Err, res.State)
 	require.Equal(t, "TestHealthCheckCaching", res.Msg)
+
 	res = h.HealthCheck(ctx)
 	pool.err = nil
 	// getting the cached error
 	require.Equal(t, servicehealthcheck.Err, res.State)
 	require.Equal(t, "TestHealthCheckCaching", res.Msg)
+
 	// Resetting the TTL to get a uncached result
 	cfg.HealthCheckResultTTL = 0
 	res = h.HealthCheck(ctx)
