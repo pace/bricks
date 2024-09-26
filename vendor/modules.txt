@@ -220,14 +220,6 @@ github.com/go-kivik/couchdb/v3/chttp
 github.com/go-kivik/kivik/v3
 github.com/go-kivik/kivik/v3/driver
 github.com/go-kivik/kivik/v3/internal/registry
-# github.com/go-pg/pg v6.14.5+incompatible
-## explicit
-github.com/go-pg/pg
-github.com/go-pg/pg/internal
-github.com/go-pg/pg/internal/parser
-github.com/go-pg/pg/internal/pool
-github.com/go-pg/pg/orm
-github.com/go-pg/pg/types
 # github.com/go-toolsmith/astcast v1.1.0
 ## explicit; go 1.16
 github.com/go-toolsmith/astcast
@@ -663,8 +655,6 @@ github.com/nunnatsa/ginkgolinter/version
 # github.com/olekukonko/tablewriter v0.0.5
 ## explicit; go 1.12
 github.com/olekukonko/tablewriter
-# github.com/onsi/ginkgo v1.16.5
-## explicit; go 1.16
 # github.com/opentracing/opentracing-go v1.1.0
 ## explicit
 github.com/opentracing/opentracing-go
@@ -709,6 +699,9 @@ github.com/prometheus/common/model
 github.com/prometheus/procfs
 github.com/prometheus/procfs/internal/fs
 github.com/prometheus/procfs/internal/util
+# github.com/puzpuzpuz/xsync/v3 v3.4.0
+## explicit; go 1.18
+github.com/puzpuzpuz/xsync/v3
 # github.com/quasilyte/go-ruleguard v0.4.3-0.20240823090925-0fe6f58b47b1
 ## explicit; go 1.19
 github.com/quasilyte/go-ruleguard/internal/goenv
@@ -754,7 +747,7 @@ github.com/redis/go-redis/v9/internal/util
 # github.com/rs/xid v1.5.0
 ## explicit; go 1.12
 github.com/rs/xid
-# github.com/rs/zerolog v1.32.0
+# github.com/rs/zerolog v1.33.0
 ## explicit; go 1.15
 github.com/rs/zerolog
 github.com/rs/zerolog/internal/cbor
@@ -877,6 +870,9 @@ github.com/timonwong/loggercheck/internal/checkers/printf
 github.com/timonwong/loggercheck/internal/rules
 github.com/timonwong/loggercheck/internal/sets
 github.com/timonwong/loggercheck/internal/stringutil
+# github.com/tmthrgd/go-hex v0.0.0-20190904060850-447a3041c3bc
+## explicit
+github.com/tmthrgd/go-hex
 # github.com/tomarrell/wrapcheck/v2 v2.9.0
 ## explicit; go 1.21
 github.com/tomarrell/wrapcheck/v2/wrapcheck
@@ -915,9 +911,35 @@ github.com/ultraware/funlen
 # github.com/ultraware/whitespace v0.1.1
 ## explicit; go 1.20
 github.com/ultraware/whitespace
+# github.com/uptrace/bun v1.2.5
+## explicit; go 1.22
+github.com/uptrace/bun
+github.com/uptrace/bun/dialect
+github.com/uptrace/bun/dialect/feature
+github.com/uptrace/bun/dialect/sqltype
+github.com/uptrace/bun/extra/bunjson
+github.com/uptrace/bun/internal
+github.com/uptrace/bun/internal/parser
+github.com/uptrace/bun/internal/tagparser
+github.com/uptrace/bun/schema
+# github.com/uptrace/bun/dialect/pgdialect v1.2.5
+## explicit; go 1.22
+github.com/uptrace/bun/dialect/pgdialect
+# github.com/uptrace/bun/driver/pgdriver v1.2.5
+## explicit; go 1.22
+github.com/uptrace/bun/driver/pgdriver
 # github.com/uudashr/gocognit v1.1.3
 ## explicit; go 1.18
 github.com/uudashr/gocognit
+# github.com/vmihailenco/msgpack/v5 v5.4.1
+## explicit; go 1.19
+github.com/vmihailenco/msgpack/v5
+github.com/vmihailenco/msgpack/v5/msgpcode
+# github.com/vmihailenco/tagparser/v2 v2.0.0
+## explicit; go 1.15
+github.com/vmihailenco/tagparser/v2
+github.com/vmihailenco/tagparser/v2/internal
+github.com/vmihailenco/tagparser/v2/internal/parser
 # github.com/xen0n/gosmopolitan v1.2.2
 ## explicit; go 1.19
 github.com/xen0n/gosmopolitan
@@ -970,10 +992,11 @@ go.uber.org/zap/internal/bufferpool
 go.uber.org/zap/internal/color
 go.uber.org/zap/internal/exit
 go.uber.org/zap/zapcore
-# golang.org/x/crypto v0.27.0
+# golang.org/x/crypto v0.28.0
 ## explicit; go 1.20
 golang.org/x/crypto/argon2
 golang.org/x/crypto/blake2b
+golang.org/x/crypto/pbkdf2
 # golang.org/x/exp v0.0.0-20240904232852-e7e105dedf7e
 ## explicit; go 1.20
 golang.org/x/exp/constraints
@@ -1001,12 +1024,12 @@ golang.org/x/net/trace
 ## explicit; go 1.18
 golang.org/x/sync/errgroup
 golang.org/x/sync/semaphore
-# golang.org/x/sys v0.25.0
+# golang.org/x/sys v0.26.0
 ## explicit; go 1.18
 golang.org/x/sys/cpu
 golang.org/x/sys/unix
 golang.org/x/sys/windows
-# golang.org/x/text v0.18.0
+# golang.org/x/text v0.19.0
 ## explicit; go 1.18
 golang.org/x/text/cases
 golang.org/x/text/internal
@@ -1421,6 +1444,9 @@ honnef.co/go/tools/stylecheck/st1021
 honnef.co/go/tools/stylecheck/st1022
 honnef.co/go/tools/stylecheck/st1023
 honnef.co/go/tools/unused
+# mellium.im/sasl v0.3.2
+## explicit; go 1.20
+mellium.im/sasl
 # mvdan.cc/gofumpt v0.7.0
 ## explicit; go 1.22
 mvdan.cc/gofumpt/format
