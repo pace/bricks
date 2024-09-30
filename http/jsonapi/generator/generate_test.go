@@ -53,7 +53,7 @@ func TestGenerator(t *testing.T) {
 					Context:  3,
 				}
 				text, _ := difflib.GetUnifiedDiffString(diff)
-				t.Errorf(text)
+				t.Error(text)
 			}
 		})
 	}
