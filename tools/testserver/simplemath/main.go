@@ -4,13 +4,12 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/opentracing/opentracing-go"
+	"github.com/getsentry/sentry-go"
 	"github.com/pace/bricks/grpc"
 	"github.com/pace/bricks/http/security"
 	"github.com/pace/bricks/locale"
 	"github.com/pace/bricks/maintenance/log"
 	"github.com/pace/bricks/tools/testserver/math"
-	"github.com/uber/jaeger-client-go"
 )
 
 type GrpcAuthBackend struct{}
@@ -37,9 +36,9 @@ func (*SimpleMathServer) Add(ctx context.Context, i *math.Input) (*math.Output, 
 	if loc, ok := locale.FromCtx(ctx); ok {
 		log.Ctx(ctx).Debug().Msgf("Locale: %q", loc.Serialize())
 	}
-	span := opentracing.SpanFromContext(ctx)
-	if sc, ok := span.Context().(jaeger.SpanContext); ok {
-		log.Ctx(ctx).Debug().Msgf("Span: %q", sc.String())
+	span := sentry.SpanFromContext(ctx)
+	if span != nil {
+		log.Ctx(ctx).Debug().Msgf("Span: %q", span.Name)
 	}
 
 	var o math.Output

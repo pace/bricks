@@ -4,8 +4,8 @@ package poi
 import (
 	"context"
 	errors1 "errors"
+	sentry "github.com/getsentry/sentry-go"
 	mux "github.com/gorilla/mux"
-	opentracing "github.com/opentracing/opentracing-go"
 	runtime "github.com/pace/bricks/http/jsonapi/runtime"
 	oauth2 "github.com/pace/bricks/http/oauth2"
 	oidc "github.com/pace/bricks/http/oidc"
@@ -436,8 +436,11 @@ func DeduplicatePoiHandler(service DeduplicatePoiHandlerService, authBackend Aut
 		r = r.WithContext(ctx)
 
 		// Trace the service function handler execution
-		handlerSpan, ctx := opentracing.StartSpanFromContext(r.Context(), "DeduplicatePoiHandler")
-		defer handlerSpan.Finish()
+		span := sentry.StartSpan(r.Context(), "http.server", sentry.WithDescription("DeduplicatePoiHandler"))
+		defer span.Finish()
+
+		ctx = span.Context()
+		r = r.WithContext(ctx)
 
 		// Setup context, response writer and request type
 		writer := deduplicatePoiResponseWriter{
@@ -491,8 +494,11 @@ func MovePoiAtPositionHandler(service MovePoiAtPositionHandlerService, authBacke
 		r = r.WithContext(ctx)
 
 		// Trace the service function handler execution
-		handlerSpan, ctx := opentracing.StartSpanFromContext(r.Context(), "MovePoiAtPositionHandler")
-		defer handlerSpan.Finish()
+		span := sentry.StartSpan(r.Context(), "http.server", sentry.WithDescription("MovePoiAtPositionHandler"))
+		defer span.Finish()
+
+		ctx = span.Context()
+		r = r.WithContext(ctx)
 
 		// Setup context, response writer and request type
 		writer := movePoiAtPositionResponseWriter{
@@ -546,8 +552,11 @@ func GetAppsHandler(service GetAppsHandlerService, authBackend AuthorizationBack
 		r = r.WithContext(ctx)
 
 		// Trace the service function handler execution
-		handlerSpan, ctx := opentracing.StartSpanFromContext(r.Context(), "GetAppsHandler")
-		defer handlerSpan.Finish()
+		span := sentry.StartSpan(r.Context(), "http.server", sentry.WithDescription("GetAppsHandler"))
+		defer span.Finish()
+
+		ctx = span.Context()
+		r = r.WithContext(ctx)
 
 		// Setup context, response writer and request type
 		writer := getAppsResponseWriter{
@@ -621,8 +630,11 @@ func CreateAppHandler(service CreateAppHandlerService, authBackend Authorization
 		r = r.WithContext(ctx)
 
 		// Trace the service function handler execution
-		handlerSpan, ctx := opentracing.StartSpanFromContext(r.Context(), "CreateAppHandler")
-		defer handlerSpan.Finish()
+		span := sentry.StartSpan(r.Context(), "http.server", sentry.WithDescription("CreateAppHandler"))
+		defer span.Finish()
+
+		ctx = span.Context()
+		r = r.WithContext(ctx)
 
 		// Setup context, response writer and request type
 		writer := createAppResponseWriter{
@@ -676,8 +688,11 @@ func CheckForPaceAppHandler(service CheckForPaceAppHandlerService, authBackend A
 		r = r.WithContext(ctx)
 
 		// Trace the service function handler execution
-		handlerSpan, ctx := opentracing.StartSpanFromContext(r.Context(), "CheckForPaceAppHandler")
-		defer handlerSpan.Finish()
+		span := sentry.StartSpan(r.Context(), "http.server", sentry.WithDescription("CheckForPaceAppHandler"))
+		defer span.Finish()
+
+		ctx = span.Context()
+		r = r.WithContext(ctx)
 
 		// Setup context, response writer and request type
 		writer := checkForPaceAppResponseWriter{
@@ -743,8 +758,11 @@ func DeleteAppHandler(service DeleteAppHandlerService, authBackend Authorization
 		r = r.WithContext(ctx)
 
 		// Trace the service function handler execution
-		handlerSpan, ctx := opentracing.StartSpanFromContext(r.Context(), "DeleteAppHandler")
-		defer handlerSpan.Finish()
+		span := sentry.StartSpan(r.Context(), "http.server", sentry.WithDescription("DeleteAppHandler"))
+		defer span.Finish()
+
+		ctx = span.Context()
+		r = r.WithContext(ctx)
 
 		// Setup context, response writer and request type
 		writer := deleteAppResponseWriter{
@@ -804,8 +822,11 @@ func GetAppHandler(service GetAppHandlerService, authBackend AuthorizationBacken
 		r = r.WithContext(ctx)
 
 		// Trace the service function handler execution
-		handlerSpan, ctx := opentracing.StartSpanFromContext(r.Context(), "GetAppHandler")
-		defer handlerSpan.Finish()
+		span := sentry.StartSpan(r.Context(), "http.server", sentry.WithDescription("GetAppHandler"))
+		defer span.Finish()
+
+		ctx = span.Context()
+		r = r.WithContext(ctx)
 
 		// Setup context, response writer and request type
 		writer := getAppResponseWriter{
@@ -865,8 +886,11 @@ func UpdateAppHandler(service UpdateAppHandlerService, authBackend Authorization
 		r = r.WithContext(ctx)
 
 		// Trace the service function handler execution
-		handlerSpan, ctx := opentracing.StartSpanFromContext(r.Context(), "UpdateAppHandler")
-		defer handlerSpan.Finish()
+		span := sentry.StartSpan(r.Context(), "http.server", sentry.WithDescription("UpdateAppHandler"))
+		defer span.Finish()
+
+		ctx = span.Context()
+		r = r.WithContext(ctx)
 
 		// Setup context, response writer and request type
 		writer := updateAppResponseWriter{
@@ -929,8 +953,11 @@ func GetAppPOIsRelationshipsHandler(service GetAppPOIsRelationshipsHandlerServic
 		r = r.WithContext(ctx)
 
 		// Trace the service function handler execution
-		handlerSpan, ctx := opentracing.StartSpanFromContext(r.Context(), "GetAppPOIsRelationshipsHandler")
-		defer handlerSpan.Finish()
+		span := sentry.StartSpan(r.Context(), "http.server", sentry.WithDescription("GetAppPOIsRelationshipsHandler"))
+		defer span.Finish()
+
+		ctx = span.Context()
+		r = r.WithContext(ctx)
 
 		// Setup context, response writer and request type
 		writer := getAppPOIsRelationshipsResponseWriter{
@@ -990,8 +1017,11 @@ func UpdateAppPOIsRelationshipsHandler(service UpdateAppPOIsRelationshipsHandler
 		r = r.WithContext(ctx)
 
 		// Trace the service function handler execution
-		handlerSpan, ctx := opentracing.StartSpanFromContext(r.Context(), "UpdateAppPOIsRelationshipsHandler")
-		defer handlerSpan.Finish()
+		span := sentry.StartSpan(r.Context(), "http.server", sentry.WithDescription("UpdateAppPOIsRelationshipsHandler"))
+		defer span.Finish()
+
+		ctx = span.Context()
+		r = r.WithContext(ctx)
 
 		// Setup context, response writer and request type
 		writer := updateAppPOIsRelationshipsResponseWriter{
@@ -1054,8 +1084,11 @@ func GetDuplicatesKMLHandler(service GetDuplicatesKMLHandlerService, authBackend
 		r = r.WithContext(ctx)
 
 		// Trace the service function handler execution
-		handlerSpan, ctx := opentracing.StartSpanFromContext(r.Context(), "GetDuplicatesKMLHandler")
-		defer handlerSpan.Finish()
+		span := sentry.StartSpan(r.Context(), "http.server", sentry.WithDescription("GetDuplicatesKMLHandler"))
+		defer span.Finish()
+
+		ctx = span.Context()
+		r = r.WithContext(ctx)
 
 		// Setup context, response writer and request type
 		writer := getDuplicatesKMLResponseWriter{
@@ -1115,8 +1148,11 @@ func GetPoisDumpHandler(service GetPoisDumpHandlerService, authBackend Authoriza
 		r = r.WithContext(ctx)
 
 		// Trace the service function handler execution
-		handlerSpan, ctx := opentracing.StartSpanFromContext(r.Context(), "GetPoisDumpHandler")
-		defer handlerSpan.Finish()
+		span := sentry.StartSpan(r.Context(), "http.server", sentry.WithDescription("GetPoisDumpHandler"))
+		defer span.Finish()
+
+		ctx = span.Context()
+		r = r.WithContext(ctx)
 
 		// Setup context, response writer and request type
 		writer := getPoisDumpResponseWriter{
@@ -1174,8 +1210,11 @@ func DeleteGasStationReferenceStatusHandler(service DeleteGasStationReferenceSta
 		r = r.WithContext(ctx)
 
 		// Trace the service function handler execution
-		handlerSpan, ctx := opentracing.StartSpanFromContext(r.Context(), "DeleteGasStationReferenceStatusHandler")
-		defer handlerSpan.Finish()
+		span := sentry.StartSpan(r.Context(), "http.server", sentry.WithDescription("DeleteGasStationReferenceStatusHandler"))
+		defer span.Finish()
+
+		ctx = span.Context()
+		r = r.WithContext(ctx)
 
 		// Setup context, response writer and request type
 		writer := deleteGasStationReferenceStatusResponseWriter{
@@ -1240,8 +1279,11 @@ func PutGasStationReferenceStatusHandler(service PutGasStationReferenceStatusHan
 		r = r.WithContext(ctx)
 
 		// Trace the service function handler execution
-		handlerSpan, ctx := opentracing.StartSpanFromContext(r.Context(), "PutGasStationReferenceStatusHandler")
-		defer handlerSpan.Finish()
+		span := sentry.StartSpan(r.Context(), "http.server", sentry.WithDescription("PutGasStationReferenceStatusHandler"))
+		defer span.Finish()
+
+		ctx = span.Context()
+		r = r.WithContext(ctx)
 
 		// Setup context, response writer and request type
 		writer := putGasStationReferenceStatusResponseWriter{
@@ -1309,8 +1351,11 @@ func GetEventsHandler(service GetEventsHandlerService, authBackend Authorization
 		r = r.WithContext(ctx)
 
 		// Trace the service function handler execution
-		handlerSpan, ctx := opentracing.StartSpanFromContext(r.Context(), "GetEventsHandler")
-		defer handlerSpan.Finish()
+		span := sentry.StartSpan(r.Context(), "http.server", sentry.WithDescription("GetEventsHandler"))
+		defer span.Finish()
+
+		ctx = span.Context()
+		r = r.WithContext(ctx)
 
 		// Setup context, response writer and request type
 		writer := getEventsResponseWriter{
@@ -1380,8 +1425,11 @@ func GetGasStationsHandler(service GetGasStationsHandlerService, authBackend Aut
 		r = r.WithContext(ctx)
 
 		// Trace the service function handler execution
-		handlerSpan, ctx := opentracing.StartSpanFromContext(r.Context(), "GetGasStationsHandler")
-		defer handlerSpan.Finish()
+		span := sentry.StartSpan(r.Context(), "http.server", sentry.WithDescription("GetGasStationsHandler"))
+		defer span.Finish()
+
+		ctx = span.Context()
+		r = r.WithContext(ctx)
 
 		// Setup context, response writer and request type
 		writer := getGasStationsResponseWriter{
@@ -1475,8 +1523,11 @@ func GetGasStationHandler(service GetGasStationHandlerService, authBackend Autho
 		r = r.WithContext(ctx)
 
 		// Trace the service function handler execution
-		handlerSpan, ctx := opentracing.StartSpanFromContext(r.Context(), "GetGasStationHandler")
-		defer handlerSpan.Finish()
+		span := sentry.StartSpan(r.Context(), "http.server", sentry.WithDescription("GetGasStationHandler"))
+		defer span.Finish()
+
+		ctx = span.Context()
+		r = r.WithContext(ctx)
 
 		// Setup context, response writer and request type
 		writer := getGasStationResponseWriter{
@@ -1540,8 +1591,11 @@ func GetPriceHistoryHandler(service GetPriceHistoryHandlerService, authBackend A
 		r = r.WithContext(ctx)
 
 		// Trace the service function handler execution
-		handlerSpan, ctx := opentracing.StartSpanFromContext(r.Context(), "GetPriceHistoryHandler")
-		defer handlerSpan.Finish()
+		span := sentry.StartSpan(r.Context(), "http.server", sentry.WithDescription("GetPriceHistoryHandler"))
+		defer span.Finish()
+
+		ctx = span.Context()
+		r = r.WithContext(ctx)
 
 		// Setup context, response writer and request type
 		writer := getPriceHistoryResponseWriter{
@@ -1618,8 +1672,11 @@ func GetGasStationFuelTypeNameMappingHandler(service GetGasStationFuelTypeNameMa
 		r = r.WithContext(ctx)
 
 		// Trace the service function handler execution
-		handlerSpan, ctx := opentracing.StartSpanFromContext(r.Context(), "GetGasStationFuelTypeNameMappingHandler")
-		defer handlerSpan.Finish()
+		span := sentry.StartSpan(r.Context(), "http.server", sentry.WithDescription("GetGasStationFuelTypeNameMappingHandler"))
+		defer span.Finish()
+
+		ctx = span.Context()
+		r = r.WithContext(ctx)
 
 		// Setup context, response writer and request type
 		writer := getGasStationFuelTypeNameMappingResponseWriter{
@@ -1683,8 +1740,11 @@ func GetMetadataFiltersHandler(service GetMetadataFiltersHandlerService, authBac
 		r = r.WithContext(ctx)
 
 		// Trace the service function handler execution
-		handlerSpan, ctx := opentracing.StartSpanFromContext(r.Context(), "GetMetadataFiltersHandler")
-		defer handlerSpan.Finish()
+		span := sentry.StartSpan(r.Context(), "http.server", sentry.WithDescription("GetMetadataFiltersHandler"))
+		defer span.Finish()
+
+		ctx = span.Context()
+		r = r.WithContext(ctx)
 
 		// Setup context, response writer and request type
 		writer := getMetadataFiltersResponseWriter{
@@ -1746,8 +1806,11 @@ func GetPoisHandler(service GetPoisHandlerService, authBackend AuthorizationBack
 		r = r.WithContext(ctx)
 
 		// Trace the service function handler execution
-		handlerSpan, ctx := opentracing.StartSpanFromContext(r.Context(), "GetPoisHandler")
-		defer handlerSpan.Finish()
+		span := sentry.StartSpan(r.Context(), "http.server", sentry.WithDescription("GetPoisHandler"))
+		defer span.Finish()
+
+		ctx = span.Context()
+		r = r.WithContext(ctx)
 
 		// Setup context, response writer and request type
 		writer := getPoisResponseWriter{
@@ -1817,8 +1880,11 @@ func GetPoiHandler(service GetPoiHandlerService, authBackend AuthorizationBacken
 		r = r.WithContext(ctx)
 
 		// Trace the service function handler execution
-		handlerSpan, ctx := opentracing.StartSpanFromContext(r.Context(), "GetPoiHandler")
-		defer handlerSpan.Finish()
+		span := sentry.StartSpan(r.Context(), "http.server", sentry.WithDescription("GetPoiHandler"))
+		defer span.Finish()
+
+		ctx = span.Context()
+		r = r.WithContext(ctx)
 
 		// Setup context, response writer and request type
 		writer := getPoiResponseWriter{
@@ -1878,8 +1944,11 @@ func ChangePoiHandler(service ChangePoiHandlerService, authBackend Authorization
 		r = r.WithContext(ctx)
 
 		// Trace the service function handler execution
-		handlerSpan, ctx := opentracing.StartSpanFromContext(r.Context(), "ChangePoiHandler")
-		defer handlerSpan.Finish()
+		span := sentry.StartSpan(r.Context(), "http.server", sentry.WithDescription("ChangePoiHandler"))
+		defer span.Finish()
+
+		ctx = span.Context()
+		r = r.WithContext(ctx)
 
 		// Setup context, response writer and request type
 		writer := changePoiResponseWriter{
@@ -1942,8 +2011,11 @@ func GetPoliciesHandler(service GetPoliciesHandlerService, authBackend Authoriza
 		r = r.WithContext(ctx)
 
 		// Trace the service function handler execution
-		handlerSpan, ctx := opentracing.StartSpanFromContext(r.Context(), "GetPoliciesHandler")
-		defer handlerSpan.Finish()
+		span := sentry.StartSpan(r.Context(), "http.server", sentry.WithDescription("GetPoliciesHandler"))
+		defer span.Finish()
+
+		ctx = span.Context()
+		r = r.WithContext(ctx)
 
 		// Setup context, response writer and request type
 		writer := getPoliciesResponseWriter{
@@ -2017,8 +2089,11 @@ func CreatePolicyHandler(service CreatePolicyHandlerService, authBackend Authori
 		r = r.WithContext(ctx)
 
 		// Trace the service function handler execution
-		handlerSpan, ctx := opentracing.StartSpanFromContext(r.Context(), "CreatePolicyHandler")
-		defer handlerSpan.Finish()
+		span := sentry.StartSpan(r.Context(), "http.server", sentry.WithDescription("CreatePolicyHandler"))
+		defer span.Finish()
+
+		ctx = span.Context()
+		r = r.WithContext(ctx)
 
 		// Setup context, response writer and request type
 		writer := createPolicyResponseWriter{
@@ -2072,8 +2147,11 @@ func GetPolicyHandler(service GetPolicyHandlerService, authBackend Authorization
 		r = r.WithContext(ctx)
 
 		// Trace the service function handler execution
-		handlerSpan, ctx := opentracing.StartSpanFromContext(r.Context(), "GetPolicyHandler")
-		defer handlerSpan.Finish()
+		span := sentry.StartSpan(r.Context(), "http.server", sentry.WithDescription("GetPolicyHandler"))
+		defer span.Finish()
+
+		ctx = span.Context()
+		r = r.WithContext(ctx)
 
 		// Setup context, response writer and request type
 		writer := getPolicyResponseWriter{
@@ -2127,8 +2205,11 @@ func GetRegionalPricesHandler(service GetRegionalPricesHandlerService, authBacke
 		defer errors.HandleRequest("GetRegionalPricesHandler", w, r)
 
 		// Trace the service function handler execution
-		handlerSpan, ctx := opentracing.StartSpanFromContext(r.Context(), "GetRegionalPricesHandler")
-		defer handlerSpan.Finish()
+		span := sentry.StartSpan(r.Context(), "http.server", sentry.WithDescription("GetRegionalPricesHandler"))
+		defer span.Finish()
+
+		ctx := span.Context()
+		r = r.WithContext(ctx)
 
 		// Setup context, response writer and request type
 		writer := getRegionalPricesResponseWriter{
@@ -2190,8 +2271,11 @@ func GetSourcesHandler(service GetSourcesHandlerService, authBackend Authorizati
 		r = r.WithContext(ctx)
 
 		// Trace the service function handler execution
-		handlerSpan, ctx := opentracing.StartSpanFromContext(r.Context(), "GetSourcesHandler")
-		defer handlerSpan.Finish()
+		span := sentry.StartSpan(r.Context(), "http.server", sentry.WithDescription("GetSourcesHandler"))
+		defer span.Finish()
+
+		ctx = span.Context()
+		r = r.WithContext(ctx)
 
 		// Setup context, response writer and request type
 		writer := getSourcesResponseWriter{
@@ -2261,8 +2345,11 @@ func CreateSourceHandler(service CreateSourceHandlerService, authBackend Authori
 		r = r.WithContext(ctx)
 
 		// Trace the service function handler execution
-		handlerSpan, ctx := opentracing.StartSpanFromContext(r.Context(), "CreateSourceHandler")
-		defer handlerSpan.Finish()
+		span := sentry.StartSpan(r.Context(), "http.server", sentry.WithDescription("CreateSourceHandler"))
+		defer span.Finish()
+
+		ctx = span.Context()
+		r = r.WithContext(ctx)
 
 		// Setup context, response writer and request type
 		writer := createSourceResponseWriter{
@@ -2316,8 +2403,11 @@ func DeleteSourceHandler(service DeleteSourceHandlerService, authBackend Authori
 		r = r.WithContext(ctx)
 
 		// Trace the service function handler execution
-		handlerSpan, ctx := opentracing.StartSpanFromContext(r.Context(), "DeleteSourceHandler")
-		defer handlerSpan.Finish()
+		span := sentry.StartSpan(r.Context(), "http.server", sentry.WithDescription("DeleteSourceHandler"))
+		defer span.Finish()
+
+		ctx = span.Context()
+		r = r.WithContext(ctx)
 
 		// Setup context, response writer and request type
 		writer := deleteSourceResponseWriter{
@@ -2377,8 +2467,11 @@ func GetSourceHandler(service GetSourceHandlerService, authBackend Authorization
 		r = r.WithContext(ctx)
 
 		// Trace the service function handler execution
-		handlerSpan, ctx := opentracing.StartSpanFromContext(r.Context(), "GetSourceHandler")
-		defer handlerSpan.Finish()
+		span := sentry.StartSpan(r.Context(), "http.server", sentry.WithDescription("GetSourceHandler"))
+		defer span.Finish()
+
+		ctx = span.Context()
+		r = r.WithContext(ctx)
 
 		// Setup context, response writer and request type
 		writer := getSourceResponseWriter{
@@ -2438,8 +2531,11 @@ func UpdateSourceHandler(service UpdateSourceHandlerService, authBackend Authori
 		r = r.WithContext(ctx)
 
 		// Trace the service function handler execution
-		handlerSpan, ctx := opentracing.StartSpanFromContext(r.Context(), "UpdateSourceHandler")
-		defer handlerSpan.Finish()
+		span := sentry.StartSpan(r.Context(), "http.server", sentry.WithDescription("UpdateSourceHandler"))
+		defer span.Finish()
+
+		ctx = span.Context()
+		r = r.WithContext(ctx)
 
 		// Setup context, response writer and request type
 		writer := updateSourceResponseWriter{
@@ -2502,8 +2598,11 @@ func GetSubscriptionsHandler(service GetSubscriptionsHandlerService, authBackend
 		r = r.WithContext(ctx)
 
 		// Trace the service function handler execution
-		handlerSpan, ctx := opentracing.StartSpanFromContext(r.Context(), "GetSubscriptionsHandler")
-		defer handlerSpan.Finish()
+		span := sentry.StartSpan(r.Context(), "http.server", sentry.WithDescription("GetSubscriptionsHandler"))
+		defer span.Finish()
+
+		ctx = span.Context()
+		r = r.WithContext(ctx)
 
 		// Setup context, response writer and request type
 		writer := getSubscriptionsResponseWriter{
@@ -2557,8 +2656,11 @@ func DeleteSubscriptionHandler(service DeleteSubscriptionHandlerService, authBac
 		r = r.WithContext(ctx)
 
 		// Trace the service function handler execution
-		handlerSpan, ctx := opentracing.StartSpanFromContext(r.Context(), "DeleteSubscriptionHandler")
-		defer handlerSpan.Finish()
+		span := sentry.StartSpan(r.Context(), "http.server", sentry.WithDescription("DeleteSubscriptionHandler"))
+		defer span.Finish()
+
+		ctx = span.Context()
+		r = r.WithContext(ctx)
 
 		// Setup context, response writer and request type
 		writer := deleteSubscriptionResponseWriter{
@@ -2606,8 +2708,11 @@ func StoreSubscriptionHandler(service StoreSubscriptionHandlerService, authBacke
 		r = r.WithContext(ctx)
 
 		// Trace the service function handler execution
-		handlerSpan, ctx := opentracing.StartSpanFromContext(r.Context(), "StoreSubscriptionHandler")
-		defer handlerSpan.Finish()
+		span := sentry.StartSpan(r.Context(), "http.server", sentry.WithDescription("StoreSubscriptionHandler"))
+		defer span.Finish()
+
+		ctx = span.Context()
+		r = r.WithContext(ctx)
 
 		// Setup context, response writer and request type
 		writer := storeSubscriptionResponseWriter{
@@ -2661,8 +2766,11 @@ func GetTilesHandler(service GetTilesHandlerService, authBackend AuthorizationBa
 		r = r.WithContext(ctx)
 
 		// Trace the service function handler execution
-		handlerSpan, ctx := opentracing.StartSpanFromContext(r.Context(), "GetTilesHandler")
-		defer handlerSpan.Finish()
+		span := sentry.StartSpan(r.Context(), "http.server", sentry.WithDescription("GetTilesHandler"))
+		defer span.Finish()
+
+		ctx = span.Context()
+		r = r.WithContext(ctx)
 
 		// Setup context, response writer and request type
 		writer := getTilesResponseWriter{

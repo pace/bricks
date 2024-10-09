@@ -24,7 +24,7 @@ const (
 	pkgJSONAPIRuntime = "github.com/pace/bricks/http/jsonapi/runtime"
 	pkgJSONAPIMetrics = "github.com/pace/bricks/maintenance/metric/jsonapi"
 	pkgMaintErrors    = "github.com/pace/bricks/maintenance/errors"
-	pkgOpentracing    = "github.com/opentracing/opentracing-go"
+	pkgSentry         = "github.com/getsentry/sentry-go"
 	pkgOAuth2         = "github.com/pace/bricks/http/oauth2"
 	pkgOIDC           = "github.com/pace/bricks/http/oidc"
 	pkgApiKey         = "github.com/pace/bricks/http/security/apikey"
@@ -598,9 +598,21 @@ func (g *Generator) buildHandler(method string, op *openapi3.Operation, pattern 
 				g.Add(auth)
 				// set tracing context
 				g.Line().Comment("Trace the service function handler execution")
-				g.List(jen.Id("handlerSpan"), jen.Id("ctx")).Op(":=").Qual(pkgOpentracing, "StartSpanFromContext").Call(
-					jen.Id("r").Dot("Context").Call(), jen.Lit(handler))
-				g.Defer().Id("handlerSpan").Dot("Finish").Call()
+				g.Id("span").Op(":=").Qual(pkgSentry, "StartSpan").Call(
+					jen.Id("r").Dot("Context").Call(), jen.Lit("http.server"), jen.Qual(pkgSentry, "WithDescription").Call(jen.Lit(handler)))
+				g.Defer().Id("span").Dot("Finish").Call()
+				g.Line().Empty()
+
+				operator := ":="
+
+				if auth != nil {
+					operator = "="
+				}
+
+				g.Id("ctx").Op(operator).Id("span").Dot("Context").Call()
+
+				g.Id("r").Op("=").Id("r.WithContext").Call(jen.Id("ctx"))
+
 				g.Line().Comment("Setup context, response writer and request type")
 
 				// response writer

@@ -4,8 +4,8 @@ package simple
 import (
 	"context"
 	errors1 "errors"
+	sentry "github.com/getsentry/sentry-go"
 	mux "github.com/gorilla/mux"
-	opentracing "github.com/opentracing/opentracing-go"
 	errors "github.com/pace/bricks/maintenance/errors"
 	metrics "github.com/pace/bricks/maintenance/metric/jsonapi"
 	"net/http"
@@ -13,15 +13,19 @@ import (
 
 /*
 GetTestHandler handles request/response marshaling and validation for
- Get /beta/test
+
+	Get /beta/test
 */
 func GetTestHandler(service GetTestHandlerService) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		defer errors.HandleRequest("GetTestHandler", w, r)
 
 		// Trace the service function handler execution
-		handlerSpan, ctx := opentracing.StartSpanFromContext(r.Context(), "GetTestHandler")
-		defer handlerSpan.Finish()
+		span := sentry.StartSpan(r.Context(), "http.server", sentry.WithDescription("GetTestHandler"))
+		defer span.Finish()
+
+		ctx := span.Context()
+		r = r.WithContext(ctx)
 
 		// Setup context, response writer and request type
 		writer := getTestResponseWriter{

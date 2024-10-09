@@ -7,6 +7,7 @@ package scan
 import (
 	"fmt"
 	"io"
+	"sort"
 	"strings"
 
 	"golang.org/x/vuln/internal"
@@ -37,13 +38,14 @@ type TextHandler struct {
 	osvs      []*osv.Entry
 	findings  []*findingSummary
 	scanLevel govulncheck.ScanLevel
+	scanMode  govulncheck.ScanMode
 
 	err error
 
-	showColor    bool
-	showTraces   bool
-	showVersion  bool
-	showAllVulns bool
+	showColor   bool
+	showTraces  bool
+	showVersion bool
+	showVerbose bool
 }
 
 const (
@@ -59,28 +61,6 @@ const (
 
 	symbolMessage = `'-scan symbol' for more fine grained vulnerability detection`
 )
-
-func (h *TextHandler) Show(show []string) {
-	for _, show := range show {
-		switch show {
-		case "traces":
-			h.showTraces = true
-		case "color":
-			h.showColor = true
-		case "version":
-			h.showVersion = true
-		case "verbose":
-			h.showAllVulns = true
-		}
-	}
-}
-
-func Flush(h govulncheck.Handler) error {
-	if th, ok := h.(interface{ Flush() error }); ok {
-		return th.Flush()
-	}
-	return nil
-}
 
 func (h *TextHandler) Flush() error {
 	if len(h.findings) == 0 {
@@ -105,9 +85,9 @@ func (h *TextHandler) Flush() error {
 
 // Config writes version information only if --version was set.
 func (h *TextHandler) Config(config *govulncheck.Config) error {
-	if config.ScanLevel != "" {
-		h.scanLevel = config.ScanLevel
-	}
+	h.scanLevel = config.ScanLevel
+	h.scanMode = config.ScanMode
+
 	if !h.showVersion {
 		return nil
 	}
@@ -137,7 +117,9 @@ func (h *TextHandler) Config(config *govulncheck.Config) error {
 
 // Progress writes progress updates during govulncheck execution.
 func (h *TextHandler) Progress(progress *govulncheck.Progress) error {
-	h.print(progress.Message, "\n\n")
+	if h.showVerbose {
+		h.print(progress.Message, "\n\n")
+	}
 	return h.err
 }
 
@@ -163,16 +145,13 @@ func (h *TextHandler) allVulns(findings []*findingSummary) summaryCounters {
 	stdlibCalled := false
 	for _, findings := range byVuln {
 		switch {
-		case isStdFindings(findings):
-			if isCalled(findings) {
-				called = append(called, findings)
-				stdlibCalled = true
-			} else {
-				required = append(required, findings)
-			}
 		case isCalled(findings):
 			called = append(called, findings)
-			mods[findings[0].Trace[0].Module] = struct{}{}
+			if isStdFindings(findings) {
+				stdlibCalled = true
+			} else {
+				mods[findings[0].Trace[0].Module] = struct{}{}
+			}
 		case isImported(findings):
 			imported = append(imported, findings)
 		default:
@@ -190,7 +169,7 @@ func (h *TextHandler) allVulns(findings []*findingSummary) summaryCounters {
 		}
 	}
 
-	if h.scanLevel == govulncheck.ScanLevelPackage || (h.scanLevel.WantPackages() && h.showAllVulns) {
+	if h.scanLevel == govulncheck.ScanLevelPackage || (h.scanLevel.WantPackages() && h.showVerbose) {
 		h.style(sectionStyle, "=== Package Results ===\n\n")
 		if len(imported) == 0 {
 			h.print(choose(!h.scanLevel.WantSymbols(), noVulnsMessage, noOtherVulnsMessage), "\n\n")
@@ -200,7 +179,7 @@ func (h *TextHandler) allVulns(findings []*findingSummary) summaryCounters {
 		}
 	}
 
-	if h.showAllVulns || h.scanLevel == govulncheck.ScanLevelModule {
+	if h.showVerbose || h.scanLevel == govulncheck.ScanLevelModule {
 		h.style(sectionStyle, "=== Module Results ===\n\n")
 		if len(required) == 0 {
 			h.print(choose(!h.scanLevel.WantPackages(), noVulnsMessage, noOtherVulnsMessage), "\n\n")
@@ -242,13 +221,20 @@ func (h *TextHandler) vulnerability(index int, findings []*findingSummary) {
 	byModule := groupByModule(findings)
 	first := true
 	for _, module := range byModule {
-		//TODO: this assumes all traces on a module are found and fixed at the same versions
+		// Note: there can be several findingSummaries for the same vulnerability
+		// emitted during streaming for different scan levels.
+
+		// The module is same for all finding summaries.
 		lastFrame := module[0].Trace[0]
 		mod := lastFrame.Module
+		// For stdlib, try to show package path as module name where
+		// the scan level allows it.
+		// TODO: should this be done in byModule as well?
 		path := lastFrame.Module
-		if path == internal.GoStdModulePath {
-			path = lastFrame.Package
+		if stdPkg := h.pkg(module); path == internal.GoStdModulePath && stdPkg != "" {
+			path = stdPkg
 		}
+		// All findings on a module are found and fixed at the same version
 		foundVersion := moduleVersionString(lastFrame.Module, lastFrame.Version)
 		fixedVersion := moduleVersionString(lastFrame.Module, module[0].FixedVersion)
 		if !first {
@@ -288,20 +274,60 @@ func (h *TextHandler) vulnerability(index int, findings []*findingSummary) {
 	h.print("\n")
 }
 
-func (h *TextHandler) traces(traces []*findingSummary) {
-	first := true
-	count := 1
-	for _, entry := range traces {
-		if entry.Compact == "" {
-			continue
+// pkg gives the package information for findings summaries
+// if one exists. This is only used to print package path
+// instead of a module for stdlib vulnerabilities at symbol
+// and package scan level.
+func (h *TextHandler) pkg(summaries []*findingSummary) string {
+	for _, f := range summaries {
+		if pkg := f.Trace[0].Package; pkg != "" {
+			return pkg
 		}
-		if first {
-			h.style(keyStyle, "    Example traces found:\n")
-		}
-		first = false
+	}
+	return ""
+}
 
-		h.print("      #", count, ": ")
-		count++
+// traces prints out the most precise trace information
+// found in the given summaries.
+func (h *TextHandler) traces(traces []*findingSummary) {
+	// Sort the traces by the vulnerable symbol. This
+	// guarantees determinism since we are currently
+	// showing only one trace per symbol.
+	sort.SliceStable(traces, func(i, j int) bool {
+		return symbol(traces[i].Trace[0], true) < symbol(traces[j].Trace[0], true)
+	})
+
+	// compacts are finding summaries with compact traces
+	// suitable for non-verbose textual output. Currently,
+	// only traces produced by symbol analysis.
+	var compacts []*findingSummary
+	for _, t := range traces {
+		if t.Compact != "" {
+			compacts = append(compacts, t)
+		}
+	}
+
+	// binLimit is a limit on the number of binary traces
+	// to show. Traces for binaries are less interesting
+	// as users cannot act on them and they can hence
+	// spam users.
+	const binLimit = 5
+	for i, entry := range compacts {
+		if i == 0 {
+			if h.scanMode == govulncheck.ScanModeBinary {
+				h.style(keyStyle, "    Vulnerable symbols found:\n")
+			} else {
+				h.style(keyStyle, "    Example traces found:\n")
+			}
+		}
+
+		// skip showing all symbols in binary mode unless '-show traces' is on.
+		if h.scanMode == govulncheck.ScanModeBinary && (i+1) > binLimit && !h.showTraces {
+			h.print("      Use '-show traces' to see the other ", len(compacts)-binLimit, " found symbols\n")
+			break
+		}
+
+		h.print("      #", i+1, ": ")
 		if !h.showTraces {
 			h.print(entry.Compact, "\n")
 		} else {
@@ -389,12 +415,12 @@ func (h *TextHandler) summarySuggestion() string {
 	var sugg strings.Builder
 	switch h.scanLevel {
 	case govulncheck.ScanLevelSymbol:
-		if !h.showAllVulns {
+		if !h.showVerbose {
 			sugg.WriteString("Use " + verboseMessage + ".")
 		}
 	case govulncheck.ScanLevelPackage:
 		sugg.WriteString("Use " + symbolMessage)
-		if !h.showAllVulns {
+		if !h.showVerbose {
 			sugg.WriteString(" and " + verboseMessage)
 		}
 		sugg.WriteString(".")

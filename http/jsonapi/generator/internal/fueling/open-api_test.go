@@ -4,8 +4,8 @@ package fueling
 import (
 	"context"
 	errors1 "errors"
+	sentry "github.com/getsentry/sentry-go"
 	mux "github.com/gorilla/mux"
-	opentracing "github.com/opentracing/opentracing-go"
 	runtime "github.com/pace/bricks/http/jsonapi/runtime"
 	errors "github.com/pace/bricks/maintenance/errors"
 	metrics "github.com/pace/bricks/maintenance/metric/jsonapi"
@@ -132,8 +132,11 @@ func ProcessPaymentHandler(service ProcessPaymentHandlerService) http.Handler {
 		defer errors.HandleRequest("ProcessPaymentHandler", w, r)
 
 		// Trace the service function handler execution
-		handlerSpan, ctx := opentracing.StartSpanFromContext(r.Context(), "ProcessPaymentHandler")
-		defer handlerSpan.Finish()
+		span := sentry.StartSpan(r.Context(), "http.server", sentry.WithDescription("ProcessPaymentHandler"))
+		defer span.Finish()
+
+		ctx := span.Context()
+		r = r.WithContext(ctx)
 
 		// Setup context, response writer and request type
 		writer := processPaymentResponseWriter{
@@ -190,8 +193,11 @@ func ApproachingAtTheForecourtHandler(service ApproachingAtTheForecourtHandlerSe
 		defer errors.HandleRequest("ApproachingAtTheForecourtHandler", w, r)
 
 		// Trace the service function handler execution
-		handlerSpan, ctx := opentracing.StartSpanFromContext(r.Context(), "ApproachingAtTheForecourtHandler")
-		defer handlerSpan.Finish()
+		span := sentry.StartSpan(r.Context(), "http.server", sentry.WithDescription("ApproachingAtTheForecourtHandler"))
+		defer span.Finish()
+
+		ctx := span.Context()
+		r = r.WithContext(ctx)
 
 		// Setup context, response writer and request type
 		writer := approachingAtTheForecourtResponseWriter{
@@ -252,8 +258,11 @@ func GetPumpHandler(service GetPumpHandlerService) http.Handler {
 		defer errors.HandleRequest("GetPumpHandler", w, r)
 
 		// Trace the service function handler execution
-		handlerSpan, ctx := opentracing.StartSpanFromContext(r.Context(), "GetPumpHandler")
-		defer handlerSpan.Finish()
+		span := sentry.StartSpan(r.Context(), "http.server", sentry.WithDescription("GetPumpHandler"))
+		defer span.Finish()
+
+		ctx := span.Context()
+		r = r.WithContext(ctx)
 
 		// Setup context, response writer and request type
 		writer := getPumpResponseWriter{
@@ -312,8 +321,11 @@ func WaitOnPumpStatusChangeHandler(service WaitOnPumpStatusChangeHandlerService)
 		defer errors.HandleRequest("WaitOnPumpStatusChangeHandler", w, r)
 
 		// Trace the service function handler execution
-		handlerSpan, ctx := opentracing.StartSpanFromContext(r.Context(), "WaitOnPumpStatusChangeHandler")
-		defer handlerSpan.Finish()
+		span := sentry.StartSpan(r.Context(), "http.server", sentry.WithDescription("WaitOnPumpStatusChangeHandler"))
+		defer span.Finish()
+
+		ctx := span.Context()
+		r = r.WithContext(ctx)
 
 		// Setup context, response writer and request type
 		writer := waitOnPumpStatusChangeResponseWriter{

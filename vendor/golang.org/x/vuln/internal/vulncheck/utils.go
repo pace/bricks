@@ -18,6 +18,7 @@ import (
 	"golang.org/x/tools/go/packages"
 	"golang.org/x/tools/go/ssa/ssautil"
 	"golang.org/x/tools/go/types/typeutil"
+	"golang.org/x/vuln/internal"
 	"golang.org/x/vuln/internal/osv"
 	"golang.org/x/vuln/internal/semver"
 
@@ -314,4 +315,39 @@ func modVersion(mod *packages.Module) string {
 		return mod.Replace.Version
 	}
 	return mod.Version
+}
+
+// pkgPath returns the path of the f's enclosing package, if any.
+// Otherwise, returns internal.UnknownPackagePath.
+func pkgPath(f *ssa.Function) string {
+	g := f
+	if f.Origin() != nil {
+		// Instantiations of generics do not have
+		// an associated package. We hence look up
+		// the original function for the package.
+		g = f.Origin()
+	}
+	if g.Package() != nil && g.Package().Pkg != nil {
+		return g.Package().Pkg.Path()
+	}
+	return internal.UnknownPackagePath
+}
+
+func pkgModPath(pkg *packages.Package) string {
+	if pkg != nil && pkg.Module != nil {
+		return pkg.Module.Path
+	}
+	return internal.UnknownModulePath
+}
+
+func IsStdPackage(pkg string) bool {
+	if pkg == "" || pkg == internal.UnknownPackagePath {
+		return false
+	}
+	// std packages do not have a "." in their path. For instance, see
+	// Contains in pkgsite/+/refs/heads/master/internal/stdlbib/stdlib.go.
+	if i := strings.IndexByte(pkg, '/'); i != -1 {
+		pkg = pkg[:i]
+	}
+	return !strings.Contains(pkg, ".")
 }

@@ -4,43 +4,24 @@ package tracing
 
 import (
 	"fmt"
-	"io"
 	"net/http"
+	"os"
 
-	opentracing "github.com/opentracing/opentracing-go"
-	olog "github.com/opentracing/opentracing-go/log"
+	"github.com/getsentry/sentry-go"
 	"github.com/pace/bricks/maintenance/log"
-	"github.com/pace/bricks/maintenance/tracing/wire"
 	"github.com/pace/bricks/maintenance/util"
-	"github.com/uber/jaeger-client-go/config"
-	"github.com/uber/jaeger-lib/metrics/prometheus"
 	"github.com/zenazn/goji/web/mutil"
 )
 
-// Closer can be used in shutdown hooks to ensure that the internal queue of
-// the Reporter is drained and all buffered spans are submitted to collectors.
-var Closer io.Closer
-
-// Tracer implementation that reports tracing to Jaeger
-var Tracer opentracing.Tracer
-
 func init() {
-	cfg, err := config.FromEnv()
+	err := sentry.Init(sentry.ClientOptions{
+		Dsn:              os.Getenv("SENTRY_DSN"),
+		Environment:      os.Getenv("ENVIRONMENT"),
+		EnableTracing:    true,
+		TracesSampleRate: 1.0,
+	})
 	if err != nil {
-		log.Warnf("Unable to load Jaeger config from ENV: %v", err)
-		return
-	}
-	if cfg.ServiceName == "" {
-		log.Warn("Using Jaeger noop tracer since no JAEGER_SERVICE_NAME is present")
-		return
-	}
-
-	Tracer, Closer, err = cfg.NewTracer(
-		config.Metrics(prometheus.New()),
-	)
-	opentracing.SetGlobalTracer(Tracer)
-	if err != nil {
-		log.Fatal(err)
+		log.Fatalf("sentry.Init: %v", err)
 	}
 }
 
@@ -51,10 +32,31 @@ type traceHandler struct {
 // Trace the service function handler execution
 func (h *traceHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
-	wireContext, _ := wire.FromWire(r)
-	_, ctx = opentracing.StartSpanFromContext(ctx, fmt.Sprintf("ServeHTTP Method: %s Path: %s", r.Method, r.URL.Path),
-		opentracing.ChildOf(wireContext))
+
+	hub := sentry.GetHubFromContext(ctx)
+	if hub == nil {
+		// Check the concurrency guide for more details: https://docs.sentry.io/platforms/go/concurrency/
+		hub = sentry.CurrentHub().Clone()
+		ctx = sentry.SetHubOnContext(ctx, hub)
+	}
+
+	options := []sentry.SpanOption{
+		// Set the OP based on values from https://develop.sentry.dev/sdk/performance/span-operations/
+		sentry.WithOpName("http.server"),
+		sentry.ContinueFromRequest(r),
+		sentry.WithTransactionSource(sentry.SourceURL),
+	}
+
+	span := sentry.StartTransaction(ctx,
+		fmt.Sprintf("%s %s", r.Method, r.URL.Path),
+		options...,
+	)
+
+	defer span.Finish()
+
+	ctx = span.Context()
 	ww := mutil.WrapWriter(w)
+
 	h.next.ServeHTTP(ww, r.WithContext(ctx))
 }
 
@@ -76,14 +78,20 @@ type traceLogHandler struct {
 func (h *traceLogHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
-	handlerSpan := opentracing.SpanFromContext(ctx)
-	handlerSpan.LogFields(olog.String("req_id", log.RequestID(r)),
-		olog.String("path", r.URL.Path),
-		olog.String("method", r.Method))
+	span := sentry.TransactionFromContext(ctx)
+	defer span.Finish()
+
+	r = r.WithContext(span.Context())
+
+	span.SetData("req_id", log.RequestIDFromContext(ctx))
+	span.SetData("path", r.URL.Path)
+	span.SetData("method", r.Method)
+
 	ww := mutil.WrapWriter(w)
-	h.next.ServeHTTP(ww, r.WithContext(ctx))
-	handlerSpan.LogFields(olog.Int("bytes", ww.BytesWritten()), olog.Int("status_code", ww.Status()))
-	handlerSpan.Finish()
+
+	h.next.ServeHTTP(ww, r)
+	span.SetData("bytes", ww.BytesWritten())
+	span.SetData("status_code", ww.Status())
 }
 
 // TraceLogHandler generates a tracing handler that adds logging data to existing handler.
@@ -94,24 +102,4 @@ func TraceLogHandler(ignoredPrefixes ...string) func(http.Handler) http.Handler 
 			next: next,
 		}
 	}, ignoredPrefixes...)
-}
-
-// Request augments an outgoing request for further tracing
-func Request(r *http.Request) *http.Request {
-	// check if the request contains a span
-	span := opentracing.SpanFromContext(r.Context())
-	if span == nil {
-		return r
-	}
-
-	// inject tracing info for next request containing the span
-	err := opentracing.GlobalTracer().Inject(
-		span.Context(),
-		opentracing.HTTPHeaders,
-		opentracing.HTTPHeadersCarrier(r.Header))
-	if err != nil {
-		log.Warnf("Request tracing injection failed: %v", err)
-	}
-
-	return r
 }

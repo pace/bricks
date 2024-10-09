@@ -8,7 +8,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/opentracing/opentracing-go"
+	"github.com/getsentry/sentry-go"
 
 	"github.com/pace/bricks/maintenance/errors"
 	"github.com/pace/bricks/maintenance/log"
@@ -130,6 +130,24 @@ func registerHealthCheck(checks *sync.Map, name string, check HealthCheck, opts 
 			initialized               = false
 			warmupFinished            = false
 		)
+
+		hub := sentry.GetHubFromContext(ctx)
+		if hub == nil {
+			// Check the concurrency guide for more details: https://docs.sentry.io/platforms/go/concurrency/
+			hub = sentry.CurrentHub().Clone()
+			ctx = sentry.SetHubOnContext(ctx, hub)
+		}
+
+		options := []sentry.SpanOption{
+			// Set the OP based on values from https://develop.sentry.dev/sdk/performance/span-operations/
+			sentry.WithOpName("function"),
+		}
+
+		span := sentry.StartTransaction(ctx, fmt.Sprintf("BackgroundHealthCheck %s", name), options...)
+		defer span.Finish()
+
+		ctx = span.Context()
+
 		// Start first health check run instantly
 		timer := time.NewTimer(0)
 		// calculate when the warmup phase should be finished
@@ -138,13 +156,18 @@ func registerHealthCheck(checks *sync.Map, name string, check HealthCheck, opts 
 		for {
 			<-timer.C
 			func() {
-				defer errors.HandleWithCtx(ctx, fmt.Sprintf("BackgroundHealthCheck_HealthCheck %s", name))
+				healthCheckName := fmt.Sprintf("BackgroundHealthCheck_HealthCheck %s", name)
+
+				span := sentry.StartSpan(ctx, "function", sentry.WithDescription(healthCheckName))
+				defer span.Finish()
+
+				ctx := span.Context()
+
+				defer errors.HandleWithCtx(ctx, healthCheckName)
 				defer timer.Reset(hcCfg.interval)
 
 				ctx, cancel := context.WithTimeout(ctx, hcCfg.maxWait)
 				defer cancel()
-				span, ctx := opentracing.StartSpanFromContext(ctx, "BackgroundHealthCheck")
-				defer span.Finish()
 
 				if hasInitialization && !initialized {
 					if time.Since(bgState.LastChecked()) < hcCfg.initResultErrorTTL {

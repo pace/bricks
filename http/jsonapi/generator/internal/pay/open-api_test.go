@@ -4,8 +4,8 @@ package pay
 import (
 	"context"
 	errors1 "errors"
+	sentry "github.com/getsentry/sentry-go"
 	mux "github.com/gorilla/mux"
-	opentracing "github.com/opentracing/opentracing-go"
 	runtime "github.com/pace/bricks/http/jsonapi/runtime"
 	oauth2 "github.com/pace/bricks/http/oauth2"
 	oidc "github.com/pace/bricks/http/oidc"
@@ -162,8 +162,11 @@ func GetPaymentMethodsHandler(service GetPaymentMethodsHandlerService, authBacke
 		defer errors.HandleRequest("GetPaymentMethodsHandler", w, r)
 
 		// Trace the service function handler execution
-		handlerSpan, ctx := opentracing.StartSpanFromContext(r.Context(), "GetPaymentMethodsHandler")
-		defer handlerSpan.Finish()
+		span := sentry.StartSpan(r.Context(), "http.server", sentry.WithDescription("GetPaymentMethodsHandler"))
+		defer span.Finish()
+
+		ctx := span.Context()
+		r = r.WithContext(ctx)
 
 		// Setup context, response writer and request type
 		writer := getPaymentMethodsResponseWriter{
@@ -231,8 +234,11 @@ func CreatePaymentMethodSEPAHandler(service CreatePaymentMethodSEPAHandlerServic
 		r = r.WithContext(ctx)
 
 		// Trace the service function handler execution
-		handlerSpan, ctx := opentracing.StartSpanFromContext(r.Context(), "CreatePaymentMethodSEPAHandler")
-		defer handlerSpan.Finish()
+		span := sentry.StartSpan(r.Context(), "http.server", sentry.WithDescription("CreatePaymentMethodSEPAHandler"))
+		defer span.Finish()
+
+		ctx = span.Context()
+		r = r.WithContext(ctx)
 
 		// Setup context, response writer and request type
 		writer := createPaymentMethodSEPAResponseWriter{
@@ -300,8 +306,11 @@ func DeletePaymentMethodHandler(service DeletePaymentMethodHandlerService, authB
 		r = r.WithContext(ctx)
 
 		// Trace the service function handler execution
-		handlerSpan, ctx := opentracing.StartSpanFromContext(r.Context(), "DeletePaymentMethodHandler")
-		defer handlerSpan.Finish()
+		span := sentry.StartSpan(r.Context(), "http.server", sentry.WithDescription("DeletePaymentMethodHandler"))
+		defer span.Finish()
+
+		ctx = span.Context()
+		r = r.WithContext(ctx)
 
 		// Setup context, response writer and request type
 		writer := deletePaymentMethodResponseWriter{
@@ -355,8 +364,11 @@ func AuthorizePaymentMethodHandler(service AuthorizePaymentMethodHandlerService,
 		defer errors.HandleRequest("AuthorizePaymentMethodHandler", w, r)
 
 		// Trace the service function handler execution
-		handlerSpan, ctx := opentracing.StartSpanFromContext(r.Context(), "AuthorizePaymentMethodHandler")
-		defer handlerSpan.Finish()
+		span := sentry.StartSpan(r.Context(), "http.server", sentry.WithDescription("AuthorizePaymentMethodHandler"))
+		defer span.Finish()
+
+		ctx := span.Context()
+		r = r.WithContext(ctx)
 
 		// Setup context, response writer and request type
 		writer := authorizePaymentMethodResponseWriter{
@@ -413,8 +425,11 @@ func DeletePaymentTokenHandler(service DeletePaymentTokenHandlerService, authBac
 		defer errors.HandleRequest("DeletePaymentTokenHandler", w, r)
 
 		// Trace the service function handler execution
-		handlerSpan, ctx := opentracing.StartSpanFromContext(r.Context(), "DeletePaymentTokenHandler")
-		defer handlerSpan.Finish()
+		span := sentry.StartSpan(r.Context(), "http.server", sentry.WithDescription("DeletePaymentTokenHandler"))
+		defer span.Finish()
+
+		ctx := span.Context()
+		r = r.WithContext(ctx)
 
 		// Setup context, response writer and request type
 		writer := deletePaymentTokenResponseWriter{
@@ -473,8 +488,11 @@ func GetPaymentMethodsIncludingCreditCheckHandler(service GetPaymentMethodsInclu
 		defer errors.HandleRequest("GetPaymentMethodsIncludingCreditCheckHandler", w, r)
 
 		// Trace the service function handler execution
-		handlerSpan, ctx := opentracing.StartSpanFromContext(r.Context(), "GetPaymentMethodsIncludingCreditCheckHandler")
-		defer handlerSpan.Finish()
+		span := sentry.StartSpan(r.Context(), "http.server", sentry.WithDescription("GetPaymentMethodsIncludingCreditCheckHandler"))
+		defer span.Finish()
+
+		ctx := span.Context()
+		r = r.WithContext(ctx)
 
 		// Setup context, response writer and request type
 		writer := getPaymentMethodsIncludingCreditCheckResponseWriter{
@@ -526,8 +544,11 @@ func GetPaymentMethodsIncludingPaymentTokenHandler(service GetPaymentMethodsIncl
 		defer errors.HandleRequest("GetPaymentMethodsIncludingPaymentTokenHandler", w, r)
 
 		// Trace the service function handler execution
-		handlerSpan, ctx := opentracing.StartSpanFromContext(r.Context(), "GetPaymentMethodsIncludingPaymentTokenHandler")
-		defer handlerSpan.Finish()
+		span := sentry.StartSpan(r.Context(), "http.server", sentry.WithDescription("GetPaymentMethodsIncludingPaymentTokenHandler"))
+		defer span.Finish()
+
+		ctx := span.Context()
+		r = r.WithContext(ctx)
 
 		// Setup context, response writer and request type
 		writer := getPaymentMethodsIncludingPaymentTokenResponseWriter{
@@ -579,8 +600,11 @@ func ProcessPaymentHandler(service ProcessPaymentHandlerService, authBackend Aut
 		defer errors.HandleRequest("ProcessPaymentHandler", w, r)
 
 		// Trace the service function handler execution
-		handlerSpan, ctx := opentracing.StartSpanFromContext(r.Context(), "ProcessPaymentHandler")
-		defer handlerSpan.Finish()
+		span := sentry.StartSpan(r.Context(), "http.server", sentry.WithDescription("ProcessPaymentHandler"))
+		defer span.Finish()
+
+		ctx := span.Context()
+		r = r.WithContext(ctx)
 
 		// Setup context, response writer and request type
 		writer := processPaymentResponseWriter{

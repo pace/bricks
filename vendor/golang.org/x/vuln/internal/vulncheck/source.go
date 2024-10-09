@@ -17,8 +17,8 @@ import (
 )
 
 // Source detects vulnerabilities in pkgs and emits the findings to handler.
-func Source(ctx context.Context, handler govulncheck.Handler, pkgs []*packages.Package, mods []*packages.Module, cfg *govulncheck.Config, client *client.Client, graph *PackageGraph) error {
-	vr, err := source(ctx, handler, pkgs, mods, cfg, client, graph)
+func Source(ctx context.Context, handler govulncheck.Handler, cfg *govulncheck.Config, client *client.Client, graph *PackageGraph) error {
+	vr, err := source(ctx, handler, cfg, client, graph)
 	if err != nil {
 		return err
 	}
@@ -33,7 +33,7 @@ func Source(ctx context.Context, handler govulncheck.Handler, pkgs []*packages.P
 // and produces a Result that contains info on detected vulnerabilities.
 //
 // Assumes that pkgs are non-empty and belong to the same program.
-func source(ctx context.Context, handler govulncheck.Handler, pkgs []*packages.Package, mods []*packages.Module, cfg *govulncheck.Config, client *client.Client, graph *PackageGraph) (*Result, error) {
+func source(ctx context.Context, handler govulncheck.Handler, cfg *govulncheck.Config, client *client.Client, graph *PackageGraph) (*Result, error) {
 	ctx, cancel := context.WithCancel(ctx)
 	defer cancel()
 
@@ -47,23 +47,31 @@ func source(ctx context.Context, handler govulncheck.Handler, pkgs []*packages.P
 		buildErr error
 	)
 	if cfg.ScanLevel.WantSymbols() {
-		fset := pkgs[0].Fset
+		fset := graph.TopPkgs()[0].Fset
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
-			prog, ssaPkgs := buildSSA(pkgs, fset)
+			prog, ssaPkgs := buildSSA(graph.TopPkgs(), fset)
 			entries = entryPoints(ssaPkgs)
 			cg, buildErr = callGraph(ctx, prog, entries)
 		}()
 	}
 
-	mv, err := FetchVulnerabilities(ctx, client, mods)
+	if err := handler.Progress(&govulncheck.Progress{Message: fetchingVulnsMessage}); err != nil {
+		return nil, err
+	}
+
+	mv, err := FetchVulnerabilities(ctx, client, graph.Modules())
 	if err != nil {
 		return nil, err
 	}
 
 	// Emit OSV entries immediately in their raw unfiltered form.
 	if err := emitOSVs(handler, mv); err != nil {
+		return nil, err
+	}
+
+	if err := handler.Progress(&govulncheck.Progress{Message: checkingSrcVulnsMessage}); err != nil {
 		return nil, err
 	}
 
@@ -76,7 +84,7 @@ func source(ctx context.Context, handler govulncheck.Handler, pkgs []*packages.P
 		return &Result{}, nil
 	}
 
-	impVulns := importedVulnPackages(pkgs, affVulns)
+	impVulns := importedVulnPackages(affVulns, graph)
 	// Emit information on imported vulnerable packages now as
 	// call graph computation might take a while.
 	if err := emitPackageFindings(handler, impVulns); err != nil {
@@ -99,7 +107,7 @@ func source(ctx context.Context, handler govulncheck.Handler, pkgs []*packages.P
 }
 
 // importedVulnPackages detects imported vulnerable packages.
-func importedVulnPackages(pkgs []*packages.Package, affVulns affectingVulns) []*Vuln {
+func importedVulnPackages(affVulns affectingVulns, graph *PackageGraph) []*Vuln {
 	var vulns []*Vuln
 	analyzed := make(map[*packages.Package]bool) // skip analyzing the same package multiple times
 	var vulnImports func(pkg *packages.Package)
@@ -108,12 +116,12 @@ func importedVulnPackages(pkgs []*packages.Package, affVulns affectingVulns) []*
 			return
 		}
 
-		osvs := affVulns.ForPackage(pkg.PkgPath)
+		osvs := affVulns.ForPackage(pkgModPath(pkg), pkg.PkgPath)
 		// Create Vuln entry for each OSV entry for pkg.
 		for _, osv := range osvs {
 			vuln := &Vuln{
 				OSV:     osv,
-				Package: pkg,
+				Package: graph.GetPackage(pkg.PkgPath),
 			}
 			vulns = append(vulns, vuln)
 		}
@@ -124,7 +132,7 @@ func importedVulnPackages(pkgs []*packages.Package, affVulns affectingVulns) []*
 		}
 	}
 
-	for _, pkg := range pkgs {
+	for _, pkg := range graph.TopPkgs() {
 		vulnImports(pkg)
 	}
 	return vulns
@@ -137,7 +145,7 @@ func importedVulnPackages(pkgs []*packages.Package, affVulns affectingVulns) []*
 // reachable Vuln has attached FuncNode that can be upward traversed to the entry points.
 // Entry points that reach the vulnerable symbols are also returned.
 func calledVulnSymbols(sources []*ssa.Function, affVulns affectingVulns, cg *callgraph.Graph, graph *PackageGraph) ([]*FuncNode, []*Vuln) {
-	sinksWithVulns := vulnFuncs(cg, affVulns)
+	sinksWithVulns := vulnFuncs(cg, affVulns, graph)
 
 	// Compute call graph backwards reachable
 	// from vulnerable functions and methods.
@@ -264,24 +272,16 @@ func vulnCallGraph(sources []*callgraph.Node, sinks map[*callgraph.Node][]*osv.E
 }
 
 // vulnFuncs returns vulnerability information for vulnerable functions in cg.
-func vulnFuncs(cg *callgraph.Graph, affVulns affectingVulns) map[*callgraph.Node][]*osv.Entry {
+func vulnFuncs(cg *callgraph.Graph, affVulns affectingVulns, graph *PackageGraph) map[*callgraph.Node][]*osv.Entry {
 	m := make(map[*callgraph.Node][]*osv.Entry)
 	for f, n := range cg.Nodes {
-		vulns := affVulns.ForSymbol(pkgPath(f), dbFuncName(f))
+		p := pkgPath(f)
+		vulns := affVulns.ForSymbol(pkgModPath(graph.GetPackage(p)), p, dbFuncName(f))
 		if len(vulns) > 0 {
 			m[n] = vulns
 		}
 	}
 	return m
-}
-
-// pkgPath returns the path of the f's enclosing package, if any.
-// Otherwise, returns "".
-func pkgPath(f *ssa.Function) string {
-	if f.Package() != nil && f.Package().Pkg != nil {
-		return f.Package().Pkg.Path()
-	}
-	return ""
 }
 
 func createNode(nodes map[*ssa.Function]*FuncNode, f *ssa.Function, graph *PackageGraph) *FuncNode {

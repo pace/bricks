@@ -3,7 +3,7 @@ package context
 import (
 	"context"
 
-	"github.com/opentracing/opentracing-go"
+	"github.com/getsentry/sentry-go"
 	http "github.com/pace/bricks/http/middleware"
 	"github.com/pace/bricks/http/oauth2"
 	"github.com/pace/bricks/locale"
@@ -35,9 +35,9 @@ func Transfer(in context.Context) context.Context {
 }
 
 func TransferTracingContext(in, out context.Context) context.Context {
-	span := opentracing.SpanFromContext(in)
+	span := sentry.SpanFromContext(in)
 	if span != nil {
-		out = opentracing.ContextWithSpan(out, span)
+		out = span.Context()
 	}
 	return out
 }

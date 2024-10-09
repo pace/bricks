@@ -7,11 +7,11 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/getsentry/sentry-go"
 	"github.com/pace/bricks/maintenance/errors"
 	"github.com/pace/bricks/pkg/lock/redis"
 
 	exponential "github.com/jpillora/backoff"
-	"github.com/opentracing/opentracing-go"
 )
 
 type routineThatKeepsRunningOneInstance struct {
@@ -58,8 +58,10 @@ func (r *routineThatKeepsRunningOneInstance) Run(ctx context.Context) {
 // until it returns. Return the backoff duration after which another single run
 // should be performed.
 func (r *routineThatKeepsRunningOneInstance) singleRun(ctx context.Context) time.Duration {
-	span, ctx := opentracing.StartSpanFromContext(ctx, fmt.Sprintf("Routine %s", r.Name))
+	span := sentry.StartSpan(ctx, "function", sentry.WithDescription(fmt.Sprintf("Routine %s", r.Name)))
 	defer span.Finish()
+
+	ctx = span.Context()
 
 	l := redis.NewLock("routine:lock:"+r.Name, redis.SetTTL(r.lockTTL))
 	lockCtx, cancel, err := l.AcquireAndKeepUp(ctx)
