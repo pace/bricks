@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/getsentry/sentry-go"
+
 	http "github.com/pace/bricks/http/middleware"
 	"github.com/pace/bricks/http/oauth2"
 	"github.com/pace/bricks/locale"
@@ -39,6 +40,7 @@ func TransferTracingContext(in, out context.Context) context.Context {
 	if span != nil {
 		out = span.Context()
 	}
+
 	return out
 }
 
@@ -47,5 +49,6 @@ func TransferExternalDependencyContext(in, out context.Context) context.Context 
 	if edc == nil {
 		return out
 	}
+
 	return http.ContextWithExternalDependency(out, edc)
 }

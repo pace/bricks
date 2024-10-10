@@ -14,13 +14,11 @@ import (
 	"sync"
 	"time"
 
-	"github.com/getsentry/sentry-go"
-
-	"github.com/rs/zerolog"
-
 	"github.com/caarlos0/env/v10"
+	"github.com/getsentry/sentry-go"
 	"github.com/go-pg/pg"
 	"github.com/prometheus/client_golang/prometheus"
+	"github.com/rs/zerolog"
 
 	"github.com/pace/bricks/maintenance/health/servicehealthcheck"
 	"github.com/pace/bricks/maintenance/log"
@@ -34,7 +32,7 @@ type Config struct {
 	Database string `env:"POSTGRES_DB" envDefault:"postgres"`
 
 	// ApplicationName is the application name. Used in logs on Pg side.
-	// Only availaible from pg-9.0.
+	// Only available from pg-9.0.
 	ApplicationName string `env:"POSTGRES_APPLICATION_NAME" envDefault:"-"`
 	// Maximum number of retries before giving up.
 	MaxRetries int `env:"POSTGRES_MAX_RETRIES" envDefault:"5"`
@@ -133,8 +131,7 @@ func init() {
 	prometheus.MustRegister(metricQueryAffectedTotal)
 
 	// parse log Config
-	err := env.Parse(&cfg)
-	if err != nil {
+	if err := env.Parse(&cfg); err != nil {
 		log.Fatalf("Failed to parse postgres environment: %v", err)
 	}
 
@@ -169,18 +166,22 @@ var (
 // logging and metrics.
 func DefaultConnectionPool() *pg.DB {
 	var err error
+
 	defaultPoolOnce.Do(func() {
 		if defaultPool == nil {
 			defaultPool = ConnectionPool()
 			// add metrics
 			metrics := NewConnectionPoolMetrics()
 			prometheus.MustRegister(metrics)
+
 			err = metrics.ObserveRegularly(context.Background(), defaultPool, "default")
 		}
 	})
+
 	if err != nil {
 		panic(err)
 	}
+
 	return defaultPool
 }
 
@@ -231,6 +232,7 @@ func CustomConnectionPool(opts *pg.Options) *pg.DB {
 		Str("database", opts.Database).
 		Str("as", opts.ApplicationName).
 		Msg("PostgreSQL connection pool created")
+
 	db := pg.Connect(opts)
 	if cfg.LogWrite || cfg.LogRead {
 		db.OnQueryProcessed(queryLogger)
@@ -259,6 +261,7 @@ func determineQueryMode(qry string) queryMode {
 	if strings.HasPrefix(strings.ToLower(strings.TrimSpace(qry)), "select") {
 		return readMode
 	}
+
 	return writeMode
 }
 
@@ -268,16 +271,17 @@ func queryLogger(event *pg.QueryProcessedEvent) {
 		if !(cfg.LogRead || cfg.LogWrite) {
 			return
 		}
-		// we can only and should only perfom the following check if we have the information availaible
+		// we can only and should only perfom the following check if we have the information available
 		mode := determineQueryMode(q)
 		if mode == readMode && !cfg.LogRead {
 			return
 		}
+
 		if mode == writeMode && !cfg.LogWrite {
 			return
 		}
-
 	}
+
 	ctx := event.DB.Context()
 	dur := float64(time.Since(event.StartTime)) / float64(time.Millisecond)
 
@@ -310,6 +314,7 @@ func queryLogger(event *pg.QueryProcessedEvent) {
 		// this is only a display issue not a "real" issue
 		le.Msgf("%v", qe)
 	}
+
 	le.Msg(q)
 }
 
@@ -326,6 +331,7 @@ func getQueryType(s string) string {
 	if len(p) > 0 {
 		return strings.ToUpper(s[:p[0]])
 	}
+
 	return strings.ToUpper(s)
 }
 
@@ -374,5 +380,6 @@ func metricsAdapter(event *pg.QueryProcessedEvent, opts *pg.Options) {
 		metricQueryRowsTotal.With(labels).Add(float64(r.RowsReturned()))
 		metricQueryAffectedTotal.With(labels).Add(math.Max(0, float64(r.RowsAffected())))
 	}
+
 	metricQueryDurationSeconds.With(labels).Observe(dur)
 }

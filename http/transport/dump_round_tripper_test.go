@@ -5,6 +5,7 @@ package transport
 import (
 	"bytes"
 	"context"
+	"net/http"
 	"net/http/httptest"
 	"os"
 	"testing"
@@ -24,12 +25,18 @@ func TestNewDumpRoundTripperEnv(t *testing.T) {
 		rt := NewDumpRoundTripperEnv()
 		assert.NotNil(t, rt)
 
-		req := httptest.NewRequest("GET", "/foo", nil)
+		req := httptest.NewRequest(http.MethodGet, "/foo", nil)
 		req = req.WithContext(ctx)
+
 		rt.SetTransport(&transportWithResponse{})
 
-		_, err := rt.RoundTrip(req)
+		resp, err := rt.RoundTrip(req)
 		assert.NoError(t, err)
+
+		defer func() {
+			err := resp.Body.Close()
+			assert.NoError(t, err)
+		}()
 
 		assert.Equal(t, "", out.String())
 	})
@@ -40,8 +47,16 @@ func TestNewDumpRoundTripperEnvDisablePrefixBasedComplete(t *testing.T) {
 	ctx := log.Output(out).WithContext(context.Background())
 
 	require.NotPanics(t, func() {
-		defer os.Setenv("HTTP_TRANSPORT_DUMP_DISABLE_ALL_URL_PREFIX", os.Getenv("HTTP_TRANSPORT_DUMP_DISABLE_ALL_URL_PREFIX"))
-		os.Setenv("HTTP_TRANSPORT_DUMP_DISABLE_ALL_URL_PREFIX", "https://please-ignore-me")
+		oldEnv := os.Getenv("HTTP_TRANSPORT_DUMP_DISABLE_ALL_URL_PREFIX")
+
+		defer func() {
+			err := os.Setenv("HTTP_TRANSPORT_DUMP_DISABLE_ALL_URL_PREFIX", oldEnv)
+			assert.NoError(t, err)
+		}()
+
+		err := os.Setenv("HTTP_TRANSPORT_DUMP_DISABLE_ALL_URL_PREFIX", "https://please-ignore-me")
+		require.NoError(t, err)
+
 		rt, err := NewDumpRoundTripper(
 			roundTripConfigViaEnv(),
 			RoundTripConfig(
@@ -54,12 +69,20 @@ func TestNewDumpRoundTripperEnvDisablePrefixBasedComplete(t *testing.T) {
 		require.NoError(t, err)
 		assert.NotNil(t, rt)
 
-		req := httptest.NewRequest("GET", "/foo", bytes.NewBufferString("Foo"))
+		req := httptest.NewRequest(http.MethodGet, "/foo", bytes.NewBufferString("Foo"))
 		req = req.WithContext(ctx)
+
 		rt.SetTransport(&transportWithResponse{})
 
-		_, err = rt.RoundTrip(req)
-		assert.NoError(t, err)
+		{
+			resp, err := rt.RoundTrip(req)
+			assert.NoError(t, err)
+
+			defer func() {
+				err := resp.Body.Close()
+				assert.NoError(t, err)
+			}()
+		}
 
 		assert.Contains(t, out.String(), `"level":"debug"`)
 		assert.Contains(t, out.String(), `"request":"GET /foo HTTP/1.1\r\nHost: example.com\r\n\r\nFoo"`)
@@ -72,11 +95,19 @@ func TestNewDumpRoundTripperEnvDisablePrefixBasedComplete(t *testing.T) {
 
 		assert.Equal(t, "", out.String())
 
-		reqWithPrefix := httptest.NewRequest("GET", "https://please-ignore-me.org/foo/", bytes.NewBufferString("Foo"))
+		reqWithPrefix := httptest.NewRequest(http.MethodGet, "https://please-ignore-me.org/foo/", bytes.NewBufferString("Foo"))
 		reqWithPrefix = reqWithPrefix.WithContext(ctx)
 
-		_, err = rt.RoundTrip(reqWithPrefix)
-		assert.NoError(t, err)
+		{
+			resp, err := rt.RoundTrip(reqWithPrefix)
+			assert.NoError(t, err)
+
+			defer func() {
+				err := resp.Body.Close()
+				assert.NoError(t, err)
+			}()
+		}
+
 		assert.Empty(t, out.String())
 	})
 }
@@ -85,9 +116,18 @@ func TestNewDumpRoundTripperEnvDisablePrefixBasedBody(t *testing.T) {
 	out := &bytes.Buffer{}
 	ctx := log.Output(out).WithContext(context.Background())
 
+	log.Println(os.Environ())
 	require.NotPanics(t, func() {
-		defer os.Setenv("HTTP_TRANSPORT_DUMP_DISABLE_DUMP_BODY_URL_PREFIX", os.Getenv("HTTP_TRANSPORT_DUMP_DISABLE_DUMP_BODY_URL_PREFIX"))
-		os.Setenv("HTTP_TRANSPORT_DUMP_DISABLE_DUMP_BODY_URL_PREFIX", "https://please-ignore-me")
+		oldEnv := os.Getenv("HTTP_TRANSPORT_DUMP_DISABLE_DUMP_BODY_URL_PREFIX")
+
+		defer func() {
+			err := os.Setenv("HTTP_TRANSPORT_DUMP_DISABLE_DUMP_BODY_URL_PREFIX", oldEnv)
+			assert.NoError(t, err)
+		}()
+
+		err := os.Setenv("HTTP_TRANSPORT_DUMP_DISABLE_DUMP_BODY_URL_PREFIX", "https://please-ignore-me")
+		require.NoError(t, err)
+
 		rt, err := NewDumpRoundTripper(
 			roundTripConfigViaEnv(),
 			RoundTripConfig(
@@ -100,12 +140,20 @@ func TestNewDumpRoundTripperEnvDisablePrefixBasedBody(t *testing.T) {
 		require.NoError(t, err)
 		assert.NotNil(t, rt)
 
-		req := httptest.NewRequest("GET", "/foo", bytes.NewBufferString("Foo"))
+		req := httptest.NewRequest(http.MethodGet, "/foo", bytes.NewBufferString("Foo"))
 		req = req.WithContext(ctx)
+
 		rt.SetTransport(&transportWithResponse{})
 
-		_, err = rt.RoundTrip(req)
-		assert.NoError(t, err)
+		{
+			resp, err := rt.RoundTrip(req)
+			assert.NoError(t, err)
+
+			defer func() {
+				err := resp.Body.Close()
+				assert.NoError(t, err)
+			}()
+		}
 
 		assert.Contains(t, out.String(), `"level":"debug"`)
 		assert.Contains(t, out.String(), `"request":"GET /foo HTTP/1.1\r\nHost: example.com\r\n\r\nFoo"`)
@@ -118,11 +166,18 @@ func TestNewDumpRoundTripperEnvDisablePrefixBasedBody(t *testing.T) {
 
 		assert.Equal(t, "", out.String())
 
-		reqWithPrefix := httptest.NewRequest("GET", "https://please-ignore-me.org/foo/", bytes.NewBufferString("Foo"))
+		reqWithPrefix := httptest.NewRequest(http.MethodGet, "https://please-ignore-me.org/foo/", bytes.NewBufferString("Foo"))
 		reqWithPrefix = reqWithPrefix.WithContext(ctx)
 
-		_, err = rt.RoundTrip(reqWithPrefix)
-		assert.NoError(t, err)
+		{
+			resp, err := rt.RoundTrip(reqWithPrefix)
+			assert.NoError(t, err)
+
+			defer func() {
+				err := resp.Body.Close()
+				assert.NoError(t, err)
+			}()
+		}
 
 		assert.Contains(t, out.String(), `"level":"debug"`)
 		assert.Contains(t, out.String(), `"request":"GET https://please-ignore-me.org/foo/ HTTP/1.1\r\n\r\n"`)
@@ -148,12 +203,18 @@ func TestNewDumpRoundTripper(t *testing.T) {
 	)
 	require.NoError(t, err)
 
-	req := httptest.NewRequest("GET", "/foo", bytes.NewBufferString("Foo"))
+	req := httptest.NewRequest(http.MethodGet, "/foo", bytes.NewBufferString("Foo"))
 	req = req.WithContext(ctx)
+
 	rt.SetTransport(&transportWithResponse{})
 
-	_, err = rt.RoundTrip(req)
+	resp, err := rt.RoundTrip(req)
 	assert.NoError(t, err)
+
+	defer func() {
+		err := resp.Body.Close()
+		assert.NoError(t, err)
+	}()
 
 	assert.Contains(t, out.String(), `"level":"debug"`)
 	assert.Contains(t, out.String(), `"request":"GET /foo HTTP/1.1\r\nHost: example.com\r\n\r\nFoo"`)
@@ -176,13 +237,19 @@ func TestNewDumpRoundTripperRedacted(t *testing.T) {
 	)
 	require.NoError(t, err)
 
-	req := httptest.NewRequest("GET", "/foo", bytes.NewBufferString("Foo DE12345678909876543210 bar"))
+	req := httptest.NewRequest(http.MethodGet, "/foo", bytes.NewBufferString("Foo DE12345678909876543210 bar"))
 	ctx = redact.Default.WithContext(ctx)
 	req = req.WithContext(ctx)
+
 	rt.SetTransport(&transportWithResponse{})
 
-	_, err = rt.RoundTrip(req)
+	resp, err := rt.RoundTrip(req)
 	assert.NoError(t, err)
+
+	defer func() {
+		err := resp.Body.Close()
+		assert.NoError(t, err)
+	}()
 
 	assert.Contains(t, out.String(), `"level":"debug"`)
 	assert.Contains(t, out.String(), `"request":"GET /foo HTTP/1.1\r\nHost: example.com\r\n\r\nFoo ******************3210 bar"`)
@@ -203,13 +270,19 @@ func TestNewDumpRoundTripperRedactedBasicAuth(t *testing.T) {
 	)
 	require.NoError(t, err)
 
-	req := httptest.NewRequest("GET", "/foo", bytes.NewBufferString("Authorization: Basic ZGVtbzpwQDU1dzByZA=="))
+	req := httptest.NewRequest(http.MethodGet, "/foo", bytes.NewBufferString("Authorization: Basic ZGVtbzpwQDU1dzByZA=="))
 	ctx = redact.Default.WithContext(ctx)
 	req = req.WithContext(ctx)
+
 	rt.SetTransport(&transportWithResponse{})
 
-	_, err = rt.RoundTrip(req)
+	resp, err := rt.RoundTrip(req)
 	assert.NoError(t, err)
+
+	defer func() {
+		err := resp.Body.Close()
+		assert.NoError(t, err)
+	}()
 
 	assert.Contains(t, out.String(), `"level":"debug"`)
 	assert.Contains(t, out.String(), `"request":"GET /foo HTTP/1.1\r\nHost: example.com\r\n\r\n*************************************ZA=="`)
@@ -229,12 +302,18 @@ func TestNewDumpRoundTripperSimple(t *testing.T) {
 	)
 	require.NoError(t, err)
 
-	req := httptest.NewRequest("GET", "/foo", bytes.NewBufferString("Foo"))
+	req := httptest.NewRequest(http.MethodGet, "/foo", bytes.NewBufferString("Foo"))
 	req = req.WithContext(ctx)
+
 	rt.SetTransport(&transportWithResponse{})
 
-	_, err = rt.RoundTrip(req)
+	resp, err := rt.RoundTrip(req)
 	assert.NoError(t, err)
+
+	defer func() {
+		err := resp.Body.Close()
+		assert.NoError(t, err)
+	}()
 
 	assert.Contains(t, out.String(), `"level":"debug"`)
 	assert.Contains(t, out.String(), `"request":"GET /foo HTTP/1.1\r\nHost: example.com\r\n\r\n"`)
@@ -255,11 +334,16 @@ func TestNewDumpRoundTripperContextOptionsOverwrite(t *testing.T) {
 		out := &bytes.Buffer{}
 		ctx := log.Output(out).WithContext(context.Background())
 
-		req := httptest.NewRequest("GET", "/foo", bytes.NewBufferString("Foo"))
+		req := httptest.NewRequest(http.MethodGet, "/foo", bytes.NewBufferString("Foo"))
 		req = req.WithContext(ctx)
 
-		_, err = rt.RoundTrip(req)
+		resp, err := rt.RoundTrip(req)
 		require.NoError(t, err)
+
+		defer func() {
+			err := resp.Body.Close()
+			assert.NoError(t, err)
+		}()
 
 		assert.Contains(t, out.String(), `"level":"debug"`)
 		assert.Contains(t, out.String(), `"request":"GET /foo HTTP/1.1\r\nHost: example.com\r\n\r\n"`)
@@ -276,13 +360,20 @@ func TestNewDumpRoundTripperContextOptionsOverwrite(t *testing.T) {
 			WithDumpOption(DumpRoundTripperOptionResponse, false),
 		)
 		require.NoError(t, err)
+
 		ctx = CtxWithDumpRoundTripperOptions(ctx, ctxDumpOptions)
 
-		req := httptest.NewRequest("GET", "/foo", bytes.NewBufferString("Foo"))
+		req := httptest.NewRequest(http.MethodGet, "/foo", bytes.NewBufferString("Foo"))
 		req = req.WithContext(ctx)
 
-		_, err = rt.RoundTrip(req)
+		resp, err := rt.RoundTrip(req)
 		require.NoError(t, err)
+
+		defer func() {
+			err := resp.Body.Close()
+			assert.NoError(t, err)
+		}()
+
 		require.Empty(t, out.String()) // Both request and response were disabled for this request
 	})
 }
@@ -301,11 +392,16 @@ func TestNewDumpRoundTripperContextOptionsOverwriteBody(t *testing.T) {
 		out := &bytes.Buffer{}
 		ctx := log.Output(out).WithContext(context.Background())
 
-		req := httptest.NewRequest("GET", "/foo", bytes.NewBufferString("Foo"))
+		req := httptest.NewRequest(http.MethodGet, "/foo", bytes.NewBufferString("Foo"))
 		req = req.WithContext(ctx)
 
-		_, err = rt.RoundTrip(req)
+		resp, err := rt.RoundTrip(req)
 		require.NoError(t, err)
+
+		defer func() {
+			err := resp.Body.Close()
+			assert.NoError(t, err)
+		}()
 
 		assert.Contains(t, out.String(), `"level":"debug"`)
 		assert.Contains(t, out.String(), `"request":"GET /foo HTTP/1.1\r\nHost: example.com\r\n\r\nFoo"`)
@@ -321,13 +417,19 @@ func TestNewDumpRoundTripperContextOptionsOverwriteBody(t *testing.T) {
 			WithDumpOption(DumpRoundTripperOptionBody, false),
 		)
 		require.NoError(t, err)
+
 		ctx = CtxWithDumpRoundTripperOptions(ctx, ctxDumpOptions)
 
-		req := httptest.NewRequest("GET", "/foo", bytes.NewBufferString("Foo"))
+		req := httptest.NewRequest(http.MethodGet, "/foo", bytes.NewBufferString("Foo"))
 		req = req.WithContext(ctx)
 
-		_, err = rt.RoundTrip(req)
+		resp, err := rt.RoundTrip(req)
 		require.NoError(t, err)
+
+		defer func() {
+			err := resp.Body.Close()
+			assert.NoError(t, err)
+		}()
 
 		assert.Contains(t, out.String(), `"level":"debug"`)
 		assert.Contains(t, out.String(), `"request":"GET /foo HTTP/1.1\r\nHost: example.com\r\n\r\n"`)

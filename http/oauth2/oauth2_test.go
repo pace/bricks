@@ -10,8 +10,11 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"testing"
+	"time"
 
 	"github.com/gorilla/mux"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 
 	"github.com/pace/bricks/http/security"
 	"github.com/pace/bricks/maintenance/log"
@@ -58,7 +61,7 @@ func TestHandlerIntrospectErrorAsMiddleware(t *testing.T) {
 			r.Use(m.Handler)
 			r.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {})
 
-			req := httptest.NewRequest("GET", "/", nil)
+			req := httptest.NewRequest(http.MethodGet, "/", nil)
 			req.Header.Set("Authorization", "Bearer some-token")
 
 			w := httptest.NewRecorder()
@@ -66,7 +69,12 @@ func TestHandlerIntrospectErrorAsMiddleware(t *testing.T) {
 
 			resp := w.Result()
 			body, err := io.ReadAll(resp.Body)
-			resp.Body.Close()
+
+			defer func() {
+				err := resp.Body.Close()
+				assert.NoError(t, err)
+			}()
+
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -96,64 +104,77 @@ func TestAuthenticatorWithSuccess(t *testing.T) {
 		userScopes     string
 		expectedScopes string
 		active         bool
-		clientId       string
-		userId         string
+		clientID       string
+		userID         string
 	}{
 		{
 			desc:       "Tests a valid Request with OAuth2 Authentication without Scope checking",
 			active:     true,
 			userScopes: "ABC DHHG kjdk",
-			clientId:   "ClientId",
-			userId:     "UserId",
+			clientID:   "ClientId",
+			userID:     "UserId",
 		},
 		{
 			desc:           "Tests a valid Request with OAuth2 Authentication and one scope to check",
 			active:         true,
 			userScopes:     "ABC DHHG kjdk",
-			clientId:       "ClientId",
-			userId:         "UserId",
+			clientID:       "ClientId",
+			userID:         "UserId",
 			expectedScopes: "ABC",
 		},
 		{
 			desc:           "Tests a valid Request with OAuth2 Authentication and two scope to check",
 			active:         true,
 			userScopes:     "ABC DHHG kjdk",
-			clientId:       "ClientId",
-			userId:         "UserId",
+			clientID:       "ClientId",
+			userID:         "UserId",
 			expectedScopes: "ABC kjdk",
 		},
 	}
 	for _, tC := range testCases {
 		t.Run(tC.desc, func(t *testing.T) {
 			w := httptest.NewRecorder()
-			r := httptest.NewRequest("GET", "/", nil)
+			r := httptest.NewRequest(http.MethodGet, "/", nil)
 			r.Header.Add("Authorization", "Bearer bearer")
 
 			auth := NewAuthorizer(&tokenIntrospectedSuccessful{&IntrospectResponse{
 				Active:   tC.active,
 				Scope:    tC.userScopes,
-				ClientID: tC.clientId,
-				UserID:   tC.userId,
+				ClientID: tC.clientID,
+				UserID:   tC.userID,
 			}}, &Config{})
 			if tC.expectedScopes != "" {
 				auth = auth.WithScope(tC.expectedScopes)
 			}
+
 			authorize, b := auth.Authorize(r, w)
 			resp := w.Result()
 			body, err := io.ReadAll(resp.Body)
-			resp.Body.Close()
+
+			defer func() {
+				err := resp.Body.Close()
+				assert.NoError(t, err)
+			}()
+
 			if err != nil {
 				t.Fatal(err)
 			}
+
 			if !b || authorize == nil {
 				t.Errorf("Expected succesfull Authentication, but was not succesfull with code %d and body %q", resp.StatusCode, string(body))
 				return
 			}
-			to, _ := security.GetTokenFromContext(authorize)
-			tok, ok := to.(*token)
 
-			if !ok || tok.value != "bearer" || tok.scope != Scope(tC.userScopes) || tok.clientID != tC.clientId || tok.userID != tC.userId {
-				t.Errorf("Expected %v but got %v", auth.introspection.(*tokenIntrospectedSuccessful).response, tok)
+			to, _ := security.GetTokenFromContext(authorize)
+
+			tok, ok := to.(*token)
+			if !ok || tok.value != "bearer" || tok.scope != Scope(tC.userScopes) || tok.clientID != tC.clientID || tok.userID != tC.userID {
+				require.IsType(t, auth.introspection, &tokenIntrospectedSuccessful{})
+
+				tis, ok := auth.introspection.(*tokenIntrospectedSuccessful)
+				if ok {
+					t.Errorf("Expected %v but got %v", tis.response, tok)
+				}
 			}
 		})
 	}
@@ -168,23 +189,31 @@ func TestAuthenticationSuccessScopeError(t *testing.T) {
 	}}, &Config{}).WithScope("DE")
 
 	w := httptest.NewRecorder()
-	r := httptest.NewRequest("GET", "/", nil)
+	r := httptest.NewRequest(http.MethodGet, "/", nil)
 	r.Header.Add("Authorization", "Bearer bearer")
 
 	_, b := auth.Authorize(r, w)
 
 	resp := w.Result()
 	body, err := io.ReadAll(resp.Body)
-	defer resp.Body.Close()
+
+	defer func() {
+		err := resp.Body.Close()
+		assert.NoError(t, err)
+	}()
+
 	if err != nil {
 		t.Fatal(err)
 	}
+
 	if b {
 		t.Errorf("Expected error in Authentication, but was succesfull with code %d and body %v", resp.StatusCode, string(body))
 	}
+
 	if got, ex := w.Code, http.StatusForbidden; got != ex {
 		t.Errorf("Expected status code %d, got %d", ex, got)
 	}
+
 	if got, ex := string(body), "Forbidden - requires scope \"DE\"\n"; got != ex {
 		t.Errorf("Expected status code %q, got %q", ex, got)
 	}
@@ -226,18 +255,25 @@ func TestAuthenticationWithErrors(t *testing.T) {
 		t.Run(tC.desc, func(t *testing.T) {
 			auth := NewAuthorizer(&tokenInspectorWithError{returnedErr: tC.returnedErr}, &Config{})
 			w := httptest.NewRecorder()
-			r := httptest.NewRequest("GET", "/", nil)
+			r := httptest.NewRequest(http.MethodGet, "/", nil)
 			r.Header.Add("Authorization", "Bearer bearer")
+
 			_, b := auth.Authorize(r, w)
 
 			resp := w.Result()
 			body, err := io.ReadAll(resp.Body)
-			defer resp.Body.Close()
+
+			defer func() {
+				err := resp.Body.Close()
+				assert.NoError(t, err)
+			}()
+
 			if err != nil {
 				t.Fatal(err)
 			}
+
 			if b {
-				t.Errorf("Expected error in authentication, but was succesful with code %d and body %v", resp.StatusCode, string(body))
+				t.Errorf("Expected error in authentication, but was successful with code %d and body %v", resp.StatusCode, string(body))
 			}
 
 			if got, ex := w.Code, tC.expectedCode; got != ex {
@@ -266,8 +302,10 @@ func Example() {
 			if err != nil {
 				panic(err)
 			}
+
 			return
 		}
+
 		_, err := fmt.Fprintf(w, "Your client may not have the right scopes to see the secret code")
 		if err != nil {
 			panic(err)
@@ -275,8 +313,9 @@ func Example() {
 	})
 
 	srv := &http.Server{
-		Handler: r,
-		Addr:    "127.0.0.1:8000",
+		Handler:           r,
+		Addr:              "127.0.0.1:8000",
+		ReadHeaderTimeout: 30 * time.Second,
 	}
 
 	log.Fatal(srv.ListenAndServe())
@@ -290,7 +329,7 @@ func TestRequest(t *testing.T) {
 		scope:    Scope("scope1 scope2"),
 	}
 
-	r := httptest.NewRequest("GET", "http://example.com", nil)
+	r := httptest.NewRequest(http.MethodGet, "http://example.com", nil)
 	ctx := security.ContextWithToken(r.Context(), &to)
 	r = r.WithContext(ctx)
 
@@ -303,7 +342,7 @@ func TestRequest(t *testing.T) {
 }
 
 func TestRequestWithNoToken(t *testing.T) {
-	r := httptest.NewRequest("GET", "http://example.com", nil)
+	r := httptest.NewRequest(http.MethodGet, "http://example.com", nil)
 	r2 := Request(r)
 	header := r2.Header.Get("Authorization")
 
@@ -402,6 +441,7 @@ func TestUnsuccessfulAccessors(t *testing.T) {
 func TestWithBearerToken(t *testing.T) {
 	ctx := context.Background()
 	ctx = WithBearerToken(ctx, "some access token")
+
 	token, ok := security.GetTokenFromContext(ctx)
 	if !ok || token.GetValue() != "some access token" {
 		t.Error("could not store bearer token in context")
@@ -419,14 +459,17 @@ func TestAddScope(t *testing.T) {
 
 	wantCtx := context.Background()
 	wantCtx = WithBearerToken(wantCtx, "some access token")
+
 	tok, ok := security.GetTokenFromContext(wantCtx)
 	if !ok {
 		t.Error("could not get token from context")
 	}
+
 	ouathToken, ok := tok.(*token)
 	if !ok {
 		t.Error("could not convert token to oauth token")
 	}
+
 	ouathToken.scope = "scope1"
 
 	tests := []struct {
@@ -446,14 +489,17 @@ func TestAddScope(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			got := AddScope(tt.args.ctx, tt.args.scope)
+
 			gotTok, ok := security.GetTokenFromContext(got)
 			if !ok {
 				t.Error("could not get token from context")
 			}
+
 			gotOauthToken, ok := gotTok.(*token)
 			if !ok {
 				t.Error("could not convert token to oauth token")
 			}
+
 			if gotOauthToken.scope != tt.want.scope {
 				t.Errorf("AddScope() = %v, want %v", gotOauthToken.scope, tt.want.scope)
 			}

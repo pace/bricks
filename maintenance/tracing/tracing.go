@@ -8,9 +8,10 @@ import (
 	"os"
 
 	"github.com/getsentry/sentry-go"
+	"github.com/zenazn/goji/web/mutil"
+
 	"github.com/pace/bricks/maintenance/log"
 	"github.com/pace/bricks/maintenance/util"
-	"github.com/zenazn/goji/web/mutil"
 )
 
 func init() {
@@ -29,7 +30,7 @@ type traceHandler struct {
 	next http.Handler
 }
 
-// Trace the service function handler execution
+// Trace the service function handler execution.
 func (h *traceHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
@@ -74,7 +75,7 @@ type traceLogHandler struct {
 	next http.Handler
 }
 
-// Trace the service function handler execution
+// Trace the service function handler execution.
 func (h *traceLogHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 

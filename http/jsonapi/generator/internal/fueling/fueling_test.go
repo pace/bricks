@@ -3,6 +3,7 @@ package fueling
 import (
 	"context"
 	"io"
+	"net/http"
 	"net/http/httptest"
 	"strings"
 	"testing"
@@ -36,7 +37,7 @@ func (t *testService) WaitOnPumpStatusChange(context.Context, WaitOnPumpStatusCh
 func TestErrorReporting(t *testing.T) {
 	r := Router(&testService{t})
 	rec := httptest.NewRecorder()
-	req := httptest.NewRequest("POST", "/fueling/beta/gas-stations/d7101f72-a672-453c-9d36-d5809ef0ded6/approaching", strings.NewReader(`{
+	req := httptest.NewRequest(http.MethodPost, "/fueling/beta/gas-stations/d7101f72-a672-453c-9d36-d5809ef0ded6/approaching", strings.NewReader(`{
 		"data": {
 		  "type": "approaching",
 		  "id": "c3f037ea-492e-4033-9b4b-4efc7beca16c",
@@ -52,9 +53,14 @@ func TestErrorReporting(t *testing.T) {
 	r.ServeHTTP(rec, req)
 
 	resp := rec.Result()
-	defer resp.Body.Close()
+
+	defer func() {
+		err := resp.Body.Close()
+		assert.NoError(t, err)
+	}()
+
 	b, _ := io.ReadAll(resp.Body)
 
-	require.Equalf(t, 422, resp.StatusCode, "expected 422 got: %s", string(b))
-	assert.Contains(t, string(b), `can't parse content: got value \"47.8\" expected type float32: Invalid type provided`)
+	require.Equalf(t, http.StatusUnprocessableEntity, resp.StatusCode, "expected 422 got: %s", string(b))
+	assert.Contains(t, string(b), `can't parse content: got value \"47.8\" expected type float32: invalid type provided`)
 }

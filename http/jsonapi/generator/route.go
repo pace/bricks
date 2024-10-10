@@ -24,7 +24,9 @@ func (r *route) parseURL() (err error) {
 	if err != nil {
 		return
 	}
+
 	r.queryValues = r.url.Query() // cache query values
+
 	return
 }
 
@@ -45,9 +47,11 @@ func (l *sortableRouteList) Less(i, j int) bool {
 	if a, b := pathLen(elemI.url.Path), pathLen(elemJ.url.Path); a != b {
 		return a > b
 	}
+
 	if a, b := strings.Count(elemJ.url.Path, "{"), strings.Count(elemI.url.Path, "{"); a != b {
 		return a > b
 	}
+
 	return len(elemI.queryValues) > len(elemJ.queryValues)
 }
 

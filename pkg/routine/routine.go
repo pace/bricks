@@ -122,7 +122,8 @@ func Run(parentCtx context.Context, routine func(context.Context)) (cancel conte
 		defer cancel()
 		routine(ctx)
 	}()
-	return
+
+	return //nolint:nakedret
 }
 
 type ctxNumKey struct{}
@@ -139,6 +140,7 @@ var (
 func init() {
 	c := make(chan os.Signal, 1)
 	signal.Notify(c, syscall.SIGINT, syscall.SIGTERM)
+
 	go func() {
 		<-c // block until SIGINT/SIGTERM is received
 		signal.Stop(c)
@@ -150,6 +152,7 @@ func init() {
 			Int("count", len(contexts)).
 			Ints64("routines", routineNumbers()).
 			Msg("received shutdown signal, canceling all running routines")
+
 		for _, cancel := range contexts {
 			cancel()
 		}
@@ -161,5 +164,6 @@ func routineNumbers() []int64 {
 	for num := range contexts {
 		routines = append(routines, num)
 	}
+
 	return routines
 }

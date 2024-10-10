@@ -33,15 +33,17 @@ func RegisterHealthchecks() {
 	registerHealthchecks()
 }
 
-// deprecated consider using DefaultClientFromEnv
+// Client returns the default client.
+// Deprecated: consider using DefaultClientFromEnv.
 func Client() (*minio.Client, error) {
 	return DefaultClientFromEnv()
 }
 
-// Client with environment based configuration. Registers healthchecks automatically. If yo do not want to use healthchecks
+// DefaultClientFromEnv with environment based configuration. Registers healthchecks automatically. If yo do not want to use healthchecks
 // consider calling CustomClient.
 func DefaultClientFromEnv() (*minio.Client, error) {
 	registerHealthchecks()
+
 	return CustomClient(cfg.Endpoint, &minio.Options{
 		Secure:       cfg.UseSSL,
 		Region:       cfg.Region,
@@ -50,17 +52,20 @@ func DefaultClientFromEnv() (*minio.Client, error) {
 	})
 }
 
-// CustomClient with customized client
+// CustomClient with customized client.
 func CustomClient(endpoint string, opts *minio.Options) (*minio.Client, error) {
 	opts.Transport = newCustomTransport(endpoint)
+
 	client, err := minio.New(endpoint, opts)
 	if err != nil {
 		return nil, err
 	}
+
 	log.Logger().Info().Str("endpoint", endpoint).
 		Str("region", opts.Region).
 		Bool("ssl", opts.Secure).
 		Msg("S3 connection created")
+
 	return client, nil
 }
 
@@ -78,8 +83,7 @@ var register = &sync.Once{}
 func registerHealthchecks() {
 	register.Do(func() {
 		// parse log config
-		err := env.Parse(&cfg)
-		if err != nil {
+		if err := env.Parse(&cfg); err != nil {
 			log.Fatalf("Failed to parse object storage environment: %v", err)
 		}
 
@@ -94,6 +98,7 @@ func registerHealthchecks() {
 		if err != nil {
 			log.Warnf("Failed to create check for bucket: %v", err)
 		}
+
 		if !ok {
 			err := client.MakeBucket(ctx, cfg.HealthCheckBucketName, minio.MakeBucketOptions{
 				Region: cfg.Region,
@@ -102,6 +107,7 @@ func registerHealthchecks() {
 				log.Warnf("Failed to create bucket: %v", err)
 			}
 		}
+
 		servicehealthcheck.RegisterHealthCheck("objstore", &HealthCheck{
 			Client: client,
 		})

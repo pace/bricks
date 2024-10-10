@@ -8,9 +8,10 @@ import (
 	"testing"
 
 	"github.com/gorilla/mux"
-	"github.com/pace/bricks/maintenance/log"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	"github.com/pace/bricks/maintenance/log"
 )
 
 func TestRequestIDRoundTripper(t *testing.T) {
@@ -18,9 +19,16 @@ func TestRequestIDRoundTripper(t *testing.T) {
 	rt.SetTransport(&transportWithResponse{})
 
 	t.Run("without req_id", func(t *testing.T) {
-		req := httptest.NewRequest("GET", "/foo", nil)
-		_, err := rt.RoundTrip(req)
-		assert.NoError(t, err)
+		req := httptest.NewRequest(http.MethodGet, "/foo", nil)
+
+		resp, err := rt.RoundTrip(req)
+		require.NoError(t, err)
+
+		defer func() {
+			err := resp.Body.Close()
+			assert.NoError(t, err)
+		}()
+
 		assert.Empty(t, req.Header["Request-Id"])
 	})
 
@@ -34,17 +42,23 @@ func TestRequestIDRoundTripper(t *testing.T) {
 			require.Equal(t, ID, log.RequestID(r))
 			require.Equal(t, ID, log.RequestIDFromContext(r.Context()))
 
-			r1 := httptest.NewRequest("GET", "/foo", nil)
+			r1 := httptest.NewRequest(http.MethodGet, "/foo", nil)
 			r1 = r1.WithContext(r.Context())
 
-			_, err := rt.RoundTrip(r1)
-			assert.NoError(t, err)
+			resp, err := rt.RoundTrip(r1)
+			require.NoError(t, err)
+
+			defer func() {
+				err := resp.Body.Close()
+				assert.NoError(t, err)
+			}()
+
 			assert.Equal(t, []string{ID}, r1.Header["Request-Id"])
 			w.WriteHeader(http.StatusNoContent)
 		})
 
 		rec := httptest.NewRecorder()
-		req := httptest.NewRequest("GET", "/foo", nil)
+		req := httptest.NewRequest(http.MethodGet, "/foo", nil)
 		req.Header.Set("Request-Id", ID)
 		r.ServeHTTP(rec, req)
 		assert.Equal(t, http.StatusNoContent, rec.Code)

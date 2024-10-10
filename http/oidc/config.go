@@ -2,8 +2,8 @@
 
 package oidc
 
-// Config for OIDC based on swagger
+// Config for OIDC based on swagger.
 type Config struct {
 	Description      string
-	OpenIdConnectURL string `json:"openIdConnectUrl"`
+	OpenIDConnectURL string `json:"openIdConnectUrl"`
 }

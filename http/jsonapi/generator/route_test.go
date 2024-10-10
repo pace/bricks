@@ -35,16 +35,21 @@ func TestSortableRouteList(t *testing.T) {
 		"/beta/receipts/{transactionID}.{fileFormat}",
 	}
 	list := make(sortableRouteList, len(paths))
+
 	for i, path := range paths {
 		route := &route{pattern: path}
 		require.NoError(t, route.parseURL())
+
 		list[i] = route
 	}
+
 	sort.Stable(&list)
+
 	actual := make([]string, len(paths))
 	for i, route := range list {
 		actual[i] = route.pattern
 	}
+
 	assert.Equal(t, []string{
 		"/beta/payment-method-kinds/applepay/authorize",
 		"/beta/payment-methods/{paymentMethodId}/notification",

@@ -5,6 +5,7 @@ package generator
 import (
 	"fmt"
 	"io"
+	"log"
 	"net/http"
 	"net/url"
 	"os"
@@ -29,14 +30,19 @@ type Generator struct {
 	generatedArrayTypes map[string]bool
 }
 
-func loadSwaggerFromURI(loader *openapi3.SwaggerLoader, url *url.URL) (*openapi3.Swagger, error) { // nolint: interfacer
+func loadSwaggerFromURI(loader *openapi3.SwaggerLoader, url *url.URL) (*openapi3.Swagger, error) {
 	var schema *openapi3.Swagger
 
 	resp, err := http.Get(url.String())
 	if err != nil {
 		return nil, err
 	}
-	defer resp.Body.Close() // nolint: errcheck
+
+	defer func() {
+		if err := resp.Body.Close(); err != nil {
+			log.Println(err)
+		}
+	}()
 
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
@@ -52,9 +58,10 @@ func loadSwaggerFromURI(loader *openapi3.SwaggerLoader, url *url.URL) (*openapi3
 }
 
 // BuildSource generates the go code in the specified path with specified package name
-// based on the passed schema source (url or file path)
+// based on the passed schema source (url or file path).
 func (g *Generator) BuildSource(source, packagePath, packageName string) (string, error) {
 	loader := openapi3.NewSwaggerLoader()
+
 	var schema *openapi3.Swagger
 
 	if strings.HasPrefix(source, "http://") || strings.HasPrefix(source, "https://") {
@@ -69,7 +76,7 @@ func (g *Generator) BuildSource(source, packagePath, packageName string) (string
 		}
 	} else {
 		// read spec
-		data, err := os.ReadFile(source) // nolint: gosec
+		data, err := os.ReadFile(source) //nolint:gosec
 		if err != nil {
 			return "", err
 		}
@@ -85,7 +92,7 @@ func (g *Generator) BuildSource(source, packagePath, packageName string) (string
 }
 
 // BuildSchema generates the go code in the specified path with specified package name
-// based on the passed schema
+// based on the passed schema.
 func (g *Generator) BuildSchema(schema *openapi3.Swagger, packagePath, packageName string) (string, error) {
 	g.generatedTypes = make(map[string]bool)
 	g.generatedArrayTypes = make(map[string]bool)
@@ -105,8 +112,7 @@ func (g *Generator) BuildSchema(schema *openapi3.Swagger, packagePath, packageNa
 	}
 
 	for _, bf := range buildFuncs {
-		err := bf(schema)
-		if err != nil {
+		if err := bf(schema); err != nil {
 			return "", err
 		}
 	}

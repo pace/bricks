@@ -4,6 +4,7 @@ package livetest_test
 
 import (
 	"context"
+	"errors"
 	"log"
 	"time"
 
@@ -49,7 +50,7 @@ func ExampleTest() {
 			t.Errorf("formatted")
 		},
 	})
-	if err != context.DeadlineExceeded {
+	if !errors.Is(err, context.DeadlineExceeded) {
 		log.Fatal(err)
 	}
 	// Output:
