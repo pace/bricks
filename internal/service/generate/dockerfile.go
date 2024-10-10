@@ -9,22 +9,21 @@ import (
 )
 
 // DockerfileOptions configure the output of the generated docker
-// file
+// file.
 type DockerfileOptions struct {
 	Name     string
 	Commands CommandOptions
 }
 
 // Dockerfile generate a dockerfile using the given options
-// for specified path
+// for specified path.
 func Dockerfile(path string, options DockerfileOptions) {
-	f, err := os.Create(path)
+	f, err := os.Create(path) //nolint:gosec
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	err = dockerTemplate.Execute(f, options)
-	if err != nil {
+	if err := dockerTemplate.Execute(f, options); err != nil {
 		log.Fatal(err)
 	}
 }

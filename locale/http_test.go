@@ -12,7 +12,7 @@ import (
 )
 
 func TestEmptyRequest(t *testing.T) {
-	r, err := http.NewRequest("GET", "http://example.com/test", nil)
+	r, err := http.NewRequest(http.MethodGet, "http://example.com/test", nil)
 	require.NoError(t, err)
 
 	l := FromRequest(r)
@@ -21,7 +21,7 @@ func TestEmptyRequest(t *testing.T) {
 }
 
 func TestFilledRequest(t *testing.T) {
-	r, err := http.NewRequest("GET", "http://example.com/test", nil)
+	r, err := http.NewRequest(http.MethodGet, "http://example.com/test", nil)
 	require.NoError(t, err)
 	r.Header.Set(HeaderAcceptLanguage, "fr-CH, fr;q=0.9, en;q=0.8, de;q=0.7, *;q=0.5")
 	r.Header.Set(HeaderAcceptTimezone, "Europe/Paris")
@@ -33,7 +33,7 @@ func TestFilledRequest(t *testing.T) {
 
 func TestExtendRequestWithEmptyLocale(t *testing.T) {
 	l := new(Locale)
-	r, err := http.NewRequest("GET", "http://example.com/test", nil)
+	r, err := http.NewRequest(http.MethodGet, "http://example.com/test", nil)
 	require.NoError(t, err)
 
 	data, err := httputil.DumpRequest(l.Request(r), false)
@@ -44,7 +44,7 @@ func TestExtendRequestWithEmptyLocale(t *testing.T) {
 
 func TestExtendRequest(t *testing.T) {
 	l := NewLocale("fr-CH, fr;q=0.9, en;q=0.8, de;q=0.7, *;q=0.5", "Europe/Paris")
-	r, err := http.NewRequest("GET", "http://example.com/test", nil)
+	r, err := http.NewRequest(http.MethodGet, "http://example.com/test", nil)
 	require.NoError(t, err)
 
 	data, err := httputil.DumpRequest(l.Request(r), false)
@@ -64,7 +64,7 @@ func (m *httpRecorderNext) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 }
 
 func TestMiddlewareWithoutLocale(t *testing.T) {
-	r, err := http.NewRequest("GET", "http://example.com/test", nil)
+	r, err := http.NewRequest(http.MethodGet, "http://example.com/test", nil)
 	require.NoError(t, err)
 
 	rec := new(httpRecorderNext)
@@ -79,7 +79,7 @@ func TestMiddlewareWithoutLocale(t *testing.T) {
 
 func TestMiddlewareWithLocale(t *testing.T) {
 	l := NewLocale("fr-CH, fr;q=0.9, en;q=0.8, de;q=0.7, *;q=0.5", "Europe/Paris")
-	r, err := http.NewRequest("GET", "http://example.com/test", nil)
+	r, err := http.NewRequest(http.MethodGet, "http://example.com/test", nil)
 	require.NoError(t, err)
 
 	rec := new(httpRecorderNext)

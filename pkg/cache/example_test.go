@@ -27,6 +27,7 @@ func Example_inMemory() {
 	if err != nil {
 		panic(err)
 	}
+
 	fmt.Println(string(v))
 
 	// forget

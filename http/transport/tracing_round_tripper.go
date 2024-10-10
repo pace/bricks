@@ -9,22 +9,22 @@ import (
 	"github.com/getsentry/sentry-go"
 )
 
-// TracingRoundTripper implements a chainable round tripper for tracing
+// TracingRoundTripper implements a chainable round tripper for tracing.
 type TracingRoundTripper struct {
 	transport http.RoundTripper
 }
 
-// Transport returns the RoundTripper to make HTTP requests
+// Transport returns the RoundTripper to make HTTP requests.
 func (l *TracingRoundTripper) Transport() http.RoundTripper {
 	return l.transport
 }
 
-// SetTransport sets the RoundTripper to make HTTP requests
+// SetTransport sets the RoundTripper to make HTTP requests.
 func (l *TracingRoundTripper) SetTransport(rt http.RoundTripper) {
 	l.transport = rt
 }
 
-// RoundTrip executes a HTTP request with distributed tracing
+// RoundTrip executes a HTTP request with distributed tracing.
 func (l *TracingRoundTripper) RoundTrip(req *http.Request) (*http.Response, error) {
 	ctx := req.Context()
 
@@ -54,6 +54,7 @@ func (l *TracingRoundTripper) RoundTrip(req *http.Request) (*http.Response, erro
 	if attempt > 0 {
 		span.SetData("attempt", int(attempt))
 	}
+
 	if err != nil {
 		span.SetData("error", err)
 		return nil, err

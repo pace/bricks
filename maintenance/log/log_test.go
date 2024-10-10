@@ -4,12 +4,13 @@ package log
 
 import (
 	"context"
+	"net/http"
 	"net/http/httptest"
 	"testing"
 )
 
 func TestLog(t *testing.T) {
-	req := httptest.NewRequest("GET", "/", nil)
+	req := httptest.NewRequest(http.MethodGet, "/", nil)
 	if RequestID(req) != "" {
 		t.Error("Request without set error ID can't have a request id")
 	}

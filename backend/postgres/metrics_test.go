@@ -5,6 +5,7 @@ package postgres_test
 import (
 	"context"
 	"errors"
+	"net/http"
 	"net/http/httptest"
 	"testing"
 	"time"
@@ -25,6 +26,7 @@ func ExampleConnectionPoolMetrics() {
 	if err := metrics.ObserveRegularly(context.Background(), myDB, "my_db"); err != nil {
 		panic(err)
 	}
+
 	prometheus.MustRegister(metrics)
 }
 
@@ -36,6 +38,7 @@ func TestIntegrationConnectionPoolMetrics(t *testing.T) {
 	metricsRegistry := prometheus.NewRegistry()
 	metrics := NewConnectionPoolMetrics()
 	metricsRegistry.MustRegister(metrics)
+
 	db := ConnectionPool()
 	trigger := make(chan chan<- struct{})
 	err := metrics.ObserveWhenTriggered(trigger, db, "test")
@@ -44,6 +47,7 @@ func TestIntegrationConnectionPoolMetrics(t *testing.T) {
 	if _, err := db.Exec(`SELECT 1;`); err != nil {
 		t.Fatalf("could not query postgres database: %s", err)
 	}
+
 	whenDone := make(chan struct{})
 	select {
 	case trigger <- whenDone:
@@ -58,7 +62,8 @@ func TestIntegrationConnectionPoolMetrics(t *testing.T) {
 	// query metrics
 	resp := httptest.NewRecorder()
 	handler := promhttp.HandlerFor(metricsRegistry, promhttp.HandlerOpts{})
-	handler.ServeHTTP(resp, httptest.NewRequest("GET", "/metrics", nil))
+	handler.ServeHTTP(resp, httptest.NewRequest(http.MethodGet, "/metrics", nil))
+
 	body := resp.Body.String()
 	assert.Regexp(t, `pace_postgres_connection_pool_hits.*?\Wpool="test"\W`, body)
 	assert.Regexp(t, `pace_postgres_connection_pool_misses.*?\Wpool="test"\W`, body)

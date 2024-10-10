@@ -15,7 +15,7 @@ import (
 
 const maxRetries = 9
 
-// RetryRoundTripper implements a chainable round tripper for retrying requests
+// RetryRoundTripper implements a chainable round tripper for retrying requests.
 type RetryRoundTripper struct {
 	retryTransport *rehttp.Transport
 	transport      http.RoundTripper
@@ -24,17 +24,14 @@ type RetryRoundTripper struct {
 // RetryNetErr retries errors returned by the 'net' package.
 func RetryNetErr() rehttp.RetryFn {
 	return func(attempt rehttp.Attempt) bool {
-		if _, isNetError := attempt.Error.(*net.OpError); isNetError {
-			return true
-		}
-		return false
+		return errors.Is(attempt.Error, &net.OpError{})
 	}
 }
 
-// RetryEOFErr retries only when the error is EOF
+// RetryEOFErr retries only when the error is EOF.
 func RetryEOFErr() rehttp.RetryFn {
 	return func(attempt rehttp.Attempt) bool {
-		return attempt.Error == io.EOF
+		return errors.Is(attempt.Error, io.EOF)
 	}
 }
 
@@ -81,23 +78,24 @@ func (rt *retryWrappedTransport) RoundTrip(r *http.Request) (*http.Response, err
 	return rt.transport.RoundTrip(r)
 }
 
-// Transport returns the RoundTripper to make HTTP requests
+// Transport returns the RoundTripper to make HTTP requests.
 func (l *RetryRoundTripper) Transport() http.RoundTripper {
 	return l.transport
 }
 
-// SetTransport sets the RoundTripper to make HTTP requests
+// SetTransport sets the RoundTripper to make HTTP requests.
 func (l *RetryRoundTripper) SetTransport(rt http.RoundTripper) {
 	l.transport = rt
 }
 
-// RoundTrip executes a HTTP request with retrying
+// RoundTrip executes a HTTP request with retrying.
 func (l *RetryRoundTripper) RoundTrip(req *http.Request) (*http.Response, error) {
 	retryTransport := *l.retryTransport
 	wrappedTransport := &retryWrappedTransport{
 		transport: transportWithAttempt(l.Transport()),
 	}
 	retryTransport.RoundTripper = wrappedTransport
+
 	resp, err := retryTransport.RoundTrip(req)
 	if err != nil {
 		return nil, err

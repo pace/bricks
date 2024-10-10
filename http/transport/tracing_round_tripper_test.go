@@ -9,9 +9,10 @@ import (
 	"testing"
 
 	"github.com/getsentry/sentry-go"
-	_ "github.com/pace/bricks/maintenance/tracing"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	_ "github.com/pace/bricks/maintenance/tracing"
 )
 
 func TestTracingRoundTripper(t *testing.T) {
@@ -26,9 +27,9 @@ func TestTracingRoundTripper(t *testing.T) {
 		tr := &recordingTransportWithResponse{statusCode: 202}
 		l.SetTransport(tr)
 
-		req := httptest.NewRequest("GET", "/foo", nil)
+		req := httptest.NewRequest(http.MethodGet, "/foo", nil)
 
-		_, err := l.RoundTrip(req)
+		_, err := l.RoundTrip(req) //nolint:bodyclose
 		require.NoError(t, err)
 
 		require.NotNil(t, tr.span)
@@ -49,8 +50,8 @@ func TestTracingRoundTripper(t *testing.T) {
 		tr := &recordingTransportWithError{err: e}
 		l.SetTransport(tr)
 
-		req := httptest.NewRequest("GET", "/bar", nil)
-		_, err := l.RoundTrip(req)
+		req := httptest.NewRequest(http.MethodGet, "/bar", nil)
+		_, err := l.RoundTrip(req) //nolint:bodyclose
 
 		assert.Equal(t, err, e)
 		assert.Equal(t, "GET /bar", tr.span.Name)
@@ -65,10 +66,15 @@ func TestTracingRoundTripper(t *testing.T) {
 		l := Chain(NewDefaultRetryRoundTripper(), &TracingRoundTripper{})
 		l.Final(tr)
 
-		req := httptest.NewRequest("GET", "/bar", nil)
+		req := httptest.NewRequest(http.MethodGet, "/bar", nil)
 
-		_, err := l.RoundTrip(req)
+		resp, err := l.RoundTrip(req)
 		require.NoError(t, err)
+
+		defer func() {
+			err := resp.Body.Close()
+			assert.NoError(t, err)
+		}()
 
 		span := sentry.TransactionFromContext(tr.ctx)
 		require.NotNil(t, span)

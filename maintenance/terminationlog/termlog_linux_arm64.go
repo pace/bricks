@@ -12,7 +12,7 @@ import (
 	"syscall"
 )
 
-// termLog default location of kubernetes termination log
+// termLog default location of kubernetes termination log.
 const termLog = "/dev/termination-log"
 
 func init() {
@@ -22,6 +22,6 @@ func init() {
 		logFile = file
 
 		// redirect stderr to the termLog
-		syscall.Dup3(int(logFile.Fd()), 2, 0) // nolint: errcheck
+		syscall.Dup3(int(logFile.Fd()), 2, 0)
 	}
 }

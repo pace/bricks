@@ -4,7 +4,7 @@
 package jsonapi
 
 const (
-	// StructTag annotation strings
+	// StructTag annotation strings.
 	annotationJSONAPI   = "jsonapi"
 	annotationPrimary   = "primary"
 	annotationClientID  = "client-id"
@@ -26,33 +26,33 @@ const (
 	// http://jsonapi.org/format/#fetching-pagination
 
 	// KeyFirstPage is the key to the links object whose value contains a link to
-	// the first page of data
+	// the first page of data.
 	KeyFirstPage = "first"
 	// KeyLastPage is the key to the links object whose value contains a link to
-	// the last page of data
+	// the last page of data.
 	KeyLastPage = "last"
 	// KeyPreviousPage is the key to the links object whose value contains a link
-	// to the previous page of data
+	// to the previous page of data.
 	KeyPreviousPage = "prev"
 	// KeyNextPage is the key to the links object whose value contains a link to
-	// the next page of data
+	// the next page of data.
 	KeyNextPage = "next"
 
 	// QueryParamPageNumber is a JSON API query parameter used in a page based
-	// pagination strategy in conjunction with QueryParamPageSize
+	// pagination strategy in conjunction with QueryParamPageSize.
 	QueryParamPageNumber = "page[number]"
 	// QueryParamPageSize is a JSON API query parameter used in a page based
-	// pagination strategy in conjunction with QueryParamPageNumber
+	// pagination strategy in conjunction with QueryParamPageNumber.
 	QueryParamPageSize = "page[size]"
 
 	// QueryParamPageOffset is a JSON API query parameter used in an offset based
-	// pagination strategy in conjunction with QueryParamPageLimit
+	// pagination strategy in conjunction with QueryParamPageLimit.
 	QueryParamPageOffset = "page[offset]"
 	// QueryParamPageLimit is a JSON API query parameter used in an offset based
-	// pagination strategy in conjunction with QueryParamPageOffset
+	// pagination strategy in conjunction with QueryParamPageOffset.
 	QueryParamPageLimit = "page[limit]"
 
 	// QueryParamPageCursor is a JSON API query parameter used with a cursor-based
-	// strategy
+	// strategy.
 	QueryParamPageCursor = "page[cursor]"
 )

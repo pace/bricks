@@ -29,6 +29,7 @@ func ContextTransfer(ctx, targetCtx context.Context) context.Context {
 	if r := requestFromContext(ctx); r != nil {
 		return contextWithRequest(targetCtx, r)
 	}
+
 	return targetCtx
 }
 
@@ -44,8 +45,11 @@ func contextWithRequest(ctx context.Context, ctxReq *ctxRequest) context.Context
 
 func requestFromContext(ctx context.Context) *ctxRequest {
 	if v := ctx.Value((*ctxRequest)(nil)); v != nil {
-		return v.(*ctxRequest)
+		if request, ok := v.(*ctxRequest); ok {
+			return request
+		}
 	}
+
 	return nil
 }
 
@@ -67,21 +71,26 @@ func GetXForwardedForHeaderFromContext(ctx context.Context) (string, error) {
 	if ctxReq == nil {
 		return "", fmt.Errorf("getting request from context: %w", ErrNotFound)
 	}
+
 	xForwardedFor := ctxReq.XForwardedFor
+
 	ip, _, err := net.SplitHostPort(ctxReq.RemoteAddr)
 	if err != nil {
 		return "", fmt.Errorf(
-			"%w (from context): could not get ip from remote address: %s",
+			"%w (from context): could not get ip from remote address: %w",
 			ErrInvalidRequest, err)
 	}
+
 	if ip == "" {
 		return "", fmt.Errorf(
 			"%w (from context): could not get ip from remote address: %q",
 			ErrInvalidRequest, ctxReq.RemoteAddr)
 	}
+
 	if xForwardedFor != "" {
 		xForwardedFor += ", "
 	}
+
 	return xForwardedFor + ip, nil
 }
 
@@ -93,5 +102,6 @@ func GetUserAgentFromContext(ctx context.Context) (string, error) {
 	if ctxReq == nil {
 		return "", fmt.Errorf("getting request from context: %w", ErrNotFound)
 	}
+
 	return ctxReq.UserAgent, nil
 }

@@ -21,6 +21,7 @@ func (t *mockHealthCheck) Init(_ context.Context) error {
 	if t.initErr {
 		return errors.New("initError")
 	}
+
 	return nil
 }
 
@@ -28,5 +29,6 @@ func (t *mockHealthCheck) HealthCheck(_ context.Context) HealthCheckResult {
 	if t.healthCheckErr {
 		return HealthCheckResult{State: Err, Msg: "healthCheckErr"}
 	}
+
 	return HealthCheckResult{State: Ok}
 }

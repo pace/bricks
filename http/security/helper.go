@@ -20,7 +20,7 @@ func (ts TokenString) GetValue() string {
 	return string(ts)
 }
 
-// prefix of the Authorization header
+// prefix of the Authorization header.
 const headerPrefix = "Bearer "
 
 var tokenKey = ctx("Token")
@@ -34,10 +34,11 @@ func GetBearerTokenFromHeader(authHeader string) string {
 	if !hasPrefix {
 		return ""
 	}
+
 	return strings.TrimPrefix(authHeader, headerPrefix)
 }
 
-// ContextWithToken creates a new Context with the token
+// ContextWithToken creates a new Context with the token.
 func ContextWithToken(targetCtx context.Context, token Token) context.Context {
 	return context.WithValue(targetCtx, tokenKey, token)
 }
@@ -48,11 +49,13 @@ func GetTokenFromContext(ctx context.Context) (Token, bool) {
 	if val == nil {
 		return nil, false
 	}
+
 	tok, ok := val.(Token)
+
 	return tok, ok
 }
 
-// GetAuthHeader creates the valid value for the authentication header
+// GetAuthHeader creates the valid value for the authentication header.
 func GetAuthHeader(tok Token) string {
 	return headerPrefix + tok.GetValue()
 }

@@ -2,7 +2,7 @@
 
 package redact
 
-// redactionSafe last 4 digits are usually concidered safe (e.g. credit cards, iban, ...)
+// redactionSafe last 4 digits are usually considered safe (e.g. credit cards, iban, ...)
 const redactionSafe = 4
 
 var Default *PatternRedactor
