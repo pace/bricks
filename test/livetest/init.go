@@ -40,8 +40,7 @@ func init() {
 	prometheus.MustRegister(paceLivetestDurationSeconds)
 
 	// parse log config
-	err := env.Parse(&cfg)
-	if err != nil {
+	if err := env.Parse(&cfg); err != nil {
 		log.Fatalf("Failed to parse livetest environment: %v", err)
 	}
 }

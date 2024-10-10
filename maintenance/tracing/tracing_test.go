@@ -7,10 +7,11 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/pace/bricks/maintenance/util"
+	"github.com/gorilla/mux"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/gorilla/mux"
+	"github.com/pace/bricks/maintenance/util"
 )
 
 func TestHandlerIgnore(t *testing.T) {
@@ -19,7 +20,7 @@ func TestHandlerIgnore(t *testing.T) {
 	r.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {})
 
 	rec := httptest.NewRecorder()
-	req := httptest.NewRequest("GET", "/test", nil)
+	req := httptest.NewRequest(http.MethodGet, "/test", nil)
 
 	// This test does not tests if any prefix is ignored
 	r.ServeHTTP(rec, req)
@@ -29,14 +30,20 @@ func TestHandler(t *testing.T) {
 	r := mux.NewRouter()
 	r.Use(Handler())
 	r.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		w.WriteHeader(200)
+		w.WriteHeader(http.StatusOK)
 	})
 
 	rec := httptest.NewRecorder()
-	req := httptest.NewRequest("GET", "/", nil)
+	req := httptest.NewRequest(http.MethodGet, "/", nil)
 
 	r.ServeHTTP(rec, req)
 
+	resp := rec.Result()
+	defer func() {
+		err := resp.Body.Close()
+		assert.NoError(t, err)
+	}()
+
 	// This test does not tests the tracing
-	require.Equal(t, 200, rec.Result().StatusCode)
+	require.Equal(t, http.StatusOK, resp.StatusCode)
 }

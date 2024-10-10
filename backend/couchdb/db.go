@@ -64,6 +64,7 @@ func clientAndDB(ctx context.Context, dbName string, cfg *Config) (*kivik.Client
 	if db.Err() != nil {
 		return nil, nil, db.Err()
 	}
+
 	return client, db, err
 }
 
@@ -74,6 +75,7 @@ func Client(cfg *Config) (*kivik.Client, error) {
 	if err != nil {
 		return nil, err
 	}
+
 	rts := []transport.ChainableRoundTripper{
 		&AuthTransport{
 			Username: cfg.User,
@@ -84,10 +86,11 @@ func Client(cfg *Config) (*kivik.Client, error) {
 	if !cfg.DisableRequestLogging {
 		rts = append(rts, &transport.LoggingRoundTripper{})
 	}
+
 	chain := transport.Chain(rts...)
 	tr := couchdb.SetTransport(chain)
-	err = client.Authenticate(ctx, tr)
-	if err != nil {
+
+	if err := client.Authenticate(ctx, tr); err != nil {
 		return nil, err
 	}
 
@@ -96,9 +99,10 @@ func Client(cfg *Config) (*kivik.Client, error) {
 
 func ParseConfig() (*Config, error) {
 	var cfg Config
-	err := env.Parse(&cfg)
-	if err != nil {
+
+	if err := env.Parse(&cfg); err != nil {
 		return nil, err
 	}
+
 	return &cfg, nil
 }

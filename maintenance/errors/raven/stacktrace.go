@@ -32,6 +32,7 @@ func (s *Stacktrace) Culprit() string {
 			return frame.Module + "." + frame.Function
 		}
 	}
+
 	return ""
 }
 
@@ -51,28 +52,33 @@ type StacktraceFrame struct {
 	InApp        bool     `json:"in_app"`
 }
 
-// Try to get stacktrace from err as an interface of github.com/pkg/errors, or else NewStacktrace()
+// Try to get stacktrace from err as an interface of github.com/pkg/errors, or else NewStacktrace().
 func GetOrNewStacktrace(err error, skip int, context int, appPackagePrefixes []string) *Stacktrace {
 	stacktracer, errHasStacktrace := err.(interface {
 		StackTrace() errors.StackTrace
 	})
 	if errHasStacktrace {
 		var frames []*StacktraceFrame
+
 		for _, f := range stacktracer.StackTrace() {
 			pc := uintptr(f) - 1
 			fn := runtime.FuncForPC(pc)
+
 			var file string
+
 			var line int
 			if fn != nil {
 				file, line = fn.FileLine(pc)
 			} else {
 				file = "unknown"
 			}
+
 			frame := NewStacktraceFrame(pc, file, line, context, appPackagePrefixes)
 			if frame != nil {
 				frames = append([]*StacktraceFrame{frame}, frames...)
 			}
 		}
+
 		return &Stacktrace{Frames: frames}
 	} else {
 		return NewStacktrace(skip+1, context, appPackagePrefixes)
@@ -89,11 +95,13 @@ func GetOrNewStacktrace(err error, skip int, context int, appPackagePrefixes []s
 // be considered "in app".
 func NewStacktrace(skip int, context int, appPackagePrefixes []string) *Stacktrace {
 	var frames []*StacktraceFrame
+
 	for i := 1 + skip; ; i++ {
 		pc, file, line, ok := runtime.Caller(i)
 		if !ok {
 			break
 		}
+
 		frame := NewStacktraceFrame(pc, file, line, context, appPackagePrefixes)
 		if frame != nil {
 			frames = append(frames, frame)
@@ -111,6 +119,7 @@ func NewStacktrace(skip int, context int, appPackagePrefixes []string) *Stacktra
 	for i, j := 0, len(frames)-1; i < j; i, j = i+1, j-1 {
 		frames[i], frames[j] = frames[j], frames[i]
 	}
+
 	return &Stacktrace{frames}
 }
 
@@ -162,6 +171,7 @@ func NewStacktraceFrame(pc uintptr, file string, line, context int, appPackagePr
 			frame.ContextLine = string(contextLine[0])
 		}
 	}
+
 	return frame
 }
 
@@ -199,6 +209,7 @@ var (
 func fileContext(filename string, line, context int) ([][]byte, int) {
 	fileCacheLock.Lock()
 	defer fileCacheLock.Unlock()
+
 	lines, ok := fileCache[filename]
 	if !ok {
 		data, err := os.ReadFile(filename)
@@ -209,6 +220,7 @@ func fileContext(filename string, line, context int) ([][]byte, int) {
 			fileCache[filename] = nil
 			return nil, 0
 		}
+
 		lines = bytes.Split(data, []byte{'\n'})
 		fileCache[filename] = lines
 	}
@@ -220,32 +232,39 @@ func fileContext(filename string, line, context int) ([][]byte, int) {
 
 	line-- // stack trace lines are 1-indexed
 	start := line - context
+
 	var idx int
+
 	if start < 0 {
 		start = 0
 		idx = line
 	} else {
 		idx = context
 	}
+
 	end := line + context + 1
+
 	if line >= len(lines) {
 		return nil, 0
 	}
+
 	if end > len(lines) {
 		end = len(lines)
 	}
+
 	return lines[start:end], idx
 }
 
 var trimPaths []string
 
-// Try to trim the GOROOT or GOPATH prefix off of a filename
+// Try to trim the GOROOT or GOPATH prefix off of a filename.
 func trimPath(filename string) string {
 	for _, prefix := range trimPaths {
 		if trimmed := strings.TrimPrefix(filename, prefix); len(trimmed) < len(filename) {
 			return trimmed
 		}
 	}
+
 	return filename
 }
 
@@ -256,6 +275,7 @@ func init() {
 		if prefix[len(prefix)-1] != filepath.Separator {
 			prefix += string(filepath.Separator)
 		}
+
 		trimPaths = append(trimPaths, prefix)
 	}
 }

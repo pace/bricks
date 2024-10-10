@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/go-pg/pg/orm"
+
 	"github.com/pace/bricks/maintenance/health/servicehealthcheck"
 )
 
@@ -21,7 +22,7 @@ type postgresQueryExecutor interface {
 	Exec(ctx context.Context, query interface{}, params ...interface{}) (res orm.Result, err error)
 }
 
-// Init initializes the test table
+// Init initializes the test table.
 func (h *HealthCheck) Init(ctx context.Context) error {
 	_, errWrite := h.Pool.Exec(ctx, `CREATE TABLE IF NOT EXISTS `+cfg.HealthCheckTableName+`(ok boolean);`)
 	return errWrite
@@ -55,6 +56,7 @@ func (h *HealthCheck) HealthCheck(ctx context.Context) servicehealthcheck.Health
 	}
 	// If no error occurred set the State of this Health Check to healthy
 	h.state.SetHealthy()
+
 	return h.state.GetState()
 }
 

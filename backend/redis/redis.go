@@ -70,8 +70,7 @@ func init() {
 	prometheus.MustRegister(paceRedisCmdDurationSeconds)
 
 	// parse log config
-	err := env.Parse(&cfg)
-	if err != nil {
+	if err := env.Parse(&cfg); err != nil {
 		log.Fatalf("Failed to parse redis environment: %v", err)
 	}
 
@@ -80,7 +79,7 @@ func init() {
 	})
 }
 
-// Client with environment based configuration
+// Client with environment based configuration.
 func Client(overwriteOpts ...func(*redis.Options)) *redis.Client {
 	opts := &redis.Options{
 		Addr:            cfg.Addrs[0],
@@ -106,14 +105,14 @@ func Client(overwriteOpts ...func(*redis.Options)) *redis.Client {
 	return CustomClient(opts)
 }
 
-// CustomClient with passed configuration
+// CustomClient with passed configuration.
 func CustomClient(opts *redis.Options) *redis.Client {
 	log.Logger().Info().Str("addr", opts.Addr).
 		Msg("Redis connection pool created")
 	return redis.NewClient(opts)
 }
 
-// ClusterClient with environment based configuration
+// ClusterClient with environment based configuration.
 func ClusterClient() *redis.ClusterClient {
 	return CustomClusterClient(&redis.ClusterOptions{
 		Addrs:           cfg.Addrs,
@@ -132,20 +131,20 @@ func ClusterClient() *redis.ClusterClient {
 	})
 }
 
-// CustomClusterClient with passed configuration
+// CustomClusterClient with passed configuration.
 func CustomClusterClient(opts *redis.ClusterOptions) *redis.ClusterClient {
 	log.Logger().Info().Strs("addrs", opts.Addrs).
 		Msg("Redis cluster connection pool created")
 	return redis.NewClusterClient(opts)
 }
 
-// WithContext adds a logging and tracing wrapper to the passed client
+// WithContext adds a logging and tracing wrapper to the passed client.
 func WithContext(ctx context.Context, c *redis.Client) *redis.Client {
 	c.AddHook(&logtracer{})
 	return c
 }
 
-// WithClusterContext adds a logging and tracing wrapper to the passed client
+// WithClusterContext adds a logging and tracing wrapper to the passed client.
 func WithClusterContext(ctx context.Context, c *redis.ClusterClient) *redis.ClusterClient {
 	c.AddHook(&logtracer{})
 	return c
@@ -160,11 +159,11 @@ type logtracerValues struct {
 	span      *sentry.Span
 }
 
-func (lt *logtracer) DialHook(next redis.DialHook) redis.DialHook {
+func (l *logtracer) DialHook(next redis.DialHook) redis.DialHook {
 	return next
 }
 
-func (lt *logtracer) ProcessHook(next redis.ProcessHook) redis.ProcessHook {
+func (l *logtracer) ProcessHook(next redis.ProcessHook) redis.ProcessHook {
 	return func(ctx context.Context, cmd redis.Cmder) error {
 		startedAt := time.Now()
 
@@ -186,8 +185,12 @@ func (lt *logtracer) ProcessHook(next redis.ProcessHook) redis.ProcessHook {
 
 		_ = next(ctx, cmd)
 
-		vals := ctx.Value(logtracerKey{}).(*logtracerValues)
-		le := log.Ctx(ctx).Debug().Str("cmd", cmd.Name()).Str("sentry:category", "redis")
+		vals, ok := ctx.Value(logtracerKey{}).(*logtracerValues)
+		if !ok {
+			vals = &logtracerValues{}
+		}
+
+		le := log.Ctx(ctx).Debug().Str("cmd", cmd.Name()).Str("sentry:category", "redis") //nolint:zerologlint
 
 		// add error
 		cmdErr := cmd.Err()

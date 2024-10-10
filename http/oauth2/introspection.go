@@ -7,22 +7,22 @@ import (
 	"errors"
 )
 
-// TokenIntrospecter needs to be implemented for token lookup
+// TokenIntrospecter needs to be implemented for token lookup.
 type TokenIntrospecter interface {
 	IntrospectToken(ctx context.Context, token string) (*IntrospectResponse, error)
 }
 
-// ErrInvalidToken in case the token is not valid or expired
+// ErrInvalidToken in case the token is not valid or expired.
 var ErrInvalidToken = errors.New("user token is invalid")
 
-// ErrUpstreamConnection connection issue
+// ErrUpstreamConnection connection issue.
 var ErrUpstreamConnection = errors.New("problem connecting to the introspection endpoint")
 
-// ErrBadUpstreamResponse the response from the server has the wrong format
+// ErrBadUpstreamResponse the response from the server has the wrong format.
 var ErrBadUpstreamResponse = errors.New("bad upstream response when introspecting token")
 
 // IntrospectResponse in case of a successful check of the
-// oauth2 request
+// oauth2 request.
 type IntrospectResponse struct {
 	Active   bool   `json:"active"`
 	Scope    string `json:"scope"`

@@ -75,6 +75,7 @@ func NewConnectionPoolMetrics() *ConnectionPoolMetrics {
 			[]string{"database", "pool"},
 		),
 	}
+
 	return &m
 }
 
@@ -121,7 +122,9 @@ func (m *ConnectionPoolMetrics) ObserveRegularly(ctx context.Context, db *pg.DB,
 	// cleaning up the related resources.
 	go func() {
 		ticker := time.NewTicker(time.Minute)
+
 		defer close(trigger)
+
 		for {
 			select {
 			case <-ticker.C:
@@ -143,7 +146,7 @@ func (m *ConnectionPoolMetrics) ObserveRegularly(ctx context.Context, db *pg.DB,
 }
 
 // ObserveWhenTriggered starts observing the given postgres pool. The pool name
-// behaves as decribed for the ObserveRegularly method. The metrics are observed
+// behaves as described for the ObserveRegularly method. The metrics are observed
 // for every emitted value from the trigger channel. The trigger channel allows
 // passing a response channel that will be closed once the metrics were
 // collected. It is also possible to pass nil. You should close the trigger
@@ -152,13 +155,16 @@ func (m *ConnectionPoolMetrics) ObserveWhenTriggered(trigger <-chan chan<- struc
 	// check that pool name is unique
 	m.poolMetricsMx.Lock()
 	defer m.poolMetricsMx.Unlock()
+
 	if _, ok := m.poolMetrics[poolName]; ok {
 		return fmt.Errorf("invalid pool name: %q: %w", poolName, ErrNotUnique)
 	}
+
 	m.poolMetrics[poolName] = struct{}{}
 
 	// start goroutine
 	go m.gatherConnectionPoolMetrics(trigger, db, poolName)
+
 	return nil
 }
 
@@ -188,6 +194,7 @@ func (m *ConnectionPoolMetrics) gatherConnectionPoolMetrics(trigger <-chan chan<
 		if done != nil {
 			close(done)
 		}
+
 		prevStats = *stats
 	}
 }

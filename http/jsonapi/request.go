@@ -18,47 +18,49 @@ import (
 )
 
 const (
-	unsupportedStructTagMsg = "Unsupported jsonapi tag annotation, %s"
+	unsupportedStructTagMsg = "unsupported jsonapi tag annotation, %s"
 )
 
 var (
 	// ErrInvalidTime is returned when a struct has a time.Time type field, but
 	// the JSON value was not a unix timestamp integer.
-	ErrInvalidTime = errors.New("Only numbers can be parsed as dates, unix timestamps")
+	ErrInvalidTime = errors.New("only numbers can be parsed as dates, unix timestamps")
 	// ErrInvalidISO8601 is returned when a struct has a time.Time type field and includes
 	// "iso8601" in the tag spec, but the JSON value was not an ISO8601 timestamp string.
-	ErrInvalidISO8601 = errors.New("Only strings can be parsed as dates, ISO8601 timestamps")
+	ErrInvalidISO8601 = errors.New("only strings can be parsed as dates, ISO8601 timestamps")
 	// ErrUnknownFieldNumberType is returned when the JSON value was a float
 	// (numeric) but the Struct field was a non numeric type (i.e. not int, uint,
-	// float, etc)
-	ErrUnknownFieldNumberType = errors.New("The struct field was not of a known number type")
+	// float, etc).
+	ErrUnknownFieldNumberType = errors.New("the struct field was not of a known number type")
 	// ErrInvalidType is returned when the given type is incompatible with the expected type.
-	ErrInvalidType = errors.New("Invalid type provided") // I wish we used punctuation.
+	ErrInvalidType = errors.New("invalid type provided") // I wish we used punctuation.
 
 )
 
-// ErrUnsupportedPtrType is returned when the Struct field was a pointer but
-// the JSON value was of a different type
-type ErrUnsupportedPtrType struct {
+// UnsupportedPtrTypeError is returned when the Struct field was a pointer but
+// the JSON value was of a different type.
+type UnsupportedPtrTypeError struct {
 	rf          reflect.Value
 	t           reflect.Type
 	structField reflect.StructField
 }
 
-func (eupt ErrUnsupportedPtrType) Error() string {
+func (eupt UnsupportedPtrTypeError) Error() string {
 	typeName := eupt.t.Elem().Name()
 	kind := eupt.t.Elem().Kind()
+
 	if kind.String() != "" && kind.String() != typeName {
 		typeName = fmt.Sprintf("%s (%s)", typeName, kind.String())
 	}
+
 	return fmt.Sprintf(
 		"jsonapi: Can't unmarshal %+v (%s) to struct field `%s`, which is a pointer to `%s`",
 		eupt.rf, eupt.rf.Type().Kind(), eupt.structField.Name, typeName,
 	)
 }
 
-func newErrUnsupportedPtrType(rf reflect.Value, t reflect.Type, structField reflect.StructField) error {
-	return ErrUnsupportedPtrType{rf, t, structField}
+func newErrUnsupportedPtrType(rf reflect.Value, t reflect.Type, structField reflect.StructField) UnsupportedPtrTypeError {
+	return UnsupportedPtrTypeError{rf, t, structField}
 }
 
 // UnmarshalPayload converts an io into a struct instance using jsonapi tags on
@@ -83,7 +85,7 @@ func newErrUnsupportedPtrType(rf reflect.Value, t reflect.Type, structField refl
 //		// ...do stuff with your blog...
 //
 //		w.Header().Set("Content-Type", jsonapi.MediaType)
-//		w.WriteHeader(201)
+//		w.WriteHeader(http.StatusCreated)
 //
 //		if err := jsonapi.MarshalPayload(w, blog); err != nil {
 //			http.Error(w, err.Error(), 500)
@@ -102,6 +104,7 @@ func UnmarshalPayload(in io.Reader, model interface{}) error {
 
 	if payload.Included != nil {
 		includedMap := make(map[string]*Node)
+
 		for _, included := range payload.Included {
 			key := fmt.Sprintf("%s,%s", included.Type, included.ID)
 			includedMap[key] = included
@@ -109,6 +112,7 @@ func UnmarshalPayload(in io.Reader, model interface{}) error {
 
 		return unmarshalNode(payload.Data, reflect.ValueOf(model), &includedMap)
 	}
+
 	return unmarshalNode(payload.Data, reflect.ValueOf(model), nil)
 }
 
@@ -133,10 +137,11 @@ func UnmarshalManyPayload(in io.Reader, t reflect.Type) ([]interface{}, error) {
 
 	for _, data := range payload.Data {
 		model := reflect.New(t.Elem())
-		err := unmarshalNode(data, model, &includedMap)
-		if err != nil {
+
+		if err := unmarshalNode(data, model, &includedMap); err != nil {
 			return nil, err
 		}
+
 		models = append(models, model.Interface())
 	}
 
@@ -157,6 +162,7 @@ func unmarshalNode(data *Node, model reflect.Value, included *map[string]*Node) 
 
 	for i := 0; i < modelValue.NumField(); i++ {
 		fieldType := modelType.Field(i)
+
 		tag := fieldType.Tag.Get("jsonapi")
 		if tag == "" {
 			continue
@@ -186,10 +192,11 @@ func unmarshalNode(data *Node, model reflect.Value, included *map[string]*Node) 
 			// Check the JSON API Type
 			if data.Type != args[1] {
 				er = fmt.Errorf(
-					"Trying to Unmarshal an object of type %#v, but %#v does not match",
+					"trying to Unmarshal an object of type %#v, but %#v does not match",
 					data.Type,
 					args[1],
 				)
+
 				break
 			}
 
@@ -251,6 +258,7 @@ func unmarshalNode(data *Node, model reflect.Value, included *map[string]*Node) 
 			}
 
 			structField := fieldType
+
 			value, err := unmarshalAttribute(attribute, args, structField, fieldValue)
 			if err != nil {
 				er = err
@@ -273,8 +281,13 @@ func unmarshalNode(data *Node, model reflect.Value, included *map[string]*Node) 
 
 				buf := bytes.NewBuffer(nil)
 
-				json.NewEncoder(buf).Encode(data.Relationships[args[1]]) // nolint: errcheck
-				json.NewDecoder(buf).Decode(relationship)                // nolint: errcheck
+				if err := json.NewEncoder(buf).Encode(data.Relationships[args[1]]); err != nil {
+					return err
+				}
+
+				if err := json.NewDecoder(buf).Decode(relationship); err != nil {
+					return err
+				}
 
 				data := relationship.Data
 				models := reflect.New(fieldValue.Type()).Elem()
@@ -301,10 +314,13 @@ func unmarshalNode(data *Node, model reflect.Value, included *map[string]*Node) 
 
 				buf := bytes.NewBuffer(nil)
 
-				json.NewEncoder(buf).Encode( // nolint: errcheck
-					data.Relationships[args[1]],
-				)
-				json.NewDecoder(buf).Decode(relationship) // nolint: errcheck
+				if err := json.NewEncoder(buf).Encode(data.Relationships[args[1]]); err != nil {
+					return err
+				}
+
+				if err := json.NewDecoder(buf).Decode(relationship); err != nil {
+					return err
+				}
 
 				/*
 					http://jsonapi.org/format/#document-resource-object-relationships
@@ -327,9 +343,7 @@ func unmarshalNode(data *Node, model reflect.Value, included *map[string]*Node) 
 				}
 
 				fieldValue.Set(m)
-
 			}
-
 		} else {
 			er = fmt.Errorf(unsupportedStructTagMsg, annotation)
 		}
@@ -357,8 +371,8 @@ func assign(field, value reflect.Value) {
 		// initialize pointer so it's value
 		// can be set by assignValue
 		field.Set(reflect.New(field.Type().Elem()))
-		field = field.Elem()
 
+		field = field.Elem()
 	}
 
 	assignValue(field, value)
@@ -390,75 +404,67 @@ func unmarshalAttribute(
 	args []string,
 	structField reflect.StructField,
 	fieldValue reflect.Value,
-) (value reflect.Value, err error) {
+) (reflect.Value, error) {
 	var attribute interface{}
-	err = json.Unmarshal(rawAttribute, &attribute)
-	if err != nil {
+
+	if err := json.Unmarshal(rawAttribute, &attribute); err != nil {
 		return reflect.Value{}, err
 	}
 
-	value = reflect.ValueOf(attribute)
+	value := reflect.ValueOf(attribute)
 	fieldType := structField.Type
 
 	// decimal.Decimal and *decimal.Decimal
 	if fieldValue.Type() == reflect.TypeOf(decimal.Decimal{}) ||
 		fieldValue.Type() == reflect.TypeOf(new(decimal.Decimal)) {
-		value, err = handleDecimal(rawAttribute)
-		return
+		return handleDecimal(rawAttribute)
 	}
 
 	// map[string][]string
 	if fieldValue.Type() == reflect.TypeOf(map[string][]string{}) {
-		value, err = handleMapStringSlice(rawAttribute)
-		return
+		return handleMapStringSlice(rawAttribute)
 	}
 
 	// Handle field of type time.Time
 	if fieldValue.Type() == reflect.TypeOf(time.Time{}) ||
 		fieldValue.Type() == reflect.TypeOf(new(time.Time)) {
-		value, err = handleTime(attribute, args, fieldValue)
-		return
+		return handleTime(attribute, args, fieldValue)
 	}
 
 	// Handle field of type struct
 	if fieldValue.Type().Kind() == reflect.Struct {
-		value, err = handleStruct(attribute, fieldValue)
-		return
+		return handleStruct(attribute, fieldValue)
 	}
 
 	// Handle field containing slices
 	if fieldValue.Type().Kind() == reflect.Slice {
 		value = reflect.New(fieldValue.Type())
-		err = json.Unmarshal(rawAttribute, value.Interface())
-		return
+		return value, json.Unmarshal(rawAttribute, value.Interface())
 	}
 
 	// JSON value was a float (numeric)
 	if value.Kind() == reflect.Float64 {
-		value, err = handleNumeric(attribute, fieldType, fieldValue)
-		return
+		return handleNumeric(attribute, fieldType, fieldValue)
 	}
 
 	// Field was a Pointer type
 	if fieldValue.Kind() == reflect.Ptr {
-		value, err = handlePointer(attribute, args, fieldType, fieldValue, structField)
-		return
+		return handlePointer(attribute, args, fieldType, fieldValue, structField)
 	}
 
 	// As a final catch-all, ensure types line up to avoid a runtime panic.
 	if fieldValue.Kind() != value.Kind() {
-		err = fmt.Errorf("got value %q expected type %v: %w", value, fieldType, ErrInvalidType)
-		return
+		return value, fmt.Errorf("got value %q expected type %v: %w", value, fieldType, ErrInvalidType)
 	}
 
-	return
+	return value, nil
 }
 
 func handleDecimal(attribute json.RawMessage) (reflect.Value, error) {
 	var dec decimal.Decimal
-	err := json.Unmarshal(attribute, &dec)
-	if err != nil {
-		return reflect.Value{}, fmt.Errorf("can't decode decimal from value %q: %v", string(attribute), err)
+
+	if err := json.Unmarshal(attribute, &dec); err != nil {
+		return reflect.Value{}, fmt.Errorf("can't decode decimal from value %q: %w", string(attribute), err)
 	}
 
 	return reflect.ValueOf(dec), nil
@@ -466,9 +472,9 @@ func handleDecimal(attribute json.RawMessage) (reflect.Value, error) {
 
 func handleMapStringSlice(attribute json.RawMessage) (reflect.Value, error) {
 	var m map[string][]string
-	err := json.Unmarshal(attribute, &m)
-	if err != nil {
-		return reflect.Value{}, fmt.Errorf("can't decode map string slice from value %q: %v", string(attribute), err)
+
+	if err := json.Unmarshal(attribute, &m); err != nil {
+		return reflect.Value{}, fmt.Errorf("can't decode map string slice from value %q: %w", string(attribute), err)
 	}
 
 	return reflect.ValueOf(m), nil
@@ -476,6 +482,7 @@ func handleMapStringSlice(attribute json.RawMessage) (reflect.Value, error) {
 
 func handleTime(attribute interface{}, args []string, fieldValue reflect.Value) (reflect.Value, error) {
 	var isIso8601 bool
+
 	v := reflect.ValueOf(attribute)
 
 	if len(args) > 2 {
@@ -489,7 +496,7 @@ func handleTime(attribute interface{}, args []string, fieldValue reflect.Value) 
 	if isIso8601 {
 		var tm string
 		if v.Kind() == reflect.String {
-			tm = v.Interface().(string)
+			tm, _ = v.Interface().(string)
 		} else {
 			return reflect.ValueOf(time.Now()), ErrInvalidISO8601
 		}
@@ -509,7 +516,8 @@ func handleTime(attribute interface{}, args []string, fieldValue reflect.Value) 
 	var at int64
 
 	if v.Kind() == reflect.Float64 {
-		at = int64(v.Interface().(float64))
+		atTmp, _ := v.Interface().(float64)
+		at = int64(atTmp)
 	} else if v.Kind() == reflect.Int {
 		at = v.Int()
 	} else {
@@ -527,7 +535,7 @@ func handleNumeric(
 	fieldValue reflect.Value,
 ) (reflect.Value, error) {
 	v := reflect.ValueOf(attribute)
-	floatValue := v.Interface().(float64)
+	floatValue, _ := v.Interface().(float64)
 
 	var kind reflect.Kind
 	if fieldValue.Kind() == reflect.Ptr {
@@ -584,12 +592,13 @@ func handleNumeric(
 
 func handlePointer(
 	attribute interface{},
-	args []string,
+	_ []string,
 	fieldType reflect.Type,
 	fieldValue reflect.Value,
 	structField reflect.StructField,
 ) (reflect.Value, error) {
 	t := fieldValue.Type()
+
 	var concreteVal reflect.Value
 
 	if attribute == nil {
@@ -605,11 +614,13 @@ func handlePointer(
 		concreteVal = reflect.ValueOf(&cVal)
 	case map[string]interface{}:
 		var err error
+
 		concreteVal, err = handleStruct(attribute, fieldValue)
 		if err != nil {
 			return reflect.Value{}, newErrUnsupportedPtrType(
 				reflect.ValueOf(attribute), fieldType, structField)
 		}
+
 		return concreteVal, err
 	default:
 		return reflect.Value{}, newErrUnsupportedPtrType(

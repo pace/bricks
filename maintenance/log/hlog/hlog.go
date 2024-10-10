@@ -15,7 +15,7 @@ import (
 )
 
 // FromRequest gets the logger in the request's context.
-// This is a shortcut for log.Ctx(r.Context())
+// This is a shortcut for log.Ctx(r.Context()).
 func FromRequest(r *http.Request) *zerolog.Logger {
 	return log.Ctx(r.Context())
 }
@@ -86,6 +86,7 @@ func RemoteAddrHandler(fieldKey string) func(next http.Handler) http.Handler {
 					return c.Str(fieldKey, host)
 				})
 			}
+
 			next.ServeHTTP(w, r)
 		})
 	}
@@ -102,6 +103,7 @@ func UserAgentHandler(fieldKey string) func(next http.Handler) http.Handler {
 					return c.Str(fieldKey, ua)
 				})
 			}
+
 			next.ServeHTTP(w, r)
 		})
 	}
@@ -118,6 +120,7 @@ func RefererHandler(fieldKey string) func(next http.Handler) http.Handler {
 					return c.Str(fieldKey, ref)
 				})
 			}
+
 			next.ServeHTTP(w, r)
 		})
 	}
@@ -125,7 +128,7 @@ func RefererHandler(fieldKey string) func(next http.Handler) http.Handler {
 
 type (
 	idKey      struct{}
-	traceIdKey struct{}
+	traceIDKey struct{}
 )
 
 // IDFromRequest returns the unique id associated to the request if any.
@@ -133,6 +136,7 @@ func IDFromRequest(r *http.Request) (id xid.ID, ok bool) {
 	if r == nil {
 		return
 	}
+
 	return IDFromCtx(r.Context())
 }
 
@@ -144,7 +148,7 @@ func IDFromCtx(ctx context.Context) (id xid.ID, ok bool) {
 
 // TraceIDFromCtx returns the trace id associated to the context if any.
 func TraceIDFromCtx(ctx context.Context) (id string, ok bool) {
-	id, ok = ctx.Value(traceIdKey{}).(string)
+	id, ok = ctx.Value(traceIDKey{}).(string)
 	return
 }
 
@@ -161,21 +165,25 @@ func RequestIDHandler(fieldKey, headerName string) func(next http.Handler) http.
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			ctx := r.Context()
+
 			id, ok := IDFromRequest(r)
 			if !ok {
 				id = xid.New()
 				ctx = context.WithValue(ctx, idKey{}, id)
 				r = r.WithContext(ctx)
 			}
+
 			if fieldKey != "" {
 				log := zerolog.Ctx(ctx)
 				log.UpdateContext(func(c zerolog.Context) zerolog.Context {
 					return c.Str(fieldKey, id.String())
 				})
 			}
+
 			if headerName != "" {
 				w.Header().Set(headerName, id.String())
 			}
+
 			next.ServeHTTP(w, r)
 		})
 	}
@@ -192,6 +200,7 @@ func CustomHeaderHandler(fieldKey, header string) func(next http.Handler) http.H
 					return c.Str(fieldKey, val)
 				})
 			}
+
 			next.ServeHTTP(w, r)
 		})
 	}
@@ -218,5 +227,6 @@ func ContextTransfer(parentCtx, out context.Context) context.Context {
 	if !found {
 		return out
 	}
+
 	return WithValue(out, id)
 }

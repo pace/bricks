@@ -6,7 +6,6 @@ type ctxKey struct{}
 
 var key = ctxKey{}
 
-// https://en.wikipedia.org/wiki/UTM_parameters
 type UTMData struct {
 	Source   string
 	Medium   string
@@ -46,6 +45,7 @@ func ContextWithUTMData(parentCtx context.Context, data UTMData) context.Context
 func FromContext(ctx context.Context) (UTMData, bool) {
 	val := ctx.Value(key)
 	data, found := val.(UTMData)
+
 	return data, found
 }
 
@@ -54,5 +54,6 @@ func ContextTransfer(in, out context.Context) context.Context {
 	if !exists {
 		return out // do nothing
 	}
+
 	return ContextWithUTMData(out, utmData)
 }

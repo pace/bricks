@@ -4,6 +4,7 @@ package runtime
 
 import (
 	"encoding/json"
+	"errors"
 	"net/http"
 	"strconv"
 	"strings"
@@ -39,29 +40,30 @@ type Error struct {
 	Meta *map[string]interface{} `json:"meta,omitempty"`
 }
 
-// setHttpStatus sets the http status for the error object
+// setHttpStatus sets the http status for the error object.
 func (e *Error) setHTTPStatus(code int) {
 	e.Status = strconv.Itoa(code)
 }
 
-// Error implements the error interface
+// Error implements the error interface.
 func (e Error) Error() string {
 	return e.Title
 }
 
-// Errors is a list of errors
+// Errors is a list of errors.
 type Errors []*Error
 
-// Error implements the error interface
+// Error implements the error interface.
 func (e Errors) Error() string {
 	messages := make([]string, len(e))
 	for i, err := range e {
 		messages[i] = err.Error()
 	}
+
 	return strings.Join(messages, "\n")
 }
 
-// setHttpStatus sets the http status for the error object
+// setHttpStatus sets the http status for the error object.
 func (e Errors) setHTTPStatus(code int) {
 	status := strconv.Itoa(code)
 	for _, err := range e {
@@ -69,29 +71,34 @@ func (e Errors) setHTTPStatus(code int) {
 	}
 }
 
-// setID sets the error id on the request
+// setID sets the error id on the request.
 func (e Errors) setID(errorID string) {
 	for _, err := range e {
 		err.ID = errorID
 	}
 }
 
-// WriteError writes a jsonapi error message to the client
+// WriteError writes a jsonapi error message to the client.
 func WriteError(w http.ResponseWriter, code int, err error) {
 	w.Header().Set("Content-Type", JSONAPIContentType)
 	w.WriteHeader(code)
 
-	// convert error type for marshaling
-	var errList errorObjects
+	var (
+		// convert error type for marshaling
+		errList errorObjects
 
-	switch v := err.(type) {
-	case Error:
-		errList.List = append(errList.List, &v)
-	case *Error:
-		errList.List = append(errList.List, v)
-	case Errors:
-		errList.List = v
-	default:
+		errError    Error
+		errErrorPtr *Error
+		errErrors   Errors
+	)
+
+	if errors.As(err, &errError) {
+		errList.List = append(errList.List, &errError)
+	} else if errors.As(err, &errErrorPtr) {
+		errList.List = append(errList.List, errErrorPtr)
+	} else if errors.As(err, &errErrors) {
+		errList.List = errErrors
+	} else {
 		errList.List = []*Error{
 			{Title: err.Error()},
 		}
@@ -110,8 +117,8 @@ func WriteError(w http.ResponseWriter, code int, err error) {
 	// render the error to the client
 	enc := json.NewEncoder(w)
 	enc.SetIndent("", "  ")
-	err = enc.Encode(errList)
-	if err != nil {
+
+	if err := enc.Encode(errList); err != nil {
 		log.Logger().Info().Str("req_id", reqID).
 			Err(err).Msg("Unable to send error response to the client")
 	}

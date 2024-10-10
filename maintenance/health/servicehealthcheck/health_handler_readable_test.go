@@ -65,6 +65,7 @@ func TestReadableHealthHandler(t *testing.T) {
 			for _, hc := range tc.req {
 				RegisterHealthCheck(hc.name, hc)
 			}
+
 			for _, hc := range tc.opt {
 				RegisterOptionalHealthCheck(hc, hc.name)
 			}
@@ -75,6 +76,7 @@ func TestReadableHealthHandler(t *testing.T) {
 				results := strings.Split(string(resBody), "Optional Services: \n")
 				reqRes := strings.Split(strings.Split(results[0], "Required Services: \n")[1], "\n")
 				optRes := strings.Split(results[1], "\n")
+
 				testListHealthChecks(t, tc.expReq, reqRes)
 				testListHealthChecks(t, tc.expOpt, optRes)
 			})

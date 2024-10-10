@@ -11,21 +11,24 @@ import (
 
 func TestLoggingHandler(t *testing.T) {
 	rec := httptest.NewRecorder()
-	req := httptest.NewRequest("GET", "/test", nil)
+	req := httptest.NewRequest(http.MethodGet, "/test", nil)
 
 	mux := http.NewServeMux()
 	mux.HandleFunc("/test", func(w http.ResponseWriter, r *http.Request) {
 		if RequestID(r) == "" {
 			t.Error("Request should have request id")
 		}
-		w.WriteHeader(201)
+
+		w.WriteHeader(http.StatusCreated)
 	})
 	Handler()(mux).ServeHTTP(rec, req)
 
 	resp := rec.Result()
-	defer resp.Body.Close()
+	defer func() {
+		_ = resp.Body.Close()
+	}()
 
-	if resp.StatusCode != 201 {
+	if resp.StatusCode != http.StatusCreated {
 		t.Error("expected 201 status code")
 	}
 }

@@ -9,13 +9,14 @@ import (
 	"strings"
 
 	"github.com/getsentry/sentry-go"
+	"github.com/zenazn/goji/web/mutil"
+
 	"github.com/pace/bricks/maintenance/log"
 	"github.com/pace/bricks/maintenance/util"
-	"github.com/zenazn/goji/web/mutil"
 )
 
 func init() {
-	var tracesSampleRate float64 = 0.1
+	tracesSampleRate := 0.1
 
 	val := strings.TrimSpace(os.Getenv("SENTRY_TRACES_SAMPLE_RATE"))
 	if val != "" {
@@ -50,7 +51,7 @@ type traceHandler struct {
 	next http.Handler
 }
 
-// Trace the service function handler execution
+// Trace the service function handler execution.
 func (h *traceHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	hub := sentry.CurrentHub()
@@ -83,6 +84,7 @@ func (h *traceHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}()
 
 	hub.Scope().SetRequest(r)
+
 	r = r.WithContext(transaction.Context())
 
 	h.next.ServeHTTP(ww, r)

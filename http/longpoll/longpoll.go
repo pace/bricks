@@ -12,7 +12,7 @@ import (
 // longpolling request.
 type LongPollFunc func(context.Context) (bool, error)
 
-// Config for long polling
+// Config for long polling.
 type Config struct {
 	// RetryTime time to wait between two retries
 	RetryTime time.Duration
@@ -23,7 +23,7 @@ type Config struct {
 }
 
 // Default configuration for http long polling
-// wait half a second between retries, min 1 sec and max 60 sec
+// wait half a second between retries, min 1 sec and max 60 sec.
 var Default = Config{
 	RetryTime:   time.Millisecond * 500,
 	MinWaitTime: time.Second,
@@ -31,7 +31,7 @@ var Default = Config{
 }
 
 // Until executes the given function fn until duration d is passed or context is canceled.
-// The constaints of the Default configuration apply.
+// The constraints of the Default configuration apply.
 func Until(ctx context.Context, d time.Duration, fn LongPollFunc) (ok bool, err error) {
 	return Default.LongPollUntil(ctx, d, fn)
 }
@@ -41,7 +41,7 @@ func Until(ctx context.Context, d time.Duration, fn LongPollFunc) (ok bool, err 
 // be set to the allowed min/max respectively. Other checking is up to the caller. The resulting time
 // budget is communicated via the provided context. This is a defence measure to not have accidental
 // long running routines. If no duration is given (0) the long poll will have exactly one execution.
-func (c Config) LongPollUntil(ctx context.Context, d time.Duration, fn LongPollFunc) (ok bool, err error) {
+func (c Config) LongPollUntil(ctx context.Context, d time.Duration, fn LongPollFunc) (bool, error) {
 	until := time.Now()
 
 	if d != 0 {
@@ -57,11 +57,16 @@ func (c Config) LongPollUntil(ctx context.Context, d time.Duration, fn LongPollF
 	fnCtx, cancel := context.WithDeadline(ctx, until)
 	defer cancel()
 
+	var (
+		ok  bool
+		err error
+	)
+
 loop:
 	for {
 		ok, err = fn(fnCtx)
 		if err != nil {
-			return
+			break
 		}
 
 		// fn returns true, break the loop
@@ -88,5 +93,5 @@ loop:
 		}
 	}
 
-	return
+	return ok, err
 }
