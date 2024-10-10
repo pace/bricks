@@ -417,7 +417,7 @@ var cfgOAuth2 = &oauth2.Config{
 }
 var cfgOIDC = &oidc.Config{
 	Description:      "",
-	OpenIdConnectURL: "https://id.pace.cloud/auth/realms/pace/.well-known/openid-configuration",
+	OpenIDConnectURL: "https://id.pace.cloud/auth/realms/pace/.well-known/openid-configuration",
 }
 
 /*

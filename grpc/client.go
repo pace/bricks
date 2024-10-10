@@ -6,6 +6,9 @@ import (
 	"context"
 	"time"
 
+	grpc_prometheus "github.com/grpc-ecosystem/go-grpc-middleware/providers/prometheus"
+	grpc_retry "github.com/grpc-ecosystem/go-grpc-middleware/retry"
+	grpc_opentracing "github.com/grpc-ecosystem/go-grpc-middleware/tracing/opentracing"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/grpc/metadata"
@@ -14,10 +17,6 @@ import (
 	"github.com/pace/bricks/http/security"
 	"github.com/pace/bricks/locale"
 	"github.com/pace/bricks/maintenance/log"
-
-	grpc_prometheus "github.com/grpc-ecosystem/go-grpc-middleware/providers/prometheus"
-	grpc_retry "github.com/grpc-ecosystem/go-grpc-middleware/retry"
-	grpc_opentracing "github.com/grpc-ecosystem/go-grpc-middleware/tracing/opentracing"
 )
 
 // Deprecated: Use NewClient instead.
@@ -31,15 +30,13 @@ func Dial(addr string) (*grpc.ClientConn, error) {
 }
 
 func NewClient(addr string) (*grpc.ClientConn, error) {
-	var conn *grpc.ClientConn
-
 	clientMetrics := grpc_prometheus.NewClientMetrics()
 
 	opts := []grpc_retry.CallOption{
 		grpc_retry.WithBackoff(grpc_retry.BackoffLinear(100 * time.Millisecond)),
 	}
 
-	conn, err := grpc.NewClient(addr,
+	return grpc.NewClient(addr,
 		grpc.WithTransportCredentials(insecure.NewCredentials()),
 		grpc.WithChainStreamInterceptor(
 			grpc_opentracing.StreamClientInterceptor(),
@@ -53,6 +50,7 @@ func NewClient(addr string) (*grpc.ClientConn, error) {
 					Str("type", "stream").
 					Err(err).
 					Msg("GRPC requested")
+
 				return cs, err
 			},
 		),
@@ -68,23 +66,26 @@ func NewClient(addr string) (*grpc.ClientConn, error) {
 					Str("type", "unary").
 					Err(err).
 					Msg("GRPC requested")
+
 				return err
 			},
 		),
 	)
-	return conn, err
 }
 
 func prepareClientContext(ctx context.Context) context.Context {
 	if loc, ok := locale.FromCtx(ctx); ok {
 		ctx = metadata.AppendToOutgoingContext(ctx, MetadataKeyLocale, loc.Serialize())
 	}
+
 	if token, ok := security.GetTokenFromContext(ctx); ok {
 		ctx = metadata.AppendToOutgoingContext(ctx, MetadataKeyBearerToken, token.GetValue())
 	}
+
 	if reqID := log.RequestIDFromContext(ctx); reqID != "" {
 		ctx = metadata.AppendToOutgoingContext(ctx, MetadataKeyRequestID, reqID)
 	}
+
 	ctx = EncodeContextWithUTMData(ctx)
 
 	if dep := middleware.ExternalDependencyContextFromContext(ctx); dep != nil {

@@ -9,6 +9,8 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/stretchr/testify/assert"
+
 	"github.com/pace/bricks/maintenance/metric"
 )
 
@@ -16,26 +18,31 @@ func TestMetric(t *testing.T) {
 	t.Run("capture metrics", func(t *testing.T) {
 		t.Run("api request", func(t *testing.T) {
 			rec := httptest.NewRecorder()
-			req := httptest.NewRequest("GET", "/test/1234567", nil)
+			req := httptest.NewRequest(http.MethodGet, "/test/1234567", nil)
 
 			handler := func(w http.ResponseWriter, r *http.Request) {
 				w = NewMetric("simple", "/test/{id}", w, r)
-				w.WriteHeader(204)
+				w.WriteHeader(http.StatusNoContent)
 			}
 
 			handler(rec, req)
-			req.Body.Close() // that's something the server does
+
+			if err := req.Body.Close(); err != nil { // that's something the server does
+				panic(err)
+			}
 
 			resp := rec.Result()
-			defer resp.Body.Close()
+			defer func() {
+				_ = resp.Body.Close()
+			}()
 
-			if resp.StatusCode != 204 {
+			if resp.StatusCode != http.StatusNoContent {
 				t.Errorf("Failed to return correct 204 response status, got: %v", resp.StatusCode)
 			}
 		})
 		t.Run("get metrics request", func(t *testing.T) {
 			rec := httptest.NewRecorder()
-			req := httptest.NewRequest("GET", "/metrics", nil)
+			req := httptest.NewRequest(http.MethodGet, "/metrics", nil)
 			metric.Handler().ServeHTTP(rec, req)
 
 			body := rec.Body.String()
@@ -54,22 +61,26 @@ func TestMetric(t *testing.T) {
 	t.Run("capture request size", func(t *testing.T) {
 		t.Run("api request", func(t *testing.T) {
 			rec := httptest.NewRecorder()
-			req := httptest.NewRequest("POST", "/noop", strings.NewReader("some static request body"))
+			req := httptest.NewRequest(http.MethodPost, "/noop", strings.NewReader("some static request body"))
 
 			handler := func(w http.ResponseWriter, r *http.Request) {
 				NewMetric("noop", "/noop", w, r)
 			}
 
 			handler(rec, req)
-			req.Body.Close() // that's something the server does
+
+			if err := req.Body.Close(); err != nil { // that's something the server does
+				panic(err)
+			}
 		})
 		t.Run("get metrics request", func(t *testing.T) {
 			rec := httptest.NewRecorder()
-			req := httptest.NewRequest("GET", "/metrics", nil)
+			req := httptest.NewRequest(http.MethodGet, "/metrics", nil)
 			metric.Handler().ServeHTTP(rec, req)
 
 			body := rec.Body.String()
 			wantMetric := `pace_api_http_size_bytes_sum{method="POST",path="/noop",service="noop",type="req"} 24`
+
 			if !strings.Contains(body, wantMetric) {
 				t.Errorf("Expected metric %q, got: %v", wantMetric, body)
 			}
@@ -80,10 +91,11 @@ func TestMetric(t *testing.T) {
 		t.Run("api request", func(t *testing.T) {
 			rec := httptest.NewRecorder()
 			reqBody := strings.NewReader("some request body")
-			req := httptest.NewRequest("POST", "/foobar", readerWithoutLen{reqBody})
+			req := httptest.NewRequest(http.MethodPost, "/foobar", readerWithoutLen{reqBody})
 
 			handler := func(w http.ResponseWriter, r *http.Request) {
 				NewMetric("foobar", "/foobar", w, r)
+
 				_, err := io.Copy(io.Discard, r.Body) // read request body
 				if err != nil {
 					panic(err)
@@ -91,15 +103,19 @@ func TestMetric(t *testing.T) {
 			}
 
 			handler(rec, req)
-			req.Body.Close() // that's something the server does
+
+			if err := req.Body.Close(); err != nil { // that's something the server does
+				panic(err)
+			}
 		})
 		t.Run("get metrics request", func(t *testing.T) {
 			rec := httptest.NewRecorder()
-			req := httptest.NewRequest("GET", "/metrics", nil)
+			req := httptest.NewRequest(http.MethodGet, "/metrics", nil)
 			metric.Handler().ServeHTTP(rec, req)
 
 			body := rec.Body.String()
 			wantMetric := `pace_api_http_size_bytes_sum{method="POST",path="/foobar",service="foobar",type="req"} 17`
+
 			if !strings.Contains(body, wantMetric) {
 				t.Errorf("Expected metric %q, got: %v", wantMetric, body)
 			}
@@ -110,7 +126,7 @@ func TestMetric(t *testing.T) {
 		t.Run("api request", func(t *testing.T) {
 			rec := httptest.NewRecorder()
 			reqBody := strings.NewReader("some request body that noone ever reads")
-			req := httptest.NewRequest("POST", "/barfoo", readerWithoutLen{reqBody})
+			req := httptest.NewRequest(http.MethodPost, "/barfoo", readerWithoutLen{reqBody})
 
 			handler := func(w http.ResponseWriter, r *http.Request) {
 				NewMetric("barfoo", "/barfoo", w, r)
@@ -118,15 +134,18 @@ func TestMetric(t *testing.T) {
 			}
 
 			handler(rec, req)
-			req.Body.Close() // that's something the server does
+
+			err := req.Body.Close() // that's something the server does
+			assert.NoError(t, err)
 		})
 		t.Run("get metrics request", func(t *testing.T) {
 			rec := httptest.NewRecorder()
-			req := httptest.NewRequest("GET", "/metrics", nil)
+			req := httptest.NewRequest(http.MethodGet, "/metrics", nil)
 			metric.Handler().ServeHTTP(rec, req)
 
 			body := rec.Body.String()
 			wantMetric := `pace_api_http_size_bytes_sum{method="POST",path="/barfoo",service="barfoo",type="req"} 39`
+
 			if !strings.Contains(body, wantMetric) {
 				t.Errorf("Expected metric %q, got: %v", wantMetric, body)
 			}
@@ -136,10 +155,11 @@ func TestMetric(t *testing.T) {
 	t.Run("capture response size", func(t *testing.T) {
 		t.Run("api request", func(t *testing.T) {
 			rec := httptest.NewRecorder()
-			req := httptest.NewRequest("GET", "/lalala", nil)
+			req := httptest.NewRequest(http.MethodGet, "/lalala", nil)
 
 			handler := func(w http.ResponseWriter, r *http.Request) {
 				w = NewMetric("lalala", "/lalala", w, r)
+
 				_, err := w.Write([]byte("hehehehe"))
 				if err != nil {
 					panic(err)
@@ -147,15 +167,18 @@ func TestMetric(t *testing.T) {
 			}
 
 			handler(rec, req)
-			req.Body.Close() // that's something the server does
+
+			err := req.Body.Close() // that's something the server does
+			assert.NoError(t, err)
 		})
 		t.Run("get metrics request", func(t *testing.T) {
 			rec := httptest.NewRecorder()
-			req := httptest.NewRequest("GET", "/metrics", nil)
+			req := httptest.NewRequest(http.MethodGet, "/metrics", nil)
 			metric.Handler().ServeHTTP(rec, req)
 
 			body := rec.Body.String()
 			wantMetric := `pace_api_http_size_bytes_sum{method="GET",path="/lalala",service="lalala",type="resp"} 8`
+
 			if !strings.Contains(body, wantMetric) {
 				t.Errorf("Expected metric %q, got: %v", wantMetric, body)
 			}
@@ -163,7 +186,7 @@ func TestMetric(t *testing.T) {
 	})
 }
 
-// readerWithoutLen is a reader that has definitely not a Len() method
+// readerWithoutLen is a reader that has definitely not a Len() method.
 type readerWithoutLen struct {
 	io.Reader
 }

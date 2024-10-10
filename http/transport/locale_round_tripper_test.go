@@ -8,10 +8,10 @@ import (
 	"net/http/httputil"
 	"testing"
 
-	"github.com/pace/bricks/locale"
-
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	"github.com/pace/bricks/locale"
 )
 
 type roundTripperMock struct {
@@ -28,10 +28,11 @@ func TestLocaleRoundTrip(t *testing.T) {
 	lrt := &LocaleRoundTripper{transport: mock}
 
 	l := locale.NewLocale("fr-CH, fr;q=0.9, en;q=0.8, de;q=0.7, *;q=0.5", "Europe/Paris")
-	r, err := http.NewRequest("GET", "http://example.com/test", nil)
+	r, err := http.NewRequest(http.MethodGet, "http://example.com/test", nil)
 	require.NoError(t, err)
 
-	lrt.RoundTrip(r.WithContext(locale.WithLocale(context.Background(), l))) // nolint: errcheck
+	_, err = lrt.RoundTrip(r.WithContext(locale.WithLocale(context.Background(), l))) //nolint:bodyclose
+	require.NoError(t, err)
 
 	lctx, ok := locale.FromCtx(mock.r.Context())
 	require.True(t, ok)

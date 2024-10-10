@@ -48,6 +48,7 @@ func NewCircuitBreakerTripper(settings gobreaker.Settings) *circuitBreakerTrippe
 	}, []string{"from", "to"})
 
 	var ok bool
+
 	var are prometheus.AlreadyRegisteredError
 	if err := prometheus.Register(stateSwitchCounterVec); errors.As(err, &are) {
 		stateSwitchCounterVec, ok = are.ExistingCollector.(*prometheus.CounterVec)
@@ -71,20 +72,20 @@ func NewCircuitBreakerTripper(settings gobreaker.Settings) *circuitBreakerTrippe
 	return &circuitBreakerTripper{breaker: gobreaker.NewCircuitBreaker(settings)}
 }
 
-// Transport returns the RoundTripper to make HTTP requests
+// Transport returns the RoundTripper to make HTTP requests.
 func (c *circuitBreakerTripper) Transport() http.RoundTripper {
 	return c.transport
 }
 
-// SetTransport sets the RoundTripper to make HTTP requests
+// SetTransport sets the RoundTripper to make HTTP requests.
 func (c *circuitBreakerTripper) SetTransport(rt http.RoundTripper) {
 	c.transport = rt
 }
 
-// RoundTrip executes a single HTTP transaction via Transport()
+// RoundTrip executes a single HTTP transaction via Transport().
 func (c *circuitBreakerTripper) RoundTrip(req *http.Request) (*http.Response, error) {
 	resp, err := c.breaker.Execute(func() (interface{}, error) {
-		return c.transport.RoundTrip(req)
+		return c.transport.RoundTrip(req) //nolint:bodyclose
 	})
 	if err != nil {
 		switch {
@@ -96,5 +97,10 @@ func (c *circuitBreakerTripper) RoundTrip(req *http.Request) (*http.Response, er
 		}
 	}
 
-	return resp.(*http.Response), nil
+	out, ok := resp.(*http.Response)
+	if !ok {
+		return nil, fmt.Errorf("unexpected response type: %T", resp)
+	}
+
+	return out, nil
 }

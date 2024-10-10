@@ -24,8 +24,7 @@ type config struct {
 var cfg config
 
 func init() {
-	err := env.Parse(&cfg)
-	if err != nil {
+	if err := env.Parse(&cfg); err != nil {
 		log.Fatalf("Failed to parse health check environment: %v", err)
 	}
 }
@@ -58,7 +57,7 @@ func UseMaxWait(maxWait time.Duration) HealthCheckOption {
 	}
 }
 
-// UseWarmup - delays a healthcheck during warmup
+// UseWarmup - delays a healthcheck during warmup.
 func UseWarmup(delay time.Duration) HealthCheckOption {
 	return func(cfg *HealthCheckCfg) {
 		cfg.warmupDelay = delay

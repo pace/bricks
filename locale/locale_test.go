@@ -44,6 +44,7 @@ func TestTimezone(t *testing.T) {
 
 	loc, err := l.Location()
 	assert.NoError(t, err)
+
 	timeInUTC := time.Date(2018, 8, 30, 12, 0, 0, 0, time.UTC)
 	assert.Equal(t, "2018-08-30 14:00:00 +0200 CEST", timeInUTC.In(loc).String())
 }
@@ -58,6 +59,7 @@ func TestTimezoneAndLocale(t *testing.T) {
 
 	loc, err := l.Location()
 	assert.NoError(t, err)
+
 	timeInUTC := time.Date(2018, 8, 30, 12, 0, 0, 0, time.UTC)
 	assert.Equal(t, "2018-08-30 14:00:00 +0200 CEST", timeInUTC.In(loc).String())
 }

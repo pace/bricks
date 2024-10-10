@@ -37,8 +37,8 @@ func (g *Generator) BuildMarkdown(source string) (string, error) {
 
 func (g *Generator) parseDefinitions(data []byte) (ErrorDefinitions, error) {
 	var parsedData []ErrorDefinition
-	err := json.Unmarshal(data, &parsedData)
-	if err != nil {
+
+	if err := json.Unmarshal(data, &parsedData); err != nil {
 		return nil, err
 	}
 
@@ -70,12 +70,14 @@ func (g *Generator) generateMarkdown(eds ErrorDefinitions) (string, error) {
 			if err != nil {
 				return "", err
 			}
+
 			_, err = output.WriteString(`|Code|Title|
 |-----------|-----------|
 `)
 			if err != nil {
 				panic(err)
 			}
+
 			for _, detail := range details {
 				_, err := output.WriteString(fmt.Sprintf("|%s|%s|\n", detail.Code, detail.Title))
 				if err != nil {

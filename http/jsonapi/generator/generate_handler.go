@@ -27,7 +27,7 @@ const (
 	pkgSentry         = "github.com/getsentry/sentry-go"
 	pkgOAuth2         = "github.com/pace/bricks/http/oauth2"
 	pkgOIDC           = "github.com/pace/bricks/http/oidc"
-	pkgApiKey         = "github.com/pace/bricks/http/security/apikey"
+	pkgAPIKey         = "github.com/pace/bricks/http/security/apikey" //nolint:gosec
 	pkgDecimal        = "github.com/shopspring/decimal"
 )
 
@@ -40,7 +40,7 @@ const (
 var noValidation = map[string]string{"valid": "-"}
 
 // List of responses that will be handled on the framework level and
-// are therefore not handled by the user
+// are therefore not handled by the user.
 var generatorResponseBlacklist = map[string]bool{
 	"401": true, // if no bearer token is provided
 	"406": true, // if accept header is unacceptable
@@ -55,7 +55,7 @@ var generatorResponseBlacklist = map[string]bool{
 
 type routeGeneratorFunc func([]*route, *openapi3.Swagger) error
 
-// BuildHandler generates the request handlers based on gorilla mux
+// BuildHandler generates the request handlers based on gorilla mux.
 func (g *Generator) BuildHandler(schema *openapi3.Swagger) error {
 	paths := schema.Paths
 	// sort by key
@@ -63,14 +63,15 @@ func (g *Generator) BuildHandler(schema *openapi3.Swagger) error {
 	for k := range paths {
 		keys = append(keys, k)
 	}
+
 	sort.Stable(sort.StringSlice(keys))
 
 	var routes []*route
 
 	for _, pattern := range keys {
 		path := paths[pattern]
-		err := g.buildPath(pattern, path, &routes, schema.Components.SecuritySchemes)
-		if err != nil {
+
+		if err := g.buildPath(pattern, path, &routes, schema.Components.SecuritySchemes); err != nil {
 			return err
 		}
 	}
@@ -83,8 +84,7 @@ func (g *Generator) BuildHandler(schema *openapi3.Swagger) error {
 		g.buildRouterWithFallbackAsArg,
 	}
 	for _, fn := range funcs {
-		err := fn(routes, schema)
-		if err != nil {
+		if err := fn(routes, schema); err != nil {
 			return err
 		}
 	}
@@ -119,8 +119,7 @@ func (g *Generator) buildPath(pattern string, pathItem *openapi3.PathItem, route
 			return err
 		}
 
-		err = route.parseURL()
-		if err != nil {
+		if err := route.parseURL(); err != nil {
 			return err
 		}
 
@@ -133,14 +132,12 @@ func (g *Generator) buildPath(pattern string, pathItem *openapi3.PathItem, route
 func (g *Generator) generateRequestResponseTypes(routes []*route, schema *openapi3.Swagger) error {
 	for _, route := range routes {
 		// generate ...ResponseWriter for each route
-		err := g.generateResponseInterface(route, schema)
-		if err != nil {
+		if err := g.generateResponseInterface(route, schema); err != nil {
 			return err
 		}
 
 		// generate ...Request for each route
-		err = g.generateRequestStruct(route, schema)
-		if err != nil {
+		if err := g.generateRequestStruct(route, schema); err != nil {
 			return err
 		}
 	}
@@ -148,15 +145,17 @@ func (g *Generator) generateRequestResponseTypes(routes []*route, schema *openap
 	return nil
 }
 
-func (g *Generator) generateResponseInterface(route *route, schema *openapi3.Swagger) error {
-	var methods []jen.Code
-	methods = append(methods, jen.Qual("net/http", "ResponseWriter"))
+func (g *Generator) generateResponseInterface(route *route, _ *openapi3.Swagger) error {
+	methods := []jen.Code{
+		jen.Qual("net/http", "ResponseWriter"),
+	}
 
 	// sort by key
 	keys := make([]string, 0, len(route.operation.Responses))
 	for k := range route.operation.Responses {
 		keys = append(keys, k)
 	}
+
 	sort.Stable(sort.StringSlice(keys))
 
 	for _, code := range keys {
@@ -170,7 +169,7 @@ func (g *Generator) generateResponseInterface(route *route, schema *openapi3.Swa
 		// error responses have an error message parameter
 		codeNum, err := strconv.Atoi(code)
 		if err != nil {
-			return fmt.Errorf("failed to parse response code %s: %v", code, err)
+			return fmt.Errorf("failed to parse response code %s: %w", code, err)
 		}
 
 		// generate method name
@@ -203,6 +202,7 @@ func (g *Generator) generateResponseInterface(route *route, schema *openapi3.Swa
 			if err != nil {
 				return err
 			}
+
 			method.Params(typeReference)
 
 			defer func() { // defer to put methods after type
@@ -255,12 +255,13 @@ func (g *Generator) generateResponseInterface(route *route, schema *openapi3.Swa
 	return nil
 }
 
-func (g *Generator) generateRequestStruct(route *route, schema *openapi3.Swagger) error {
+func (g *Generator) generateRequestStruct(route *route, _ *openapi3.Swagger) error {
 	body := route.operation.RequestBody
-	var fields []jen.Code
 
 	// add http request
-	fields = append(fields, jen.Id("Request").Op("*").Qual("net/http", "Request").Tag(noValidation))
+	fields := []jen.Code{
+		jen.Id("Request").Op("*").Qual("net/http", "Request").Tag(noValidation),
+	}
 
 	// add request type
 	if body != nil {
@@ -279,6 +280,7 @@ func (g *Generator) generateRequestStruct(route *route, schema *openapi3.Swagger
 	for _, param := range route.operation.Parameters {
 		paramName := generateParamName(param)
 		paramStmt := jen.Id(paramName)
+
 		tags := make(map[string]string)
 		if param.Value.Required {
 			tags["valid"] = "required"
@@ -293,8 +295,7 @@ func (g *Generator) generateRequestStruct(route *route, schema *openapi3.Swagger
 			tg := g.goType(paramStmt, param.Value.Schema.Value, tags)
 			tg.isParam = true
 
-			err := tg.invoke()
-			if err != nil {
+			if err := tg.invoke(); err != nil {
 				return err
 			}
 		}
@@ -309,6 +310,7 @@ func (g *Generator) generateRequestStruct(route *route, schema *openapi3.Swagger
 		g.addGoDoc(route.requestType, "is a standard http.Request extended with the\n"+
 			"un-marshaled content object")
 	}
+
 	g.goSource.Type().Id(route.requestType).Struct(fields...)
 
 	return nil
@@ -335,7 +337,7 @@ func (g *Generator) buildServiceInterface(routes []*route, schema *openapi3.Swag
 	return nil
 }
 
-func (g *Generator) buildSubServiceInterface(route *route, schema *openapi3.Swagger) error {
+func (g *Generator) buildSubServiceInterface(route *route, _ *openapi3.Swagger) error {
 	methods := make([]jen.Code, 0)
 
 	if route.operation.Description != "" {
@@ -343,6 +345,7 @@ func (g *Generator) buildSubServiceInterface(route *route, schema *openapi3.Swag
 	} else {
 		methods = append(methods, jen.Comment(fmt.Sprintf("%s %s", route.serviceFunc, route.operation.Summary)))
 	}
+
 	methods = append(methods, jen.Id(route.serviceFunc).Params(
 		jen.Qual("context", "Context"),
 		jen.Id(route.responseType),
@@ -360,7 +363,9 @@ func (g *Generator) buildRouter(routes []*route, schema *openapi3.Swagger) error
 	if err != nil {
 		return nil
 	}
+
 	g.addGoDoc("Router", "implements: "+schema.Info.Title+"\n\n"+schema.Info.Description)
+
 	serviceInterfaceVariable := jen.Id("service").Interface()
 	if hasSecuritySchema(schema) {
 		g.goSource.Func().Id("Router").Params(
@@ -369,6 +374,7 @@ func (g *Generator) buildRouter(routes []*route, schema *openapi3.Swagger) error
 		g.goSource.Func().Id("Router").Params(
 			serviceInterfaceVariable).Op("*").Qual(pkgGorillaMux, "Router").Block(routerBody...)
 	}
+
 	return nil
 }
 
@@ -377,7 +383,9 @@ func (g *Generator) buildRouterWithFallbackAsArg(routes []*route, schema *openap
 	if err != nil {
 		return nil
 	}
+
 	g.addGoDoc("Router", "implements: "+schema.Info.Title+"\n\n"+schema.Info.Description)
+
 	serviceInterfaceVariable := jen.Id("service").Interface()
 	if hasSecuritySchema(schema) {
 		g.goSource.Func().Id("RouterWithFallback").Params(
@@ -386,6 +394,7 @@ func (g *Generator) buildRouterWithFallbackAsArg(routes []*route, schema *openap
 		g.goSource.Func().Id("RouterWithFallback").Params(
 			serviceInterfaceVariable, jen.Id("fallback").Qual("net/http", "Handler")).Op("*").Qual(pkgGorillaMux, "Router").Block(routerBody...)
 	}
+
 	return nil
 }
 
@@ -401,15 +410,18 @@ func (g *Generator) buildRouterHelpers(routes []*route, schema *openapi3.Swagger
 	// add all route handlers
 	for i := 0; i < len(sortableRoutes); i++ {
 		route := sortableRoutes[i]
+
 		var routeCallParams *jen.Statement
 		if needsSecurity {
 			routeCallParams = jen.List(jen.Id("service"), jen.Id("authBackend"))
 		} else {
 			routeCallParams = jen.List(jen.Id("service"))
 		}
+
 		primaryHandler := jen.Id(route.handler).Call(routeCallParams)
 		fallbackHandler := jen.Id(fallbackName)
 		ifElse := make([]jen.Code, 0)
+
 		for _, handler := range []jen.Code{primaryHandler, fallbackHandler} {
 			block := jen.Return(handler)
 			ifElse = append(ifElse, block)
@@ -431,6 +443,7 @@ func (g *Generator) buildRouterHelpers(routes []*route, schema *openapi3.Swagger
 		} else {
 			callParams = jen.List(jen.Id("service").Id("interface{}"), fallback)
 		}
+
 		helper := jen.Func().Id(generateHandlerTypeAssertionHelperName(route.handler)).
 			Params(callParams).Qual("net/http", "Handler").Block(implGuard).Line().Line()
 
@@ -444,7 +457,9 @@ func (g *Generator) buildRouterHelpers(routes []*route, schema *openapi3.Swagger
 func (g *Generator) buildRouterBodyWithFallback(routes []*route, schema *openapi3.Swagger, fallback jen.Code) ([]jen.Code, error) {
 	needsSecurity := hasSecuritySchema(schema)
 	startInd := 0
-	var routeStmts []jen.Code
+
+	var routeStmts []jen.Code //nolint:prealloc
+
 	if needsSecurity {
 		startInd++
 		routeStmts = make([]jen.Code, 2, (len(routes)+2)*len(schema.Servers)+2)
@@ -453,7 +468,9 @@ func (g *Generator) buildRouterBodyWithFallback(routes []*route, schema *openapi
 		for name := range schema.Components.SecuritySchemes {
 			names = append(names, name)
 		}
+
 		sort.Stable(sort.StringSlice(names))
+
 		caser := cases.Title(language.Und, cases.NoLower)
 		for _, name := range names {
 			routeStmts = append(routeStmts, jen.Id("authBackend").Dot("Init"+caser.String(name)).Call(jen.Id("cfg"+caser.String(name))))
@@ -466,16 +483,20 @@ func (g *Generator) buildRouterBodyWithFallback(routes []*route, schema *openapi
 
 	// Note: we don't restrict host, scheme and port to ease development
 	pathsIdx := make(map[string]struct{})
+
 	var paths []string
+
 	for _, server := range schema.Servers {
-		serverUrl, err := url.Parse(server.URL)
+		serverURL, err := url.Parse(server.URL)
 		if err != nil {
 			return nil, err
 		}
-		if _, ok := pathsIdx[serverUrl.Path]; !ok {
-			paths = append(paths, serverUrl.Path)
+
+		if _, ok := pathsIdx[serverURL.Path]; !ok {
+			paths = append(paths, serverURL.Path)
 		}
-		pathsIdx[serverUrl.Path] = struct{}{}
+
+		pathsIdx[serverURL.Path] = struct{}{}
 	}
 
 	// but generate subrouters for each server
@@ -494,12 +515,14 @@ func (g *Generator) buildRouterBodyWithFallback(routes []*route, schema *openapi
 		// add all route handlers
 		for i := 0; i < len(sortableRoutes); i++ {
 			route := sortableRoutes[i]
+
 			var routeCallParams *jen.Statement
 			if needsSecurity {
 				routeCallParams = jen.List(jen.Id("service"), fallback, jen.Id("authBackend"))
 			} else {
 				routeCallParams = jen.List(jen.Id("service"), fallback)
 			}
+
 			helper := jen.Id(generateHandlerTypeAssertionHelperName(route.handler)).Call(routeCallParams)
 			routeStmt := jen.Id(subrouterID).Dot("Methods").Call(jen.Lit(route.method)).
 				Dot("Path").Call(jen.Lit(route.url.Path))
@@ -510,6 +533,7 @@ func (g *Generator) buildRouterBodyWithFallback(routes []*route, schema *openapi
 					if len(value) != 1 {
 						panic("query paths can only handle one query parameter with the same name!")
 					}
+
 					routeStmt.Dot("Queries").Call(jen.Lit(key), jen.Lit(value[0]))
 				}
 			}
@@ -520,7 +544,6 @@ func (g *Generator) buildRouterBodyWithFallback(routes []*route, schema *openapi
 			routeStmt.Dot("Handler").Call(helper)
 
 			routeStmts = append(routeStmts, routeStmt)
-
 		}
 	}
 
@@ -530,7 +553,7 @@ func (g *Generator) buildRouterBodyWithFallback(routes []*route, schema *openapi
 	return routeStmts, nil
 }
 
-func (g *Generator) buildHandler(method string, op *openapi3.Operation, pattern string, pathItem *openapi3.PathItem, secSchemes map[string]*openapi3.SecuritySchemeRef) (*route, error) {
+func (g *Generator) buildHandler(method string, op *openapi3.Operation, pattern string, _ *openapi3.PathItem, secSchemes map[string]*openapi3.SecuritySchemeRef) (*route, error) {
 	needsSecurity := len(secSchemes) > 0
 	route := &route{
 		method:    strings.ToUpper(method),
@@ -545,11 +568,14 @@ func (g *Generator) buildHandler(method string, op *openapi3.Operation, pattern 
 
 	// use OperationID for go function names or generate the name
 	caser := cases.Title(language.Und, cases.NoLower)
+
 	oid := caser.String(op.OperationID)
 	if oid == "" {
 		log.Warnf("Note: Avoid automatic method name generation for path (use OperationID): %s", pattern)
+
 		oid = generateName(method, op, pattern)
 	}
+
 	handler := oid + "Handler"
 	route.handler = handler
 	route.serviceFunc = oid
@@ -559,6 +585,7 @@ func (g *Generator) buildHandler(method string, op *openapi3.Operation, pattern 
 
 	// check if handler has request body
 	var requestBody bool
+
 	if body := op.RequestBody; body != nil {
 		if mt := body.Value.Content.Get(jsonapiContent); mt != nil {
 			requestBody = true
@@ -567,25 +594,31 @@ func (g *Generator) buildHandler(method string, op *openapi3.Operation, pattern 
 
 	// generate handler function
 	gen := g // generator is used less frequent then the jen group, make available with longer name
+
 	var auth *jen.Group
+
 	if needsSecurity {
 		if op.Security != nil {
 			var err error
+
 			auth, err = generateAuthorization(op, secSchemes)
 			if err != nil {
 				return nil, err
 			}
 		}
 	}
+
 	g.addGoDoc(handler, fmt.Sprintf(`handles request/response marshaling and validation for
         %s %s`,
 		method, pattern))
+
 	var params *jen.Statement
 	if needsSecurity {
 		params = jen.List(jen.Id("service").Id(generateSubServiceName(route.handler)), jen.Id("authBackend").Id(authBackendInterface))
 	} else {
 		params = jen.List(jen.Id("service").Id(generateSubServiceName(route.handler)))
 	}
+
 	g.goSource.Func().Id(handler).Params(params).Qual("net/http", "Handler").Block(
 		jen.Return().Qual("net/http", "HandlerFunc").Call(
 			jen.Func().Params(
@@ -625,14 +658,17 @@ func (g *Generator) buildHandler(method string, op *openapi3.Operation, pattern 
 
 				// vars in case parameters are given
 				g.Line().Comment("Scan and validate incoming request parameters")
+
 				if len(route.operation.Parameters) > 0 {
 					// path parameters need the vars
 					needVars := false
+
 					for _, param := range route.operation.Parameters {
 						if param.Value.In == "path" {
 							needVars = true
 						}
 					}
+
 					if needVars {
 						g.Id("vars").Op(":=").Qual(pkgGorillaMux, "Vars").Call(jen.Id("r"))
 					}
@@ -702,7 +738,9 @@ func (g *Generator) buildHandler(method string, op *openapi3.Operation, pattern 
 				// otherwise directly call the service
 				if requestBody {
 					g.Line().Comment("Unmarshal the service request body")
+
 					isArray := false
+
 					mt := op.RequestBody.Value.Content.Get(jsonapiContent)
 					if mt != nil {
 						data := mt.Schema.Value.Properties["data"]
@@ -712,6 +750,7 @@ func (g *Generator) buildHandler(method string, op *openapi3.Operation, pattern 
 							}
 						}
 					}
+
 					if isArray {
 						typeName := nameFromSchemaRef(mt.Schema.Value.Properties["data"].Value.Items)
 						g.List(jen.Id("ok"), jen.Id("data")).Op(":=").
@@ -753,17 +792,21 @@ func (g *Generator) buildHandler(method string, op *openapi3.Operation, pattern 
 func generateAuthorization(op *openapi3.Operation, secSchemes map[string]*openapi3.SecuritySchemeRef) (*jen.Group, error) {
 	req := *op.Security
 	r := &jen.Group{}
+
 	if len(req[0]) == 0 {
 		return r, nil
 	}
 
 	multipleSecSchemes := len(req[0]) > 1
+
 	var err error
+
 	if multipleSecSchemes {
 		r, err = generateAuthorizationForMultipleSecSchemas(op, secSchemes)
 	} else {
 		r, err = generateAuthorizationForSingleSecSchema(op, secSchemes)
 	}
+
 	if err != nil {
 		return nil, err
 	}
@@ -774,10 +817,13 @@ func generateAuthorization(op *openapi3.Operation, secSchemes map[string]*openap
 func generateAuthorizationForSingleSecSchema(op *openapi3.Operation, schemas map[string]*openapi3.SecuritySchemeRef) (*jen.Group, error) {
 	req := *op.Security
 	r := &jen.Group{}
+
 	if len(req[0]) == 0 {
 		return nil, nil
 	}
+
 	caser := cases.Title(language.Und, cases.NoLower)
+
 	for name, secConfig := range (*op.Security)[0] {
 		securityScheme := schemas[name]
 		switch securityScheme.Value.Type {
@@ -791,22 +837,30 @@ func generateAuthorizationForSingleSecSchema(op *openapi3.Operation, schemas map
 			if len(secConfig) > 0 {
 				return nil, fmt.Errorf("security config for api key authorization needs %d values but had: %d", 0, len(secConfig))
 			}
+
 			r.Line().List(jen.Id("ctx"), jen.Id("ok")).Op(":=").Id("authBackend."+authFuncPrefix+caser.String(name)).Call(jen.Id("r"), jen.Id("w"))
 		default:
 			return nil, fmt.Errorf("security Scheme of type %q is not suppported", securityScheme.Value.Type)
 		}
 	}
+
 	r.Line().If(jen.Op("!").Id("ok")).Block(jen.Return())
+
 	return r, nil
 }
 
 func generateAuthorizationForMultipleSecSchemas(op *openapi3.Operation, secSchemes map[string]*openapi3.SecuritySchemeRef) (*jen.Group, error) {
-	var orderedSec [][]string
+	orderedSec := make([][]string, len((*op.Security)[0]))
+	i := 0
+
 	// Security Schemes are sorted for a reliable order of the code
 	for name, val := range (*op.Security)[0] {
 		vals := []string{name}
-		orderedSec = append(orderedSec, append(vals, val...))
+		orderedSec[i] = append(vals, val...)
+
+		i++
 	}
+
 	sort.Slice(orderedSec, func(i, j int) bool {
 		return orderedSec[i][0] < orderedSec[j][0]
 	})
@@ -819,11 +873,13 @@ func generateAuthorizationForMultipleSecSchemas(op *openapi3.Operation, secSchem
 	caser := cases.Title(language.Und, cases.NoLower)
 
 	r.Line().Var().Id("ok").Id("bool")
+
 	for _, val := range orderedSec {
 		name := val[0]
 		securityScheme := secSchemes[name]
 		innerBlock := &jen.Group{}
 		innerBlock.Line().List(jen.Id("ctx"), jen.Id("ok")).Op("=").Id("authBackend." + authFuncPrefix + caser.String(name))
+
 		switch securityScheme.Value.Type {
 		case "oauth2", "openIdConnect":
 			if len(val) >= 2 {
@@ -835,25 +891,31 @@ func generateAuthorizationForMultipleSecSchemas(op *openapi3.Operation, secSchem
 			if len(val) > 1 {
 				return nil, fmt.Errorf("security config for api key authorization needs %d values but had: %d", 0, len(val))
 			}
+
 			innerBlock.Call(jen.Id("r"), jen.Id("w"))
 		default:
 			return nil, fmt.Errorf("security Scheme of type %q is not suppported", securityScheme.Value.Type)
 		}
+
 		innerBlock.Line().If(jen.Op("!").Id("ok")).Block(jen.Return())
 		r.Line().If(jen.Id("authBackend." + authCanAuthFuncPrefix + caser.String(name))).Call(jen.Id("r")).Block(innerBlock).Else()
 	}
+
 	r.Block(last)
+
 	return r, nil
 }
 
 var asciiName = regexp.MustCompile("([^a-zA-Z]+)")
 
-func generateName(method string, op *openapi3.Operation, pattern string) string {
+func generateName(method string, _ *openapi3.Operation, pattern string) string {
 	name := method
 	parts := strings.Split(asciiName.ReplaceAllString(pattern, "/"), "/")
+
 	for _, part := range parts {
 		name += goNameHelper(part)
 	}
+
 	return goNameHelper(name)
 }
 
@@ -862,6 +924,7 @@ func generateMethodName(description string) string {
 	for i := 0; i < len(parts); i++ {
 		parts[i] = goNameHelper(parts[i])
 	}
+
 	return goNameHelper(strings.Join(parts, ""))
 }
 

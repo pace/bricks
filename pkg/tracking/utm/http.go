@@ -21,6 +21,7 @@ func FromRequest(req *http.Request) (UTMData, error) {
 	if data == emptyData {
 		return emptyData, ErrNotFound
 	}
+
 	return data, nil
 }
 
@@ -28,6 +29,7 @@ func AttachToRequest(data UTMData, req *http.Request) *http.Request {
 	if data == emptyData {
 		return req
 	}
+
 	q := req.URL.Query()
 	q.Set("utm_source", data.Source)
 	q.Set("utm_medium", data.Medium)
@@ -35,11 +37,13 @@ func AttachToRequest(data UTMData, req *http.Request) *http.Request {
 	q.Set("utm_term", data.Term)
 	q.Set("utm_content", data.Content)
 	q.Set("utm_partner_client", data.Client)
+
 	req.URL.RawQuery = q.Encode()
+
 	return req
 }
 
-// Middleware attempts to attach utm data found in the request to the request context
+// Middleware attempts to attach utm data found in the request to the request context.
 func Middleware() func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -48,10 +52,12 @@ func Middleware() func(http.Handler) http.Handler {
 				next.ServeHTTP(w, r)
 				return
 			}
+
 			clientID, found := oauth2.ClientID(r.Context())
 			if found && data.Client == "" {
 				data.Client = clientID
 			}
+
 			ctx := ContextWithUTMData(r.Context(), data)
 			r = r.WithContext(ctx)
 			next.ServeHTTP(w, r)
@@ -73,8 +79,10 @@ func (r *RoundTripper) RoundTrip(req *http.Request) (*http.Response, error) {
 	if !found { // no utm data found, skip directly to next roundtripper
 		return r.transport.RoundTrip(req)
 	}
+
 	newReq := cloneRequest(req)
 	newReq = AttachToRequest(data, newReq)
+
 	return r.transport.RoundTrip(newReq)
 }
 
@@ -98,5 +106,6 @@ func cloneRequest(r *http.Request) *http.Request {
 	for k, s := range r.Header {
 		r2.Header[k] = append([]string(nil), s...)
 	}
+
 	return r2
 }

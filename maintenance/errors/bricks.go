@@ -13,7 +13,7 @@ import (
 // BricksError - a bricks err is a bricks specific error which provides
 // convenience functions to be transformed into runtime.Errors (JSON errors)
 // pb generate can be used to create a set of pre defined BricksErrors based
-// on a JSON specification, see pb generate for details
+// on a JSON specification, see pb generate for details.
 type BricksError struct {
 	// title - a short, human-readable summary of the problem that SHOULD NOT change from occurrence
 	// to occurrence of the problem, except for purposes of localization.
@@ -32,6 +32,7 @@ func NewBricksError(opts ...BricksErrorOption) *BricksError {
 	for _, opt := range opts {
 		opt(e)
 	}
+
 	return e
 }
 
@@ -56,7 +57,7 @@ func (e *BricksError) Status() int {
 }
 
 // AsRuntimeError - returns the BricksError as bricks runtime.Error which aligns
-// with a JSON error object
+// with a JSON error object.
 func (e *BricksError) AsRuntimeError() *runtime.Error {
 	j := &runtime.Error{
 		ID:     uuid.NewString(),
@@ -65,6 +66,7 @@ func (e *BricksError) AsRuntimeError() *runtime.Error {
 		Title:  e.title,
 		Detail: e.detail,
 	}
+
 	return j
 }
 

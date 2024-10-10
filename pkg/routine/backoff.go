@@ -28,5 +28,6 @@ func (all combinedExponentialBackoff) Duration(key interface{}) (dur time.Durati
 			backoff.Reset()
 		}
 	}
+
 	return
 }
