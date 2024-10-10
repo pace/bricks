@@ -14,8 +14,10 @@ func TestLongPollUntilBounds(t *testing.T) {
 	ok, err := Until(context.Background(), -1, func(ctx context.Context) (bool, error) {
 		budget, ok := ctx.Deadline()
 		assert.True(t, ok)
-		assert.Equal(t, time.Millisecond*999, budget.Sub(time.Now()).Truncate(time.Millisecond)) // nolint: gosimple
+		assert.Equal(t, time.Millisecond*999, time.Until(budget).Truncate(time.Millisecond))
+
 		called++
+
 		return true, nil
 	})
 	assert.True(t, ok)
@@ -26,8 +28,10 @@ func TestLongPollUntilBounds(t *testing.T) {
 	ok, err = Until(context.Background(), time.Hour, func(ctx context.Context) (bool, error) {
 		budget, ok := ctx.Deadline()
 		assert.True(t, ok)
-		assert.Equal(t, time.Second*59, budget.Sub(time.Now()).Truncate(time.Second)) // nolint: gosimple
+		assert.Equal(t, time.Second*59, time.Until(budget).Truncate(time.Second))
+
 		called++
+
 		return true, nil
 	})
 	assert.True(t, ok)
@@ -45,6 +49,7 @@ func TestLongPollUntilNoTimeout(t *testing.T) {
 		f(ctx)
 
 		called++
+
 		return false, nil
 	})
 	assert.False(t, ok)
@@ -85,8 +90,10 @@ func TestLongPollUntilTimeout(t *testing.T) {
 
 func TestLongPollUntilTimeoutWithContext(t *testing.T) {
 	called := 0
+
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
 	defer cancel()
+
 	ok, err := Until(ctx, time.Second*2, func(context.Context) (bool, error) {
 		called++
 		return false, nil

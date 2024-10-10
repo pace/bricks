@@ -37,7 +37,7 @@ func (h *LoggingHook) BeforeQuery(ctx context.Context, event *bun.QueryEvent) co
 }
 
 func (h *LoggingHook) AfterQuery(ctx context.Context, event *bun.QueryEvent) {
-	// we can only and should only perfom the following check if we have the information availaible
+	// we can only and should only perfom the following check if we have the information available.
 	mode := determineQueryMode(event.Query)
 
 	if mode == readMode && !h.logReadQueries {

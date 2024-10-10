@@ -6,6 +6,8 @@ import (
 	"context"
 	"time"
 
+	grpc_prometheus "github.com/grpc-ecosystem/go-grpc-middleware/providers/prometheus"
+	grpc_retry "github.com/grpc-ecosystem/go-grpc-middleware/v2/interceptors/retry"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/grpc/metadata"
@@ -14,9 +16,6 @@ import (
 	"github.com/pace/bricks/http/security"
 	"github.com/pace/bricks/locale"
 	"github.com/pace/bricks/maintenance/log"
-
-	grpc_prometheus "github.com/grpc-ecosystem/go-grpc-middleware/providers/prometheus"
-	grpc_retry "github.com/grpc-ecosystem/go-grpc-middleware/v2/interceptors/retry"
 )
 
 // Deprecated: Use NewClient instead.
@@ -30,8 +29,6 @@ func Dial(addr string) (*grpc.ClientConn, error) {
 }
 
 func NewClient(addr string) (*grpc.ClientConn, error) {
-	var conn *grpc.ClientConn
-
 	clientMetrics := grpc_prometheus.NewClientMetrics()
 
 	opts := []grpc_retry.CallOption{
@@ -39,7 +36,7 @@ func NewClient(addr string) (*grpc.ClientConn, error) {
 		grpc_retry.WithMax(10),
 	}
 
-	conn, err := grpc.NewClient(addr,
+	return grpc.NewClient(addr,
 		grpc.WithTransportCredentials(insecure.NewCredentials()),
 		grpc.WithChainStreamInterceptor(
 			grpc_retry.StreamClientInterceptor(opts...),
@@ -51,13 +48,14 @@ func NewClient(addr string) (*grpc.ClientConn, error) {
 					Str("type", "stream").
 					Err(err).
 					Msg("GRPC requested")
+
 				return cs, err
 			},
 		),
 		grpc.WithChainUnaryInterceptor(
 			clientMetrics.UnaryClientInterceptor(),
 			grpc_retry.UnaryClientInterceptor(opts...),
-			func(ctx context.Context, method string, req, reply interface{}, cc *grpc.ClientConn, invoker grpc.UnaryInvoker, opts ...grpc.CallOption) error {
+			func(ctx context.Context, method string, req, reply any, cc *grpc.ClientConn, invoker grpc.UnaryInvoker, opts ...grpc.CallOption) error {
 				start := time.Now()
 				err := invoker(prepareClientContext(ctx), method, req, reply, cc, opts...)
 				log.Ctx(ctx).Debug().Str("method", method).
@@ -65,23 +63,26 @@ func NewClient(addr string) (*grpc.ClientConn, error) {
 					Str("type", "unary").
 					Err(err).
 					Msg("GRPC requested")
+
 				return err
 			},
 		),
 	)
-	return conn, err
 }
 
 func prepareClientContext(ctx context.Context) context.Context {
 	if loc, ok := locale.FromCtx(ctx); ok {
 		ctx = metadata.AppendToOutgoingContext(ctx, MetadataKeyLocale, loc.Serialize())
 	}
+
 	if token, ok := security.GetTokenFromContext(ctx); ok {
 		ctx = metadata.AppendToOutgoingContext(ctx, MetadataKeyBearerToken, token.GetValue())
 	}
+
 	if reqID := log.RequestIDFromContext(ctx); reqID != "" {
 		ctx = metadata.AppendToOutgoingContext(ctx, MetadataKeyRequestID, reqID)
 	}
+
 	ctx = EncodeContextWithUTMData(ctx)
 
 	if dep := middleware.ExternalDependencyContextFromContext(ctx); dep != nil {

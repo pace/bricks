@@ -3,17 +3,19 @@
 package runtime
 
 import (
+	"errors"
 	"fmt"
 	"net/http"
 	"strings"
 	"time"
 
 	valid "github.com/asaskevich/govalidator"
+
 	"github.com/pace/bricks/pkg/isotime"
 )
 
 func init() {
-	valid.CustomTypeTagMap.Set("iso8601", valid.CustomTypeValidator(func(i interface{}, o interface{}) bool {
+	valid.CustomTypeTagMap.Set("iso8601", valid.CustomTypeValidator(func(i any, o any) bool {
 		switch v := i.(type) {
 		case time.Time:
 			return true
@@ -28,35 +30,34 @@ func init() {
 
 // ValidateParameters checks the given struct and returns true if the struct
 // is valid according to the specification (declared with go-validator struct tags)
-// In case of an error, an jsonapi error message will be directly send to the client
-func ValidateParameters(w http.ResponseWriter, r *http.Request, data interface{}) bool {
+// In case of an error, an jsonapi error message will be directly send to the client.
+func ValidateParameters(w http.ResponseWriter, r *http.Request, data any) bool {
 	return ValidateStruct(w, r, data, "parameter")
 }
 
 // ValidateRequest checks the given struct and returns true if the struct
 // is valid according to the specification (declared with go-validator struct tags)
-// In case of an error, an jsonapi error message will be directly send to the client
-func ValidateRequest(w http.ResponseWriter, r *http.Request, data interface{}) bool {
+// In case of an error, an jsonapi error message will be directly send to the client.
+func ValidateRequest(w http.ResponseWriter, r *http.Request, data any) bool {
 	return ValidateStruct(w, r, data, "pointer")
 }
 
 // ValidateStruct checks the given struct and returns true if the struct
 // is valid according to the specification (declared with go-validator struct tags)
 // In case of an error, an jsonapi error message will be directly send to the client
-// The passed source is the source for validation errors (e.g. pointer for data or parameter)
-func ValidateStruct(w http.ResponseWriter, r *http.Request, data interface{}, source string) bool {
+// The passed source is the source for validation errors (e.g. pointer for data or parameter).
+func ValidateStruct(w http.ResponseWriter, r *http.Request, data any, source string) bool {
 	ok, err := valid.ValidateStruct(data)
-
 	if !ok {
-		switch errs := err.(type) {
-		case valid.Errors:
+		validErrors := valid.Errors{}
+
+		if errors.As(err, &validErrors) {
 			var e Errors
-			generateValidationErrors(errs, &e, source)
+
+			generateValidationErrors(validErrors, &e, source)
 			WriteError(w, http.StatusUnprocessableEntity, e)
-		case error:
-			panic(err) // programming error, e.g. not used with struct
-		default:
-			panic(fmt.Errorf("unhandled error case: %s", err))
+		} else {
+			panic(fmt.Errorf("unhandled error case: %w", err))
 		}
 
 		return false
@@ -65,16 +66,21 @@ func ValidateStruct(w http.ResponseWriter, r *http.Request, data interface{}, so
 	return true
 }
 
-// convert govalidator errors into jsonapi errors
+// convert govalidator errors into jsonapi errors.
 func generateValidationErrors(validErrors valid.Errors, jsonapiErrors *Errors, source string) {
 	for _, err := range validErrors {
-		switch e := err.(type) {
-		case valid.Errors:
-			generateValidationErrors(e, jsonapiErrors, source)
-		case valid.Error:
-			*jsonapiErrors = append(*jsonapiErrors, generateValidationError(e, source))
-		default:
-			panic(fmt.Errorf("unhandled error case: %s", e))
+		validErrors := valid.Errors{}
+
+		if errors.As(err, &validErrors) {
+			generateValidationErrors(validErrors, jsonapiErrors, source)
+		} else {
+			validError := valid.Error{}
+
+			if errors.As(err, &validError) {
+				*jsonapiErrors = append(*jsonapiErrors, generateValidationError(validError, source))
+			} else {
+				panic(fmt.Errorf("unhandled error case: %w", err))
+			}
 		}
 	}
 }
@@ -88,7 +94,7 @@ func generateValidationErrors(validErrors valid.Errors, jsonapiErrors *Errors, s
 // https://github.com/pace/bricks/issues/10
 
 // generateValidationError generates a new jsonapi error based
-// on the given govalidator error
+// on the given govalidator error.
 func generateValidationError(e valid.Error, source string) *Error {
 	path := ""
 	for _, p := range append(e.Path, e.Name) {
@@ -104,7 +110,7 @@ func generateValidationError(e valid.Error, source string) *Error {
 	return &Error{
 		Title:  fmt.Sprintf("%s is invalid", e.Name),
 		Detail: e.Err.Error(),
-		Source: &map[string]interface{}{
+		Source: &map[string]any{
 			source: path,
 		},
 	}

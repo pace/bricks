@@ -7,12 +7,13 @@ import (
 	"database/sql"
 	"time"
 
-	"github.com/pace/bricks/maintenance/health/servicehealthcheck"
 	"github.com/uptrace/bun"
+
+	"github.com/pace/bricks/maintenance/health/servicehealthcheck"
 )
 
 type queryExecutor interface {
-	Exec(ctx context.Context, dest ...interface{}) (sql.Result, error)
+	Exec(ctx context.Context, dest ...any) (sql.Result, error)
 }
 
 // HealthCheck checks the state of a postgres connection. It must not be changed
@@ -44,7 +45,7 @@ func NewHealthCheck(db *bun.DB) *HealthCheck {
 	}
 }
 
-// Init initializes the test table
+// Init initializes the test table.
 func (h *HealthCheck) Init(ctx context.Context) error {
 	_, err := h.createTableQueryExecutor.Exec(ctx)
 	return err

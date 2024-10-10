@@ -26,48 +26,51 @@ var ErrInvalidFieldname = errors.New("invalid fieldName, not registered in sanit
 
 type datetimeSanitizer struct{}
 
-func (d datetimeSanitizer) SanitizeValue(fieldName string, value string) (interface{}, error) {
+func (d datetimeSanitizer) SanitizeValue(fieldName string, value string) (any, error) {
 	t, err := isotime.ParseISO8601(value)
 	if err != nil {
 		return nil, err
 	}
+
 	return t, nil
 }
 
 type intSanitizer struct{}
 
-func (i intSanitizer) SanitizeValue(fieldName string, value string) (interface{}, error) {
+func (i intSanitizer) SanitizeValue(fieldName string, value string) (any, error) {
 	return strconv.Atoi(value)
 }
 
 type decimalSanitizer struct{}
 
-func (d decimalSanitizer) SanitizeValue(fieldName string, value string) (interface{}, error) {
+func (d decimalSanitizer) SanitizeValue(fieldName string, value string) (any, error) {
 	return decimal.NewFromString(value)
 }
 
 type noopSanitizer struct{}
 
-func (n noopSanitizer) SanitizeValue(fieldName string, value string) (interface{}, error) {
+func (n noopSanitizer) SanitizeValue(fieldName string, value string) (any, error) {
 	return value, nil
 }
 
 type uuidSanitizer struct{}
 
-func (u uuidSanitizer) SanitizeValue(fieldName string, value string) (interface{}, error) {
+func (u uuidSanitizer) SanitizeValue(fieldName string, value string) (any, error) {
 	if _, err := uuid.Parse(value); err != nil {
 		return nil, err
 	}
+
 	return value, nil
 }
 
 type composableAndFieldRestrictedSanitizer map[string]ValueSanitizer
 
-func (c composableAndFieldRestrictedSanitizer) SanitizeValue(fieldName string, value string) (interface{}, error) {
+func (c composableAndFieldRestrictedSanitizer) SanitizeValue(fieldName string, value string) (any, error) {
 	san, found := c[fieldName]
 	if !found {
 		return nil, fmt.Errorf("%w: %v", ErrInvalidFieldname, fieldName)
 	}
+
 	return san.SanitizeValue(fieldName, value)
 }
 

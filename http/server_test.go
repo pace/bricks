@@ -6,21 +6,37 @@ import (
 	"os"
 	"testing"
 	"time"
+
+	"github.com/stretchr/testify/require"
 )
 
 func TestServer(t *testing.T) {
 	// Defaults
-	os.Setenv("ADDR", "")
-	os.Setenv("PORT", "")
-	os.Setenv("MAX_HEADER_BYTES", "")
-	os.Setenv("IDLE_TIMEOUT", "")
-	os.Setenv("READ_TIMEOUT", "")
-	os.Setenv("WRITE_TIMEOUT", "")
+	err := os.Setenv("ADDR", "")
+	require.NoError(t, err)
+
+	err = os.Setenv("PORT", "")
+	require.NoError(t, err)
+
+	err = os.Setenv("MAX_HEADER_BYTES", "")
+	require.NoError(t, err)
+
+	err = os.Setenv("IDLE_TIMEOUT", "")
+	require.NoError(t, err)
+
+	err = os.Setenv("READ_TIMEOUT", "")
+	require.NoError(t, err)
+
+	err = os.Setenv("WRITE_TIMEOUT", "")
+	require.NoError(t, err)
+
 	parseConfig()
+
 	s := Server(nil)
+
 	cases := []struct {
 		env              string
-		expected, actual interface{}
+		expected, actual any
 	}{
 		{"ADDR", ":3000", s.Addr},
 		{"MAX_HEADER_BYTES", 1048576, s.MaxHeaderBytes},
@@ -35,17 +51,31 @@ func TestServer(t *testing.T) {
 	}
 
 	// custom
-	os.Setenv("ADDR", ":5432")
-	os.Setenv("PORT", "1234")
-	os.Setenv("MAX_HEADER_BYTES", "100")
-	os.Setenv("IDLE_TIMEOUT", "1s")
-	os.Setenv("READ_TIMEOUT", "2s")
-	os.Setenv("WRITE_TIMEOUT", "3s")
+	err = os.Setenv("ADDR", ":5432")
+	require.NoError(t, err)
+
+	err = os.Setenv("PORT", "1234")
+	require.NoError(t, err)
+
+	err = os.Setenv("MAX_HEADER_BYTES", "100")
+	require.NoError(t, err)
+
+	err = os.Setenv("IDLE_TIMEOUT", "1s")
+	require.NoError(t, err)
+
+	err = os.Setenv("READ_TIMEOUT", "2s")
+	require.NoError(t, err)
+
+	err = os.Setenv("WRITE_TIMEOUT", "3s")
+	require.NoError(t, err)
+
 	parseConfig()
+
 	s = Server(nil)
+
 	cases = []struct {
 		env              string
-		expected, actual interface{}
+		expected, actual any
 	}{
 		{"ADDR", ":5432", s.Addr},
 		{"MAX_HEADER_BYTES", 100, s.MaxHeaderBytes},
@@ -62,15 +92,21 @@ func TestServer(t *testing.T) {
 
 func TestEnvironment(t *testing.T) {
 	// Defaults
-	os.Setenv("ENVIRONMENT", "")
+	err := os.Setenv("ENVIRONMENT", "")
+	require.NoError(t, err)
+
 	parseConfig()
+
 	if Environment() != "edge" {
 		t.Errorf("Expected edge, got: %q", Environment())
 	}
 
 	// custom
-	os.Setenv("ENVIRONMENT", "production")
+	err = os.Setenv("ENVIRONMENT", "production")
+	require.NoError(t, err)
+
 	parseConfig()
+
 	if Environment() != "production" {
 		t.Errorf("Expected production, got: %q", Environment())
 	}

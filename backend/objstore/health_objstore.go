@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/minio/minio-go/v7"
+
 	"github.com/pace/bricks/maintenance/errors"
 	"github.com/pace/bricks/maintenance/health/servicehealthcheck"
 	"github.com/pace/bricks/maintenance/log"
@@ -27,7 +28,7 @@ var (
 
 // HealthCheck checks if the object storage client is healthy. If the last result is outdated,
 // object storage is checked for upload and download,
-// otherwise returns the old result
+// otherwise returns the old result.
 func (h *HealthCheck) HealthCheck(ctx context.Context) servicehealthcheck.HealthCheckResult {
 	if time.Since(h.state.LastChecked()) <= cfg.HealthCheckResultTTL {
 		// the last health check is not outdated, an can be reused.
@@ -49,7 +50,7 @@ func (h *HealthCheck) HealthCheck(ctx context.Context) servicehealthcheck.Health
 		},
 	)
 	if err != nil {
-		h.state.SetErrorState(fmt.Errorf("failed to put object: %v", err))
+		h.state.SetErrorState(fmt.Errorf("failed to put object: %w", err))
 		return h.state.GetState()
 	}
 
@@ -58,6 +59,7 @@ func (h *HealthCheck) HealthCheck(ctx context.Context) servicehealthcheck.Health
 		defer func() {
 			go func() {
 				defer errors.HandleWithCtx(ctx, "HealthCheck remove s3 object version")
+
 				ctx := log.WithContext(context.Background())
 
 				err = h.Client.RemoveObject(
@@ -88,15 +90,20 @@ func (h *HealthCheck) HealthCheck(ctx context.Context) servicehealthcheck.Health
 		},
 	)
 	if err != nil {
-		h.state.SetErrorState(fmt.Errorf("failed to get object: %v", err))
+		h.state.SetErrorState(fmt.Errorf("failed to get object: %w", err))
 		return h.state.GetState()
 	}
-	defer obj.Close()
+
+	defer func() {
+		if err := obj.Close(); err != nil {
+			log.Ctx(ctx).Debug().Err(err).Msg("Failed closing object")
+		}
+	}()
 
 	// Assert expectations
 	buf, err := io.ReadAll(obj)
 	if err != nil {
-		h.state.SetErrorState(fmt.Errorf("failed to compare object: %v", err))
+		h.state.SetErrorState(fmt.Errorf("failed to compare object: %w", err))
 		return h.state.GetState()
 	}
 
@@ -106,12 +113,14 @@ func (h *HealthCheck) HealthCheck(ctx context.Context) servicehealthcheck.Health
 		}
 
 		h.state.SetErrorState(fmt.Errorf("unexpected content: %q <-> %q", string(buf), string(expContent)))
+
 		return h.state.GetState()
 	}
 
 healthy:
 	// If uploading and downloading worked set the Health Check to healthy
 	h.state.SetHealthy()
+
 	return h.state.GetState()
 }
 
@@ -119,7 +128,7 @@ healthy:
 // time span concurrent request to the objstore may break the assumption
 // that the value is the same, but in this case it would be acceptable.
 // Assumption all instances are created equal and one providing evidence
-// of a good write would be sufficient. See #244
+// of a good write would be sufficient. See #244.
 func wasConcurrentHealthCheck(checkTime time.Time, observedValue string) bool {
 	t, err := time.Parse(healthCheckTimeFormat, observedValue)
 	if err == nil {
@@ -127,7 +136,7 @@ func wasConcurrentHealthCheck(checkTime time.Time, observedValue string) bool {
 		allowedEnd := checkTime.Add(healthCheckConcurrentSpan)
 
 		// timestamp we got from the document is in allowed range
-		// concider it healthy
+		// consider it healthy
 		return t.After(allowedStart) && t.Before(allowedEnd)
 	}
 

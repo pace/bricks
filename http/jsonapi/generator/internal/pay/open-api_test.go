@@ -144,7 +144,7 @@ var cfgOAuth2 = &oauth2.Config{
 }
 var cfgOpenID = &oidc.Config{
 	Description:      "",
-	OpenIdConnectURL: "https://example.com/.well-known/openid-configuration",
+	OpenIDConnectURL: "https://example.com/.well-known/openid-configuration",
 }
 var cfgProfileKey = &apikey.Config{
 	Description: "prefix with \"Bearer \"",

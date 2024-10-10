@@ -76,12 +76,14 @@ func TestJSONHealthHandler(t *testing.T) {
 			for _, hc := range tc.requiredHC {
 				RegisterHealthCheck(hc.name, hc)
 			}
+
 			for _, hc := range tc.optionalHC {
 				RegisterOptionalHealthCheck(hc, hc.name)
 			}
 
 			testRequest(t, handler, tc.expCode, func(t *testing.T, resBody []byte) {
 				var res map[string]serviceStats
+
 				err := json.Unmarshal(resBody, &res)
 				require.NoError(t, err)
 

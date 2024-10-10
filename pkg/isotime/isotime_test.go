@@ -87,6 +87,7 @@ func TestParseISO8601(t *testing.T) {
 				t.Errorf("ParseISO8601() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
+
 			if !got.Equal(tt.want) {
 				t.Errorf("ParseISO8601() = %v, want %v", got, tt.want)
 			}

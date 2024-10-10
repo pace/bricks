@@ -12,7 +12,7 @@ import (
 // longpolling request.
 type LongPollFunc func(context.Context) (bool, error)
 
-// Config for long polling
+// Config for long polling.
 type Config struct {
 	// RetryTime time to wait between two retries
 	RetryTime time.Duration
@@ -23,7 +23,7 @@ type Config struct {
 }
 
 // Default configuration for http long polling
-// wait half a second between retries, min 1 sec and max 60 sec
+// wait half a second between retries, min 1 sec and max 60 sec.
 var Default = Config{
 	RetryTime:   time.Millisecond * 500,
 	MinWaitTime: time.Second,
@@ -31,7 +31,7 @@ var Default = Config{
 }
 
 // Until executes the given function fn until duration d is passed or context is canceled.
-// The constaints of the Default configuration apply.
+// The constraints of the Default configuration apply.
 func Until(ctx context.Context, d time.Duration, fn LongPollFunc) (ok bool, err error) {
 	return Default.LongPollUntil(ctx, d, fn)
 }

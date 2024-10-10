@@ -11,19 +11,27 @@ import (
 	"testing"
 
 	"github.com/gorilla/mux"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+
 	"github.com/pace/bricks/http/jsonapi/runtime"
 	"github.com/pace/bricks/maintenance/health"
-	"github.com/stretchr/testify/require"
 )
 
 func TestHealthHandler(t *testing.T) {
 	rec := httptest.NewRecorder()
-	req := httptest.NewRequest("GET", "/health/liveness", nil)
+	req := httptest.NewRequest(http.MethodGet, "/health/liveness", nil)
 
 	Router().ServeHTTP(rec, req)
 
 	resp := rec.Result()
-	require.Equal(t, 200, resp.StatusCode)
+
+	{
+		err := resp.Body.Close()
+		assert.NoError(t, err)
+	}
+
+	require.Equal(t, http.StatusOK, resp.StatusCode)
 
 	data, err := io.ReadAll(resp.Body)
 	require.NoError(t, err)
@@ -52,19 +60,27 @@ func TestHealthRoutes(t *testing.T) {
 		expectedResult: "OK\n",
 		title:          "route liveness",
 	}}
+
 	health.SetCustomReadinessCheck(func(w http.ResponseWriter, r *http.Request) {
 		_, err := fmt.Fprint(w, "Ready")
 		require.NoError(t, err)
 	})
+
 	for _, tC := range tCs {
 		t.Run(tC.title, func(t *testing.T) {
 			rec := httptest.NewRecorder()
-			req := httptest.NewRequest("GET", tC.route, nil)
+			req := httptest.NewRequest(http.MethodGet, tC.route, nil)
 
 			Router().ServeHTTP(rec, req)
 
 			resp := rec.Result()
 			data, err := io.ReadAll(resp.Body)
+
+			{
+				err := resp.Body.Close()
+				assert.NoError(t, err)
+			}
+
 			require.NoError(t, err)
 			require.Equal(t, tC.expectedResult, string(data))
 		})
@@ -73,13 +89,13 @@ func TestHealthRoutes(t *testing.T) {
 
 func TestCustomRoutes(t *testing.T) {
 	rec := httptest.NewRecorder()
-	req := httptest.NewRequest("GET", "/foo/bar", nil)
+	req := httptest.NewRequest(http.MethodGet, "/foo/bar", nil)
 
 	// example of a service foo exposing api bar
 	fooRouter := mux.NewRouter()
 	fooRouter.HandleFunc("/foo/bar", func(w http.ResponseWriter, r *http.Request) {
 		runtime.WriteError(w, http.StatusNotImplemented, fmt.Errorf("Some error"))
-	}).Methods("GET")
+	}).Methods(http.MethodGet)
 
 	r := Router()
 	// service routers will be mounted like this
@@ -88,6 +104,11 @@ func TestCustomRoutes(t *testing.T) {
 	r.ServeHTTP(rec, req)
 
 	resp := rec.Result()
+
+	defer func() {
+		err := resp.Body.Close()
+		assert.NoError(t, err)
+	}()
 
 	require.Equal(t, 501, resp.StatusCode, "Expected /foo/bar to respond with 501")
 

@@ -14,8 +14,8 @@ func (l *AuthTransport) RoundTrip(req *http.Request) (*http.Response, error) {
 	return l.transport.RoundTrip(req)
 }
 
-func (rt *AuthTransport) Transport() http.RoundTripper {
-	return rt.transport
+func (l *AuthTransport) Transport() http.RoundTripper {
+	return l.transport
 }
 
 func (l *AuthTransport) SetTransport(rt http.RoundTripper) {

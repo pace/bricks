@@ -8,10 +8,10 @@ import (
 	"time"
 
 	"github.com/getsentry/sentry-go"
+	exponential "github.com/jpillora/backoff"
+
 	"github.com/pace/bricks/maintenance/errors"
 	"github.com/pace/bricks/pkg/lock/redis"
-
-	exponential "github.com/jpillora/backoff"
 )
 
 type routineThatKeepsRunningOneInstance struct {
@@ -38,8 +38,10 @@ func (r *routineThatKeepsRunningOneInstance) Run(ctx context.Context) {
 		"routine": &exponential.Backoff{Min: r.retryInterval, Max: 10 * time.Minute},
 	}
 
-	r.num = ctx.Value(ctxNumKey{}).(int64)
+	r.num, _ = ctx.Value(ctxNumKey{}).(int64)
+
 	var tryAgainIn time.Duration // zero on first run
+
 	for {
 		select {
 		case <-ctx.Done():
@@ -50,6 +52,7 @@ func (r *routineThatKeepsRunningOneInstance) Run(ctx context.Context) {
 		// after the routine returned.
 		singleRunCtx, cancel := context.WithCancel(ctx)
 		tryAgainIn = r.singleRun(singleRunCtx)
+
 		cancel()
 	}
 }
@@ -59,14 +62,18 @@ func (r *routineThatKeepsRunningOneInstance) Run(ctx context.Context) {
 // should be performed.
 func (r *routineThatKeepsRunningOneInstance) singleRun(ctx context.Context) time.Duration {
 	l := redis.NewLock("routine:lock:"+r.Name, redis.SetTTL(r.lockTTL))
+
 	lockCtx, cancel, err := l.AcquireAndKeepUp(ctx)
 	if err != nil {
 		go errors.Handle(ctx, err) // report error to Sentry, non-blocking
 		return r.backoff.Duration("lock")
 	}
+
 	if lockCtx != nil {
 		defer cancel()
+
 		routinePanicked := true
+
 		func() {
 			defer errors.HandleWithCtx(ctx, fmt.Sprintf("routine %d", r.num)) // handle panics
 
@@ -74,12 +81,16 @@ func (r *routineThatKeepsRunningOneInstance) singleRun(ctx context.Context) time
 			defer span.Finish()
 
 			r.Routine(span.Context())
+
 			routinePanicked = false
 		}()
+
 		if routinePanicked {
 			return r.backoff.Duration("routine")
 		}
 	}
+
 	r.backoff.ResetAll()
+
 	return r.retryInterval
 }

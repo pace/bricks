@@ -7,12 +7,13 @@ import (
 	"context"
 	"testing"
 
-	"github.com/pace/bricks/http/middleware"
-	"github.com/pace/bricks/locale"
-	"github.com/pace/bricks/maintenance/log"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/grpc/metadata"
+
+	"github.com/pace/bricks/http/middleware"
+	"github.com/pace/bricks/locale"
+	"github.com/pace/bricks/maintenance/log"
 )
 
 func TestPrepareContext(t *testing.T) {
@@ -23,6 +24,7 @@ func TestPrepareContext(t *testing.T) {
 	assert.NotEmpty(t, log.RequestIDFromContext(ctx0))
 
 	var buf0 bytes.Buffer
+
 	l := log.Ctx(ctx0).Output(&buf0)
 	l.Debug().Msg("test")
 	assert.Contains(t, buf0.String(), "{\"level\":\"debug\",\"req_id\":\""+
@@ -40,12 +42,14 @@ func TestPrepareContext(t *testing.T) {
 	assert.Len(t, md.Get(MetadataKeyRequestID), 0)
 	assert.Len(t, md.Get(MetadataKeyBearerToken), 0)
 	assert.Equal(t, "c690uu0ta2rv348epm8g", log.RequestIDFromContext(ctx1))
+
 	loc, ok := locale.FromCtx(ctx1)
 	assert.True(t, ok)
 	assert.Equal(t, "fr-CH, fr;q=0.9, en;q=0.8, de;q=0.7, *;q=0.5", loc.Language())
 	assert.Equal(t, "Europe/Paris", loc.Timezone())
 
 	var buf1 bytes.Buffer
+
 	l = log.Ctx(ctx1).Output(&buf1)
 	l.Debug().Msg("test")
 	assert.Contains(t, buf1.String(), "{\"level\":\"debug\",\"req_id\":\"c690uu0ta2rv348epm8g\",\"time\":\"")
@@ -63,10 +67,12 @@ func TestPrepareContext(t *testing.T) {
 	assert.Equal(t, "c690uu0ta2rv348epm8g", log.RequestIDFromContext(ctx1))
 
 	var buf2 bytes.Buffer
+
 	l = log.Ctx(ctx2).Output(&buf2)
 	l.Debug().Msg("test")
 	assert.Contains(t, buf2.String(), "{\"level\":\"debug\",\"req_id\":\"c690uu0ta2rv348epm8g\",\"time\":\"")
 	assert.Contains(t, buf2.String(), ",\"message\":\"test\"}\n")
+
 	_, ok = locale.FromCtx(ctx2)
 	assert.False(t, ok)
 

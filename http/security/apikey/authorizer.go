@@ -30,7 +30,7 @@ type token struct {
 	value string
 }
 
-// GetValue returns the api key
+// GetValue returns the api key.
 func (b *token) GetValue() string {
 	return b.value
 }
@@ -42,22 +42,26 @@ func NewAuthorizer(authConfig *Config, apiKey string) *Authorizer {
 
 // Authorize authorizes a request based on the configured api key the config of the security schema
 // Success: A context with a token containing the api key and true
-// Error: the unchanged request context and false. the response already contains the error message
+// Error: the unchanged request context and false. the response already contains the error message.
 func (a *Authorizer) Authorize(r *http.Request, w http.ResponseWriter) (context.Context, bool) {
 	key := security.GetBearerTokenFromHeader(r.Header.Get(a.authConfig.Name))
 	if key == "" {
 		log.Req(r).Info().Msg("No Api Key present in field " + a.authConfig.Name)
 		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+
 		return r.Context(), false
 	}
+
 	if key == a.apiKey {
 		return security.ContextWithToken(r.Context(), &token{key}), true
 	}
+
 	http.Error(w, "ApiKey not valid", http.StatusUnauthorized)
+
 	return r.Context(), false
 }
 
-// CanAuthorizeRequest returns true, if the request contains a token in the configured header, otherwise false
+// CanAuthorizeRequest returns true, if the request contains a token in the configured header, otherwise false.
 func (a *Authorizer) CanAuthorizeRequest(r http.Request) bool {
 	return security.GetBearerTokenFromHeader(r.Header.Get(a.authConfig.Name)) != ""
 }

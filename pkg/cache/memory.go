@@ -36,12 +36,15 @@ func InMemory() *Memory {
 func (c *Memory) Put(_ context.Context, key string, value []byte, ttl time.Duration) error {
 	v := inMemoryValue{value: make([]byte, len(value))}
 	copy(v.value, value)
+
 	if ttl != 0 {
 		v.expiresAt = time.Now().Add(ttl)
 	}
+
 	c.mx.Lock()
 	c.values[key] = v
 	c.mx.Unlock()
+
 	return nil
 }
 
@@ -53,9 +56,11 @@ func (c *Memory) Get(ctx context.Context, key string) ([]byte, time.Duration, er
 	c.mx.RLock()
 	v, ok := c.values[key]
 	c.mx.RUnlock()
+
 	if !ok {
 		return nil, 0, fmt.Errorf("key %q: %w", key, ErrNotFound)
 	}
+
 	var ttl time.Duration
 	if !v.expiresAt.IsZero() {
 		ttl = time.Until(v.expiresAt)
@@ -64,8 +69,10 @@ func (c *Memory) Get(ctx context.Context, key string) ([]byte, time.Duration, er
 			return nil, 0, fmt.Errorf("key %q: %w", key, ErrNotFound)
 		}
 	}
+
 	value := make([]byte, len(v.value))
 	copy(value, v.value)
+
 	return value, ttl, nil
 }
 

@@ -9,14 +9,14 @@ import (
 	"time"
 
 	"github.com/getsentry/sentry-go"
-
-	"github.com/pace/bricks/maintenance/log/hlog"
 	"github.com/rs/xid"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
+
+	"github.com/pace/bricks/maintenance/log/hlog"
 )
 
-// RequestIDHeader name of the header that can contain a request ID
+// RequestIDHeader name of the header that can contain a request ID.
 const RequestIDHeader = "Request-Id"
 
 // Handler returns a middleware that handles all of the logging aspects of
@@ -40,7 +40,7 @@ func Handler(silentPrefixes ...string) func(http.Handler) http.Handler {
 }
 
 // requestCompleted logs all request related information once
-// at the end of the request
+// at the end of the request.
 var requestCompleted = func(r *http.Request, status, size int, duration time.Duration) {
 	ctx := r.Context()
 
@@ -65,7 +65,7 @@ var requestCompleted = func(r *http.Request, status, size int, duration time.Dur
 		Msg("Request Completed")
 }
 
-// ProxyAwareRemote return the most likely remote address
+// ProxyAwareRemote return the most likely remote address.
 func ProxyAwareRemote(r *http.Request) string {
 	// if we get the content via a proxy, try to extract the
 	// ip from the usual headers
@@ -73,10 +73,12 @@ func ProxyAwareRemote(r *http.Request) string {
 		addresses := strings.Split(r.Header.Get(h), ",")
 		for i := len(addresses) - 1; i >= 0; i-- {
 			ip := strings.TrimSpace(addresses[i])
+
 			realIP := net.ParseIP(ip)
 			if !realIP.IsGlobalUnicast() || isPrivate(realIP) {
 				continue // bad address, go to next
 			}
+
 			return ip
 		}
 	}
@@ -87,12 +89,13 @@ func ProxyAwareRemote(r *http.Request) string {
 		log.Ctx(r.Context()).Warn().Err(err).Msg("failed to decode the remote address")
 		return ""
 	}
+
 	return host
 }
 
 // isPrivate reports whether `ip' is a local address, according to
 // RFC 1918 (IPv4 addresses) and RFC 4193 (IPv6 addresses).
-// Remove as soon as https://github.com/golang/go/issues/29146 is resolved
+// Remove as soon as https://github.com/golang/go/issues/29146 is resolved.
 func isPrivate(ip net.IP) bool {
 	if ip4 := ip.To4(); ip4 != nil {
 		// Local IPv4 addresses are defined in https://tools.ietf.org/html/rfc1918
@@ -109,6 +112,7 @@ func RequestIDHandler(fieldKey, headerName string) func(next http.Handler) http.
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			ctx := r.Context()
+
 			var id xid.ID
 
 			// try extract of xid from header

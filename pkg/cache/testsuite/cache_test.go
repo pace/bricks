@@ -5,9 +5,10 @@ package testsuite_test
 import (
 	"testing"
 
+	"github.com/stretchr/testify/suite"
+
 	"github.com/pace/bricks/pkg/cache"
 	. "github.com/pace/bricks/pkg/cache/testsuite"
-	"github.com/stretchr/testify/suite"
 )
 
 // TestStringsTestSuite tests the reference in-memory cache implementation.

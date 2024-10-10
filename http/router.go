@@ -6,9 +6,8 @@ import (
 	"net/http"
 	"net/http/pprof"
 
-	"github.com/pace/bricks/maintenance/tracing"
-
 	"github.com/gorilla/mux"
+
 	"github.com/pace/bricks/http/middleware"
 	"github.com/pace/bricks/locale"
 	"github.com/pace/bricks/maintenance/errors"
@@ -16,11 +15,12 @@ import (
 	"github.com/pace/bricks/maintenance/health/servicehealthcheck"
 	"github.com/pace/bricks/maintenance/log"
 	"github.com/pace/bricks/maintenance/metric"
+	"github.com/pace/bricks/maintenance/tracing"
 	redactMdw "github.com/pace/bricks/pkg/redact/middleware"
 )
 
 // Router returns the default microservice endpoints for
-// health, metrics and debugging
+// health, metrics and debugging.
 func Router() *mux.Router {
 	r := mux.NewRouter()
 
@@ -53,10 +53,10 @@ func Router() *mux.Router {
 	// report Client ID back to caller
 	r.Use(middleware.ClientID)
 
-	// support redacting of data accross the full request scope
+	// support redacting of data across the full request scope
 	r.Use(redactMdw.Redact)
 
-	// makes some infos about the request accessable from the context
+	// makes some infos about the request accessible from the context
 	r.Use(middleware.RequestInContext)
 
 	// for prometheus

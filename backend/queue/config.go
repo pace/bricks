@@ -20,8 +20,7 @@ type config struct {
 var cfg config
 
 func init() {
-	err := env.Parse(&cfg)
-	if err != nil {
+	if err := env.Parse(&cfg); err != nil {
 		log.Fatalf("Failed to parse queue environment: %v", err)
 	}
 }

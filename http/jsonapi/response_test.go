@@ -13,11 +13,10 @@ import (
 	"testing"
 	"time"
 
+	"github.com/shopspring/decimal"
 	"github.com/stretchr/testify/require"
 
 	"github.com/pace/bricks/pkg/isotime"
-
-	"github.com/shopspring/decimal"
 )
 
 func TestMarshalPayload(t *testing.T) {
@@ -25,14 +24,16 @@ func TestMarshalPayload(t *testing.T) {
 	if e != nil {
 		panic(e)
 	}
+
 	book := &Book{ID: 1, Decimal1: d}
 	books := []*Book{book, {ID: 2}}
-	var jsonData map[string]interface{}
+
+	var jsonData map[string]any
 
 	// One
 	out1 := bytes.NewBuffer(nil)
-	err := MarshalPayload(out1, book)
-	if err != nil {
+
+	if err := MarshalPayload(out1, book); err != nil {
 		t.Fatal(err)
 	}
 
@@ -43,29 +44,33 @@ func TestMarshalPayload(t *testing.T) {
 	if err := json.Unmarshal(out1.Bytes(), &jsonData); err != nil {
 		t.Fatal(err)
 	}
-	if _, ok := jsonData["data"].(map[string]interface{}); !ok {
+
+	if _, ok := jsonData["data"].(map[string]any); !ok {
 		t.Fatalf("data key did not contain an Hash/Dict/Map")
 	}
+
 	fmt.Println(out1.String())
 
 	// Many
 	out2 := bytes.NewBuffer(nil)
-	err = MarshalPayload(out2, books)
-	if err != nil {
+
+	if err := MarshalPayload(out2, books); err != nil {
 		t.Fatal(err)
 	}
 
 	if err := json.Unmarshal(out2.Bytes(), &jsonData); err != nil {
 		t.Fatal(err)
 	}
-	if _, ok := jsonData["data"].([]interface{}); !ok {
+
+	if _, ok := jsonData["data"].([]any); !ok {
 		t.Fatalf("data key did not contain an Array")
 	}
 }
 
 func TestMarshalPayloadWithNulls(t *testing.T) {
 	books := []*Book{nil, {ID: 101}, nil}
-	var jsonData map[string]interface{}
+
+	var jsonData map[string]any
 
 	out := bytes.NewBuffer(nil)
 	if err := MarshalPayload(out, books); err != nil {
@@ -75,15 +80,18 @@ func TestMarshalPayloadWithNulls(t *testing.T) {
 	if err := json.Unmarshal(out.Bytes(), &jsonData); err != nil {
 		t.Fatal(err)
 	}
+
 	raw, ok := jsonData["data"]
 	if !ok {
 		t.Fatalf("data key does not exist")
 	}
-	arr, ok := raw.([]interface{})
+
+	arr, ok := raw.([]any)
 	if !ok {
 		t.Fatalf("data is not an Array")
 	}
-	for i := 0; i < len(arr); i++ {
+
+	for i := range len(arr) {
 		if books[i] == nil && arr[i] != nil ||
 			books[i] != nil && arr[i] == nil {
 			t.Fatalf("restored data is not equal to source")
@@ -100,20 +108,40 @@ func TestMarshal_attrStringSlice(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	var jsonData map[string]interface{}
+	var jsonData map[string]any
 	if err := json.Unmarshal(out.Bytes(), &jsonData); err != nil {
 		t.Fatal(err)
 	}
 
-	jsonTags := jsonData["data"].(map[string]interface{})["attributes"].(map[string]interface{})["tags"].([]interface{})
+	dataMap, ok := jsonData["data"].(map[string]any)
+	if !ok {
+		t.Fatal("data was not a map")
+	}
+
+	attributesMap, ok := dataMap["attributes"].(map[string]any)
+	if !ok {
+		t.Fatal("data.attributes was not a map")
+	}
+
+	jsonTags, ok := attributesMap["tags"].([]any)
+	if !ok {
+		t.Fatal("data.attributes.tags was not a slice")
+	}
+
 	if e, a := len(tags), len(jsonTags); e != a {
 		t.Fatalf("Was expecting tags of length %d got %d", e, a)
 	}
 
-	// Convert from []interface{} to []string
+	// Convert from []any to []string
 	jsonTagsStrings := []string{}
+
 	for _, tag := range jsonTags {
-		jsonTagsStrings = append(jsonTagsStrings, tag.(string))
+		s, ok := tag.(string)
+		if !ok {
+			t.Fatalf("Was expecting tag to be a string, got %T", tag)
+		}
+
+		jsonTagsStrings = append(jsonTagsStrings, s)
 	}
 
 	// Sort both
@@ -135,29 +163,42 @@ func TestWithoutOmitsEmptyAnnotationOnRelation(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	var jsonData map[string]interface{}
+	var jsonData map[string]any
 	if err := json.Unmarshal(out.Bytes(), &jsonData); err != nil {
 		t.Fatal(err)
 	}
-	relationships := jsonData["data"].(map[string]interface{})["relationships"].(map[string]interface{})
+
+	dataMap, ok := jsonData["data"].(map[string]any)
+	if !ok {
+		t.Fatal("data was not a map")
+	}
+
+	relationships, ok := dataMap["relationships"].(map[string]any)
+	if !ok {
+		t.Fatal("data.relationships was not a map")
+	}
 
 	// Verifiy the "posts" relation was an empty array
 	posts, ok := relationships["posts"]
 	if !ok {
 		t.Fatal("Was expecting the data.relationships.posts key/value to have been present")
 	}
-	postsMap, ok := posts.(map[string]interface{})
+
+	postsMap, ok := posts.(map[string]any)
 	if !ok {
 		t.Fatal("data.relationships.posts was not a map")
 	}
+
 	postsData, ok := postsMap["data"]
 	if !ok {
 		t.Fatal("Was expecting the data.relationships.posts.data key/value to have been present")
 	}
-	postsDataSlice, ok := postsData.([]interface{})
+
+	postsDataSlice, ok := postsData.([]any)
 	if !ok {
 		t.Fatal("data.relationships.posts.data was not a slice []")
 	}
+
 	if len(postsDataSlice) != 0 {
 		t.Fatal("Was expecting the data.relationships.posts.data value to have been an empty array []")
 	}
@@ -167,14 +208,17 @@ func TestWithoutOmitsEmptyAnnotationOnRelation(t *testing.T) {
 	if !postExists {
 		t.Fatal("Was expecting the data.relationships.current_post key/value to have NOT been omitted")
 	}
-	currentPostMap, ok := currentPost.(map[string]interface{})
+
+	currentPostMap, ok := currentPost.(map[string]any)
 	if !ok {
 		t.Fatal("data.relationships.current_post was not a map")
 	}
+
 	currentPostData, ok := currentPostMap["data"]
 	if !ok {
 		t.Fatal("Was expecting the data.relationships.current_post.data key/value to have been present")
 	}
+
 	if currentPostData != nil {
 		t.Fatal("Was expecting the data.relationships.current_post.data value to have been nil/null")
 	}
@@ -195,11 +239,15 @@ func TestWithOmitsEmptyAnnotationOnRelation(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	var jsonData map[string]interface{}
+	var jsonData map[string]any
 	if err := json.Unmarshal(out.Bytes(), &jsonData); err != nil {
 		t.Fatal(err)
 	}
-	payload := jsonData["data"].(map[string]interface{})
+
+	payload, ok := jsonData["data"].(map[string]any)
+	if !ok {
+		t.Fatal("data was not a map")
+	}
 
 	// Verify relationship was NOT set
 	if val, exists := payload["relationships"]; exists {
@@ -227,24 +275,38 @@ func TestWithOmitsEmptyAnnotationOnRelation_MixedData(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	var jsonData map[string]interface{}
+	var jsonData map[string]any
 	if err := json.Unmarshal(out.Bytes(), &jsonData); err != nil {
 		t.Fatal(err)
 	}
-	payload := jsonData["data"].(map[string]interface{})
+
+	payload, ok := jsonData["data"].(map[string]any)
+	if !ok {
+		t.Fatal("data was not a map")
+	}
 
 	// Verify relationship was set
 	if _, exists := payload["relationships"]; !exists {
 		t.Fatal("Was expecting the data.relationships key/value to have NOT been empty")
 	}
 
-	relationships := payload["relationships"].(map[string]interface{})
+	relationships, ok := payload["relationships"].(map[string]any)
+	if !ok {
+		t.Fatal("data.relationships was not a map")
+	}
 
 	// Verify the relationship was not omitted, and is not null
 	if val, exists := relationships["current_post"]; !exists {
 		t.Fatal("Was expecting the data.relationships.current_post key/value to have NOT been omitted")
-	} else if val.(map[string]interface{})["data"] == nil {
-		t.Fatal("Was expecting the data.relationships.current_post value to have NOT been nil/null")
+	} else {
+		valMap, ok := val.(map[string]any)
+		if !ok {
+			t.Fatal("Was expecting the data.relationships.current_post value to have been a map")
+		}
+
+		if valMap["data"] == nil {
+			t.Fatal("Was expecting the data.relationships.current_post value to have NOT been nil/null")
+		}
 	}
 }
 
@@ -283,26 +345,38 @@ func TestWithOmitsEmptyAnnotationOnAttribute(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	var jsonData map[string]interface{}
+	var jsonData map[string]any
 	if err := json.Unmarshal(out.Bytes(), &jsonData); err != nil {
 		t.Fatal(err)
 	}
 
 	// Verify that there is no field "phones" in attributes
-	payload := jsonData["data"].(map[string]interface{})
-	attributes := payload["attributes"].(map[string]interface{})
+	payload, ok := jsonData["data"].(map[string]any)
+	if !ok {
+		t.Fatal("data was not a map")
+	}
+
+	attributes, ok := payload["attributes"].(map[string]any)
+	if !ok {
+		t.Fatal("Was expecting the data.attributes key/value to have been a map")
+	}
+
 	if _, ok := attributes["title"]; !ok {
 		t.Fatal("Was expecting the data.attributes.title to have NOT been omitted")
 	}
+
 	if _, ok := attributes["phones"]; ok {
 		t.Fatal("Was expecting the data.attributes.phones to have been omitted")
 	}
+
 	if _, ok := attributes["address"]; ok {
 		t.Fatal("Was expecting the data.attributes.phones to have been omitted")
 	}
+
 	if _, ok := attributes["tags"]; !ok {
 		t.Fatal("Was expecting the data.attributes.tags to have NOT been omitted")
 	}
+
 	if _, ok := attributes["account"]; !ok {
 		t.Fatal("Was expecting the data.attributes.account to have NOT been omitted")
 	}
@@ -321,18 +395,22 @@ func TestMarshalIDPtr(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	var jsonData map[string]interface{}
+	var jsonData map[string]any
 	if err := json.Unmarshal(out.Bytes(), &jsonData); err != nil {
 		t.Fatal(err)
 	}
-	data := jsonData["data"].(map[string]interface{})
-	// attributes := data["attributes"].(map[string]interface{})
+
+	data, ok := jsonData["data"].(map[string]any)
+	if !ok {
+		t.Fatal("data was not a map")
+	}
 
 	// Verify that the ID was sent
 	val, exists := data["id"]
 	if !exists {
 		t.Fatal("Was expecting the data.id member to exist")
 	}
+
 	if val != id {
 		t.Fatalf("Was expecting the data.id member to be `%s`, got `%s`", id, val)
 	}
@@ -346,19 +424,24 @@ func TestMarshalOnePayload_omitIDString(t *testing.T) {
 
 	foo := &Foo{Title: "Foo"}
 	out := bytes.NewBuffer(nil)
+
 	if err := MarshalPayload(out, foo); err != nil {
 		t.Fatal(err)
 	}
 
-	var jsonData map[string]interface{}
+	var jsonData map[string]any
 	if err := json.Unmarshal(out.Bytes(), &jsonData); err != nil {
 		t.Fatal(err)
 	}
-	payload := jsonData["data"].(map[string]interface{})
+
+	payload, ok := jsonData["data"].(map[string]any)
+	if !ok {
+		t.Fatal("data was not a map")
+	}
 
 	// Verify that empty ID of type string gets omitted. See:
 	// https://github.com/google/jsonapi/issues/83#issuecomment-285611425
-	_, ok := payload["id"]
+	_, ok = payload["id"]
 	if ok {
 		t.Fatal("Was expecting the data.id member to be omitted")
 	}
@@ -368,15 +451,14 @@ func TestMarshall_invalidIDType(t *testing.T) {
 	type badIDStruct struct {
 		ID *bool `jsonapi:"primary,cars"`
 	}
+
 	id := true
 	o := &badIDStruct{ID: &id}
 
 	out := bytes.NewBuffer(nil)
-	if err := MarshalPayload(out, o); err != ErrBadJSONAPIID {
-		t.Fatalf(
-			"Was expecting a `%s` error, got `%s`", ErrBadJSONAPIID, err,
-		)
-	}
+
+	err := MarshalPayload(out, o)
+	require.ErrorIs(t, err, ErrBadJSONAPIID)
 }
 
 func TestOmitsEmptyAnnotation(t *testing.T) {
@@ -390,16 +472,26 @@ func TestOmitsEmptyAnnotation(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	var jsonData map[string]interface{}
+	var jsonData map[string]any
 	if err := json.Unmarshal(out.Bytes(), &jsonData); err != nil {
 		t.Fatal(err)
 	}
-	attributes := jsonData["data"].(map[string]interface{})["attributes"].(map[string]interface{})
+
+	data, ok := jsonData["data"].(map[string]any)
+	if !ok {
+		t.Fatal("data was not a map")
+	}
+
+	attributes, ok := data["attributes"].(map[string]any)
+	if !ok {
+		t.Fatal("Was expecting the data.attributes key/value to have been a map")
+	}
 
 	// Verify that the specifically omitted field were omitted
 	if val, exists := attributes["title"]; exists {
 		t.Fatalf("Was expecting the data.attributes.title key/value to have been omitted - it was not and had a value of %v", val)
 	}
+
 	if val, exists := attributes["pages"]; exists {
 		t.Fatalf("Was expecting the data.attributes.pages key/value to have been omitted - it was not and had a value of %v", val)
 	}
@@ -664,12 +756,14 @@ func TestSupportsLinkable(t *testing.T) {
 	if data.Links == nil {
 		t.Fatal("Expected data.links")
 	}
+
 	links := *data.Links
 
 	self, hasSelf := links["self"]
 	if !hasSelf {
 		t.Fatal("Expected 'self' link to be present")
 	}
+
 	if _, isString := self.(string); !isString {
 		t.Fatal("Expected 'self' to contain a string")
 	}
@@ -678,7 +772,8 @@ func TestSupportsLinkable(t *testing.T) {
 	if !hasComments {
 		t.Fatal("expect 'comments' to be present")
 	}
-	commentsMap, isMap := comments.(map[string]interface{})
+
+	commentsMap, isMap := comments.(map[string]any)
 	if !isMap {
 		t.Fatal("Expected 'comments' to contain a map")
 	}
@@ -687,6 +782,7 @@ func TestSupportsLinkable(t *testing.T) {
 	if !hasHref {
 		t.Fatal("Expect 'comments' to contain an 'href' key/value")
 	}
+
 	if _, isString := commentsHref.(string); !isString {
 		t.Fatal("Expected 'href' to contain a string")
 	}
@@ -695,16 +791,19 @@ func TestSupportsLinkable(t *testing.T) {
 	if !hasMeta {
 		t.Fatal("Expect 'comments' to contain a 'meta' key/value")
 	}
-	commentsMetaMap, isMap := commentsMeta.(map[string]interface{})
+
+	commentsMetaMap, isMap := commentsMeta.(map[string]any)
 	if !isMap {
 		t.Fatal("Expected 'comments' to contain a map")
 	}
 
 	commentsMetaObject := Meta(commentsMetaMap)
-	countsMap, isMap := commentsMetaObject["counts"].(map[string]interface{})
+
+	countsMap, isMap := commentsMetaObject["counts"].(map[string]any)
 	if !isMap {
 		t.Fatal("Expected 'counts' to contain a map")
 	}
+
 	for k, v := range countsMap {
 		if _, isNum := v.(float64); !isNum {
 			t.Fatalf("Exepected value at '%s' to be a numeric (float64)", k)
@@ -746,7 +845,7 @@ func TestSupportsMetable(t *testing.T) {
 		t.Fatalf("Expected data.meta")
 	}
 
-	meta := Meta(*data.Meta)
+	meta := *data.Meta
 	if e, a := "extra details regarding the blog", meta["detail"]; e != a {
 		t.Fatalf("Was expecting meta.detail to be %q, got %q", e, a)
 	}
@@ -774,10 +873,11 @@ func TestRelations(t *testing.T) {
 	if relations["posts"] == nil {
 		t.Fatalf("Posts relationship was not materialized")
 	} else {
-		if relations["posts"].(map[string]interface{})["links"] == nil {
+		if posts, ok := relations["posts"].(map[string]any); !ok || posts["links"] == nil {
 			t.Fatalf("Posts relationship links were not materialized")
 		}
-		if relations["posts"].(map[string]interface{})["meta"] == nil {
+
+		if posts, ok := relations["posts"].(map[string]any); !ok || posts["meta"] == nil {
 			t.Fatalf("Posts relationship meta were not materialized")
 		}
 	}
@@ -785,15 +885,26 @@ func TestRelations(t *testing.T) {
 	if relations["current_post"] == nil {
 		t.Fatalf("Current post relationship was not materialized")
 	} else {
-		if relations["current_post"].(map[string]interface{})["links"] == nil {
+		if currentPost, ok := relations["current_post"].(map[string]any); !ok || currentPost["links"] == nil {
 			t.Fatalf("Current post relationship links were not materialized")
 		}
-		if relations["current_post"].(map[string]interface{})["meta"] == nil {
+
+		if currentPost, ok := relations["current_post"].(map[string]any); !ok || currentPost["meta"] == nil {
 			t.Fatalf("Current post relationship meta were not materialized")
 		}
 	}
 
-	if len(relations["posts"].(map[string]interface{})["data"].([]interface{})) != 2 {
+	posts, ok := relations["posts"].(map[string]any)
+	if !ok {
+		t.Fatalf("Expected posts to be a map")
+	}
+
+	postsData, ok := posts["data"].([]any)
+	if !ok {
+		t.Fatalf("Expected posts.data to be a slice")
+	}
+
+	if len(postsData) != 2 {
 		t.Fatalf("Did not materialize two posts")
 	}
 }
@@ -855,7 +966,7 @@ func TestMarshalPayloadWithoutIncluded(t *testing.T) {
 }
 
 func TestMarshalPayload_many(t *testing.T) {
-	data := []interface{}{
+	data := []any{
 		&Blog{
 			ID:        5,
 			Title:     "Title 1",
@@ -974,7 +1085,8 @@ func TestMarshalMany_SliceOfInterfaceAndSliceOfStructsSameJSON(t *testing.T) {
 		{ID: 1, Author: "aren55555", ISBN: "abc"},
 		{ID: 2, Author: "shwoodard", ISBN: "xyz"},
 	}
-	interfaces := []interface{}{}
+	interfaces := []any{}
+
 	for _, s := range structs {
 		interfaces = append(interfaces, s)
 	}
@@ -984,16 +1096,18 @@ func TestMarshalMany_SliceOfInterfaceAndSliceOfStructsSameJSON(t *testing.T) {
 	if err := MarshalPayload(structsOut, structs); err != nil {
 		t.Fatal(err)
 	}
+
 	interfacesOut := new(bytes.Buffer)
 	if err := MarshalPayload(interfacesOut, interfaces); err != nil {
 		t.Fatal(err)
 	}
 
 	// Generic JSON Unmarshal
-	structsData, interfacesData := make(map[string]interface{}), make(map[string]interface{})
+	structsData, interfacesData := make(map[string]any), make(map[string]any)
 	if err := json.Unmarshal(structsOut.Bytes(), &structsData); err != nil {
 		t.Fatal(err)
 	}
+
 	if err := json.Unmarshal(interfacesOut.Bytes(), &interfacesData); err != nil {
 		t.Fatal(err)
 	}
@@ -1006,15 +1120,15 @@ func TestMarshalMany_SliceOfInterfaceAndSliceOfStructsSameJSON(t *testing.T) {
 
 func TestMarshal_InvalidIntefaceArgument(t *testing.T) {
 	out := new(bytes.Buffer)
-	if err := MarshalPayload(out, true); err != ErrUnexpectedType {
-		t.Fatal("Was expecting an error")
-	}
-	if err := MarshalPayload(out, 25); err != ErrUnexpectedType {
-		t.Fatal("Was expecting an error")
-	}
-	if err := MarshalPayload(out, Book{}); err != ErrUnexpectedType {
-		t.Fatal("Was expecting an error")
-	}
+
+	err := MarshalPayload(out, true)
+	require.ErrorIs(t, err, ErrUnexpectedType)
+
+	err = MarshalPayload(out, 25)
+	require.ErrorIs(t, err, ErrUnexpectedType)
+
+	err = MarshalPayload(out, Book{})
+	require.ErrorIs(t, err, ErrUnexpectedType)
 }
 
 func testBlog() *Blog {

@@ -27,6 +27,7 @@ func TestHide(t *testing.T) {
 		err        error
 		exposedErr error
 	}
+
 	tests := []struct {
 		name             string
 		args             args
@@ -49,26 +50,26 @@ func TestHide(t *testing.T) {
 				err:        iAmAnError,
 				exposedErr: iAmAnotherError,
 			},
-			want: fmt.Errorf("%w: %s", iAmAnotherError, iAmAnError),
+			want: fmt.Errorf("%w: %s", iAmAnotherError, iAmAnError.Error()),
 		},
 		{
 			name: "normal_context_with_error_nothing_exposed",
 			args: args{
 				ctx:        backgroundContext,
-				err:        fmt.Errorf("%s: %w", iAmAnError, context.Canceled),
+				err:        fmt.Errorf("%s: %w", iAmAnError.Error(), context.Canceled),
 				exposedErr: nil,
 			},
-			want:             fmt.Errorf("%s: %w", iAmAnError, context.Canceled),
+			want:             fmt.Errorf("%s: %w", iAmAnError.Error(), context.Canceled),
 			expectContextErr: true,
 		},
 		{
 			name: "normal_context_with_error_with_exposed",
 			args: args{
 				ctx:        backgroundContext,
-				err:        fmt.Errorf("%s: %w", iAmAnError, context.Canceled),
+				err:        fmt.Errorf("%s: %w", iAmAnError.Error(), context.Canceled),
 				exposedErr: iAmAnotherError,
 			},
-			want:             fmt.Errorf("%w: %s: %s", iAmAnotherError, iAmAnError, context.Canceled),
+			want:             fmt.Errorf("%w: %s: %s", iAmAnotherError, iAmAnError.Error(), context.Canceled.Error()),
 			expectContextErr: true,
 		},
 		{
@@ -88,27 +89,27 @@ func TestHide(t *testing.T) {
 				err:        iAmAnError,
 				exposedErr: iAmAnotherError,
 			},
-			want:             fmt.Errorf("%w: %s", iAmAnotherError, iAmAnError),
+			want:             fmt.Errorf("%w: %s", iAmAnotherError, iAmAnError.Error()),
 			expectContextErr: false,
 		},
 		{
 			name: "canceled_context_with_error_nothing_exposed",
 			args: args{
 				ctx:        canceledContext,
-				err:        fmt.Errorf("%s: %w", iAmAnError, context.Canceled),
+				err:        fmt.Errorf("%s: %w", iAmAnError.Error(), context.Canceled),
 				exposedErr: nil,
 			},
-			want:             fmt.Errorf("%s: %w", iAmAnError, context.Canceled),
+			want:             fmt.Errorf("%s: %w", iAmAnError.Error(), context.Canceled),
 			expectContextErr: true,
 		},
 		{
 			name: "canceled_context_with_error_with_exposed",
 			args: args{
 				ctx:        canceledContext,
-				err:        fmt.Errorf("%s: %w", iAmAnError, context.Canceled),
+				err:        fmt.Errorf("%s: %w", iAmAnError.Error(), context.Canceled),
 				exposedErr: iAmAnotherError,
 			},
-			want:             fmt.Errorf("%s: %s: %w", iAmAnotherError, iAmAnError, context.Canceled),
+			want:             fmt.Errorf("%s: %s: %w", iAmAnotherError.Error(), iAmAnError.Error(), context.Canceled),
 			expectContextErr: true,
 		},
 		{
@@ -128,27 +129,27 @@ func TestHide(t *testing.T) {
 				err:        iAmAnError,
 				exposedErr: iAmAnotherError,
 			},
-			want:             fmt.Errorf("%w: %s", iAmAnotherError, iAmAnError),
+			want:             fmt.Errorf("%w: %s", iAmAnotherError, iAmAnError.Error()),
 			expectContextErr: false,
 		},
 		{
 			name: "exceeded_context_with_error_nothing_exposed",
 			args: args{
 				ctx:        exceededContext,
-				err:        fmt.Errorf("%s: %w", iAmAnError, context.DeadlineExceeded),
+				err:        fmt.Errorf("%s: %w", iAmAnError.Error(), context.DeadlineExceeded),
 				exposedErr: nil,
 			},
-			want:             fmt.Errorf("%s: %w", iAmAnError, context.DeadlineExceeded),
+			want:             fmt.Errorf("%s: %w", iAmAnError.Error(), context.DeadlineExceeded),
 			expectContextErr: true,
 		},
 		{
 			name: "exceeded_context_with_error_with_exposed",
 			args: args{
 				ctx:        exceededContext,
-				err:        fmt.Errorf("%s: %w", iAmAnError, context.DeadlineExceeded),
+				err:        fmt.Errorf("%s: %w", iAmAnError.Error(), context.DeadlineExceeded),
 				exposedErr: iAmAnotherError,
 			},
-			want:             fmt.Errorf("%s: %s: %w", iAmAnotherError, iAmAnError, context.DeadlineExceeded),
+			want:             fmt.Errorf("%s: %s: %w", iAmAnotherError.Error(), iAmAnError.Error(), context.DeadlineExceeded),
 			expectContextErr: true,
 		},
 	}

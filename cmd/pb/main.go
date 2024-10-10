@@ -18,8 +18,8 @@ func main() {
 		Args: cobra.MaximumNArgs(1),
 	}
 	addRootCommands(rootCmd)
-	err := rootCmd.Execute()
-	if err != nil {
+
+	if err := rootCmd.Execute(); err != nil {
 		log.Fatal(err)
 	}
 }
@@ -27,6 +27,7 @@ func main() {
 // pace ...
 func addRootCommands(rootCmd *cobra.Command) {
 	var restSource string
+
 	rootCmdNew := &cobra.Command{
 		Use:  "new NAME",
 		Args: cobra.ExactArgs(1),
@@ -67,6 +68,7 @@ func addRootCommands(rootCmd *cobra.Command) {
 	rootCmd.AddCommand(rootCmdEdit)
 
 	var runCmd string
+
 	rootCmdRun := &cobra.Command{
 		Use:  "run NAME",
 		Args: cobra.ExactArgs(1),
@@ -81,6 +83,7 @@ func addRootCommands(rootCmd *cobra.Command) {
 	rootCmd.AddCommand(rootCmdRun)
 
 	var testGoConvey bool
+
 	rootCmdTest := &cobra.Command{
 		Use:  "test NAME",
 		Args: cobra.ExactArgs(1),
@@ -136,6 +139,7 @@ func (e *errorDefinitionsOutputFlag) Type() string {
 // pace service generate ...
 func addServiceGenerateCommands(rootCmdGenerate *cobra.Command) {
 	var pkgName, path, source string
+
 	cmdRest := &cobra.Command{
 		Use:  "rest",
 		Args: cobra.NoArgs,
@@ -153,6 +157,7 @@ func addServiceGenerateCommands(rootCmdGenerate *cobra.Command) {
 	rootCmdGenerate.AddCommand(cmdRest)
 
 	var commandsPath string
+
 	cmdCommands := &cobra.Command{
 		Use:  "commands NAME",
 		Args: cobra.ExactArgs(1),
@@ -165,6 +170,7 @@ func addServiceGenerateCommands(rootCmdGenerate *cobra.Command) {
 	rootCmdGenerate.AddCommand(cmdCommands)
 
 	var dockerfilePath string
+
 	cmdDockerfile := &cobra.Command{
 		Use:  "dockerfile NAME",
 		Args: cobra.ExactArgs(1),
@@ -179,6 +185,7 @@ func addServiceGenerateCommands(rootCmdGenerate *cobra.Command) {
 	rootCmdGenerate.AddCommand(cmdDockerfile)
 
 	var makefilePath string
+
 	cmdMakefile := &cobra.Command{
 		Use:  "makefile NAME",
 		Args: cobra.ExactArgs(1),
@@ -192,6 +199,7 @@ func addServiceGenerateCommands(rootCmdGenerate *cobra.Command) {
 	rootCmdGenerate.AddCommand(cmdMakefile)
 
 	var errorsDefinitionsPkgName, errorsDefinitionsPath, errorsDefinitionsSource string
+
 	errorDefinitionsOutput := goOutputFlag
 	cmdErrorDefinitions := &cobra.Command{
 		Use:   "error-definitions",

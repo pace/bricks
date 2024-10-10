@@ -26,20 +26,20 @@ func (hcf HealthCheckFunc) HealthCheck(ctx context.Context) HealthCheckResult {
 	return hcf(ctx)
 }
 
-// Initializable is used to mark that a health check needs to be initialized
+// Initializable is used to mark that a health check needs to be initialized.
 type Initializable interface {
 	Init(ctx context.Context) error
 }
 
-// HealthState describes if a any error or warning occurred during the health check of a service
+// HealthState describes if a any error or warning occurred during the health check of a service.
 type HealthState string
 
 const (
-	// Err State of a service, if an error occurred during the health check of the service
+	// Err State of a service, if an error occurred during the health check of the service.
 	Err HealthState = "ERR"
-	// Warn State of a service, if a warning occurred during the health check of the service
+	// Warn State of a service, if a warning occurred during the health check of the service.
 	Warn HealthState = "WARN"
-	// Ok State of a service, if no warning or error occurred during the health check of the service
+	// Ok State of a service, if no warning or error occurred during the health check of the service.
 	Ok HealthState = "OK"
 )
 
@@ -51,40 +51,52 @@ type HealthCheckResult struct {
 	Msg   string
 }
 
-// requiredChecks contains all required registered Health Checks - key:Name
+// requiredChecks contains all required registered Health Checks - key:Name.
 var requiredChecks sync.Map
 
-// optionalChecks contains all optional registered Health Checks - key:Name
+// optionalChecks contains all optional registered Health Checks - key:Name.
 var optionalChecks sync.Map
 
 func checksResults(checks *sync.Map) map[string]HealthCheckResult {
 	results := make(map[string]HealthCheckResult)
-	checks.Range(func(key, value interface{}) bool {
-		name := key.(string)
-		result := value.(*ConnectionState).GetState()
+
+	checks.Range(func(key, value any) bool {
+		name, _ := key.(string)
+		if name == "" {
+			return true
+		}
+
+		state, ok := value.(*ConnectionState)
+		if !ok {
+			return true
+		}
+
+		result := state.GetState()
 		results[name] = result
+
 		return true
 	})
+
 	return results
 }
 
 // RegisterHealthCheck registers a required HealthCheck. The name
 // must be unique. If the health check satisfies the Initializable interface, it
 // is initialized before it is added.
-// It is not possible to add a health check with the same name twice, even if one is required and one is optional
+// It is not possible to add a health check with the same name twice, even if one is required and one is optional.
 func RegisterHealthCheck(name string, hc HealthCheck, opts ...HealthCheckOption) {
 	registerHealthCheck(&requiredChecks, name, hc, opts...)
 }
 
 // RegisterHealthCheckFunc registers a required HealthCheck. The name
 // must be unique.  It is not possible to add a health check with the same name twice,
-// even if one is required and one is optional
+// even if one is required and one is optional.
 func RegisterHealthCheckFunc(name string, f HealthCheckFunc, opts ...HealthCheckOption) {
 	RegisterHealthCheck(name, f, opts...)
 }
 
 // RegisterOptionalHealthCheck registers a HealthCheck like RegisterHealthCheck(hc HealthCheck, name string)
-// but the health check is only checked for /health/check and not for /health/
+// but the health check is only checked for /health/check and not for /health/.
 func RegisterOptionalHealthCheck(hc HealthCheck, name string, opts ...HealthCheckOption) {
 	registerHealthCheck(&optionalChecks, name, hc, opts...)
 }
@@ -110,6 +122,7 @@ func registerHealthCheck(checks *sync.Map, name string, check HealthCheck, opts 
 		log.Warnf("tried to register health check with name %q twice", name)
 		return
 	}
+
 	if _, inOpt := optionalChecks.Load(name); inOpt {
 		log.Warnf("tried to register health check with name %q twice", name)
 		return
@@ -119,7 +132,9 @@ func registerHealthCheck(checks *sync.Map, name string, check HealthCheck, opts 
 	if len(name) > longestCheckName {
 		longestCheckName = len(name)
 	}
+
 	var bgState ConnectionState
+
 	checks.Store(name, &bgState)
 
 	go func() {
@@ -153,6 +168,7 @@ func registerHealthCheck(checks *sync.Map, name string, check HealthCheck, opts 
 		// calculate when the warmup phase should be finished
 		healthCheckStart := time.Now()
 		warmupDeadline := healthCheckStart.Add(hcCfg.warmupDelay)
+
 		for {
 			<-timer.C
 			func() {
@@ -174,6 +190,7 @@ func registerHealthCheck(checks *sync.Map, name string, check HealthCheck, opts 
 						// Too soon, leave the same state
 						return
 					}
+
 					initErr := initHealthCheck(ctx, initHC)
 					if initErr != nil {
 						// Init failed again
@@ -196,6 +213,7 @@ func registerHealthCheck(checks *sync.Map, name string, check HealthCheck, opts 
 						})
 						// sanity trigger a health check, since we can not guarantee what the real implementation does ...
 						go check.HealthCheck(ctx)
+
 						return
 					}
 				}
@@ -207,12 +225,13 @@ func registerHealthCheck(checks *sync.Map, name string, check HealthCheck, opts 
 	}()
 }
 
-// initHealthCheck will recover from panics and return a proper error
+// initHealthCheck will recover from panics and return a proper error.
 func initHealthCheck(ctx context.Context, initHC Initializable) (err error) {
 	defer func() {
 		if r := recover(); r != nil {
 			err = fmt.Errorf("panic: %v", r)
-			errors.Handle(ctx, errors.NewPanic(r))
+
+			errors.Handle(ctx, errors.NewPanicError(r))
 		}
 	}()
 

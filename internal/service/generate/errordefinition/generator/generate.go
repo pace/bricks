@@ -27,6 +27,7 @@ type Generator struct {
 
 func loadDefinitionData(source string) ([]byte, error) {
 	var data []byte
+
 	if strings.HasPrefix(source, "http://") || strings.HasPrefix(source, "https://") {
 		loc, err := url.Parse(source)
 		if err != nil {
@@ -40,7 +41,8 @@ func loadDefinitionData(source string) ([]byte, error) {
 	} else {
 		// read definition file from disk
 		var err error
-		data, err = os.ReadFile(source) // nolint: gosec
+
+		data, err = os.ReadFile(source) //nolint:gosec
 		if err != nil {
 			return nil, err
 		}
@@ -54,17 +56,23 @@ func loadDefinitionDataFromURI(url *url.URL) ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
-	defer resp.Body.Close() // nolint: errcheck
+
+	defer func() {
+		if err := resp.Body.Close(); err != nil {
+			fmt.Fprintf(os.Stderr, "failed closing response body: %v", err)
+		}
+	}()
 
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return nil, err
 	}
+
 	return body, nil
 }
 
 // BuildSource generates the go code in the specified path with specified package name
-// based on the passed schema source (url or file path)
+// based on the passed schema source (url or file path).
 func (g *Generator) BuildSource(source, packagePath, packageName string) (string, error) {
 	data, err := loadDefinitionData(source)
 	if err != nil {
@@ -73,8 +81,8 @@ func (g *Generator) BuildSource(source, packagePath, packageName string) (string
 
 	// parse definition
 	var errors runtime.Errors
-	err = json.Unmarshal(data, &errors)
-	if err != nil {
+
+	if err := json.Unmarshal(data, &errors); err != nil {
 		return "", err
 	}
 
@@ -89,16 +97,15 @@ func (g *Generator) BuildDefinitions(errors runtime.Errors, packagePath, package
 
 	// create a error code const for easier runtime error comparison
 
-	var constObjects []jen.Code
-	for _, jsonError := range errors {
+	constObjects := make([]jen.Code, 0)
 
+	for _, jsonError := range errors {
 		// skip example if given
 		if jsonError.Code == "EXAMPLE" {
 			continue
 		}
 
 		constObjects = append(constObjects, jen.Id(fmt.Sprintf("ERR_CODE_%s", jsonError.Code)).Op("=").Lit(jsonError.Code))
-
 	}
 
 	if len(constObjects) > 0 {
@@ -106,7 +113,6 @@ func (g *Generator) BuildDefinitions(errors runtime.Errors, packagePath, package
 	}
 
 	for _, jsonError := range errors {
-
 		// skip example if given
 		if jsonError.Code == "EXAMPLE" {
 			continue

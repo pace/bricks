@@ -14,7 +14,9 @@ import (
 func HealthHandler() http.HandlerFunc {
 	return func(w http.ResponseWriter, _ *http.Request) {
 		var errors []string
+
 		var warnings []string
+
 		for name, res := range checksResults(&requiredChecks) {
 			if res.State == Err {
 				errors = append(errors, fmt.Sprintf("%s: %s", name, res.Msg))
@@ -22,12 +24,16 @@ func HealthHandler() http.HandlerFunc {
 				warnings = append(warnings, fmt.Sprintf("%s: %s", name, res.Msg))
 			}
 		}
+
 		if len(errors) > 0 {
 			log.Logger().Info().Strs("errors", errors).Strs("warnings", warnings).Msg("Health check failed")
+
 			msg := fmt.Sprintf("ERR: %d errors and %d warnings", len(errors), len(warnings))
 			writeResult(w, http.StatusServiceUnavailable, msg)
+
 			return
 		}
+
 		writeResult(w, http.StatusOK, string(Ok))
 	}
 }
@@ -35,6 +41,7 @@ func HealthHandler() http.HandlerFunc {
 func writeResult(w http.ResponseWriter, status int, body string) {
 	w.Header().Set("Content-Type", "text/plain")
 	w.WriteHeader(status)
+
 	if _, err := fmt.Fprint(w, body); err != nil {
 		log.Warnf("could not write output: %s", err)
 	}

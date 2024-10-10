@@ -29,14 +29,18 @@ func TestIntegration_RedisLock(t *testing.T) {
 	for try := 0; true; try++ {
 		lockCtx, releaseLock, err = lock.AcquireAndKeepUp(ctx)
 		require.NoError(t, err)
+
 		if lockCtx == nil {
 			t.Log("Not obtained, try again in 1sec")
 			time.Sleep(time.Second)
+
 			continue
 		}
+
 		require.NotNil(t, lockCtx)
 		require.NotNil(t, releaseLock)
 		releaseLock()
+
 		break
 	}
 }

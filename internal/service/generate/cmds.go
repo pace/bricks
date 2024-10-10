@@ -15,13 +15,13 @@ import (
 const errorsPkg = "github.com/pace/bricks/maintenance/errors"
 
 // CommandOptions are applied when generating the different
-// microservice commands
+// microservice commands.
 type CommandOptions struct {
 	DaemonName  string
 	ControlName string
 }
 
-// NewCommandOptions generate command names using given name
+// NewCommandOptions generate command names using given name.
 func NewCommandOptions(name string) CommandOptions {
 	return CommandOptions{
 		DaemonName:  name + "d",
@@ -30,7 +30,7 @@ func NewCommandOptions(name string) CommandOptions {
 }
 
 // Commands generates the microservice commands based of
-// the given path
+// the given path.
 func Commands(path string, options CommandOptions) {
 	// Create directories
 	dirs := []string{
@@ -38,15 +38,14 @@ func Commands(path string, options CommandOptions) {
 		filepath.Join(path, "cmd", options.ControlName),
 	}
 	for _, dir := range dirs {
-		err := os.MkdirAll(dir, 0o770) // nolint: gosec
-		if err != nil {
+		if err := os.MkdirAll(dir, 0o750); err != nil {
 			log.Fatal(fmt.Printf("Failed to create dir %s: %v", dir, err))
 		}
 	}
 
 	// Create commands files
 	for _, dir := range dirs {
-		f, err := os.Create(filepath.Join(dir, "main.go"))
+		f, err := os.Create(filepath.Join(dir, "main.go")) //nolint:gosec
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -59,6 +58,7 @@ func Commands(path string, options CommandOptions) {
 		} else {
 			generateControlMain(code, cmdName)
 		}
+
 		_, err = f.WriteString(copyright())
 		if err != nil {
 			log.Fatal(err)
@@ -98,10 +98,11 @@ func generateControlMain(f *jen.File, cmdName string) {
 		jen.Qual("fmt", "Printf").Call(jen.Lit(cmdName)))
 }
 
-// copyright generates copyright statement
+// copyright generates copyright statement.
 func copyright() string {
 	stmt := ""
 	now := time.Now()
 	stmt += fmt.Sprintf("// Copyright © %04d by PACE Telematics GmbH. All rights reserved.\n", now.Year())
+
 	return stmt
 }

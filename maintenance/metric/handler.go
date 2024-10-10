@@ -11,7 +11,7 @@ import (
 
 // Handler simply return the prometheus http handler.
 // The handler will expose all of the collectors and metrics
-// that are attached to the prometheus default registry
+// that are attached to the prometheus default registry.
 func Handler() http.Handler {
 	return promhttp.Handler()
 }

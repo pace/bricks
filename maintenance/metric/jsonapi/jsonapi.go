@@ -101,10 +101,11 @@ func NewMetric(serviceName, path string, w http.ResponseWriter, r *http.Request)
 
 // WriteHeader captures the status code for metric submission and
 // collects the pace_api_http_request_total counter and
-// pace_api_http_request_duration_seconds histogram metric
+// pace_api_http_request_duration_seconds histogram metric.
 func (m *Metric) WriteHeader(statusCode int) {
 	clientID, _ := oauth2.ClientID(m.request.Context())
 	IncPaceAPIHTTPRequestTotal(strconv.Itoa(statusCode), m.request.Method, m.path, m.serviceName, clientID)
+
 	duration := float64(time.Since(m.requestStart).Nanoseconds()) / float64(time.Second)
 	AddPaceAPIHTTPRequestDurationSeconds(duration, m.request.Method, m.path, m.serviceName)
 	m.ResponseWriter.WriteHeader(statusCode)
@@ -114,10 +115,11 @@ func (m *Metric) WriteHeader(statusCode int) {
 func (m *Metric) Write(p []byte) (int, error) {
 	size, err := m.ResponseWriter.Write(p)
 	m.sizeWritten += size
+
 	return size, err
 }
 
-// IncPaceAPIHTTPRequestTotal increments the pace_api_http_request_total counter metric
+// IncPaceAPIHTTPRequestTotal increments the pace_api_http_request_total counter metric.
 func IncPaceAPIHTTPRequestTotal(code, method, path, service, clientID string) {
 	paceAPIHTTPRequestTotal.With(prometheus.Labels{
 		"code":      code,
@@ -128,7 +130,7 @@ func IncPaceAPIHTTPRequestTotal(code, method, path, service, clientID string) {
 	}).Inc()
 }
 
-// AddPaceAPIHTTPRequestDurationSeconds adds an observed value for the pace_api_http_request_duration_seconds histogram metric
+// AddPaceAPIHTTPRequestDurationSeconds adds an observed value for the pace_api_http_request_duration_seconds histogram metric.
 func AddPaceAPIHTTPRequestDurationSeconds(duration float64, method, path, service string) {
 	paceAPIHTTPRequestDurationSeconds.With(prometheus.Labels{
 		"method":  method,
@@ -147,7 +149,7 @@ func AddPaceAPIHTTPSizeBytes(size float64, method, path, service, requestOrRespo
 	}).Observe(size)
 }
 
-// lenCallbackReader is a reader that reports the total size before closing
+// lenCallbackReader is a reader that reports the total size before closing.
 type lenCallbackReader struct {
 	reader io.ReadCloser
 	size   int
@@ -157,6 +159,7 @@ type lenCallbackReader struct {
 func (r *lenCallbackReader) Read(p []byte) (int, error) {
 	n, err := r.reader.Read(p)
 	r.size += n
+
 	return n, err
 }
 
@@ -165,5 +168,6 @@ func (r *lenCallbackReader) Close() error {
 	n, _ := io.Copy(io.Discard, r.reader)
 	r.size += int(n)
 	r.onEOF(r.size)
+
 	return r.reader.Close()
 }

@@ -4,7 +4,7 @@ package transport
 
 import "net/http"
 
-// ChainableRoundTripper models a chainable round tripper
+// ChainableRoundTripper models a chainable round tripper.
 type ChainableRoundTripper interface {
 	http.RoundTripper
 
@@ -41,7 +41,7 @@ type RoundTripperChain struct {
 }
 
 // Chain returns a round tripper chain with the specified chainable round trippers and http.DefaultTransport as transport.
-// The transport can be overriden by using the Final method.
+// The transport can be overridden by using the Final method.
 func Chain(rt ...ChainableRoundTripper) *RoundTripperChain {
 	final := &finalRoundTripper{transport: http.DefaultTransport}
 	c := &RoundTripperChain{first: final, current: final, final: final}
@@ -67,6 +67,7 @@ func (c *RoundTripperChain) Use(rt ChainableRoundTripper) *RoundTripperChain {
 
 	c.current.SetTransport(rt)
 	rt.SetTransport(c.final)
+
 	c.current = rt
 
 	return c

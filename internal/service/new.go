@@ -12,12 +12,12 @@ import (
 )
 
 // NewOptions collection of options to apply while or
-// after the creation of the new project
+// after the creation of the new project.
 type NewOptions struct {
 	RestSource string // url or path to OpenAPIv3 (json:api) specification
 }
 
-// New creates a new directory in the go path
+// New creates a new directory in the go path.
 func New(name string, options NewOptions) {
 	// get dir for the service
 	dir, err := GoServicePath(name)
@@ -32,8 +32,8 @@ func New(name string, options NewOptions) {
 	// add REST API if there was a source specified
 	if options.RestSource != "" {
 		restDir := filepath.Join(dir, "internal", "http", "rest")
-		err := os.MkdirAll(restDir, 0o770) // nolint: gosec
-		if err != nil {
+
+		if err := os.MkdirAll(restDir, 0o750); err != nil {
 			log.Fatal(fmt.Printf("Failed to generate dir for rest api %s: %v", restDir, err))
 		}
 
