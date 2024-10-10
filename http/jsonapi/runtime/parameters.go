@@ -14,23 +14,23 @@ import (
 	"github.com/pace/bricks/pkg/isotime"
 )
 
-// ScanIn help to avoid missuse using iota for the possible values
+// ScanIn help to avoid missuse using iota for the possible values.
 type ScanIn int
 
 const (
-	// ScanInPath hints the scanner to scan the input
+	// ScanInPath hints the scanner to scan the input.
 	ScanInPath ScanIn = iota
-	// ScanInQuery hints the scanner to scan the request url query
+	// ScanInQuery hints the scanner to scan the request url query.
 	ScanInQuery
-	// ScanInHeader ints the scanner to scan the request header
+	// ScanInHeader ints the scanner to scan the request header.
 	ScanInHeader
 )
 
-// ScanParameter configured the ScanParameters function
+// ScanParameter configured the ScanParameters function.
 type ScanParameter struct {
 	// Data contains the reference to the parameter, that should
 	// be scanned to
-	Data interface{}
+	Data any
 	// Where the data can be found for scanning
 	Location ScanIn
 	// Input must contain the value data if location is in ScanInPath
@@ -39,12 +39,12 @@ type ScanParameter struct {
 	Name string
 }
 
-// BuildInvalidValueError build a new error, using the passed type and data
+// BuildInvalidValueError build a new error, using the passed type and data.
 func (p *ScanParameter) BuildInvalidValueError(typ reflect.Type, data string) error {
 	return &Error{
 		Title:  fmt.Sprintf("invalid value for %s", p.Name),
 		Detail: fmt.Sprintf("invalid value, expected %s got: %q", typ, data),
-		Source: &map[string]interface{}{
+		Source: &map[string]any{
 			"parameter": p.Name,
 		},
 	}
@@ -53,7 +53,7 @@ func (p *ScanParameter) BuildInvalidValueError(typ reflect.Type, data string) er
 // ScanParameters scans the request using the given path parameter objects
 // in case an error is encountered a 400 along with a jsonapi errors object
 // is sent to the ResponseWriter and false is returned. Returns true if all
-// values were scanned successfully. The used scanning function is fmt.Sscan
+// values were scanned successfully. The used scanning function is fmt.Sscan.
 func ScanParameters(w http.ResponseWriter, r *http.Request, parameters ...*ScanParameter) bool {
 	for _, param := range parameters {
 		var scanData string
@@ -72,14 +72,16 @@ func ScanParameters(w http.ResponseWriter, r *http.Request, parameters ...*ScanP
 				size := len(input)
 				array := reflect.MakeSlice(reValue.Type(), size, size)
 				invalid := 0
-				for i := 0; i < size; i++ {
+
+				for i := range size {
 					if input[i] == "" {
 						invalid++
 						continue
 					}
 
 					arrElem := array.Index(i - invalid)
-					n, _ := Scan(input[i], arrElem.Addr().Interface()) // nolint: gosec
+					n, _ := Scan(input[i], arrElem.Addr().Interface())
+
 					if n != 1 {
 						WriteError(w, http.StatusBadRequest, param.BuildInvalidValueError(arrElem.Type(), input[i]))
 						return false
@@ -89,6 +91,7 @@ func ScanParameters(w http.ResponseWriter, r *http.Request, parameters ...*ScanP
 				if invalid > 0 {
 					array = array.Slice(0, size-invalid)
 				}
+
 				reValue.Set(array)
 
 				// skip parsing at the bottom of the loop
@@ -110,18 +113,21 @@ func ScanParameters(w http.ResponseWriter, r *http.Request, parameters ...*ScanP
 			return false
 		}
 	}
+
 	return true
 }
 
-// Scan works like fmt.Sscan except for strings and decimals, they are directly assigned
-func Scan(str string, data interface{}) (int, error) {
+// Scan works like fmt.Sscan except for strings and decimals, they are directly assigned.
+func Scan(str string, data any) (int, error) {
 	// handle decimal
 	if d, ok := data.(*decimal.Decimal); ok {
 		nd, err := decimal.NewFromString(str)
 		if err != nil {
 			return 0, err
 		}
+
 		*d = nd
+
 		return 1, nil
 	}
 
@@ -133,6 +139,7 @@ func Scan(str string, data interface{}) (int, error) {
 		}
 
 		*t = nt
+
 		return 1, nil
 	}
 
@@ -143,5 +150,5 @@ func Scan(str string, data interface{}) (int, error) {
 		return 1, nil
 	}
 
-	return fmt.Sscan(str, data) // nolint: gosec
+	return fmt.Sscan(str, data)
 }

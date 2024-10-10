@@ -6,32 +6,32 @@ import (
 	"github.com/pace/bricks/maintenance/terminationlog"
 )
 
-// Fatal implements log Fatal interface
-func Fatal(v ...interface{}) {
+// Fatal implements log Fatal interface.
+func Fatal(v ...any) {
 	terminationlog.Fatal(v...)
 }
 
-// Fatalln implements log Fatalln interface
-func Fatalln(v ...interface{}) {
+// Fatalln implements log Fatalln interface.
+func Fatalln(v ...any) {
 	terminationlog.Fatalln(v...)
 }
 
-// Fatalf implements log Fatalf interface
-func Fatalf(format string, v ...interface{}) {
+// Fatalf implements log Fatalf interface.
+func Fatalf(format string, v ...any) {
 	terminationlog.Fatalf(format, v...)
 }
 
-// Print implements log Print interface
-func Print(v ...interface{}) {
+// Print implements log Print interface.
+func Print(v ...any) {
 	Debug(v...)
 }
 
-// Println implements log Println interface
-func Println(v ...interface{}) {
+// Println implements log Println interface.
+func Println(v ...any) {
 	Debug(v...)
 }
 
-// Printf implements log Printf interface
-func Printf(format string, v ...interface{}) {
+// Printf implements log Printf interface.
+func Printf(format string, v ...any) {
 	Debugf(format, v...)
 }

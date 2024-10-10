@@ -17,25 +17,27 @@ func TestValidateParametersWithError(t *testing.T) {
 	type access struct {
 		Token string `valid:"uuid"`
 	}
+
 	type input struct {
 		UUID   string `valid:"uuid"`
 		Access access
 	}
-	expected := map[string]interface{}{
-		"errors": []interface{}{
-			map[string]interface{}{
+
+	expected := map[string]any{
+		"errors": []any{
+			map[string]any{
 				"title":  "UUID is invalid",
 				"detail": "foo does not validate as uuid",
 				"status": "422",
-				"source": map[string]interface{}{
+				"source": map[string]any{
 					"parameter": "/uuid",
 				},
 			},
-			map[string]interface{}{
+			map[string]any{
 				"title":  "Token is invalid",
 				"detail": "bar does not validate as uuid",
 				"status": "422",
-				"source": map[string]interface{}{
+				"source": map[string]any{
 					"parameter": "/access/token",
 				},
 			},
@@ -49,24 +51,27 @@ func TestValidateParametersWithError(t *testing.T) {
 	}
 
 	rec := httptest.NewRecorder()
-	req := httptest.NewRequest("POST", "/", nil)
+	req := httptest.NewRequest(http.MethodPost, "/", nil)
 
 	ok := ValidateParameters(rec, req, &val)
-
 	if ok {
 		t.Error("expected to fail the validation")
 	}
 
 	resp := rec.Result()
-	defer resp.Body.Close()
 
-	if resp.StatusCode != 422 {
+	defer func() {
+		err := resp.Body.Close()
+		assert.NoError(t, err)
+	}()
+
+	if resp.StatusCode != http.StatusUnprocessableEntity {
 		t.Error("expected UnprocessableEntity")
 	}
 
-	var data map[string]interface{}
-	err := json.NewDecoder(resp.Body).Decode(&data)
-	if err != nil {
+	var data map[string]any
+
+	if err := json.NewDecoder(resp.Body).Decode(&data); err != nil {
 		t.Fatal(err)
 	}
 
@@ -77,13 +82,14 @@ func TestValidateParametersWithError(t *testing.T) {
 
 func TestValidateRequest(t *testing.T) {
 	rec := httptest.NewRecorder()
-	req := httptest.NewRequest("POST", "/", nil)
+	req := httptest.NewRequest(http.MethodPost, "/", nil)
 
 	type args struct {
 		w    http.ResponseWriter
 		r    *http.Request
-		data interface{}
+		data any
 	}
+
 	tests := []struct {
 		name string
 		args args

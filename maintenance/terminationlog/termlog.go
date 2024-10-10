@@ -16,25 +16,25 @@ import (
 
 var logFile *os.File
 
-// Fatalf implements log Fatalf interface
-func Fatalf(format string, v ...interface{}) {
+// Fatalf implements log Fatalf interface.
+func Fatalf(format string, v ...any) {
 	if logFile != nil {
-		fmt.Fprintf(logFile, format, v...)
+		_, _ = fmt.Fprintf(logFile, format, v...)
 	}
 
 	log.Fatal().Msg(fmt.Sprintf(format, v...))
 }
 
-// Fatal implements log Fatal interface
-func Fatal(v ...interface{}) {
+// Fatal implements log Fatal interface.
+func Fatal(v ...any) {
 	if logFile != nil {
-		fmt.Fprint(logFile, v...)
+		_, _ = fmt.Fprint(logFile, v...)
 	}
 
 	log.Fatal().Msg(fmt.Sprint(v...))
 }
 
-// Fatalln implements log Fatalln interface
-func Fatalln(v ...interface{}) {
+// Fatalln implements log Fatalln interface.
+func Fatalln(v ...any) {
 	Fatal(v...)
 }

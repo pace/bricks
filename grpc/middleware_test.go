@@ -6,10 +6,11 @@ import (
 	"context"
 	"testing"
 
-	"github.com/pace/bricks/http/middleware"
-	"github.com/pace/bricks/pkg/tracking/utm"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/grpc/metadata"
+
+	"github.com/pace/bricks/http/middleware"
+	"github.com/pace/bricks/pkg/tracking/utm"
 )
 
 func TestEncodeContextWithUTMData(t *testing.T) {
@@ -26,6 +27,7 @@ func TestEncodeContextWithUTMData(t *testing.T) {
 	ctx = EncodeContextWithUTMData(ctx)
 	md, exists := metadata.FromOutgoingContext(ctx)
 	require.True(t, exists)
+
 	ctx2 := context.Background()
 	ctx2 = ContextWithUTMFromMetadata(ctx2, md)
 	utmData, exists := utm.FromContext(ctx2)

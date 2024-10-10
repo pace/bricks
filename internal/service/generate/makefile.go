@@ -9,21 +9,20 @@ import (
 )
 
 // MakefileOptions options that change the rendering
-// of the makefile
+// of the makefile.
 type MakefileOptions struct {
 	Name string
 }
 
 // Makefile generates a with given options for the
-// specified path
+// specified path.
 func Makefile(path string, options MakefileOptions) {
-	f, err := os.Create(path)
+	f, err := os.Create(path) //nolint:gosec
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	err = makefileTemplate.Execute(f, options)
-	if err != nil {
+	if err := makefileTemplate.Execute(f, options); err != nil {
 		log.Fatal(err)
 	}
 }

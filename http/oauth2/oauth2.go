@@ -16,14 +16,14 @@ import (
 	"github.com/pace/bricks/maintenance/log"
 )
 
-// Deprecated: Middleware holds data necessary for Oauth processing - Deprecated for generated apis,
-// use the generated Authentication Backend of the API with oauth2.Authorizer
+// Middleware holds data necessary for Oauth processing.
+// Deprecated: for generated apis, use the generated Authentication Backend of the API with oauth2.Authorizer.
 type Middleware struct {
 	Backend TokenIntrospecter
 }
 
-// Deprecated: NewMiddleware creates a new Oauth middleware - Deprecated for generated apis,
-// use the generated AuthenticationBackend of the API with oauth2.Authorizer
+// NewMiddleware creates a new Oauth middleware.
+// Deprecated: for generated apis, use the generated AuthenticationBackend of the API with oauth2.Authorizer.
 func NewMiddleware(backend TokenIntrospecter) *Middleware {
 	return &Middleware{Backend: backend}
 }
@@ -36,6 +36,7 @@ func (m *Middleware) Handler(next http.Handler) http.Handler {
 		if !isOk {
 			return
 		}
+
 		next.ServeHTTP(w, r.WithContext(ctx))
 	})
 }
@@ -46,12 +47,12 @@ type token struct {
 	clientID string
 	authTime int64
 	scope    Scope
-	backend  interface{}
+	backend  any
 }
 
 const oAuth2Header = "Authorization"
 
-// GetValue returns the oauth2 token of the current user
+// GetValue returns the oauth2 token of the current user.
 func (t *token) GetValue() string {
 	return t.value
 }
@@ -60,7 +61,7 @@ func (t *token) GetValue() string {
 // Success: it returns a context containing the introspection result and true
 // if the introspection was successful
 // Error: The function writes the error in the Response and creates a log-message
-// with more details and returns nil and false if any error occurs during the introspection
+// with more details and returns nil and false if any error occurs during the introspection.
 func introspectRequest(r *http.Request, w http.ResponseWriter, tokenIntro TokenIntrospecter) (context.Context, bool) {
 	// Setup tracing
 	span := sentry.StartSpan(r.Context(), "function", sentry.WithDescription("introspectRequest"))
@@ -85,9 +86,10 @@ func introspectRequest(r *http.Request, w http.ResponseWriter, tokenIntro TokenI
 			http.Error(w, err.Error(), http.StatusUnauthorized)
 		default:
 			http.Error(w, err.Error(), http.StatusInternalServerError)
-
 		}
+
 		log.Req(r).Info().Msg(err.Error())
+
 		return nil, false
 	}
 
@@ -115,10 +117,11 @@ func fromIntrospectResponse(s *IntrospectResponse, tokenValue string) token {
 	}
 
 	t.scope = Scope(s.Scope)
+
 	return t
 }
 
-// Request adds Authorization token to r
+// Request adds Authorization token to r.
 func Request(r *http.Request) *http.Request {
 	tok, ok := security.GetTokenFromContext(r.Context())
 	if ok {
@@ -132,76 +135,91 @@ func Request(r *http.Request) *http.Request {
 // the permissions represented by the provided scope are included in the valid scope.
 func HasScope(ctx context.Context, scope Scope) bool {
 	tok, _ := security.GetTokenFromContext(ctx)
+
 	oauth2token, ok := tok.(*token)
 	if !ok {
 		return false
 	}
+
 	return scope.IsIncludedIn(oauth2token.scope)
 }
 
-// UserID returns the userID stored in ctx
+// UserID returns the userID stored in ctx.
 func UserID(ctx context.Context) (string, bool) {
 	tok, _ := security.GetTokenFromContext(ctx)
+
 	oauth2token, ok := tok.(*token)
 	if !ok {
 		return "", false
 	}
+
 	return oauth2token.userID, true
 }
 
-// AuthTime returns the auth time stored in ctx as unix timestamp
+// AuthTime returns the auth time stored in ctx as unix timestamp.
 func AuthTime(ctx context.Context) (int64, bool) {
 	tok, _ := security.GetTokenFromContext(ctx)
+
 	oauth2token, ok := tok.(*token)
 	if !ok {
 		return 0, false
 	}
+
 	return oauth2token.authTime, true
 }
 
-// Scopes returns the scopes stored in ctx
+// Scopes returns the scopes stored in ctx.
 func Scopes(ctx context.Context) []string {
 	tok, _ := security.GetTokenFromContext(ctx)
+
 	oauth2token, ok := tok.(*token)
 	if !ok {
 		return []string{}
 	}
+
 	return oauth2token.scope.toSlice()
 }
 
 func AddScope(ctx context.Context, scope string) context.Context {
 	tok, _ := security.GetTokenFromContext(ctx)
+
 	oauth2token, ok := tok.(*token)
 	if !ok {
 		return ctx
 	}
+
 	oauth2token.scope = oauth2token.scope.Add(scope)
+
 	return security.ContextWithToken(ctx, oauth2token)
 }
 
-// ClientID returns the clientID stored in ctx
+// ClientID returns the clientID stored in ctx.
 func ClientID(ctx context.Context) (string, bool) {
 	tok, _ := security.GetTokenFromContext(ctx)
+
 	oauth2token, ok := tok.(*token)
 	if !ok {
 		return "", false
 	}
+
 	return oauth2token.clientID, true
 }
 
 // Backend returns the backend stored in the context. It identifies the
 // authorization backend for the token.
-func Backend(ctx context.Context) (interface{}, bool) {
+func Backend(ctx context.Context) (any, bool) {
 	tok, _ := security.GetTokenFromContext(ctx)
+
 	oauth2token, ok := tok.(*token)
 	if !ok {
 		return nil, false
 	}
+
 	return oauth2token.backend, true
 }
 
 // ContextTransfer sources the oauth2 token from the sourceCtx
-// and returning a new context based on the targetCtx
+// and returning a new context based on the targetCtx.
 func ContextTransfer(sourceCtx context.Context, targetCtx context.Context) context.Context {
 	tok, _ := security.GetTokenFromContext(sourceCtx)
 	return security.ContextWithToken(targetCtx, tok)
@@ -209,11 +227,12 @@ func ContextTransfer(sourceCtx context.Context, targetCtx context.Context) conte
 
 // Deprecated: BearerToken was moved to the security package,
 // because it's used by apiKey and oauth2 authorization.
-// BearerToken returns the bearer token stored in ctx
+// BearerToken returns the bearer token stored in ctx.
 func BearerToken(ctx context.Context) (string, bool) {
 	if tok, ok := security.GetTokenFromContext(ctx); ok {
 		return tok.GetValue(), true
 	}
+
 	return "", false
 }
 

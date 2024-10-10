@@ -20,6 +20,7 @@ func TestContextWithUTMData(t *testing.T) {
 	ctxWithData := ContextWithUTMData(ctx, data)
 	_, found := FromContext(ctx)
 	assert.False(t, found)
+
 	dataFromCtx, found := FromContext(ctxWithData)
 	assert.True(t, found)
 	assert.Equal(t, data, dataFromCtx)

@@ -34,10 +34,10 @@ const (
 )
 
 // Runtime has the same methods as jsonapi package for serialization and
-// deserialization but also has a ctx, a map[string]interface{} for storing
+// deserialization but also has a ctx, a map[string]any for storing
 // state, designed for instrumenting serialization timings.
 type Runtime struct {
-	ctx map[string]interface{}
+	ctx map[string]any
 }
 
 // Events is the func type that provides the callback for handling event timings.
@@ -48,17 +48,17 @@ type Events func(*Runtime, Event, string, time.Duration)
 var Instrumentation Events
 
 // NewRuntime creates a Runtime for use in an application.
-func NewRuntime() *Runtime { return &Runtime{make(map[string]interface{})} }
+func NewRuntime() *Runtime { return &Runtime{make(map[string]any)} }
 
 // WithValue adds custom state variables to the runtime context.
-func (r *Runtime) WithValue(key string, value interface{}) *Runtime {
+func (r *Runtime) WithValue(key string, value any) *Runtime {
 	r.ctx[key] = value
 
 	return r
 }
 
 // Value returns a state variable in the runtime context.
-func (r *Runtime) Value(key string) interface{} {
+func (r *Runtime) Value(key string) any {
 	return r.ctx[key]
 }
 
@@ -72,14 +72,14 @@ func (r *Runtime) shouldInstrument() bool {
 }
 
 // UnmarshalPayload has docs in request.go for UnmarshalPayload.
-func (r *Runtime) UnmarshalPayload(reader io.Reader, model interface{}) error {
+func (r *Runtime) UnmarshalPayload(reader io.Reader, model any) error {
 	return r.instrumentCall(UnmarshalStart, UnmarshalStop, func() error {
 		return UnmarshalPayload(reader, model)
 	})
 }
 
 // UnmarshalManyPayload has docs in request.go for UnmarshalManyPayload.
-func (r *Runtime) UnmarshalManyPayload(reader io.Reader, kind reflect.Type) (elements []interface{}, err error) {
+func (r *Runtime) UnmarshalManyPayload(reader io.Reader, kind reflect.Type) (elements []any, err error) {
 	err2 := r.instrumentCall(UnmarshalStart, UnmarshalStop, func() error {
 		elements, err = UnmarshalManyPayload(reader, kind)
 		return err
@@ -89,7 +89,7 @@ func (r *Runtime) UnmarshalManyPayload(reader io.Reader, kind reflect.Type) (ele
 }
 
 // MarshalPayload has docs in response.go for MarshalPayload.
-func (r *Runtime) MarshalPayload(w io.Writer, model interface{}) error {
+func (r *Runtime) MarshalPayload(w io.Writer, model any) error {
 	return r.instrumentCall(MarshalStart, MarshalStop, func() error {
 		return MarshalPayload(w, model)
 	})
@@ -106,6 +106,7 @@ func (r *Runtime) instrumentCall(start Event, stop Event, c func() error) error 
 	}
 
 	begin := time.Now()
+
 	Instrumentation(r, start, instrumentationGUID, time.Duration(0))
 
 	if err := c(); err != nil {
@@ -128,5 +129,6 @@ func newUUID() (string, error) {
 	uuid[8] = uuid[8]&^0xc0 | 0x80
 	// version 4 (pseudo-random); see section 4.1.3
 	uuid[6] = uuid[6]&^0xf0 | 0x40
+
 	return fmt.Sprintf("%x-%x-%x-%x-%x", uuid[0:4], uuid[4:6], uuid[6:8], uuid[8:10], uuid[10:]), nil
 }

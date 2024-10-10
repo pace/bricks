@@ -3,6 +3,7 @@
 package runtime
 
 import (
+	"errors"
 	"fmt"
 	"net"
 	"net/http"
@@ -15,10 +16,12 @@ import (
 // Unmarshal processes the request content and fills passed data struct with the
 // correct jsonapi content. After un-marshaling the struct will be validated with
 // specified go-validator struct tags.
-// In case of an error, an jsonapi error message will be directly send to the client
-func Unmarshal(w http.ResponseWriter, r *http.Request, data interface{}) bool {
+// In case of an error, an jsonapi error message will be directly send to the client.
+func Unmarshal(w http.ResponseWriter, r *http.Request, data any) bool {
 	// don't leak , but error can't be handled
-	defer r.Body.Close() // nolint: errcheck
+	defer func() {
+		_ = r.Body.Close()
+	}()
 
 	// verify that the client accepts our response
 	// Note: logically this would be done before marshalling,
@@ -40,10 +43,9 @@ func Unmarshal(w http.ResponseWriter, r *http.Request, data interface{}) bool {
 	}
 
 	// parse request
-	err := jsonapi.UnmarshalPayload(r.Body, data)
-	if err != nil {
+	if err := jsonapi.UnmarshalPayload(r.Body, data); err != nil {
 		WriteError(w, http.StatusUnprocessableEntity,
-			fmt.Errorf("can't parse content: %v", err))
+			fmt.Errorf("can't parse content: %w", err))
 		return false
 	}
 
@@ -54,10 +56,12 @@ func Unmarshal(w http.ResponseWriter, r *http.Request, data interface{}) bool {
 // UnmarshalMany processes the request content that has an array of objects and fills passed data struct with the
 // correct jsonapi content. After un-marshaling the struct will be validated with
 // specified go-validator struct tags.
-// In case of an error, an jsonapi error message will be directly send to the client
-func UnmarshalMany(w http.ResponseWriter, r *http.Request, t reflect.Type) (bool, []interface{}) {
+// In case of an error, an jsonapi error message will be directly send to the client.
+func UnmarshalMany(w http.ResponseWriter, r *http.Request, t reflect.Type) (bool, []any) {
 	// don't leak , but error can't be handled
-	defer r.Body.Close() // nolint: errcheck
+	defer func() {
+		_ = r.Body.Close()
+	}()
 
 	// verify that the client accepts our response
 	// Note: logically this would be done before marshalling,
@@ -82,7 +86,7 @@ func UnmarshalMany(w http.ResponseWriter, r *http.Request, t reflect.Type) (bool
 	data, err := jsonapi.UnmarshalManyPayload(r.Body, t)
 	if err != nil {
 		WriteError(w, http.StatusUnprocessableEntity,
-			fmt.Errorf("can't parse content: %v", err))
+			fmt.Errorf("can't parse content: %w", err))
 		return false, nil
 	}
 	// validate request
@@ -91,24 +95,24 @@ func UnmarshalMany(w http.ResponseWriter, r *http.Request, t reflect.Type) (bool
 			return false, nil
 		}
 	}
+
 	return true, data
 }
 
 // Marshal the given data and writes them into the response writer, sets
-// the content-type and code as well
-func Marshal(w http.ResponseWriter, data interface{}, code int) {
+// the content-type and code as well.
+func Marshal(w http.ResponseWriter, data any, code int) {
 	// write response header
 	w.Header().Set("Content-Type", JSONAPIContentType)
 	w.WriteHeader(code)
 
 	// write marshaled response body
-	err := jsonapi.MarshalPayload(w, data)
-	if err != nil {
-		switch err.(type) {
-		case *net.OpError:
-			log.Errorf("Connection error: %s", err)
-		default:
-			panic(fmt.Errorf("failed to marshal jsonapi response for %#v: %s", data, err))
+	if err := jsonapi.MarshalPayload(w, data); err != nil {
+		var opErr *net.OpError
+		if errors.As(err, &opErr) {
+			log.Errorf("Connection error: %v", err)
+		} else {
+			panic(fmt.Errorf("failed to marshal jsonapi response for %#v: %w", data, err))
 		}
 	}
 }

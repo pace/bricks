@@ -10,7 +10,7 @@ import (
 
 // Manages several backoffs of which at any time only one or none is used. When
 // getting the duration of one backoff, all others are reset.
-type combinedExponentialBackoff map[interface{}]*exponential.Backoff
+type combinedExponentialBackoff map[any]*exponential.Backoff
 
 // ResetAll resets all backoffs.
 func (all combinedExponentialBackoff) ResetAll() {
@@ -20,7 +20,7 @@ func (all combinedExponentialBackoff) ResetAll() {
 }
 
 // Duration returns the duration of the requested backoff and resets all others.
-func (all combinedExponentialBackoff) Duration(key interface{}) (dur time.Duration) {
+func (all combinedExponentialBackoff) Duration(key any) (dur time.Duration) {
 	for k, backoff := range all {
 		if k == key {
 			dur = backoff.Duration()
@@ -28,5 +28,6 @@ func (all combinedExponentialBackoff) Duration(key interface{}) (dur time.Durati
 			backoff.Reset()
 		}
 	}
+
 	return
 }

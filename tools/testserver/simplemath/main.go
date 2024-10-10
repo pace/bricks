@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/getsentry/sentry-go"
+
 	"github.com/pace/bricks/grpc"
 	"github.com/pace/bricks/http/security"
 	"github.com/pace/bricks/locale"
@@ -25,6 +26,7 @@ func (*GrpcAuthBackend) AuthorizeUnary(ctx context.Context) (context.Context, er
 	} else {
 		return nil, fmt.Errorf("unauthenticated")
 	}
+
 	return ctx, nil
 }
 
@@ -36,18 +38,21 @@ func (*SimpleMathServer) Add(ctx context.Context, i *math.Input) (*math.Output, 
 	if loc, ok := locale.FromCtx(ctx); ok {
 		log.Ctx(ctx).Debug().Msgf("Locale: %q", loc.Serialize())
 	}
+
 	span := sentry.SpanFromContext(ctx)
 	if span != nil {
 		log.Ctx(ctx).Debug().Msgf("Span: %q", span.Name)
 	}
 
 	var o math.Output
-	o.C = i.A + i.B
-	log.Ctx(ctx).Debug().Msgf("A: %d + B: %d = C: %d", i.A, i.B, o.C)
+
+	o.C = i.GetA() + i.GetB()
+	log.Ctx(ctx).Debug().Msgf("A: %d + B: %d = C: %d", i.GetA(), i.GetB(), o.GetC())
+
 	return &o, nil
 }
 
-func (*SimpleMathServer) Substract(ctx context.Context, i *math.Input) (*math.Output, error) {
+func (*SimpleMathServer) Subtract(ctx context.Context, i *math.Input) (*math.Output, error) {
 	panic("not implemented")
 }
 
@@ -57,8 +62,7 @@ func main() {
 	gs := grpc.Server(&GrpcAuthBackend{}, log.InterceptorLogger(l))
 	math.RegisterMathServiceServer(gs, ms)
 
-	err := grpc.ListenAndServe(gs)
-	if err != nil {
+	if err := grpc.ListenAndServe(gs); err != nil {
 		log.Fatal(err)
 	}
 }

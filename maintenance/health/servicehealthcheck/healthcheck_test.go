@@ -51,7 +51,7 @@ func TestHandlerHealthCheck(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.title, func(t *testing.T) {
 			resetHealthChecks()
-			// set warmup for unit testing explicitely to 0
+			// set warmup for unit testing explicitly to 0
 			RegisterHealthCheck(tc.check.name, tc.check, UseWarmup(0))
 			testRequest(t, handler, tc.expCode, expBody(tc.expBody))
 		})
@@ -60,6 +60,7 @@ func TestHandlerHealthCheck(t *testing.T) {
 
 func TestInitErrorRetryAndCaching(t *testing.T) {
 	handler := HealthHandler()
+
 	resetHealthChecks()
 
 	bgInterval := time.Second
@@ -77,18 +78,15 @@ func TestInitErrorRetryAndCaching(t *testing.T) {
 			UseInitErrResultTTL(time.Hour), // Big caching ttl of the init err result
 		)
 		testRequest(t, handler, http.StatusServiceUnavailable, expBody("ERR: 1 errors and 0 warnings"))
-
 	}
 
 	{
 		hc := &mockHealthCheck{
-			initErr:         true,
-			healthCheckErr:  false,
-			healthCheckWarn: false,
-			name:            "initErr",
+			initErr: true,
 		}
 		// No init err, but expect err because of cache
 		hc.initErr = false
+
 		waitForBackgroundCheck(bgInterval)
 		testRequest(t, handler, http.StatusServiceUnavailable, expBody("ERR: 1 errors and 0 warnings"))
 	}
@@ -116,14 +114,12 @@ func TestInitErrorRetryAndCaching(t *testing.T) {
 
 	{
 		hc := &mockHealthCheck{
-			initErr:         true,
-			healthCheckErr:  false,
-			healthCheckWarn: false,
-			name:            "initErr",
+			initErr: true,
 		}
 
 		// Remove init err, no caching, expect OK
 		hc.initErr = false
+
 		waitForBackgroundCheck(bgInterval)
 		testRequest(t, handler, http.StatusOK, expBody("OK"))
 	}
@@ -133,6 +129,7 @@ func TestInitErrorRetryAndCaching(t *testing.T) {
 func TestHandlerHealthCheckOptional(t *testing.T) {
 	checkOpt := &mockHealthCheck{name: "TestHandlerHealthCheckErr", healthCheckErr: true}
 	checkReq := &mockHealthCheck{name: "TestOk"}
+
 	resetHealthChecks()
 
 	RegisterHealthCheck(checkReq.name, checkReq)
@@ -141,7 +138,7 @@ func TestHandlerHealthCheckOptional(t *testing.T) {
 	testRequest(t, HealthHandler(), http.StatusOK, expBody("OK"))
 }
 
-// used in testRequest to customise the response body check
+// used in testRequest to customise the response body check.
 type resBodyComparer func(t *testing.T, resBody []byte)
 
 // expBody will expect the response body to equal to the passed expected body.
@@ -162,11 +159,18 @@ func testRequest(t *testing.T, handler http.Handler, expCode int, expBody resBod
 
 	rec := httptest.NewRecorder()
 	handler.ServeHTTP(rec, nil)
+
 	resp := rec.Result()
 	assert.Equal(t, expCode, resp.StatusCode)
-	defer resp.Body.Close()
+
+	defer func() {
+		err := resp.Body.Close()
+		assert.NoError(t, err)
+	}()
+
 	data, err := io.ReadAll(resp.Body)
 	require.NoError(t, err)
+
 	if expBody != nil {
 		expBody(t, data)
 	}
@@ -179,10 +183,11 @@ func waitForBackgroundCheck(additionalWait ...time.Duration) {
 	if len(additionalWait) > 0 {
 		t += additionalWait[0]
 	}
+
 	time.Sleep(t)
 }
 
-// remove all previous health checks
+// remove all previous health checks.
 func resetHealthChecks() {
 	requiredChecks = sync.Map{}
 	optionalChecks = sync.Map{}

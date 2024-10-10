@@ -9,6 +9,8 @@ import (
 	"net/http/httptest"
 	"reflect"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
 func TestErrorMarshaling(t *testing.T) {
@@ -46,19 +48,25 @@ func TestErrorMarshaling(t *testing.T) {
 			WriteError(rec, testCase.httpStatus, testCase.err)
 
 			resp := rec.Result()
-			defer resp.Body.Close()
+
+			defer func() {
+				err := resp.Body.Close()
+				assert.NoError(t, err)
+			}()
 
 			if resp.StatusCode != testCase.httpStatus {
 				t.Errorf("expected the response code %d got: %d", testCase.httpStatus, resp.StatusCode)
 			}
+
 			if ct := resp.Header.Get("Content-Type"); ct != JSONAPIContentType {
 				t.Errorf("expected the response code %q got: %q", JSONAPIContentType, ct)
 			}
 
 			var errList errorObjects
+
 			dec := json.NewDecoder(resp.Body)
-			err := dec.Decode(&errList)
-			if err != nil {
+
+			if err := dec.Decode(&errList); err != nil {
 				t.Fatal(err)
 			}
 
@@ -82,6 +90,7 @@ func TestErrors(t *testing.T) {
 		&Error{Title: "foo2", Detail: "bar2"},
 	}
 	result := "foo\nfoo2"
+
 	if errs.Error() != result {
 		t.Errorf("expected %q got: %q", result, errs.Error())
 	}
@@ -89,7 +98,7 @@ func TestErrors(t *testing.T) {
 
 func TestError(t *testing.T) {
 	err := Error{}
-	err.setHTTPStatus(200)
+	err.setHTTPStatus(http.StatusOK)
 
 	result := "200"
 	if err.Status != result {

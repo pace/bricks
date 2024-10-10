@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/caarlos0/env/v11"
+
 	"github.com/pace/bricks/maintenance/log"
 )
 
@@ -26,19 +27,19 @@ type config struct {
 	WriteTimeout   time.Duration `env:"WRITE_TIMEOUT" envDefault:"60s"`
 }
 
-// addrOrPort returns ADDR if it is defined, otherwise PORT is used
+// addrOrPort returns ADDR if it is defined, otherwise PORT is used.
 func (cfg config) addrOrPort() string {
 	if cfg.Addr != "" {
 		return cfg.Addr
 	}
+
 	return ":" + strconv.Itoa(cfg.Port)
 }
 
 var cfg config
 
 func parseConfig() {
-	err := env.Parse(&cfg)
-	if err != nil {
+	if err := env.Parse(&cfg); err != nil {
 		log.Fatalf("Failed to parse server environment: %v", err)
 	}
 }
@@ -57,7 +58,7 @@ func Server(handler http.Handler) *http.Server {
 	}
 }
 
-// Environment returns the name of the current server environment
+// Environment returns the name of the current server environment.
 func Environment() string {
 	return cfg.Environment
 }

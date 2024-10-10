@@ -7,16 +7,18 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"maps"
 	"net/http"
 	"os"
 	"time"
+
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/rs/zerolog"
 
 	"github.com/pace/bricks/http/jsonapi/runtime"
 	"github.com/pace/bricks/http/oauth2"
 	"github.com/pace/bricks/maintenance/errors/raven"
 	"github.com/pace/bricks/maintenance/log"
-	"github.com/prometheus/client_golang/prometheus"
-	"github.com/rs/zerolog"
 )
 
 var paceHTTPPanicCounter = prometheus.NewGauge(prometheus.GaugeOpts{
@@ -28,9 +30,9 @@ func init() {
 	prometheus.MustRegister(paceHTTPPanicCounter)
 }
 
-// PanicWrap wraps a panic for HandleRequest
+// PanicWrap wraps a panic for HandleRequest.
 type PanicWrap struct {
-	err interface{}
+	err any
 }
 
 type recoveryHandler struct {
@@ -52,8 +54,11 @@ func contextWithRequest(ctx context.Context, r *http.Request) context.Context {
 
 func requestFromContext(ctx context.Context) *http.Request {
 	if v := ctx.Value(reqKey); v != nil {
-		return v.(*http.Request)
+		if out, ok := v.(*http.Request); ok {
+			return out
+		}
 	}
+
 	return nil
 }
 
@@ -63,6 +68,7 @@ func ContextTransfer(ctx, targetCtx context.Context) context.Context {
 	if r := requestFromContext(ctx); r != nil {
 		return contextWithRequest(targetCtx, r)
 	}
+
 	return targetCtx
 }
 
@@ -78,7 +84,7 @@ func (h *contextHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	h.next.ServeHTTP(w, r.WithContext(contextWithRequest(r.Context(), r)))
 }
 
-// Handler implements a panic recovering middleware
+// Handler implements a panic recovering middleware.
 func Handler() func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		next = &contextHandler{next: next}
@@ -86,7 +92,7 @@ func Handler() func(http.Handler) http.Handler {
 	}
 }
 
-// HandleRequest should be called with defer to recover panics in request handlers
+// HandleRequest should be called with defer to recover panics in request handlers.
 func HandleRequest(handlerName string, w http.ResponseWriter, r *http.Request) {
 	if rp := recover(); rp != nil {
 		paceHTTPPanicCounter.Inc()
@@ -94,38 +100,43 @@ func HandleRequest(handlerName string, w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-// HandleError reports the passed error to sentry
-func HandleError(rp interface{}, handlerName string, w http.ResponseWriter, r *http.Request) {
+// HandleError reports the passed error to sentry.
+func HandleError(rp any, handlerName string, w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
+
 	pw, ok := rp.(*PanicWrap)
 	if ok {
 		log.Ctx(ctx).Error().Str("handler", handlerName).Msgf("Panic: %v", pw.err)
+
 		rp = pw.err // unwrap error
 	} else {
 		log.Ctx(ctx).Error().Str("handler", handlerName).Msgf("Error: %v", rp)
 	}
+
 	log.Stack(ctx)
 
 	sentryEvent{ctx, r, rp, 1, handlerName}.Send()
 
-	runtime.WriteError(w, http.StatusInternalServerError, errors.New("Internal Server Error"))
+	runtime.WriteError(w, http.StatusInternalServerError, errors.New("internal Server Error"))
 }
 
 // Handle logs the given error and reports it to sentry.
-func Handle(ctx context.Context, rp interface{}) {
+func Handle(ctx context.Context, rp any) {
 	pw, ok := rp.(*PanicWrap)
 	if ok {
 		log.Ctx(ctx).Error().Msgf("Panic: %v", pw.err)
+
 		rp = pw.err // unwrap error
 	} else {
 		log.Ctx(ctx).Error().Msgf("Error: %v", rp)
 	}
+
 	log.Stack(ctx)
 
 	sentryEvent{ctx, nil, rp, 1, ""}.Send()
 }
 
-// HandleWithCtx should be called with defer to recover panics in goroutines
+// HandleWithCtx should be called with defer to recover panics in goroutines.
 func HandleWithCtx(ctx context.Context, handlerName string) {
 	if rp := recover(); rp != nil {
 		log.Ctx(ctx).Error().Str("handler", handlerName).Msgf("Panic: %v", rp)
@@ -144,15 +155,15 @@ func New(text string) error {
 	return errors.New(text)
 }
 
-// WrapWithExtra adds extra data to an error before reporting to Sentry
-func WrapWithExtra(err error, extraInfo map[string]interface{}) error {
+// WrapWithExtra adds extra data to an error before reporting to Sentry.
+func WrapWithExtra(err error, extraInfo map[string]any) error {
 	return raven.WrapWithExtra(err, extraInfo)
 }
 
 type sentryEvent struct {
 	ctx         context.Context
 	req         *http.Request // optional
-	r           interface{}
+	r           any
 	level       int
 	handlerName string
 }
@@ -171,6 +182,7 @@ func (e sentryEvent) build() *raven.Packet {
 	}
 
 	rvalStr := fmt.Sprint(rp)
+
 	var packet *raven.Packet
 
 	if err, ok := rp.(error); ok {
@@ -183,17 +195,17 @@ func (e sentryEvent) build() *raven.Packet {
 
 	// extract ErrWithExtra info and append it to the packet
 	if ee, ok := rp.(raven.ErrWithExtra); ok {
-		for k, v := range ee.ExtraInfo() {
-			packet.Extra[k] = v
-		}
+		maps.Copy(packet.Extra, ee.ExtraInfo())
 	}
 
 	// add user
 	userID, ok := oauth2.UserID(ctx)
+
 	user := raven.User{ID: userID}
 	if r != nil {
 		user.IP = log.ProxyAwareRemote(r)
 	}
+
 	packet.Interfaces = append(packet.Interfaces, &user)
 	if ok {
 		packet.Tags = append(packet.Tags, raven.Tag{Key: "user_id", Value: userID})
@@ -204,14 +216,17 @@ func (e sentryEvent) build() *raven.Packet {
 		packet.Extra["req_id"] = reqID
 		packet.Tags = append(packet.Tags, raven.Tag{Key: "req_id", Value: reqID})
 	}
+
 	if traceID := log.TraceIDFromContext(ctx); traceID != "" {
 		packet.Extra["uber_trace_id"] = traceID
 		packet.Tags = append(packet.Tags, raven.Tag{Key: "trace_id", Value: traceID})
 	}
+
 	packet.Extra["handler"] = handlerName
 	if clientID, ok := oauth2.ClientID(ctx); ok {
 		packet.Extra["oauth2_client_id"] = clientID
 	}
+
 	if scopes := oauth2.Scopes(ctx); len(scopes) > 0 {
 		packet.Extra["oauth2_scopes"] = scopes
 	}
@@ -240,13 +255,14 @@ func getBreadcrumbs(ctx context.Context) []*raven.Breadcrumb {
 		return nil
 	}
 
-	var data []map[string]interface{}
+	var data []map[string]any
 	if err := json.Unmarshal(sink.ToJSON(), &data); err != nil {
 		log.Ctx(ctx).Warn().Err(err).Msg("failed to prepare sentry message")
 		return nil
 	}
 
 	result := make([]*raven.Breadcrumb, len(data))
+
 	for i, d := range data {
 		crumb, err := createBreadcrumb(d)
 		if err != nil {
@@ -260,7 +276,7 @@ func getBreadcrumbs(ctx context.Context) []*raven.Breadcrumb {
 	return result
 }
 
-func createBreadcrumb(data map[string]interface{}) (*raven.Breadcrumb, error) {
+func createBreadcrumb(data map[string]any) (*raven.Breadcrumb, error) {
 	// remove the request id if it can still be found in the logs
 	delete(data, "req_id")
 
@@ -268,6 +284,7 @@ func createBreadcrumb(data map[string]interface{}) (*raven.Breadcrumb, error) {
 	if !ok {
 		return nil, errors.New(`cannot parse "time"`)
 	}
+
 	delete(data, "time")
 
 	time, err := time.Parse(time.RFC3339, timeRaw)
@@ -279,6 +296,7 @@ func createBreadcrumb(data map[string]interface{}) (*raven.Breadcrumb, error) {
 	if !ok {
 		return nil, errors.New(`cannot parse "level"`)
 	}
+
 	delete(data, "level")
 
 	level, err := translateZerologLevelToSentryLevel(levelRaw)
@@ -290,12 +308,14 @@ func createBreadcrumb(data map[string]interface{}) (*raven.Breadcrumb, error) {
 	if !ok {
 		return nil, errors.New(`cannot parse "message"`)
 	}
+
 	delete(data, "message")
 
 	categoryRaw, ok := data["sentry:category"]
 	if !ok {
 		categoryRaw = ""
 	}
+
 	delete(data, "sentry:category")
 
 	category, ok := categoryRaw.(string)
@@ -307,6 +327,7 @@ func createBreadcrumb(data map[string]interface{}) (*raven.Breadcrumb, error) {
 	if !ok {
 		typRaw = ""
 	}
+
 	delete(data, "sentry:type")
 
 	typ, ok := typRaw.(string)

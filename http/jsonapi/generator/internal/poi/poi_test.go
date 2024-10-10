@@ -35,15 +35,17 @@ func (s *testService) CheckForPaceApp(ctx context.Context, w CheckForPaceAppResp
 	if r.ParamFilterLatitude != 41.859194 {
 		s.t.Errorf("expected ParamLatitude to be %f, got: %f", 41.859194, r.ParamFilterLatitude)
 	}
+
 	if r.ParamFilterLongitude != -87.646984 {
 		s.t.Errorf("expected ParamLongitude to be %f, got: %f", -87.646984, r.ParamFilterLatitude)
 	}
+
 	if r.ParamFilterAppType != "fueling" {
 		s.t.Errorf("expected ParamAppType to be %q, got: %q", "fueling", r.ParamFilterAppType)
 	}
 
 	appsResp := make(LocationBasedAppsWithRefs, 10)
-	for i := 0; i < 10; i++ {
+	for i := range 10 {
 		appsResp[i] = &LocationBasedAppWithRefs{
 			ID:                   strconv.Itoa(i),
 			AndroidInstantAppURL: "https://foobar.com",
@@ -64,7 +66,7 @@ func (s *testService) GetApps(ctx context.Context, w GetAppsResponseWriter, r *G
 	}
 
 	appsResp := make(LocationBasedApps, 10)
-	for i := 0; i < 10; i++ {
+	for i := range 10 {
 		appsResp[i] = &LocationBasedApp{
 			ID:                   strconv.Itoa(i),
 			AndroidInstantAppURL: "https://foobar.com",
@@ -225,7 +227,7 @@ func (s testAuthBackend) InitOIDC(cfgOIDC *oidc.Config) {}
 func TestHandler(t *testing.T) {
 	r := Router(&testService{t}, &testAuthBackend{})
 	rec := httptest.NewRecorder()
-	req := httptest.NewRequest("GET", "/poi/beta/apps/query?"+
+	req := httptest.NewRequest(http.MethodGet, "/poi/beta/apps/query?"+
 		"filter[latitude]=41.859194&filter[longitude]=-87.646984&filter[appType]=fueling", nil)
 	req.Header.Set("Accept", runtime.JSONAPIContentType)
 	req.Header.Set("Content-Type", runtime.JSONAPIContentType)
@@ -233,41 +235,50 @@ func TestHandler(t *testing.T) {
 	r.ServeHTTP(rec, req)
 
 	resp := rec.Result()
-	defer resp.Body.Close()
+	defer func() {
+		_ = resp.Body.Close()
+	}()
 
-	if resp.StatusCode != 200 {
+	if resp.StatusCode != http.StatusOK {
 		t.Errorf("expected OK got: %d", resp.StatusCode)
 		t.Error(rec.Body.String())
+
 		return
 	}
 
 	var data struct {
-		Data []map[string]interface{} `json:"data"`
+		Data []map[string]any `json:"data"`
 	}
-	err := json.NewDecoder(resp.Body).Decode(&data)
-	if err != nil {
+
+	if err := json.NewDecoder(resp.Body).Decode(&data); err != nil {
 		t.Fatal(err)
 		return
 	}
+
 	if len(data.Data) != 10 {
 		t.Error("Expected 10 apps")
 		return
 	}
+
 	if data.Data[0]["type"] != "locationBasedAppWithRefs" {
 		t.Error("Expected type locationBasedAppWithRefs")
 		return
 	}
-	attributes, ok := data.Data[0]["attributes"].(map[string]interface{})
+
+	attributes, ok := data.Data[0]["attributes"].(map[string]any)
 	if !ok {
 		t.Error("Expected attributes do be present")
 		return
 	}
+
 	if attributes["androidInstantAppUrl"] != "https://foobar.com" {
 		t.Error(`Expected androidInstantAppUrl to be "https://foobar.com"`)
 	}
+
 	if attributes["title"] != "some app" {
 		t.Error(`Expected androidInstantAppUrl to be "some app"`)
 	}
+
 	if attributes["appType"] != "some type" {
 		t.Error(`Expected androidInstantAppUrl to be "some type"`)
 	}
@@ -276,48 +287,57 @@ func TestHandler(t *testing.T) {
 func TestHandlerWithTimeInQuery(t *testing.T) {
 	r := Router(&testService{t}, &testAuthBackend{})
 	rec := httptest.NewRecorder()
-	req := httptest.NewRequest("GET", "/poi/beta/apps?filter[since]=2020-05-06T12%3A22%3A54%2E000888456", nil)
+	req := httptest.NewRequest(http.MethodGet, "/poi/beta/apps?filter[since]=2020-05-06T12%3A22%3A54%2E000888456", nil)
 	req.Header.Set("Accept", runtime.JSONAPIContentType)
 	req.Header.Set("Content-Type", runtime.JSONAPIContentType)
 
 	r.ServeHTTP(rec, req)
 
 	resp := rec.Result()
-	defer resp.Body.Close()
+	defer func() {
+		_ = resp.Body.Close()
+	}()
 
-	if resp.StatusCode != 200 {
+	if resp.StatusCode != http.StatusOK {
 		t.Errorf("expected OK got: %d", resp.StatusCode)
 		t.Error(rec.Body.String())
+
 		return
 	}
 
 	var data struct {
-		Data []map[string]interface{} `json:"data"`
+		Data []map[string]any `json:"data"`
 	}
-	err := json.NewDecoder(resp.Body).Decode(&data)
-	if err != nil {
+
+	if err := json.NewDecoder(resp.Body).Decode(&data); err != nil {
 		t.Fatal(err)
 		return
 	}
+
 	if len(data.Data) != 10 {
 		t.Error("Expected 10 apps")
 		return
 	}
+
 	if data.Data[0]["type"] != "locationBasedApp" {
 		t.Error("Expected type locationBasedApp")
 		return
 	}
-	attributes, ok := data.Data[0]["attributes"].(map[string]interface{})
+
+	attributes, ok := data.Data[0]["attributes"].(map[string]any)
 	if !ok {
 		t.Error("Expected attributes do be present")
 		return
 	}
+
 	if attributes["androidInstantAppUrl"] != "https://foobar.com" {
 		t.Error(`Expected androidInstantAppUrl to be "https://foobar.com"`)
 	}
+
 	if attributes["title"] != "some app" {
 		t.Error(`Expected androidInstantAppUrl to be "some app"`)
 	}
+
 	if attributes["appType"] != "some type" {
 		t.Error(`Expected androidInstantAppUrl to be "some type"`)
 	}
@@ -326,7 +346,7 @@ func TestHandlerWithTimeInQuery(t *testing.T) {
 func TestCreatePolicyHandler(t *testing.T) {
 	r := Router(&testService{t}, &testAuthBackend{})
 	rec := httptest.NewRecorder()
-	req := httptest.NewRequest("POST", "/poi/beta/policies", strings.NewReader(`{
+	req := httptest.NewRequest(http.MethodPost, "/poi/beta/policies", strings.NewReader(`{
 		"data": {
 			"id": "f106ac99-213c-4cf7-8c1b-1e841516026b",
 			"type": "policies",
@@ -355,11 +375,14 @@ func TestCreatePolicyHandler(t *testing.T) {
 	r.ServeHTTP(rec, req)
 
 	resp := rec.Result()
-	defer resp.Body.Close()
+	defer func() {
+		_ = resp.Body.Close()
+	}()
 
-	if resp.StatusCode != 200 {
+	if resp.StatusCode != http.StatusOK {
 		t.Errorf("expected OK got: %d", resp.StatusCode)
 		t.Error(rec.Body.String())
+
 		return
 	}
 }

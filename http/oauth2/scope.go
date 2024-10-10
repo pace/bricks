@@ -3,10 +3,11 @@
 package oauth2
 
 import (
+	"slices"
 	"strings"
 )
 
-// Scope represents an OAuth 2 access token scope
+// Scope represents an OAuth 2 access token scope.
 type Scope string
 
 // IsIncludedIn checks if the permissions of a scope s are also included
@@ -19,16 +20,7 @@ func (s *Scope) IsIncludedIn(t Scope) bool {
 	pts := t.toSlice()
 
 	for _, ps := range pss {
-		found := false
-
-		for _, pt := range pts {
-			if ps == pt {
-				found = true
-				break
-			}
-		}
-
-		if !found {
+		if !slices.Contains(pts, ps) {
 			return false
 		}
 	}

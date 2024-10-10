@@ -6,7 +6,7 @@ type Message struct {
 	Message string `json:"message"`
 
 	// Optional
-	Params []interface{} `json:"params,omitempty"`
+	Params []any `json:"params,omitempty"`
 }
 
 func (m *Message) Class() string { return "logentry" }

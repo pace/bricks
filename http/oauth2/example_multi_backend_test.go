@@ -5,6 +5,7 @@ package oauth2_test
 import (
 	"context"
 	"fmt"
+	"net/http"
 	"net/http/httptest"
 
 	"github.com/pace/bricks/http/oauth2"
@@ -21,6 +22,7 @@ func (b multiAuthBackends) IntrospectToken(ctx context.Context, token string) (r
 			return
 		}
 	}
+
 	return nil, oauth2.ErrInvalidToken
 }
 
@@ -33,6 +35,7 @@ func (b *authBackend) IntrospectToken(ctx context.Context, token string) (*oauth
 			Backend: b,
 		}, nil
 	}
+
 	return nil, oauth2.ErrInvalidToken
 }
 
@@ -42,20 +45,23 @@ func Example_multipleBackends() {
 	// authorized the request. The actual value used for the backend depends on
 	// your implementation: you can use constants or pointers, like in this
 	// example.
-
 	authorizer := oauth2.NewAuthorizer(multiAuthBackends{
 		&authBackend{"A", "token-a"},
 		&authBackend{"B", "token-b"},
 		&authBackend{"C", "token-c"},
 	}, nil)
 
-	r := httptest.NewRequest("GET", "/some/endpoint", nil)
+	r := httptest.NewRequest(http.MethodGet, "/some/endpoint", nil)
 	r.Header.Set("Authorization", "Bearer token-b")
 
 	if authorizer.CanAuthorizeRequest(r) {
-		ctx, ok := authorizer.Authorize(r, nil)
+		ctx, _ := authorizer.Authorize(r, nil)
 		usedBackend, _ := oauth2.Backend(ctx)
-		fmt.Printf("%t %s", ok, usedBackend.(*authBackend)[0])
+
+		assertedBackend, ok := usedBackend.(*authBackend)
+		if ok {
+			fmt.Printf("%t %s", ok, assertedBackend[0])
+		}
 	}
 
 	// Output:

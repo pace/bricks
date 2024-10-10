@@ -17,6 +17,7 @@ type ConnectionState struct {
 func (cs *ConnectionState) setConnectionState(result HealthCheckResult) {
 	cs.m.Lock()
 	defer cs.m.Unlock()
+
 	cs.result = result
 	cs.lastCheck = time.Now()
 }
@@ -36,6 +37,7 @@ func (cs *ConnectionState) SetHealthy() {
 func (cs *ConnectionState) GetState() HealthCheckResult {
 	cs.m.Lock()
 	defer cs.m.Unlock()
+
 	return cs.result
 }
 
@@ -43,5 +45,6 @@ func (cs *ConnectionState) GetState() HealthCheckResult {
 func (cs *ConnectionState) LastChecked() time.Time {
 	cs.m.Lock()
 	defer cs.m.Unlock()
+
 	return cs.lastCheck
 }

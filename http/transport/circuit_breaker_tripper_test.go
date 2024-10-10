@@ -13,21 +13,19 @@ import (
 )
 
 func TestCircuitBreakerTripper(t *testing.T) {
-	req := httptest.NewRequest("GET", "/foo", nil)
+	req := httptest.NewRequest(http.MethodGet, "/foo", nil)
 
 	t.Run("with_default_settings", func(t *testing.T) {
 		breaker := NewDefaultCircuitBreakerTripper("testcircuitbreaker")
 		chain := Chain(breaker).Final(&failingRoundTripper{})
 
-		for i := 0; i < 6; i++ {
-			if _, err := chain.RoundTrip(req); errors.Is(err, ErrCircuitBroken) {
-				t.Errorf("got err=%q, before expected", ErrCircuitBroken)
-			}
+		for range 6 {
+			_, err := chain.RoundTrip(req) //nolint:bodyclose
+			require.NotErrorIs(t, err, ErrCircuitBroken)
 		}
 
-		if _, err := chain.RoundTrip(req); !errors.Is(err, ErrCircuitBroken) {
-			t.Errorf("wanted err=%q, got err=%q", ErrCircuitBroken, err)
-		}
+		_, err := chain.RoundTrip(req) //nolint:bodyclose
+		require.ErrorIs(t, err, ErrCircuitBroken)
 	})
 
 	t.Run("panic_on_empty_name", func(t *testing.T) {
@@ -47,6 +45,11 @@ func TestCircuitBreakerTripper(t *testing.T) {
 
 		resp, err := chain.RoundTrip(req)
 		require.NoError(t, err, "expected no err, got err=%q", err)
+
+		defer func() {
+			err := resp.Body.Close()
+			assert.NoError(t, err)
+		}()
 
 		gotBodyStr, err := io.ReadAll(resp.Body)
 		require.NoError(t, err, "failed reading response body no err, got err=%q", err)

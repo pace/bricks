@@ -13,6 +13,7 @@ func TestWorkQueueNoTask(t *testing.T) {
 	ctx := context.Background()
 	q := NewWorkQueue(ctx)
 	q.Wait()
+
 	if q.Err() != nil {
 		t.Error("expected no error")
 	}
@@ -25,10 +26,12 @@ func TestWorkQueueOneTask(t *testing.T) {
 		if ctx1 == ctx {
 			t.Error("should not directly pass the context")
 		}
+
 		return nil
 	})
 
 	q.Wait()
+
 	if q.Err() != nil {
 		t.Error("expected no error")
 	}
@@ -42,10 +45,12 @@ func TestWorkQueueOneTaskWithErr(t *testing.T) {
 	})
 
 	q.Wait()
+
 	if q.Err() == nil {
 		t.Error("expected error")
 		return
 	}
+
 	expected := "failed to some work: Some error"
 	if q.Err().Error() != expected {
 		t.Errorf("expected error %q, got: %q", q.Err().Error(), expected)
@@ -55,6 +60,7 @@ func TestWorkQueueOneTaskWithErr(t *testing.T) {
 func TestWorkQueueOneTaskWithCancel(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	cancel()
+
 	q := NewWorkQueue(ctx)
 	q.Add("some work", func(ctx context.Context) error {
 		time.Sleep(10 * time.Millisecond)
@@ -62,10 +68,12 @@ func TestWorkQueueOneTaskWithCancel(t *testing.T) {
 	})
 
 	q.Wait()
+
 	if q.Err() == nil {
 		t.Error("expected error")
 		return
 	}
+
 	expected := "context canceled"
 	if q.Err().Error() != expected {
 		t.Errorf("expected error %q, got: %q", q.Err().Error(), expected)

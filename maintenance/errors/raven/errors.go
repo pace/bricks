@@ -1,12 +1,14 @@
 package raven
 
+import "maps"
+
 type causer interface {
 	Cause() error
 }
 
 type errWrappedWithExtra struct {
 	err       error
-	extraInfo map[string]interface{}
+	extraInfo map[string]any
 }
 
 func (ewx *errWrappedWithExtra) Error() string {
@@ -21,8 +23,8 @@ func (ewx *errWrappedWithExtra) ExtraInfo() Extra {
 	return ewx.extraInfo
 }
 
-// Adds extra data to an error before reporting to Sentry
-func WrapWithExtra(err error, extraInfo map[string]interface{}) error {
+// Adds extra data to an error before reporting to Sentry.
+func WrapWithExtra(err error, extraInfo map[string]any) error {
 	return &errWrappedWithExtra{
 		err:       err,
 		extraInfo: extraInfo,
@@ -44,9 +46,7 @@ func extractExtra(err error) Extra {
 	currentErr := err
 	for currentErr != nil {
 		if errWithExtra, ok := currentErr.(ErrWithExtra); ok {
-			for k, v := range errWithExtra.ExtraInfo() {
-				extra[k] = v
-			}
+			maps.Copy(extra, errWithExtra.ExtraInfo())
 		}
 
 		if errWithCause, ok := currentErr.(causer); ok {

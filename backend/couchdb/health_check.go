@@ -7,6 +7,7 @@ import (
 	"time"
 
 	kivik "github.com/go-kivik/kivik/v4"
+
 	"github.com/pace/bricks/maintenance/health/servicehealthcheck"
 )
 
@@ -28,7 +29,7 @@ var (
 
 // HealthCheck checks if the object storage client is healthy. If the last result is outdated,
 // object storage is checked for upload and download,
-// otherwise returns the old result
+// otherwise returns the old result.
 func (h *HealthCheck) HealthCheck(ctx context.Context) servicehealthcheck.HealthCheckResult {
 	if time.Since(h.state.LastChecked()) <= h.Config.HealthCheckResultTTL {
 		// the last health check is not outdated, an can be reused.
@@ -48,7 +49,7 @@ check:
 	// check if context was canceled
 	select {
 	case <-ctx.Done():
-		h.state.SetErrorState(fmt.Errorf("failed: %v", ctx.Err()))
+		h.state.SetErrorState(fmt.Errorf("failed: %w", ctx.Err()))
 		return h.state.GetState()
 	default:
 	}
@@ -58,21 +59,26 @@ check:
 		if kivik.HTTPStatus(err) == http.StatusNotFound {
 			goto put
 		}
-		h.state.SetErrorState(fmt.Errorf("failed to get: %#v", err))
+
+		h.state.SetErrorState(fmt.Errorf("failed to get: %w", err))
+
 		return h.state.GetState()
 	}
-	defer row.Close()
+
+	defer func() {
+		_ = row.Close()
+	}()
 
 	// check if document exists
 	rev, err = row.Rev()
 	if err != nil {
-		h.state.SetErrorState(fmt.Errorf("failed to get document revision: %v", err))
+		h.state.SetErrorState(fmt.Errorf("failed to get document revision: %w", err))
 	}
 
 	if rev != "" {
 		err = row.ScanDoc(&doc)
 		if err != nil {
-			h.state.SetErrorState(fmt.Errorf("failed to get: %v", err))
+			h.state.SetErrorState(fmt.Errorf("failed to get: %w", err))
 			return h.state.GetState()
 		}
 
@@ -85,23 +91,28 @@ check:
 put:
 	// update document
 	doc.ID = h.Config.HealthCheckKey
+
 	doc.Time = time.Now().Format(healthCheckTimeFormat)
+
 	_, err = h.DB.Put(ctx, h.Config.HealthCheckKey, doc)
 	if err != nil {
 		// not yet created, try to create
 		if h.Config.DatabaseAutoCreate && kivik.HTTPStatus(err) == http.StatusNotFound {
 			err := h.Client.CreateDB(ctx, h.Name)
 			if err != nil {
-				h.state.SetErrorState(fmt.Errorf("failed to put object: %v", err))
+				h.state.SetErrorState(fmt.Errorf("failed to put object: %w", err))
 				return h.state.GetState()
 			}
+
 			goto put
 		}
 
 		if kivik.HTTPStatus(err) == http.StatusConflict {
 			goto check
 		}
-		h.state.SetErrorState(fmt.Errorf("failed to put object: %v", err))
+
+		h.state.SetErrorState(fmt.Errorf("failed to put object: %w", err))
+
 		return h.state.GetState()
 	}
 
@@ -111,6 +122,7 @@ put:
 healthy:
 	// If uploading and downloading worked set the Health Check to healthy
 	h.state.SetHealthy()
+
 	return h.state.GetState()
 }
 
@@ -124,7 +136,7 @@ type Doc struct {
 // time span concurrent request to the objstore may break the assumption
 // that the value is the same, but in this case it would be acceptable.
 // Assumption all instances are created equal and one providing evidence
-// of a good write would be sufficient. See #244
+// of a good write would be sufficient. See #244.
 func wasConcurrentHealthCheck(checkTime time.Time, observedValue string) bool {
 	t, err := time.Parse(healthCheckTimeFormat, observedValue)
 	if err == nil {
@@ -132,7 +144,7 @@ func wasConcurrentHealthCheck(checkTime time.Time, observedValue string) bool {
 		allowedEnd := checkTime.Add(healthCheckConcurrentSpan)
 
 		// timestamp we got from the document is in allowed range
-		// concider it healthy
+		// consider it healthy
 		return t.After(allowedStart) && t.Before(allowedEnd)
 	}
 

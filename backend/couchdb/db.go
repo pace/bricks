@@ -61,6 +61,7 @@ func clientAndDB(dbName string, cfg *Config) (*kivik.Client, *kivik.DB, error) {
 	if db.Err() != nil {
 		return nil, nil, db.Err()
 	}
+
 	return client, db, err
 }
 
@@ -86,9 +87,10 @@ func Client(cfg *Config) (*kivik.Client, error) {
 
 func ParseConfig() (*Config, error) {
 	var cfg Config
-	err := env.Parse(&cfg)
-	if err != nil {
+
+	if err := env.Parse(&cfg); err != nil {
 		return nil, err
 	}
+
 	return &cfg, nil
 }

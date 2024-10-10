@@ -63,9 +63,11 @@ func Metrics(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		paceHTTPInFlightGauge.Inc()
 		defer paceHTTPInFlightGauge.Dec()
+
 		startTime := time.Now()
 		srw := statusWriter{ResponseWriter: w}
 		next.ServeHTTP(&srw, r)
+
 		dur := float64(time.Since(startTime)) / float64(time.Millisecond)
 		labels := prometheus.Labels{
 			"code":   strconv.Itoa(srw.status),
@@ -91,10 +93,12 @@ func (w *statusWriter) WriteHeader(status int) {
 
 func (w *statusWriter) Write(b []byte) (int, error) {
 	if w.status == 0 {
-		w.status = 200
+		w.status = http.StatusOK
 	}
+
 	n, err := w.ResponseWriter.Write(b)
 	w.length += n
+
 	return n, err
 }
 
@@ -103,5 +107,6 @@ func filterRequestSource(source string) string {
 	case "uptime", "kubernetes", "nginx", "livetest":
 		return source
 	}
+
 	return ""
 }

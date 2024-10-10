@@ -113,6 +113,7 @@ func (b *Blog) JSONAPIRelationshipLinks(relation string) *Links {
 			},
 		}
 	}
+
 	if relation == "current_post" {
 		return &Links{
 			"self": fmt.Sprintf("https://example.com/api/posts/%s", "3"),
@@ -121,6 +122,7 @@ func (b *Blog) JSONAPIRelationshipLinks(relation string) *Links {
 			},
 		}
 	}
+
 	return nil
 }
 
@@ -133,12 +135,12 @@ func (b *Blog) JSONAPIMeta() *Meta {
 func (b *Blog) JSONAPIRelationshipMeta(relation string) *Meta {
 	if relation == "posts" {
 		return &Meta{
-			"this": map[string]interface{}{
-				"can": map[string]interface{}{
-					"go": []interface{}{
+			"this": map[string]any{
+				"can": map[string]any{
+					"go": []any{
 						"as",
 						"deep",
-						map[string]interface{}{
+						map[string]any{
 							"as": "required",
 						},
 					},
@@ -146,11 +148,13 @@ func (b *Blog) JSONAPIRelationshipMeta(relation string) *Meta {
 			},
 		}
 	}
+
 	if relation == "current_post" {
 		return &Meta{
 			"detail": "extra current_post detail",
 		}
 	}
+
 	return nil
 }
 

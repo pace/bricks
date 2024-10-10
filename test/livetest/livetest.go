@@ -4,14 +4,16 @@ package livetest
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"time"
 
 	"github.com/getsentry/sentry-go"
+
 	"github.com/pace/bricks/maintenance/log"
 )
 
-// TestFunc represents a single test (possibly with sub tests)
+// TestFunc represents a single test (possibly with sub tests).
 type TestFunc func(t *T)
 
 // Test executes the passed tests in the given order (array order).
@@ -45,8 +47,7 @@ func testRun(ctx context.Context, tests []TestFunc) {
 			Int("test", i+1).Logger()
 		ctx = logger.WithContext(ctx)
 
-		err = executeTest(ctx, test, fmt.Sprintf("test-%d", i+1))
-		if err != nil {
+		if err = executeTest(ctx, test, fmt.Sprintf("test-%d", i+1)); err != nil {
 			break
 		}
 	}
@@ -67,10 +68,20 @@ func executeTest(ctx context.Context, t TestFunc, name string) error {
 
 	proxy := NewTestProxy(ctx, name)
 	startTime := time.Now()
+
 	func() {
 		defer func() {
 			err := recover()
-			if err != nil && (err != ErrSkipNow || err != ErrFailNow) {
+			if err == nil {
+				return
+			}
+
+			recoveredErr, ok := err.(error)
+			if !ok {
+				return
+			}
+
+			if !errors.Is(recoveredErr, ErrSkipNow) || !errors.Is(recoveredErr, ErrFailNow) {
 				logger.Error().Msgf("PANIC: %+v", err)
 				log.Stack(ctx)
 				proxy.Fail()
@@ -79,7 +90,9 @@ func executeTest(ctx context.Context, t TestFunc, name string) error {
 
 		t(proxy)
 	}()
+
 	duration := float64(time.Since(startTime)) / float64(time.Second)
+
 	proxy.okIfNoSkipFail()
 	paceLivetestDurationSeconds.WithLabelValues(cfg.ServiceName).Observe(duration)
 
