@@ -87,10 +87,8 @@ func NewActivePassive(clusterName string, timeToFailover time.Duration, client *
 	return ap, nil
 }
 
-// Run registers the readiness probe and calls the OnActive
-// and OnPassive callbacks in case the election toke place.
-// Will handle panic safely and therefore can be directly called
-// with go.
+// Run registers the readiness probe and calls the OnActive and OnPassive callbacks in case the election took place.
+// Will handle panic safely and therefore can be directly called with go.
 func (a *ActivePassive) Run(ctx context.Context) error {
 	defer errors.HandleWithCtx(ctx, "activepassive failover handler")
 
@@ -110,11 +108,10 @@ func (a *ActivePassive) Run(ctx context.Context) error {
 
 	var lock *redislock.Lock
 
-	// t is a ticker that reminds to call refresh if
-	// the token was acquired after half of the remaining ttl time
+	// t is a ticker that reminds to call refresh if the token was acquired after half of the remaining TTL time
 	t := time.NewTicker(a.timeToFailover)
 
-	// retry time triggers to check if the look needs to be acquired
+	// retry time triggers to check if the lock needs to be acquired
 	retry := time.NewTicker(waitRetry)
 
 	for {
@@ -130,12 +127,12 @@ func (a *ActivePassive) Run(ctx context.Context) error {
 					RetryStrategy: redislock.LimitRetry(redislock.LinearBackoff(a.timeToFailover/3), 3),
 				})
 				if err != nil {
-					logger.Debug().Err(err).Msg("failed to refresh")
+					logger.Info().Err(err).Msg("failed to refresh Redis lock")
 					a.becomeUndefined(ctx)
 				}
 			}
 		case <-retry.C:
-			// try to acquire the lock, as we are not the active
+			// try to acquire the lock as we are not active
 			if a.getState() != ACTIVE {
 				var err error
 				lock, err = a.locker.Obtain(ctx, lockName, a.timeToFailover, &redislock.Options{
@@ -144,26 +141,27 @@ func (a *ActivePassive) Run(ctx context.Context) error {
 				if err != nil {
 					// we became passive, trigger callback
 					if a.getState() != PASSIVE {
-						logger.Debug().Err(err).Msg("becoming passive")
+						logger.Info().Err(err).Msg("becoming a passive pod")
 						a.becomePassive(ctx)
 					}
 
 					continue
 				}
 
-				// lock acquired
-				logger.Debug().Msg("becoming active")
+				// lock has been acquired; now become active
+				logger.Info().Msg("becoming the active pod")
+				errors.Handle(ctx, "a new pod has become the active one possibly leading to a loss of online stations in couchDB")
+
 				a.becomeActive(ctx)
 
 				// we are active, renew if required
 				d, err := lock.TTL(ctx)
 				if err != nil {
-					logger.Debug().Err(err).Msg("failed to get TTL")
+					logger.Info().Err(err).Msg("failed to get lock TTL")
 				}
 				if d == 0 {
-					// TTL seems to be expired, retry to get lock or become
-					// passive in next iteration
-					logger.Debug().Msg("ttl expired")
+					// lock TTL has expired; retry to acquire lock or become passive in next iteration
+					logger.Debug().Msg("lock TTL has expired")
 					a.becomeUndefined(ctx)
 				}
 				refreshTime := d / 2
