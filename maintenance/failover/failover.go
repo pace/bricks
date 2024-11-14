@@ -124,29 +124,31 @@ func (a *ActivePassive) Run(ctx context.Context) error {
 			return nil
 		case <-t.C:
 			if a.getState() == ACTIVE {
-				err := lock.Refresh(ctx, a.timeToFailover, &redislock.Options{
-					RetryStrategy: redislock.LimitRetry(redislock.LinearBackoff(a.timeToFailover/5), 2),
-				})
-				if err != nil {
-					logger.Warn().Err(err).Msg("failed to refresh the redis lock; attempting to reacquire lock")
-
-					// Attempt to reacquire the lock immediately but try only once
-					var errReacquire error
-
-					lock, errReacquire = a.locker.Obtain(ctx, lockName, a.timeToFailover, &redislock.Options{
-						RetryStrategy: redislock.LimitRetry(redislock.LinearBackoff(50*time.Millisecond), 2),
+				if lock != nil {
+					err := lock.Refresh(ctx, a.timeToFailover, &redislock.Options{
+						RetryStrategy: redislock.LimitRetry(redislock.LinearBackoff(a.timeToFailover/5), 2),
 					})
-					if errReacquire == nil {
-						// Successfully reacquired the lock, remain active
-						logger.Info().Msg("redis lock reacquired after refresh failure; remaining active")
+					if err != nil {
+						logger.Warn().Err(err).Msg("failed to refresh the redis lock; attempting to reacquire lock")
 
-						a.becomeActive(ctx)
-						t.Reset(a.timeToFailover / 2)
-					} else {
-						// We were active but couldn't refresh the lock TTL and reacquire the lock, so, become undefined
-						logger.Info().Err(err).Msg("failed to reacquire the redis lock; becoming undefined")
+						// Attempt to reacquire the lock immediately but try only once
+						var errReacquire error
 
-						a.becomeUndefined(ctx)
+						lock, errReacquire = a.locker.Obtain(ctx, lockName, a.timeToFailover, &redislock.Options{
+							RetryStrategy: redislock.LimitRetry(redislock.LinearBackoff(50*time.Millisecond), 2),
+						})
+						if errReacquire == nil {
+							// Successfully reacquired the lock, remain active
+							logger.Info().Msg("redis lock reacquired after refresh failure; remaining active")
+
+							a.becomeActive(ctx)
+							t.Reset(a.timeToFailover / 2)
+						} else {
+							// We were active but couldn't refresh the lock TTL and reacquire the lock, so, become undefined
+							logger.Info().Err(err).Msg("failed to reacquire the redis lock; becoming undefined")
+
+							a.becomeUndefined(ctx)
+						}
 					}
 				}
 			}
