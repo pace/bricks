@@ -108,8 +108,9 @@ func (a *ActivePassive) Run(ctx context.Context) error {
 
 	var lock *redislock.Lock
 
-	// ticker that reminds to call refresh if the token was acquired after half of the remaining TTL
-	t := time.NewTicker(a.timeToFailover)
+	// Ticker that tries to refresh the lock's TTL well before the TTL actually expires to reduce the possibility of
+	// small network delays or redis unavailability leading to a refresh try after the TTL has already expired.
+	t := time.NewTicker(a.timeToFailover / 2)
 
 	// ticker to check if the lock can be acquired
 	retry := time.NewTicker(waitRetry)
@@ -124,7 +125,7 @@ func (a *ActivePassive) Run(ctx context.Context) error {
 		case <-t.C:
 			if a.getState() == ACTIVE {
 				err := lock.Refresh(ctx, a.timeToFailover, &redislock.Options{
-					RetryStrategy: redislock.LimitRetry(redislock.LinearBackoff(a.timeToFailover/3), 3),
+					RetryStrategy: redislock.LimitRetry(redislock.LinearBackoff(a.timeToFailover/5), 2),
 				})
 				if err != nil {
 					// we were active but couldn't refresh the lock TTL anymore
