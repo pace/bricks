@@ -110,7 +110,7 @@ func (a *ActivePassive) Run(ctx context.Context) error {
 
 	// Ticker that tries to refresh the lock's TTL well before the TTL actually expires to reduce the possibility of
 	// small network delays or redis unavailability leading to a refresh try after the TTL has already expired.
-	t := time.NewTicker(a.timeToFailover / 2)
+	refresh := time.NewTicker(a.timeToFailover / 2)
 
 	// Ticker to check if the lock can be acquired
 	retry := time.NewTicker(waitRetry)
@@ -122,7 +122,7 @@ func (a *ActivePassive) Run(ctx context.Context) error {
 			return ctx.Err()
 		case <-a.close:
 			return nil
-		case <-t.C:
+		case <-refresh.C:
 			if a.getState() == ACTIVE {
 				if lock != nil {
 					err := lock.Refresh(ctx, a.timeToFailover, &redislock.Options{
@@ -142,7 +142,7 @@ func (a *ActivePassive) Run(ctx context.Context) error {
 							logger.Info().Msg("redis lock reacquired after refresh failure; remaining active")
 
 							a.becomeActive(ctx)
-							t.Reset(a.timeToFailover / 2)
+							refresh.Reset(a.timeToFailover / 2)
 						} else {
 							// We were active but couldn't refresh the lock TTL and reacquire the lock, so, become undefined
 							logger.Info().Err(err).Msg("failed to reacquire the redis lock; becoming undefined")
@@ -188,7 +188,7 @@ func (a *ActivePassive) Run(ctx context.Context) error {
 				logger.Debug().Msgf("redis lock TTL is still valid; set refresh time to %v ms", refreshTime)
 
 				// Trigger a refresh after TTL / 2
-				t.Reset(refreshTime)
+				refresh.Reset(refreshTime)
 			}
 		}
 	}
