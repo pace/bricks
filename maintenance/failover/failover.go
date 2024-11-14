@@ -138,12 +138,12 @@ func (a *ActivePassive) Run(ctx context.Context) error {
 			if a.getState() != ACTIVE {
 				var err error
 				lock, err = a.locker.Obtain(ctx, lockName, a.timeToFailover, &redislock.Options{
-					RetryStrategy: redislock.LimitRetry(redislock.LinearBackoff(a.timeToFailover/3), 3),
+					RetryStrategy: redislock.LimitRetry(redislock.LinearBackoff(waitRetry/2), 1),
 				})
 				if err != nil {
-					// we became passive, trigger callback
+					// couldn't obtain the lock; becoming passive
 					if a.getState() != PASSIVE {
-						logger.Info().Err(err).Msg("failed to obtain the redis lock; becoming passive")
+						logger.Info().Err(err).Msg("couldn't obtain the redis lock; becoming passive")
 						a.becomePassive(ctx)
 					}
 
