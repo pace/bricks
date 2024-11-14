@@ -99,7 +99,7 @@ func (a *ActivePassive) Run(ctx context.Context) error {
 	a.close = make(chan struct{})
 	defer close(a.close)
 
-	// trigger stop handler
+	// Trigger stop handler
 	defer func() {
 		if a.OnStop != nil {
 			a.OnStop()
@@ -112,11 +112,11 @@ func (a *ActivePassive) Run(ctx context.Context) error {
 	// small network delays or redis unavailability leading to a refresh try after the TTL has already expired.
 	t := time.NewTicker(a.timeToFailover / 2)
 
-	// ticker to check if the lock can be acquired
+	// Ticker to check if the lock can be acquired
 	retry := time.NewTicker(waitRetry)
 
 	for {
-		// allow close or cancel
+		// Allow close or cancel
 		select {
 		case <-ctx.Done():
 			return ctx.Err()
@@ -128,13 +128,28 @@ func (a *ActivePassive) Run(ctx context.Context) error {
 					RetryStrategy: redislock.LimitRetry(redislock.LinearBackoff(a.timeToFailover/5), 2),
 				})
 				if err != nil {
-					// we were active but couldn't refresh the lock TTL anymore
-					logger.Info().Err(err).Msg("failed to refresh the redis lock; becoming undefined")
-					a.becomeUndefined(ctx)
+					logger.Warn().Err(err).Msg("failed to refresh the redis lock; attempting to reacquire lock")
+
+					// Attempt to reacquire the lock immediately but try only once
+					var errReacquire error
+
+					lock, errReacquire = a.locker.Obtain(ctx, lockName, a.timeToFailover, &redislock.Options{})
+					if errReacquire == nil {
+						// Successfully reacquired the lock, remain active
+						logger.Info().Msg("redis lock reacquired after refresh failure; remaining active")
+
+						a.becomeActive(ctx)
+						t.Reset(a.timeToFailover / 2)
+					} else {
+						// We were active but couldn't refresh the lock TTL and reacquire the lock, so, become undefined
+						logger.Info().Err(err).Msg("failed to reacquire the redis lock; becoming undefined")
+
+						a.becomeUndefined(ctx)
+					}
 				}
 			}
 		case <-retry.C:
-			// try to acquire the lock as we are not active
+			// Try to acquire the lock as we are not active
 			if a.getState() != ACTIVE {
 				var err error
 				lock, err = a.locker.Obtain(ctx, lockName, a.timeToFailover, &redislock.Options{
@@ -150,11 +165,11 @@ func (a *ActivePassive) Run(ctx context.Context) error {
 					continue
 				}
 
-				// lock acquired
+				// Lock acquired
 				logger.Debug().Msg("redis lock acquired; becoming active")
 				a.becomeActive(ctx)
 
-				// we are active, renew the lock TTL if required
+				// We are active; renew the lock TTL if required
 				d, err := lock.TTL(ctx)
 				if err != nil {
 					logger.Info().Err(err).Msg("failed to get TTL from redis lock")
@@ -168,7 +183,7 @@ func (a *ActivePassive) Run(ctx context.Context) error {
 
 				logger.Debug().Msgf("redis lock TTL is still valid; set refresh time to %v ms", refreshTime)
 
-				// trigger a refresh after TTL / 2
+				// Trigger a refresh after TTL / 2
 				t.Reset(refreshTime)
 			}
 		}
