@@ -30,21 +30,19 @@ const (
 
 const Label = "github.com.pace.bricks.activepassive"
 
-// ActivePassive implements a failover mechanism that allows
+// ActivePassive implements a fail over mechanism that allows
 // to deploy a service multiple times but ony one will accept
 // traffic by using the label selector of kubernetes.
 // In order to determine the active, a lock needs to be hold
-// in redis. Hocks can be passed to handle the case of becoming
+// in redis. Hooks can be passed to handle the case of becoming
 // the active or passive.
 // The readiness probe will report the state (ACTIVE/PASSIVE)
 // of each of the members in the cluster.
 type ActivePassive struct {
-	// OnActive will be called in case the current processes
-	// is elected to be the active one
+	// OnActive will be called in case the current process is elected to be the active one
 	OnActive func()
 
-	// OnPassive will be called in case the current process is
-	// the passive one
+	// OnPassive will be called in case the current process is the passive one
 	OnPassive func()
 
 	// OnStop is called after the ActivePassive process stops
@@ -58,16 +56,16 @@ type ActivePassive struct {
 	// access to the kubernetes api
 	client *k8sapi.Client
 
-	// current status of the failover (to show it in the readiness status)
+	// current status of the fail over (to show it in the readiness status)
 	state   status
 	stateMu sync.RWMutex
 }
 
 // NewActivePassive creates a new active passive cluster
-// identified by the name, the time to failover determines
-// the frequency of checks performed against the redis to
+// identified by the name. The time to fail over determines
+// the frequency of checks performed against redis to
 // keep the active state.
-// NOTE: creating multiple ActivePassive in one processes
+// NOTE: creating multiple ActivePassive in one process
 // is not working correctly as there is only one readiness
 // probe.
 func NewActivePassive(clusterName string, timeToFailover time.Duration, client *redis.Client) (*ActivePassive, error) {
@@ -88,7 +86,7 @@ func NewActivePassive(clusterName string, timeToFailover time.Duration, client *
 }
 
 // Run registers the readiness probe and calls the OnActive
-// and OnPassive callbacks in case the election toke place.
+// and OnPassive callbacks in case the election took place.
 // Will handle panic safely and therefore can be directly called
 // with go.
 func (a *ActivePassive) Run(ctx context.Context) error {
@@ -110,11 +108,10 @@ func (a *ActivePassive) Run(ctx context.Context) error {
 
 	var lock *redislock.Lock
 
-	// t is a ticker that reminds to call refresh if
-	// the token was acquired after half of the remaining ttl time
+	// ticker that reminds to call refresh if the token was acquired after half of the remaining TTL
 	t := time.NewTicker(a.timeToFailover)
 
-	// retry time triggers to check if the look needs to be acquired
+	// ticker to check if the lock can be acquired
 	retry := time.NewTicker(waitRetry)
 
 	for {
@@ -130,12 +127,13 @@ func (a *ActivePassive) Run(ctx context.Context) error {
 					RetryStrategy: redislock.LimitRetry(redislock.LinearBackoff(a.timeToFailover/3), 3),
 				})
 				if err != nil {
-					logger.Debug().Err(err).Msg("failed to refresh")
+					// we were active but couldn't refresh the lock TTL anymore
+					logger.Info().Err(err).Msg("failed to refresh the redis lock; becoming undefined")
 					a.becomeUndefined(ctx)
 				}
 			}
 		case <-retry.C:
-			// try to acquire the lock, as we are not the active
+			// try to acquire the lock as we are not active
 			if a.getState() != ACTIVE {
 				var err error
 				lock, err = a.locker.Obtain(ctx, lockName, a.timeToFailover, &redislock.Options{
@@ -144,7 +142,7 @@ func (a *ActivePassive) Run(ctx context.Context) error {
 				if err != nil {
 					// we became passive, trigger callback
 					if a.getState() != PASSIVE {
-						logger.Debug().Err(err).Msg("becoming passive")
+						logger.Info().Err(err).Msg("failed to obtain the redis lock; becoming passive")
 						a.becomePassive(ctx)
 					}
 
@@ -152,25 +150,24 @@ func (a *ActivePassive) Run(ctx context.Context) error {
 				}
 
 				// lock acquired
-				logger.Debug().Msg("becoming active")
+				logger.Debug().Msg("redis lock acquired; becoming active")
 				a.becomeActive(ctx)
 
-				// we are active, renew if required
+				// we are active, renew the lock TTL if required
 				d, err := lock.TTL(ctx)
 				if err != nil {
-					logger.Debug().Err(err).Msg("failed to get TTL")
+					logger.Info().Err(err).Msg("failed to get TTL from redis lock")
 				}
 				if d == 0 {
-					// TTL seems to be expired, retry to get lock or become
-					// passive in next iteration
-					logger.Debug().Msg("ttl expired")
+					// TTL seems to be expired, retry to get lock or become passive in next iteration
+					logger.Info().Msg("redis lock TTL has expired; becoming undefined")
 					a.becomeUndefined(ctx)
 				}
 				refreshTime := d / 2
 
-				logger.Debug().Msgf("set refresh to %v", refreshTime)
+				logger.Debug().Msgf("redis lock TTL is still valid; set refresh time to %v ms", refreshTime)
 
-				// set to trigger refresh after TTL / 2
+				// trigger a refresh after TTL / 2
 				t.Reset(refreshTime)
 			}
 		}
