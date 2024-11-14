@@ -133,7 +133,9 @@ func (a *ActivePassive) Run(ctx context.Context) error {
 					// Attempt to reacquire the lock immediately but try only once
 					var errReacquire error
 
-					lock, errReacquire = a.locker.Obtain(ctx, lockName, a.timeToFailover, &redislock.Options{})
+					lock, errReacquire = a.locker.Obtain(ctx, lockName, a.timeToFailover, &redislock.Options{
+						RetryStrategy: redislock.LimitRetry(redislock.LinearBackoff(50*time.Millisecond), 2),
+					})
 					if errReacquire == nil {
 						// Successfully reacquired the lock, remain active
 						logger.Info().Msg("redis lock reacquired after refresh failure; remaining active")
@@ -170,16 +172,16 @@ func (a *ActivePassive) Run(ctx context.Context) error {
 				a.becomeActive(ctx)
 
 				// We are active; renew the lock TTL if required
-				d, err := lock.TTL(ctx)
+				ttl, err := lock.TTL(ctx)
 				if err != nil {
 					logger.Info().Err(err).Msg("failed to get TTL from redis lock")
 				}
-				if d == 0 {
+				if ttl == 0 {
 					// TTL seems to be expired, retry to get lock or become passive in next iteration
 					logger.Info().Msg("redis lock TTL has expired; becoming undefined")
 					a.becomeUndefined(ctx)
 				}
-				refreshTime := d / 2
+				refreshTime := ttl / 2
 
 				logger.Debug().Msgf("redis lock TTL is still valid; set refresh time to %v ms", refreshTime)
 
