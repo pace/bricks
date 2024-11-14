@@ -130,11 +130,11 @@ func (a *ActivePassive) Run(ctx context.Context) error {
 				if err != nil {
 					logger.Warn().Err(err).Msg("failed to refresh the redis lock; attempting to reacquire lock")
 
-					// Attempt to reacquire the lock immediately but try only once
+					// Attempt to reacquire the lock immediately with a short backoff interval and limited retries
 					var errReacquire error
 
 					lock, errReacquire = a.locker.Obtain(ctx, lockName, a.timeToFailover, &redislock.Options{
-						RetryStrategy: redislock.LimitRetry(redislock.LinearBackoff(50*time.Millisecond), 2),
+						RetryStrategy: redislock.LimitRetry(redislock.LinearBackoff(100*time.Millisecond), 2),
 					})
 					if errReacquire == nil {
 						// Successfully reacquired the lock, remain active
