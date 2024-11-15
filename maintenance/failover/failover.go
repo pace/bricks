@@ -15,7 +15,6 @@ import (
 	"github.com/pace/bricks/maintenance/errors"
 	"github.com/pace/bricks/maintenance/health"
 	"github.com/pace/bricks/maintenance/log"
-	"github.com/redis/go-redis/v9"
 )
 
 type status int
@@ -27,6 +26,10 @@ const (
 )
 
 const Label = "github.com.pace.bricks.activepassive"
+
+type LockClient interface {
+	Obtain(ctx context.Context, key string, ttl time.Duration, opt *redislock.Options) (*redislock.Lock, error)
+}
 
 // ActivePassive implements a fail over mechanism that allows
 // to deploy a service multiple times but ony one will accept
@@ -49,7 +52,7 @@ type ActivePassive struct {
 	close          chan struct{}
 	clusterName    string
 	timeToFailover time.Duration
-	locker         *redislock.Client
+	locker         LockClient
 
 	// access to the kubernetes api
 	client *k8sapi.Client
@@ -66,16 +69,20 @@ type ActivePassive struct {
 // NOTE: creating multiple ActivePassive in one process
 // is not working correctly as there is only one readiness
 // probe.
-func NewActivePassive(clusterName string, timeToFailover time.Duration, client *redis.Client) (*ActivePassive, error) {
+func NewActivePassive(clusterName string, timeToFailover time.Duration, lockClient LockClient) (*ActivePassive, error) {
 	cl, err := k8sapi.NewClient()
 	if err != nil {
 		return nil, err
 	}
 
+	if lockClient == nil {
+		return nil, errors.New("redislock client is not initialized")
+	}
+
 	ap := &ActivePassive{
 		clusterName:    clusterName,
 		timeToFailover: timeToFailover,
-		locker:         redislock.New(client),
+		locker:         lockClient,
 		client:         cl,
 	}
 	health.SetCustomReadinessCheck(ap.Handler)
