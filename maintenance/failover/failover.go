@@ -130,7 +130,7 @@ func (a *ActivePassive) Run(ctx context.Context) error {
 				if err != nil {
 					logger.Warn().Err(err).Msg("failed to refresh the redis lock; attempting to reacquire lock")
 
-					// Attempt to reacquire the lock immediately with a short backoff interval and limited retries
+					// Attempt to reacquire the lock immediately with short and limited retries
 					var errReacquire error
 
 					lock, errReacquire = a.locker.Obtain(ctx, lockName, a.timeToFailover, &redislock.Options{
@@ -139,13 +139,11 @@ func (a *ActivePassive) Run(ctx context.Context) error {
 					if errReacquire == nil {
 						// Successfully reacquired the lock, remain active
 						logger.Info().Msg("redis lock reacquired after refresh failure; remaining active")
-
 						a.becomeActive(ctx)
-						refresh.Reset(a.timeToFailover / 2)
+						refresh.Reset(refreshInterval)
 					} else {
 						// We were active but couldn't refresh the lock TTL and reacquire the lock, so, become undefined
 						logger.Info().Err(err).Msg("failed to reacquire the redis lock; becoming undefined")
-
 						a.becomeUndefined(ctx)
 					}
 				}
@@ -174,13 +172,21 @@ func (a *ActivePassive) Run(ctx context.Context) error {
 				// Check TTL of the newly acquired lock and adjust refresh timer
 				ttl, err := lock.TTL(ctx)
 				if err != nil {
+					// If trying to get the TTL from the lock fails we become undefined and retry acquisition at the next tick.
 					logger.Info().Err(err).Msg("failed to get TTL from redis lock")
+					a.becomeUndefined(ctx)
+					continue
 				}
+
 				if ttl == 0 {
+					// Since the lock is very fresh with a TTL well > 0 this case is just a safeguard against rare occasions.
 					logger.Info().Msg("redis lock TTL has expired; becoming undefined")
 					a.becomeUndefined(ctx)
 				} else {
+					// If everything works as smoothly the refresh time should be about the same as the refresh interval
+					// defined at the beginning.
 					refreshTime := ttl / 2
+
 					logger.Info().Msgf("redis lock TTL is still valid; set refresh time to %v ms", refreshTime)
 					refresh.Reset(refreshTime)
 				}
