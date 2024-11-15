@@ -138,12 +138,12 @@ func (a *ActivePassive) Run(ctx context.Context) error {
 					})
 					if errReacquire == nil {
 						// Successfully reacquired the lock, remain active
-						logger.Info().Msg("redis lock reacquired after refresh failure; remaining active")
+						logger.Debug().Msg("redis lock reacquired after refresh failure; remaining active")
 						a.becomeActive(ctx)
 						refresh.Reset(refreshInterval)
 					} else {
 						// We were active but couldn't refresh the lock TTL and reacquire the lock, so, become undefined
-						logger.Info().Err(err).Msg("failed to reacquire the redis lock; becoming undefined")
+						logger.Debug().Err(err).Msg("failed to reacquire the redis lock; becoming undefined")
 						a.becomeUndefined(ctx)
 					}
 				}
@@ -158,7 +158,7 @@ func (a *ActivePassive) Run(ctx context.Context) error {
 				if err != nil {
 					// couldn't obtain the lock; becoming passive
 					if a.getState() != PASSIVE {
-						logger.Info().Err(err).Msg("couldn't obtain the redis lock; becoming passive")
+						logger.Debug().Err(err).Msg("couldn't obtain the redis lock; becoming passive")
 						a.becomePassive(ctx)
 					}
 
@@ -173,21 +173,25 @@ func (a *ActivePassive) Run(ctx context.Context) error {
 				ttl, err := lock.TTL(ctx)
 				if err != nil {
 					// If trying to get the TTL from the lock fails we become undefined and retry acquisition at the next tick.
-					logger.Info().Err(err).Msg("failed to get TTL from redis lock")
+					logger.Debug().Err(err).Msg("failed to get TTL from redis lock")
 					a.becomeUndefined(ctx)
 					continue
 				}
 
 				if ttl == 0 {
 					// Since the lock is very fresh with a TTL well > 0 this case is just a safeguard against rare occasions.
-					logger.Info().Msg("redis lock TTL has expired; becoming undefined")
+					logger.Debug().Msg("redis lock TTL has expired; becoming undefined")
 					a.becomeUndefined(ctx)
 				} else {
-					// If everything works as smoothly the refresh time should be about the same as the refresh interval
-					// defined at the beginning.
+					// Enforce a minimum refresh time
+					minRefreshTime := 2 * time.Second
 					refreshTime := ttl / 2
+					if refreshTime < minRefreshTime {
+						logger.Warn().Msgf("calculated refresh time %v is below minimum threshold; using %v instead", refreshTime, minRefreshTime)
+						refreshTime = minRefreshTime
+					}
 
-					logger.Info().Msgf("redis lock TTL is still valid; set refresh time to %v ms", refreshTime)
+					logger.Debug().Msgf("redis lock TTL is still valid; set refresh time to %v ms", refreshTime)
 					refresh.Reset(refreshTime)
 				}
 			}
