@@ -33,7 +33,7 @@ func (m *MockRedisLockClient) Obtain(ctx context.Context, key string, ttl time.D
 		failTime:   m.failTime,
 		failPeriod: m.failPeriod,
 	}
-	m.Called(ctx, key, ttl, opt)
+
 	return mockLock.Lock, nil
 }
 
