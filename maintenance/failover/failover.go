@@ -153,16 +153,22 @@ func (a *ActivePassive) Run(ctx context.Context) error {
 						logger.Debug().Err(err).Msg("Stefan: failed to reacquire the redis lock; becoming undefined")
 						a.becomeUndefined(ctx)
 					}
+				} else {
+					logger.Debug().Err(err).Msg("Stefan: redis lock refreshed")
 				}
 			}
 		case <-retry.C:
 			// Try to acquire the lock as we are not active
 			if a.getState() != ACTIVE {
+				logger.Debug().Msgf("Stefan: in retry: trying to acquire the lock...")
+
 				var err error
 				lock, err = a.locker.Obtain(ctx, lockName, a.timeToFailover, &redislock.Options{
 					RetryStrategy: redislock.LimitRetry(redislock.LinearBackoff(retryInterval/2), 2),
 				})
 				if err != nil {
+					logger.Debug().Err(err).Msgf("Stefan: failed to obtain the redis lock; current state: %v", a.getState())
+
 					// couldn't obtain the lock; becoming passive
 					if a.getState() != PASSIVE {
 						logger.Debug().Err(err).Msg("Stefan: couldn't obtain the redis lock; becoming passive")
