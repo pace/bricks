@@ -130,6 +130,8 @@ func (a *ActivePassive) Run(ctx context.Context) error {
 		case <-a.close:
 			return nil
 		case <-refresh.C:
+			logger.Debug().Msgf("Stefan: tick from refresh; state: %v", a.getState())
+
 			if a.getState() == ACTIVE && lock != nil {
 				err := lock.Refresh(ctx, a.timeToFailover, &redislock.Options{
 					RetryStrategy: redislock.LimitRetry(redislock.LinearBackoff(refreshInterval/5), 2),
@@ -158,6 +160,8 @@ func (a *ActivePassive) Run(ctx context.Context) error {
 				}
 			}
 		case <-retry.C:
+			logger.Debug().Msgf("Stefan: tick from retry; state: %v", a.getState())
+
 			// Try to acquire the lock as we are not active
 			if a.getState() != ACTIVE {
 				logger.Debug().Msgf("Stefan: in retry: trying to acquire the lock...")
