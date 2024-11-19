@@ -190,9 +190,14 @@ func (a *ActivePassive) Run(ctx context.Context) error {
 
 				logger.Debug().Msg("Stefan: became active")
 
-				timeoutCtx, cancel := context.WithTimeout(ctx, 2*time.Second)
+				if lock == nil {
+					logger.Debug().Msg("Stefan: lock is nil")
+					a.becomeUndefined(ctx)
+					continue
+				}
 
 				// Check TTL of the newly acquired lock and adjust refresh timer
+				timeoutCtx, cancel := context.WithTimeout(ctx, 2*time.Second)
 				ttl, err := lock.TTL(timeoutCtx)
 				if err != nil {
 					// If trying to get the TTL from the lock fails we become undefined and retry acquisition at the next tick.
