@@ -188,14 +188,19 @@ func (a *ActivePassive) Run(ctx context.Context) error {
 
 				logger.Debug().Msg("Stefan: became active")
 
+				timeoutCtx, cancel := context.WithTimeout(ctx, 2*time.Second)
+
 				// Check TTL of the newly acquired lock and adjust refresh timer
-				ttl, err := lock.TTL(ctx)
+				ttl, err := lock.TTL(timeoutCtx)
 				if err != nil {
 					// If trying to get the TTL from the lock fails we become undefined and retry acquisition at the next tick.
 					logger.Debug().Err(err).Msg("Stefan: failed to get TTL from redis lock; becoming undefined")
+					cancel()
 					a.becomeUndefined(ctx)
 					continue
 				}
+
+				cancel()
 
 				logger.Debug().Msgf("Stefan: got TTL from redis lock: %v", ttl.Abs())
 
