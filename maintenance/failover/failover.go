@@ -186,20 +186,26 @@ func (a *ActivePassive) Run(ctx context.Context) error {
 				logger.Debug().Msg("Stefan: redis lock acquired; becoming active")
 				a.becomeActive(ctx)
 
+				logger.Debug().Msg("Stefan: became active")
+
 				// Check TTL of the newly acquired lock and adjust refresh timer
 				ttl, err := lock.TTL(ctx)
 				if err != nil {
 					// If trying to get the TTL from the lock fails we become undefined and retry acquisition at the next tick.
-					logger.Debug().Err(err).Msg("Stefan: failed to get TTL from redis lock")
+					logger.Debug().Err(err).Msg("Stefan: failed to get TTL from redis lock; becoming undefined")
 					a.becomeUndefined(ctx)
 					continue
 				}
+
+				logger.Debug().Msgf("Stefan: got TTL from redis lock: %v", ttl.Abs())
 
 				if ttl == 0 {
 					// Since the lock is very fresh with a TTL well > 0 this case is just a safeguard against rare occasions.
 					logger.Debug().Msg("Stefan: redis lock TTL has expired; becoming undefined")
 					a.becomeUndefined(ctx)
 				} else {
+					logger.Debug().Msg("Stefan: redis lock TTL > 0")
+
 					// Enforce a minimum refresh time
 					minRefreshTime := 2 * time.Second
 					refreshTime := ttl / 2
