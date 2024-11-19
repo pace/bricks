@@ -15,6 +15,7 @@ import (
 	"github.com/pace/bricks/maintenance/errors"
 	"github.com/pace/bricks/maintenance/health"
 	"github.com/pace/bricks/maintenance/log"
+	"github.com/redis/go-redis/v9"
 )
 
 type status int
@@ -51,7 +52,7 @@ type ActivePassive struct {
 	locker         *redislock.Client
 
 	// access to the kubernetes api
-	client *k8sapi.Client
+	k8sClient *k8sapi.Client
 
 	// current status of the fail over (to show it in the readiness status)
 	state   status
@@ -65,22 +66,23 @@ type ActivePassive struct {
 // NOTE: creating multiple ActivePassive in one process
 // is not working correctly as there is only one readiness
 // probe.
-func NewActivePassive(clusterName string, timeToFailover time.Duration, lockClient *redislock.Client) (*ActivePassive, error) {
-	cl, err := k8sapi.NewClient()
+func NewActivePassive(clusterName string, timeToFailover time.Duration, redisClient *redis.Client) (*ActivePassive, error) {
+	k8sClient, err := k8sapi.NewClient()
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to initialize the kubernets client: %w", err)
 	}
 
-	if lockClient == nil {
-		return nil, errors.New("redislock client is not initialized")
+	if redisClient == nil {
+		return nil, fmt.Errorf("redis client is not initialized")
 	}
 
 	ap := &ActivePassive{
 		clusterName:    clusterName,
 		timeToFailover: timeToFailover,
-		locker:         lockClient,
-		client:         cl,
+		locker:         redislock.New(redisClient),
+		k8sClient:      k8sClient,
 	}
+
 	health.SetCustomReadinessCheck(ap.Handler)
 
 	return ap, nil
@@ -272,7 +274,7 @@ func (a *ActivePassive) becomeUndefined(ctx context.Context) {
 
 // setState returns true if the state was set successfully
 func (a *ActivePassive) setState(ctx context.Context, state status) bool {
-	err := a.client.SetCurrentPodLabel(ctx, Label, a.label(state))
+	err := a.k8sClient.SetCurrentPodLabel(ctx, Label, a.label(state))
 	if err != nil {
 		log.Ctx(ctx).Error().Err(err).Msg("failed to mark pod as undefined")
 		a.stateMu.Lock()
