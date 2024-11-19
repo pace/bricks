@@ -27,10 +27,6 @@ const (
 
 const Label = "github.com.pace.bricks.activepassive"
 
-type LockClient interface {
-	Obtain(ctx context.Context, key string, ttl time.Duration, opt *redislock.Options) (*redislock.Lock, error)
-}
-
 // ActivePassive implements a fail over mechanism that allows
 // to deploy a service multiple times but ony one will accept
 // traffic by using the label selector of kubernetes.
@@ -52,7 +48,7 @@ type ActivePassive struct {
 	close          chan struct{}
 	clusterName    string
 	timeToFailover time.Duration
-	locker         LockClient
+	locker         *redislock.Client
 
 	// access to the kubernetes api
 	client *k8sapi.Client
@@ -69,7 +65,7 @@ type ActivePassive struct {
 // NOTE: creating multiple ActivePassive in one process
 // is not working correctly as there is only one readiness
 // probe.
-func NewActivePassive(clusterName string, timeToFailover time.Duration, lockClient LockClient) (*ActivePassive, error) {
+func NewActivePassive(clusterName string, timeToFailover time.Duration, lockClient *redislock.Client) (*ActivePassive, error) {
 	cl, err := k8sapi.NewClient()
 	if err != nil {
 		return nil, err
@@ -117,17 +113,21 @@ func (a *ActivePassive) Run(ctx context.Context) error {
 	// Ticker to refresh the lock's TTL before it expires
 	refreshInterval := a.timeToFailover / 2
 	refresh := time.NewTicker(refreshInterval)
+	logger.Debug().Msgf("Stefan: refresh interval: %v s", refreshInterval)
 
 	// Ticker to check if the lock can be acquired if in passive or undefined state
 	retryInterval := a.timeToFailover / 3
 	retry := time.NewTicker(retryInterval)
+	logger.Debug().Msgf("Stefan: retry interval: %v s", retryInterval)
 
 	for {
 		// Allow close or cancel
 		select {
 		case <-ctx.Done():
+			logger.Warn().Err(ctx.Err()).Msg("Stefan: context canceled; exiting Run()")
 			return ctx.Err()
 		case <-a.close:
+			logger.Warn().Err(ctx.Err()).Msg("Stefan: closed; exiting Run()")
 			return nil
 		case <-refresh.C:
 			logger.Debug().Msgf("Stefan: tick from refresh; state: %v", a.getState())
