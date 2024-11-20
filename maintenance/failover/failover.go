@@ -50,6 +50,7 @@ type ActivePassive struct {
 	clusterName    string
 	timeToFailover time.Duration
 	locker         *redislock.Client
+	redisClient    *redis.Client
 
 	// access to the kubernetes api
 	k8sClient *k8sapi.Client
@@ -80,6 +81,7 @@ func NewActivePassive(clusterName string, timeToFailover time.Duration, redisCli
 		clusterName:    clusterName,
 		timeToFailover: timeToFailover,
 		locker:         redislock.New(redisClient),
+		redisClient:    redisClient,
 		k8sClient:      k8sClient,
 	}
 
@@ -135,6 +137,11 @@ func (a *ActivePassive) Run(ctx context.Context) error {
 			logger.Debug().Msgf("Stefan: tick from refresh; state: %v", a.getState())
 
 			if a.getState() == ACTIVE && lock != nil {
+				if !a.isRedisOnline(ctx) {
+					logger.Debug().Msg("Stefan: redis is offline; skipping lock acquisition attempt")
+					continue
+				}
+
 				err := lock.Refresh(ctx, a.timeToFailover, &redislock.Options{
 					RetryStrategy: redislock.LimitRetry(redislock.LinearBackoff(refreshInterval/5), 2),
 				})
@@ -169,6 +176,12 @@ func (a *ActivePassive) Run(ctx context.Context) error {
 				logger.Debug().Msgf("Stefan: in retry: trying to acquire the lock...")
 
 				var err error
+
+				if !a.isRedisOnline(ctx) {
+					logger.Debug().Msg("Stefan: redis is offline; skipping lock acquisition attempt")
+					continue
+				}
+
 				lock, err = a.locker.Obtain(ctx, lockName, a.timeToFailover, &redislock.Options{
 					RetryStrategy: redislock.LimitRetry(redislock.LinearBackoff(retryInterval/2), 2),
 				})
@@ -190,24 +203,20 @@ func (a *ActivePassive) Run(ctx context.Context) error {
 
 				logger.Debug().Msg("Stefan: became active")
 
-				if lock == nil {
-					logger.Debug().Msg("Stefan: lock is nil")
+				// Check TTL of the newly acquired lock and adjust refresh timer
+				if !a.isRedisOnline(ctx) {
+					logger.Debug().Msg("Stefan: redis is offline; skipping lock acquisition attempt")
 					a.becomeUndefined(ctx)
 					continue
 				}
 
-				// Check TTL of the newly acquired lock and adjust refresh timer
-				timeoutCtx, cancel := context.WithTimeout(ctx, 2*time.Second)
-				ttl, err := lock.TTL(timeoutCtx)
+				ttl, err := lock.TTL(ctx)
 				if err != nil {
 					// If trying to get the TTL from the lock fails we become undefined and retry acquisition at the next tick.
 					logger.Debug().Err(err).Msg("Stefan: failed to get TTL from redis lock; becoming undefined")
-					cancel()
 					a.becomeUndefined(ctx)
 					continue
 				}
-
-				cancel()
 
 				logger.Debug().Msgf("Stefan: got TTL from redis lock: %v", ttl.Abs())
 
@@ -298,4 +307,17 @@ func (a *ActivePassive) getState() status {
 	state := a.state
 	a.stateMu.RUnlock()
 	return state
+}
+
+// isRedisOnline pings the Redis client to check its availability. We want to do lock operations
+// only if Redis is reachable.
+func (a *ActivePassive) isRedisOnline(ctx context.Context) bool {
+	err := a.redisClient.Ping(ctx).Err()
+	if err != nil {
+		log.Ctx(ctx).Warn().Err(err).Msg("Stefan: redis is offline or unreachable")
+		return false
+	}
+
+	log.Ctx(ctx).Debug().Msg("Stefan: redis is online")
+	return true
 }
