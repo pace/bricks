@@ -5,6 +5,7 @@ package failover
 import (
 	"context"
 	"fmt"
+	"github.com/rs/zerolog"
 	"net/http"
 	"strings"
 	"sync"
@@ -203,22 +204,14 @@ func (a *ActivePassive) Run(ctx context.Context) error {
 
 				logger.Debug().Msg("Stefan: became active")
 
-				if !a.isRedisOnline(ctx) {
-					logger.Debug().Msg("Stefan: redis is offline; skipping lock.TTL() attempt")
-					a.becomeUndefined(ctx)
-					continue
-				}
-
-				lockKey := lock.Key()
-				logger.Debug().Msgf("Stefan: the lock's key is: %v", lockKey)
-				if lockKey == "" {
-					logger.Debug().Msg("Stefan: there is no key attached to the lock; becoming undefined")
+				if !a.isRedisOnline(ctx) || !a.isLockKeyPresent(ctx, lockName) {
+					logger.Debug().Msg("Stefan: redis is offline or the lock key does not exist; becoming undefined")
 					a.becomeUndefined(ctx)
 					continue
 				}
 
 				// Check TTL of the newly acquired lock and adjust refresh timer
-				ttl, err := lock.TTL(ctx)
+				ttl, err := safeGetTTL(ctx, lock, logger)
 				if err != nil {
 					// If trying to get the TTL from the lock fails we become undefined and retry acquisition at the next tick.
 					logger.Debug().Err(err).Msg("Stefan: failed to get TTL from redis lock; becoming undefined")
@@ -327,4 +320,28 @@ func (a *ActivePassive) isRedisOnline(ctx context.Context) bool {
 	}
 
 	return true
+}
+
+// isLockKeyPresent returns true if the lock's key exists in Redis.
+func (a *ActivePassive) isLockKeyPresent(ctx context.Context, lockKey string) bool {
+	cmd := a.redisClient.Exists(ctx, lockKey)
+	return cmd.Val() > 0
+}
+
+// safeGetTTL tries to get the TTL from the provided redislock and recovers from a panic inside TTL().
+func safeGetTTL(ctx context.Context, lock *redislock.Lock, logger zerolog.Logger) (time.Duration, error) {
+	var (
+		err error
+		ttl time.Duration
+	)
+
+	defer func() {
+		if r := recover(); r != nil {
+			logger.Error().Msgf("Recovered from panic in lock.TTL(): %v", r)
+			err = fmt.Errorf("panic during lock.TTL(): %v", r)
+		}
+	}()
+
+	ttl, err = lock.TTL(ctx)
+	return ttl, err
 }
