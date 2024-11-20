@@ -138,7 +138,7 @@ func (a *ActivePassive) Run(ctx context.Context) error {
 
 			if a.getState() == ACTIVE && lock != nil {
 				if !a.isRedisOnline(ctx) {
-					logger.Debug().Msg("Stefan: redis is offline; skipping lock acquisition attempt")
+					logger.Debug().Msg("Stefan: redis is offline; skipping lock.Refresh() attempt")
 					continue
 				}
 
@@ -178,7 +178,7 @@ func (a *ActivePassive) Run(ctx context.Context) error {
 				var err error
 
 				if !a.isRedisOnline(ctx) {
-					logger.Debug().Msg("Stefan: redis is offline; skipping lock acquisition attempt")
+					logger.Debug().Msg("Stefan: redis is offline; skipping locker.Obtain() attempt")
 					continue
 				}
 
@@ -203,13 +203,21 @@ func (a *ActivePassive) Run(ctx context.Context) error {
 
 				logger.Debug().Msg("Stefan: became active")
 
-				// Check TTL of the newly acquired lock and adjust refresh timer
 				if !a.isRedisOnline(ctx) {
-					logger.Debug().Msg("Stefan: redis is offline; skipping lock acquisition attempt")
+					logger.Debug().Msg("Stefan: redis is offline; skipping lock.TTL() attempt")
 					a.becomeUndefined(ctx)
 					continue
 				}
 
+				lockKey := lock.Key()
+				logger.Debug().Msgf("Stefan: the lock's key is: %v", lockKey)
+				if lockKey == "" {
+					logger.Debug().Msg("Stefan: there is no key attached to the lock; becoming undefined")
+					a.becomeUndefined(ctx)
+					continue
+				}
+
+				// Check TTL of the newly acquired lock and adjust refresh timer
 				ttl, err := lock.TTL(ctx)
 				if err != nil {
 					// If trying to get the TTL from the lock fails we become undefined and retry acquisition at the next tick.
@@ -318,6 +326,5 @@ func (a *ActivePassive) isRedisOnline(ctx context.Context) bool {
 		return false
 	}
 
-	log.Ctx(ctx).Debug().Msg("Stefan: redis is online")
 	return true
 }
