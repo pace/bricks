@@ -597,9 +597,16 @@ func (g *Generator) buildHandler(method string, op *openapi3.Operation, pattern 
 
 				g.Add(auth)
 				// set tracing context
+
+				ctxStmt := jen.Id("r").Dot("Context").Call()
+
+				if auth != nil {
+					ctxStmt = jen.Id("ctx")
+				}
+
 				g.Line().Comment("Trace the service function handler execution")
 				g.Id("span").Op(":=").Qual(pkgSentry, "StartSpan").Call(
-					jen.Id("r").Dot("Context").Call(), jen.Lit("http.server"), jen.Qual(pkgSentry, "WithDescription").Call(jen.Lit(handler)))
+					ctxStmt, jen.Lit("http.server"), jen.Qual(pkgSentry, "WithDescription").Call(jen.Lit(handler)))
 				g.Defer().Id("span").Dot("Finish").Call()
 				g.Line().Empty()
 
@@ -626,7 +633,7 @@ func (g *Generator) buildHandler(method string, op *openapi3.Operation, pattern 
 
 				// request
 				g.Id("request").Op(":=").Id(route.requestType).
-					Block(jen.Id("Request").Op(":").Id("r").Dot("WithContext").Call(jen.Id("ctx")).Op(","))
+					Block(jen.Id("Request").Op(":").Id("r").Op(","))
 
 				// vars in case parameters are given
 				g.Line().Comment("Scan and validate incoming request parameters")
@@ -773,7 +780,6 @@ func generateAuthorization(op *openapi3.Operation, secSchemes map[string]*openap
 		return nil, err
 	}
 
-	r.Line().Id("r").Op("=").Id("r.WithContext").Call(jen.Id("ctx"))
 	return r, nil
 }
 

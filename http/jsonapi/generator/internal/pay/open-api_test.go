@@ -173,7 +173,7 @@ func GetPaymentMethodsHandler(service GetPaymentMethodsHandlerService, authBacke
 			ResponseWriter: metrics.NewMetric("pay", "/beta/payment-methods", w, r),
 		}
 		request := GetPaymentMethodsRequest{
-			Request: r.WithContext(ctx),
+			Request: r,
 		}
 
 		// Scan and validate incoming request parameters
@@ -231,10 +231,9 @@ func CreatePaymentMethodSEPAHandler(service CreatePaymentMethodSEPAHandlerServic
 			http.Error(w, "Authorization Error", http.StatusUnauthorized)
 			return
 		}
-		r = r.WithContext(ctx)
 
 		// Trace the service function handler execution
-		span := sentry.StartSpan(r.Context(), "http.server", sentry.WithDescription("CreatePaymentMethodSEPAHandler"))
+		span := sentry.StartSpan(ctx, "http.server", sentry.WithDescription("CreatePaymentMethodSEPAHandler"))
 		defer span.Finish()
 
 		ctx = span.Context()
@@ -245,7 +244,7 @@ func CreatePaymentMethodSEPAHandler(service CreatePaymentMethodSEPAHandlerServic
 			ResponseWriter: metrics.NewMetric("pay", "/beta/payment-methods/sepa-direct-debit", w, r),
 		}
 		request := CreatePaymentMethodSEPARequest{
-			Request: r.WithContext(ctx),
+			Request: r,
 		}
 
 		// Scan and validate incoming request parameters
@@ -303,10 +302,9 @@ func DeletePaymentMethodHandler(service DeletePaymentMethodHandlerService, authB
 			http.Error(w, "Authorization Error", http.StatusUnauthorized)
 			return
 		}
-		r = r.WithContext(ctx)
 
 		// Trace the service function handler execution
-		span := sentry.StartSpan(r.Context(), "http.server", sentry.WithDescription("DeletePaymentMethodHandler"))
+		span := sentry.StartSpan(ctx, "http.server", sentry.WithDescription("DeletePaymentMethodHandler"))
 		defer span.Finish()
 
 		ctx = span.Context()
@@ -317,7 +315,7 @@ func DeletePaymentMethodHandler(service DeletePaymentMethodHandlerService, authB
 			ResponseWriter: metrics.NewMetric("pay", "/beta/payment-methods/{paymentMethodId}", w, r),
 		}
 		request := DeletePaymentMethodRequest{
-			Request: r.WithContext(ctx),
+			Request: r,
 		}
 
 		// Scan and validate incoming request parameters
@@ -375,7 +373,7 @@ func AuthorizePaymentMethodHandler(service AuthorizePaymentMethodHandlerService,
 			ResponseWriter: metrics.NewMetric("pay", "/beta/payment-methods/{paymentMethodId}/authorize", w, r),
 		}
 		request := AuthorizePaymentMethodRequest{
-			Request: r.WithContext(ctx),
+			Request: r,
 		}
 
 		// Scan and validate incoming request parameters
@@ -436,7 +434,7 @@ func DeletePaymentTokenHandler(service DeletePaymentTokenHandlerService, authBac
 			ResponseWriter: metrics.NewMetric("pay", "/beta/payment-methods/{paymentMethodId}/paymentTokens/{paymentTokenId}", w, r),
 		}
 		request := DeletePaymentTokenRequest{
-			Request: r.WithContext(ctx),
+			Request: r,
 		}
 
 		// Scan and validate incoming request parameters
@@ -499,7 +497,7 @@ func GetPaymentMethodsIncludingCreditCheckHandler(service GetPaymentMethodsInclu
 			ResponseWriter: metrics.NewMetric("pay", "/beta/payment-methods?include=creditCheck", w, r),
 		}
 		request := GetPaymentMethodsIncludingCreditCheckRequest{
-			Request: r.WithContext(ctx),
+			Request: r,
 		}
 
 		// Scan and validate incoming request parameters
@@ -555,7 +553,7 @@ func GetPaymentMethodsIncludingPaymentTokenHandler(service GetPaymentMethodsIncl
 			ResponseWriter: metrics.NewMetric("pay", "/beta/payment-methods?include=paymentToken", w, r),
 		}
 		request := GetPaymentMethodsIncludingPaymentTokenRequest{
-			Request: r.WithContext(ctx),
+			Request: r,
 		}
 
 		// Scan and validate incoming request parameters
@@ -611,7 +609,7 @@ func ProcessPaymentHandler(service ProcessPaymentHandlerService, authBackend Aut
 			ResponseWriter: metrics.NewMetric("pay", "/beta/transaction/{pathDecimal}", w, r),
 		}
 		request := ProcessPaymentRequest{
-			Request: r.WithContext(ctx),
+			Request: r,
 		}
 
 		// Scan and validate incoming request parameters

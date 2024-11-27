@@ -143,7 +143,7 @@ func ProcessPaymentHandler(service ProcessPaymentHandlerService) http.Handler {
 			ResponseWriter: metrics.NewMetric("fueling", "/gas-station/{gasStationId}/payment", w, r),
 		}
 		request := ProcessPaymentRequest{
-			Request: r.WithContext(ctx),
+			Request: r,
 		}
 
 		// Scan and validate incoming request parameters
@@ -204,7 +204,7 @@ func ApproachingAtTheForecourtHandler(service ApproachingAtTheForecourtHandlerSe
 			ResponseWriter: metrics.NewMetric("fueling", "/gas-stations/{gasStationId}/approaching", w, r),
 		}
 		request := ApproachingAtTheForecourtRequest{
-			Request: r.WithContext(ctx),
+			Request: r,
 		}
 
 		// Scan and validate incoming request parameters
@@ -269,7 +269,7 @@ func GetPumpHandler(service GetPumpHandlerService) http.Handler {
 			ResponseWriter: metrics.NewMetric("fueling", "/gas-stations/{gasStationId}/pumps/{pumpId}", w, r),
 		}
 		request := GetPumpRequest{
-			Request: r.WithContext(ctx),
+			Request: r,
 		}
 
 		// Scan and validate incoming request parameters
@@ -332,7 +332,7 @@ func WaitOnPumpStatusChangeHandler(service WaitOnPumpStatusChangeHandlerService)
 			ResponseWriter: metrics.NewMetric("fueling", "/gas-stations/{gasStationId}/pumps/{pumpId}/wait-for-status-change", w, r),
 		}
 		request := WaitOnPumpStatusChangeRequest{
-			Request: r.WithContext(ctx),
+			Request: r,
 		}
 
 		// Scan and validate incoming request parameters
