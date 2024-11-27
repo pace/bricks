@@ -76,12 +76,10 @@ type traceLogHandler struct {
 
 // Trace the service function handler execution
 func (h *traceLogHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	ctx := r.Context()
-
-	span := sentry.TransactionFromContext(ctx)
+	span := sentry.TransactionFromContext(r.Context())
 	defer span.Finish()
 
-	r = r.WithContext(span.Context())
+	ctx := span.Context()
 
 	span.SetData("req_id", log.RequestIDFromContext(ctx))
 	span.SetData("path", r.URL.Path)
@@ -89,7 +87,7 @@ func (h *traceLogHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	ww := mutil.WrapWriter(w)
 
-	h.next.ServeHTTP(ww, r)
+	h.next.ServeHTTP(ww, r.WithContext(ctx))
 	span.SetData("bytes", ww.BytesWritten())
 	span.SetData("status_code", ww.Status())
 }
