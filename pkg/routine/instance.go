@@ -58,11 +58,6 @@ func (r *routineThatKeepsRunningOneInstance) Run(ctx context.Context) {
 // until it returns. Return the backoff duration after which another single run
 // should be performed.
 func (r *routineThatKeepsRunningOneInstance) singleRun(ctx context.Context) time.Duration {
-	span := sentry.StartSpan(ctx, "function", sentry.WithDescription(fmt.Sprintf("Routine %s", r.Name)))
-	defer span.Finish()
-
-	ctx = span.Context()
-
 	l := redis.NewLock("routine:lock:"+r.Name, redis.SetTTL(r.lockTTL))
 	lockCtx, cancel, err := l.AcquireAndKeepUp(ctx)
 	if err != nil {
@@ -74,7 +69,11 @@ func (r *routineThatKeepsRunningOneInstance) singleRun(ctx context.Context) time
 		routinePanicked := true
 		func() {
 			defer errors.HandleWithCtx(ctx, fmt.Sprintf("routine %d", r.num)) // handle panics
-			r.Routine(lockCtx)
+
+			span := sentry.StartSpan(lockCtx, "function", sentry.WithDescription(fmt.Sprintf("routine %d", r.num)))
+			defer span.Finish()
+
+			r.Routine(span.Context())
 			routinePanicked = false
 		}()
 		if routinePanicked {
