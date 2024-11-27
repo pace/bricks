@@ -17,6 +17,7 @@ import (
 // Transfer takes the logger, log.Sink, authentication, request and
 // error info from the given context and returns a complete
 // new context with all these objects.
+// Deprecated: Use context.WithoutCancel instead.
 func Transfer(in context.Context) context.Context {
 	// transfer logger, log.Sink, authentication and error info
 	out := TransferTracingContext(in, context.Background())
