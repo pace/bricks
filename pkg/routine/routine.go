@@ -13,7 +13,6 @@ import (
 	"syscall"
 
 	"github.com/getsentry/sentry-go"
-
 	"github.com/pace/bricks/maintenance/errors"
 	"github.com/pace/bricks/maintenance/log"
 	pkgcontext "github.com/pace/bricks/pkg/context"
@@ -94,16 +93,12 @@ func Run(parentCtx context.Context, routine func(context.Context)) (cancel conte
 	// add routine number to context and logger
 	num := atomic.AddInt64(&ctr, 1)
 
-	span := sentry.StartTransaction(ctx, fmt.Sprintf("Routine %d", num), sentry.WithOpName("function"))
-	defer span.Finish()
-
-	ctx = span.Context()
-
 	ctx = context.WithValue(ctx, ctxNumKey{}, num)
 	logger := log.Ctx(ctx).With().Int64("routine", num).Logger()
 	ctx = logger.WithContext(ctx)
 	// get cancel function
 	ctx, cancel = context.WithCancel(ctx)
+
 	// register context to be cancelled when the program is shut down
 	contextsMx.Lock()
 	contexts[num] = cancel
@@ -120,7 +115,11 @@ func Run(parentCtx context.Context, routine func(context.Context)) (cancel conte
 	go func() {
 		defer errors.HandleWithCtx(ctx, fmt.Sprintf("routine %d", num)) // handle panics
 		defer cancel()
-		routine(ctx)
+
+		span := sentry.StartSpan(ctx, "function", sentry.WithDescription(fmt.Sprintf("routine %d", num)))
+		defer span.Finish()
+
+		routine(span.Context())
 	}()
 	return
 }

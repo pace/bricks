@@ -64,10 +64,9 @@ func GetTestHandler(service GetTestHandlerService, authBackend AuthorizationBack
 			http.Error(w, "Authorization Error", http.StatusUnauthorized)
 			return
 		}
-		r = r.WithContext(ctx)
 
 		// Trace the service function handler execution
-		span := sentry.StartSpan(r.Context(), "http.server", sentry.WithDescription("GetTestHandler"))
+		span := sentry.StartSpan(ctx, "http.server", sentry.WithDescription("GetTestHandler"))
 		defer span.Finish()
 
 		ctx = span.Context()
@@ -78,7 +77,7 @@ func GetTestHandler(service GetTestHandlerService, authBackend AuthorizationBack
 			ResponseWriter: metrics.NewMetric("securitytest", "/beta/test", w, r),
 		}
 		request := GetTestRequest{
-			Request: r.WithContext(ctx),
+			Request: r,
 		}
 
 		// Scan and validate incoming request parameters

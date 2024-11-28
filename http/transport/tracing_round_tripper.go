@@ -46,9 +46,8 @@ func (l *TracingRoundTripper) RoundTrip(req *http.Request) (*http.Response, erro
 	defer span.Finish()
 
 	ctx = span.Context()
-	req = req.WithContext(ctx)
 
-	resp, err := l.Transport().RoundTrip(req)
+	resp, err := l.Transport().RoundTrip(req.WithContext(ctx))
 
 	attempt := attemptFromCtx(ctx)
 	if attempt > 0 {

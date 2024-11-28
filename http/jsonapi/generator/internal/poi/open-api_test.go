@@ -433,10 +433,9 @@ func DeduplicatePoiHandler(service DeduplicatePoiHandlerService, authBackend Aut
 		if !ok {
 			return
 		}
-		r = r.WithContext(ctx)
 
 		// Trace the service function handler execution
-		span := sentry.StartSpan(r.Context(), "http.server", sentry.WithDescription("DeduplicatePoiHandler"))
+		span := sentry.StartSpan(ctx, "http.server", sentry.WithDescription("DeduplicatePoiHandler"))
 		defer span.Finish()
 
 		ctx = span.Context()
@@ -447,7 +446,7 @@ func DeduplicatePoiHandler(service DeduplicatePoiHandlerService, authBackend Aut
 			ResponseWriter: metrics.NewMetric("poi", "/beta/admin/poi/dedupe", w, r),
 		}
 		request := DeduplicatePoiRequest{
-			Request: r.WithContext(ctx),
+			Request: r,
 		}
 
 		// Scan and validate incoming request parameters
@@ -491,10 +490,9 @@ func MovePoiAtPositionHandler(service MovePoiAtPositionHandlerService, authBacke
 		if !ok {
 			return
 		}
-		r = r.WithContext(ctx)
 
 		// Trace the service function handler execution
-		span := sentry.StartSpan(r.Context(), "http.server", sentry.WithDescription("MovePoiAtPositionHandler"))
+		span := sentry.StartSpan(ctx, "http.server", sentry.WithDescription("MovePoiAtPositionHandler"))
 		defer span.Finish()
 
 		ctx = span.Context()
@@ -505,7 +503,7 @@ func MovePoiAtPositionHandler(service MovePoiAtPositionHandlerService, authBacke
 			ResponseWriter: metrics.NewMetric("poi", "/beta/admin/poi/move", w, r),
 		}
 		request := MovePoiAtPositionRequest{
-			Request: r.WithContext(ctx),
+			Request: r,
 		}
 
 		// Scan and validate incoming request parameters
@@ -549,10 +547,9 @@ func GetAppsHandler(service GetAppsHandlerService, authBackend AuthorizationBack
 		if !ok {
 			return
 		}
-		r = r.WithContext(ctx)
 
 		// Trace the service function handler execution
-		span := sentry.StartSpan(r.Context(), "http.server", sentry.WithDescription("GetAppsHandler"))
+		span := sentry.StartSpan(ctx, "http.server", sentry.WithDescription("GetAppsHandler"))
 		defer span.Finish()
 
 		ctx = span.Context()
@@ -563,7 +560,7 @@ func GetAppsHandler(service GetAppsHandlerService, authBackend AuthorizationBack
 			ResponseWriter: metrics.NewMetric("poi", "/beta/apps", w, r),
 		}
 		request := GetAppsRequest{
-			Request: r.WithContext(ctx),
+			Request: r,
 		}
 
 		// Scan and validate incoming request parameters
@@ -627,10 +624,9 @@ func CreateAppHandler(service CreateAppHandlerService, authBackend Authorization
 		if !ok {
 			return
 		}
-		r = r.WithContext(ctx)
 
 		// Trace the service function handler execution
-		span := sentry.StartSpan(r.Context(), "http.server", sentry.WithDescription("CreateAppHandler"))
+		span := sentry.StartSpan(ctx, "http.server", sentry.WithDescription("CreateAppHandler"))
 		defer span.Finish()
 
 		ctx = span.Context()
@@ -641,7 +637,7 @@ func CreateAppHandler(service CreateAppHandlerService, authBackend Authorization
 			ResponseWriter: metrics.NewMetric("poi", "/beta/apps", w, r),
 		}
 		request := CreateAppRequest{
-			Request: r.WithContext(ctx),
+			Request: r,
 		}
 
 		// Scan and validate incoming request parameters
@@ -685,10 +681,9 @@ func CheckForPaceAppHandler(service CheckForPaceAppHandlerService, authBackend A
 		if !ok {
 			return
 		}
-		r = r.WithContext(ctx)
 
 		// Trace the service function handler execution
-		span := sentry.StartSpan(r.Context(), "http.server", sentry.WithDescription("CheckForPaceAppHandler"))
+		span := sentry.StartSpan(ctx, "http.server", sentry.WithDescription("CheckForPaceAppHandler"))
 		defer span.Finish()
 
 		ctx = span.Context()
@@ -699,7 +694,7 @@ func CheckForPaceAppHandler(service CheckForPaceAppHandlerService, authBackend A
 			ResponseWriter: metrics.NewMetric("poi", "/beta/apps/query", w, r),
 		}
 		request := CheckForPaceAppRequest{
-			Request: r.WithContext(ctx),
+			Request: r,
 		}
 
 		// Scan and validate incoming request parameters
@@ -755,10 +750,9 @@ func DeleteAppHandler(service DeleteAppHandlerService, authBackend Authorization
 		if !ok {
 			return
 		}
-		r = r.WithContext(ctx)
 
 		// Trace the service function handler execution
-		span := sentry.StartSpan(r.Context(), "http.server", sentry.WithDescription("DeleteAppHandler"))
+		span := sentry.StartSpan(ctx, "http.server", sentry.WithDescription("DeleteAppHandler"))
 		defer span.Finish()
 
 		ctx = span.Context()
@@ -769,7 +763,7 @@ func DeleteAppHandler(service DeleteAppHandlerService, authBackend Authorization
 			ResponseWriter: metrics.NewMetric("poi", "/beta/apps/{appID}", w, r),
 		}
 		request := DeleteAppRequest{
-			Request: r.WithContext(ctx),
+			Request: r,
 		}
 
 		// Scan and validate incoming request parameters
@@ -819,10 +813,9 @@ func GetAppHandler(service GetAppHandlerService, authBackend AuthorizationBacken
 		if !ok {
 			return
 		}
-		r = r.WithContext(ctx)
 
 		// Trace the service function handler execution
-		span := sentry.StartSpan(r.Context(), "http.server", sentry.WithDescription("GetAppHandler"))
+		span := sentry.StartSpan(ctx, "http.server", sentry.WithDescription("GetAppHandler"))
 		defer span.Finish()
 
 		ctx = span.Context()
@@ -833,7 +826,7 @@ func GetAppHandler(service GetAppHandlerService, authBackend AuthorizationBacken
 			ResponseWriter: metrics.NewMetric("poi", "/beta/apps/{appID}", w, r),
 		}
 		request := GetAppRequest{
-			Request: r.WithContext(ctx),
+			Request: r,
 		}
 
 		// Scan and validate incoming request parameters
@@ -883,10 +876,9 @@ func UpdateAppHandler(service UpdateAppHandlerService, authBackend Authorization
 		if !ok {
 			return
 		}
-		r = r.WithContext(ctx)
 
 		// Trace the service function handler execution
-		span := sentry.StartSpan(r.Context(), "http.server", sentry.WithDescription("UpdateAppHandler"))
+		span := sentry.StartSpan(ctx, "http.server", sentry.WithDescription("UpdateAppHandler"))
 		defer span.Finish()
 
 		ctx = span.Context()
@@ -897,7 +889,7 @@ func UpdateAppHandler(service UpdateAppHandlerService, authBackend Authorization
 			ResponseWriter: metrics.NewMetric("poi", "/beta/apps/{appID}", w, r),
 		}
 		request := UpdateAppRequest{
-			Request: r.WithContext(ctx),
+			Request: r,
 		}
 
 		// Scan and validate incoming request parameters
@@ -950,10 +942,9 @@ func GetAppPOIsRelationshipsHandler(service GetAppPOIsRelationshipsHandlerServic
 		if !ok {
 			return
 		}
-		r = r.WithContext(ctx)
 
 		// Trace the service function handler execution
-		span := sentry.StartSpan(r.Context(), "http.server", sentry.WithDescription("GetAppPOIsRelationshipsHandler"))
+		span := sentry.StartSpan(ctx, "http.server", sentry.WithDescription("GetAppPOIsRelationshipsHandler"))
 		defer span.Finish()
 
 		ctx = span.Context()
@@ -964,7 +955,7 @@ func GetAppPOIsRelationshipsHandler(service GetAppPOIsRelationshipsHandlerServic
 			ResponseWriter: metrics.NewMetric("poi", "/beta/apps/{appID}/relationships/pois", w, r),
 		}
 		request := GetAppPOIsRelationshipsRequest{
-			Request: r.WithContext(ctx),
+			Request: r,
 		}
 
 		// Scan and validate incoming request parameters
@@ -1014,10 +1005,9 @@ func UpdateAppPOIsRelationshipsHandler(service UpdateAppPOIsRelationshipsHandler
 		if !ok {
 			return
 		}
-		r = r.WithContext(ctx)
 
 		// Trace the service function handler execution
-		span := sentry.StartSpan(r.Context(), "http.server", sentry.WithDescription("UpdateAppPOIsRelationshipsHandler"))
+		span := sentry.StartSpan(ctx, "http.server", sentry.WithDescription("UpdateAppPOIsRelationshipsHandler"))
 		defer span.Finish()
 
 		ctx = span.Context()
@@ -1028,7 +1018,7 @@ func UpdateAppPOIsRelationshipsHandler(service UpdateAppPOIsRelationshipsHandler
 			ResponseWriter: metrics.NewMetric("poi", "/beta/apps/{appID}/relationships/pois", w, r),
 		}
 		request := UpdateAppPOIsRelationshipsRequest{
-			Request: r.WithContext(ctx),
+			Request: r,
 		}
 
 		// Scan and validate incoming request parameters
@@ -1081,10 +1071,9 @@ func GetDuplicatesKMLHandler(service GetDuplicatesKMLHandlerService, authBackend
 		if !ok {
 			return
 		}
-		r = r.WithContext(ctx)
 
 		// Trace the service function handler execution
-		span := sentry.StartSpan(r.Context(), "http.server", sentry.WithDescription("GetDuplicatesKMLHandler"))
+		span := sentry.StartSpan(ctx, "http.server", sentry.WithDescription("GetDuplicatesKMLHandler"))
 		defer span.Finish()
 
 		ctx = span.Context()
@@ -1095,7 +1084,7 @@ func GetDuplicatesKMLHandler(service GetDuplicatesKMLHandlerService, authBackend
 			ResponseWriter: metrics.NewMetric("poi", "/beta/datadumps/duplicatemap/{countryCode}", w, r),
 		}
 		request := GetDuplicatesKMLRequest{
-			Request: r.WithContext(ctx),
+			Request: r,
 		}
 
 		// Scan and validate incoming request parameters
@@ -1145,10 +1134,9 @@ func GetPoisDumpHandler(service GetPoisDumpHandlerService, authBackend Authoriza
 		if !ok {
 			return
 		}
-		r = r.WithContext(ctx)
 
 		// Trace the service function handler execution
-		span := sentry.StartSpan(r.Context(), "http.server", sentry.WithDescription("GetPoisDumpHandler"))
+		span := sentry.StartSpan(ctx, "http.server", sentry.WithDescription("GetPoisDumpHandler"))
 		defer span.Finish()
 
 		ctx = span.Context()
@@ -1159,7 +1147,7 @@ func GetPoisDumpHandler(service GetPoisDumpHandlerService, authBackend Authoriza
 			ResponseWriter: metrics.NewMetric("poi", "/beta/datadumps/pois", w, r),
 		}
 		request := GetPoisDumpRequest{
-			Request: r.WithContext(ctx),
+			Request: r,
 		}
 
 		// Scan and validate incoming request parameters
@@ -1207,10 +1195,9 @@ func DeleteGasStationReferenceStatusHandler(service DeleteGasStationReferenceSta
 		if !ok {
 			return
 		}
-		r = r.WithContext(ctx)
 
 		// Trace the service function handler execution
-		span := sentry.StartSpan(r.Context(), "http.server", sentry.WithDescription("DeleteGasStationReferenceStatusHandler"))
+		span := sentry.StartSpan(ctx, "http.server", sentry.WithDescription("DeleteGasStationReferenceStatusHandler"))
 		defer span.Finish()
 
 		ctx = span.Context()
@@ -1221,7 +1208,7 @@ func DeleteGasStationReferenceStatusHandler(service DeleteGasStationReferenceSta
 			ResponseWriter: metrics.NewMetric("poi", "/beta/delivery/gas-stations/{gasStationId}/reference-status/{reference}", w, r),
 		}
 		request := DeleteGasStationReferenceStatusRequest{
-			Request: r.WithContext(ctx),
+			Request: r,
 		}
 
 		// Scan and validate incoming request parameters
@@ -1276,10 +1263,9 @@ func PutGasStationReferenceStatusHandler(service PutGasStationReferenceStatusHan
 		if !ok {
 			return
 		}
-		r = r.WithContext(ctx)
 
 		// Trace the service function handler execution
-		span := sentry.StartSpan(r.Context(), "http.server", sentry.WithDescription("PutGasStationReferenceStatusHandler"))
+		span := sentry.StartSpan(ctx, "http.server", sentry.WithDescription("PutGasStationReferenceStatusHandler"))
 		defer span.Finish()
 
 		ctx = span.Context()
@@ -1290,7 +1276,7 @@ func PutGasStationReferenceStatusHandler(service PutGasStationReferenceStatusHan
 			ResponseWriter: metrics.NewMetric("poi", "/beta/delivery/gas-stations/{gasStationId}/reference-status/{reference}", w, r),
 		}
 		request := PutGasStationReferenceStatusRequest{
-			Request: r.WithContext(ctx),
+			Request: r,
 		}
 
 		// Scan and validate incoming request parameters
@@ -1348,10 +1334,9 @@ func GetEventsHandler(service GetEventsHandlerService, authBackend Authorization
 		if !ok {
 			return
 		}
-		r = r.WithContext(ctx)
 
 		// Trace the service function handler execution
-		span := sentry.StartSpan(r.Context(), "http.server", sentry.WithDescription("GetEventsHandler"))
+		span := sentry.StartSpan(ctx, "http.server", sentry.WithDescription("GetEventsHandler"))
 		defer span.Finish()
 
 		ctx = span.Context()
@@ -1362,7 +1347,7 @@ func GetEventsHandler(service GetEventsHandlerService, authBackend Authorization
 			ResponseWriter: metrics.NewMetric("poi", "/beta/events", w, r),
 		}
 		request := GetEventsRequest{
-			Request: r.WithContext(ctx),
+			Request: r,
 		}
 
 		// Scan and validate incoming request parameters
@@ -1422,10 +1407,9 @@ func GetGasStationsHandler(service GetGasStationsHandlerService, authBackend Aut
 		if !ok {
 			return
 		}
-		r = r.WithContext(ctx)
 
 		// Trace the service function handler execution
-		span := sentry.StartSpan(r.Context(), "http.server", sentry.WithDescription("GetGasStationsHandler"))
+		span := sentry.StartSpan(ctx, "http.server", sentry.WithDescription("GetGasStationsHandler"))
 		defer span.Finish()
 
 		ctx = span.Context()
@@ -1436,7 +1420,7 @@ func GetGasStationsHandler(service GetGasStationsHandlerService, authBackend Aut
 			ResponseWriter: metrics.NewMetric("poi", "/beta/gas-stations", w, r),
 		}
 		request := GetGasStationsRequest{
-			Request: r.WithContext(ctx),
+			Request: r,
 		}
 
 		// Scan and validate incoming request parameters
@@ -1520,10 +1504,9 @@ func GetGasStationHandler(service GetGasStationHandlerService, authBackend Autho
 		if !ok {
 			return
 		}
-		r = r.WithContext(ctx)
 
 		// Trace the service function handler execution
-		span := sentry.StartSpan(r.Context(), "http.server", sentry.WithDescription("GetGasStationHandler"))
+		span := sentry.StartSpan(ctx, "http.server", sentry.WithDescription("GetGasStationHandler"))
 		defer span.Finish()
 
 		ctx = span.Context()
@@ -1534,7 +1517,7 @@ func GetGasStationHandler(service GetGasStationHandlerService, authBackend Autho
 			ResponseWriter: metrics.NewMetric("poi", "/beta/gas-stations/{id}", w, r),
 		}
 		request := GetGasStationRequest{
-			Request: r.WithContext(ctx),
+			Request: r,
 		}
 
 		// Scan and validate incoming request parameters
@@ -1588,10 +1571,9 @@ func GetPriceHistoryHandler(service GetPriceHistoryHandlerService, authBackend A
 		if !ok {
 			return
 		}
-		r = r.WithContext(ctx)
 
 		// Trace the service function handler execution
-		span := sentry.StartSpan(r.Context(), "http.server", sentry.WithDescription("GetPriceHistoryHandler"))
+		span := sentry.StartSpan(ctx, "http.server", sentry.WithDescription("GetPriceHistoryHandler"))
 		defer span.Finish()
 
 		ctx = span.Context()
@@ -1602,7 +1584,7 @@ func GetPriceHistoryHandler(service GetPriceHistoryHandlerService, authBackend A
 			ResponseWriter: metrics.NewMetric("poi", "/beta/gas-stations/{id}/fuel-price-histories/{fuel_type}", w, r),
 		}
 		request := GetPriceHistoryRequest{
-			Request: r.WithContext(ctx),
+			Request: r,
 		}
 
 		// Scan and validate incoming request parameters
@@ -1669,10 +1651,9 @@ func GetGasStationFuelTypeNameMappingHandler(service GetGasStationFuelTypeNameMa
 		if !ok {
 			return
 		}
-		r = r.WithContext(ctx)
 
 		// Trace the service function handler execution
-		span := sentry.StartSpan(r.Context(), "http.server", sentry.WithDescription("GetGasStationFuelTypeNameMappingHandler"))
+		span := sentry.StartSpan(ctx, "http.server", sentry.WithDescription("GetGasStationFuelTypeNameMappingHandler"))
 		defer span.Finish()
 
 		ctx = span.Context()
@@ -1683,7 +1664,7 @@ func GetGasStationFuelTypeNameMappingHandler(service GetGasStationFuelTypeNameMa
 			ResponseWriter: metrics.NewMetric("poi", "/beta/gas-stations/{id}/fueltype", w, r),
 		}
 		request := GetGasStationFuelTypeNameMappingRequest{
-			Request: r.WithContext(ctx),
+			Request: r,
 		}
 
 		// Scan and validate incoming request parameters
@@ -1737,10 +1718,9 @@ func GetMetadataFiltersHandler(service GetMetadataFiltersHandlerService, authBac
 		if !ok {
 			return
 		}
-		r = r.WithContext(ctx)
 
 		// Trace the service function handler execution
-		span := sentry.StartSpan(r.Context(), "http.server", sentry.WithDescription("GetMetadataFiltersHandler"))
+		span := sentry.StartSpan(ctx, "http.server", sentry.WithDescription("GetMetadataFiltersHandler"))
 		defer span.Finish()
 
 		ctx = span.Context()
@@ -1751,7 +1731,7 @@ func GetMetadataFiltersHandler(service GetMetadataFiltersHandlerService, authBac
 			ResponseWriter: metrics.NewMetric("poi", "/beta/meta", w, r),
 		}
 		request := GetMetadataFiltersRequest{
-			Request: r.WithContext(ctx),
+			Request: r,
 		}
 
 		// Scan and validate incoming request parameters
@@ -1803,10 +1783,9 @@ func GetPoisHandler(service GetPoisHandlerService, authBackend AuthorizationBack
 		if !ok {
 			return
 		}
-		r = r.WithContext(ctx)
 
 		// Trace the service function handler execution
-		span := sentry.StartSpan(r.Context(), "http.server", sentry.WithDescription("GetPoisHandler"))
+		span := sentry.StartSpan(ctx, "http.server", sentry.WithDescription("GetPoisHandler"))
 		defer span.Finish()
 
 		ctx = span.Context()
@@ -1817,7 +1796,7 @@ func GetPoisHandler(service GetPoisHandlerService, authBackend AuthorizationBack
 			ResponseWriter: metrics.NewMetric("poi", "/beta/pois", w, r),
 		}
 		request := GetPoisRequest{
-			Request: r.WithContext(ctx),
+			Request: r,
 		}
 
 		// Scan and validate incoming request parameters
@@ -1877,10 +1856,9 @@ func GetPoiHandler(service GetPoiHandlerService, authBackend AuthorizationBacken
 		if !ok {
 			return
 		}
-		r = r.WithContext(ctx)
 
 		// Trace the service function handler execution
-		span := sentry.StartSpan(r.Context(), "http.server", sentry.WithDescription("GetPoiHandler"))
+		span := sentry.StartSpan(ctx, "http.server", sentry.WithDescription("GetPoiHandler"))
 		defer span.Finish()
 
 		ctx = span.Context()
@@ -1891,7 +1869,7 @@ func GetPoiHandler(service GetPoiHandlerService, authBackend AuthorizationBacken
 			ResponseWriter: metrics.NewMetric("poi", "/beta/pois/{poiId}", w, r),
 		}
 		request := GetPoiRequest{
-			Request: r.WithContext(ctx),
+			Request: r,
 		}
 
 		// Scan and validate incoming request parameters
@@ -1941,10 +1919,9 @@ func ChangePoiHandler(service ChangePoiHandlerService, authBackend Authorization
 		if !ok {
 			return
 		}
-		r = r.WithContext(ctx)
 
 		// Trace the service function handler execution
-		span := sentry.StartSpan(r.Context(), "http.server", sentry.WithDescription("ChangePoiHandler"))
+		span := sentry.StartSpan(ctx, "http.server", sentry.WithDescription("ChangePoiHandler"))
 		defer span.Finish()
 
 		ctx = span.Context()
@@ -1955,7 +1932,7 @@ func ChangePoiHandler(service ChangePoiHandlerService, authBackend Authorization
 			ResponseWriter: metrics.NewMetric("poi", "/beta/pois/{poiId}", w, r),
 		}
 		request := ChangePoiRequest{
-			Request: r.WithContext(ctx),
+			Request: r,
 		}
 
 		// Scan and validate incoming request parameters
@@ -2008,10 +1985,9 @@ func GetPoliciesHandler(service GetPoliciesHandlerService, authBackend Authoriza
 		if !ok {
 			return
 		}
-		r = r.WithContext(ctx)
 
 		// Trace the service function handler execution
-		span := sentry.StartSpan(r.Context(), "http.server", sentry.WithDescription("GetPoliciesHandler"))
+		span := sentry.StartSpan(ctx, "http.server", sentry.WithDescription("GetPoliciesHandler"))
 		defer span.Finish()
 
 		ctx = span.Context()
@@ -2022,7 +1998,7 @@ func GetPoliciesHandler(service GetPoliciesHandlerService, authBackend Authoriza
 			ResponseWriter: metrics.NewMetric("poi", "/beta/policies", w, r),
 		}
 		request := GetPoliciesRequest{
-			Request: r.WithContext(ctx),
+			Request: r,
 		}
 
 		// Scan and validate incoming request parameters
@@ -2086,10 +2062,9 @@ func CreatePolicyHandler(service CreatePolicyHandlerService, authBackend Authori
 		if !ok {
 			return
 		}
-		r = r.WithContext(ctx)
 
 		// Trace the service function handler execution
-		span := sentry.StartSpan(r.Context(), "http.server", sentry.WithDescription("CreatePolicyHandler"))
+		span := sentry.StartSpan(ctx, "http.server", sentry.WithDescription("CreatePolicyHandler"))
 		defer span.Finish()
 
 		ctx = span.Context()
@@ -2100,7 +2075,7 @@ func CreatePolicyHandler(service CreatePolicyHandlerService, authBackend Authori
 			ResponseWriter: metrics.NewMetric("poi", "/beta/policies", w, r),
 		}
 		request := CreatePolicyRequest{
-			Request: r.WithContext(ctx),
+			Request: r,
 		}
 
 		// Scan and validate incoming request parameters
@@ -2144,10 +2119,9 @@ func GetPolicyHandler(service GetPolicyHandlerService, authBackend Authorization
 		if !ok {
 			return
 		}
-		r = r.WithContext(ctx)
 
 		// Trace the service function handler execution
-		span := sentry.StartSpan(r.Context(), "http.server", sentry.WithDescription("GetPolicyHandler"))
+		span := sentry.StartSpan(ctx, "http.server", sentry.WithDescription("GetPolicyHandler"))
 		defer span.Finish()
 
 		ctx = span.Context()
@@ -2158,7 +2132,7 @@ func GetPolicyHandler(service GetPolicyHandlerService, authBackend Authorization
 			ResponseWriter: metrics.NewMetric("poi", "/beta/policies/{policyId}", w, r),
 		}
 		request := GetPolicyRequest{
-			Request: r.WithContext(ctx),
+			Request: r,
 		}
 
 		// Scan and validate incoming request parameters
@@ -2216,7 +2190,7 @@ func GetRegionalPricesHandler(service GetRegionalPricesHandlerService, authBacke
 			ResponseWriter: metrics.NewMetric("poi", "/beta/prices/regional", w, r),
 		}
 		request := GetRegionalPricesRequest{
-			Request: r.WithContext(ctx),
+			Request: r,
 		}
 
 		// Scan and validate incoming request parameters
@@ -2268,10 +2242,9 @@ func GetSourcesHandler(service GetSourcesHandlerService, authBackend Authorizati
 		if !ok {
 			return
 		}
-		r = r.WithContext(ctx)
 
 		// Trace the service function handler execution
-		span := sentry.StartSpan(r.Context(), "http.server", sentry.WithDescription("GetSourcesHandler"))
+		span := sentry.StartSpan(ctx, "http.server", sentry.WithDescription("GetSourcesHandler"))
 		defer span.Finish()
 
 		ctx = span.Context()
@@ -2282,7 +2255,7 @@ func GetSourcesHandler(service GetSourcesHandlerService, authBackend Authorizati
 			ResponseWriter: metrics.NewMetric("poi", "/beta/sources", w, r),
 		}
 		request := GetSourcesRequest{
-			Request: r.WithContext(ctx),
+			Request: r,
 		}
 
 		// Scan and validate incoming request parameters
@@ -2342,10 +2315,9 @@ func CreateSourceHandler(service CreateSourceHandlerService, authBackend Authori
 		if !ok {
 			return
 		}
-		r = r.WithContext(ctx)
 
 		// Trace the service function handler execution
-		span := sentry.StartSpan(r.Context(), "http.server", sentry.WithDescription("CreateSourceHandler"))
+		span := sentry.StartSpan(ctx, "http.server", sentry.WithDescription("CreateSourceHandler"))
 		defer span.Finish()
 
 		ctx = span.Context()
@@ -2356,7 +2328,7 @@ func CreateSourceHandler(service CreateSourceHandlerService, authBackend Authori
 			ResponseWriter: metrics.NewMetric("poi", "/beta/sources", w, r),
 		}
 		request := CreateSourceRequest{
-			Request: r.WithContext(ctx),
+			Request: r,
 		}
 
 		// Scan and validate incoming request parameters
@@ -2400,10 +2372,9 @@ func DeleteSourceHandler(service DeleteSourceHandlerService, authBackend Authori
 		if !ok {
 			return
 		}
-		r = r.WithContext(ctx)
 
 		// Trace the service function handler execution
-		span := sentry.StartSpan(r.Context(), "http.server", sentry.WithDescription("DeleteSourceHandler"))
+		span := sentry.StartSpan(ctx, "http.server", sentry.WithDescription("DeleteSourceHandler"))
 		defer span.Finish()
 
 		ctx = span.Context()
@@ -2414,7 +2385,7 @@ func DeleteSourceHandler(service DeleteSourceHandlerService, authBackend Authori
 			ResponseWriter: metrics.NewMetric("poi", "/beta/sources/{sourceId}", w, r),
 		}
 		request := DeleteSourceRequest{
-			Request: r.WithContext(ctx),
+			Request: r,
 		}
 
 		// Scan and validate incoming request parameters
@@ -2464,10 +2435,9 @@ func GetSourceHandler(service GetSourceHandlerService, authBackend Authorization
 		if !ok {
 			return
 		}
-		r = r.WithContext(ctx)
 
 		// Trace the service function handler execution
-		span := sentry.StartSpan(r.Context(), "http.server", sentry.WithDescription("GetSourceHandler"))
+		span := sentry.StartSpan(ctx, "http.server", sentry.WithDescription("GetSourceHandler"))
 		defer span.Finish()
 
 		ctx = span.Context()
@@ -2478,7 +2448,7 @@ func GetSourceHandler(service GetSourceHandlerService, authBackend Authorization
 			ResponseWriter: metrics.NewMetric("poi", "/beta/sources/{sourceId}", w, r),
 		}
 		request := GetSourceRequest{
-			Request: r.WithContext(ctx),
+			Request: r,
 		}
 
 		// Scan and validate incoming request parameters
@@ -2528,10 +2498,9 @@ func UpdateSourceHandler(service UpdateSourceHandlerService, authBackend Authori
 		if !ok {
 			return
 		}
-		r = r.WithContext(ctx)
 
 		// Trace the service function handler execution
-		span := sentry.StartSpan(r.Context(), "http.server", sentry.WithDescription("UpdateSourceHandler"))
+		span := sentry.StartSpan(ctx, "http.server", sentry.WithDescription("UpdateSourceHandler"))
 		defer span.Finish()
 
 		ctx = span.Context()
@@ -2542,7 +2511,7 @@ func UpdateSourceHandler(service UpdateSourceHandlerService, authBackend Authori
 			ResponseWriter: metrics.NewMetric("poi", "/beta/sources/{sourceId}", w, r),
 		}
 		request := UpdateSourceRequest{
-			Request: r.WithContext(ctx),
+			Request: r,
 		}
 
 		// Scan and validate incoming request parameters
@@ -2595,10 +2564,9 @@ func GetSubscriptionsHandler(service GetSubscriptionsHandlerService, authBackend
 		if !ok {
 			return
 		}
-		r = r.WithContext(ctx)
 
 		// Trace the service function handler execution
-		span := sentry.StartSpan(r.Context(), "http.server", sentry.WithDescription("GetSubscriptionsHandler"))
+		span := sentry.StartSpan(ctx, "http.server", sentry.WithDescription("GetSubscriptionsHandler"))
 		defer span.Finish()
 
 		ctx = span.Context()
@@ -2609,7 +2577,7 @@ func GetSubscriptionsHandler(service GetSubscriptionsHandlerService, authBackend
 			ResponseWriter: metrics.NewMetric("poi", "/beta/subscriptions", w, r),
 		}
 		request := GetSubscriptionsRequest{
-			Request: r.WithContext(ctx),
+			Request: r,
 		}
 
 		// Scan and validate incoming request parameters
@@ -2653,10 +2621,9 @@ func DeleteSubscriptionHandler(service DeleteSubscriptionHandlerService, authBac
 		if !ok {
 			return
 		}
-		r = r.WithContext(ctx)
 
 		// Trace the service function handler execution
-		span := sentry.StartSpan(r.Context(), "http.server", sentry.WithDescription("DeleteSubscriptionHandler"))
+		span := sentry.StartSpan(ctx, "http.server", sentry.WithDescription("DeleteSubscriptionHandler"))
 		defer span.Finish()
 
 		ctx = span.Context()
@@ -2667,7 +2634,7 @@ func DeleteSubscriptionHandler(service DeleteSubscriptionHandlerService, authBac
 			ResponseWriter: metrics.NewMetric("poi", "/beta/subscriptions/{id}", w, r),
 		}
 		request := DeleteSubscriptionRequest{
-			Request: r.WithContext(ctx),
+			Request: r,
 		}
 
 		// Scan and validate incoming request parameters
@@ -2705,10 +2672,9 @@ func StoreSubscriptionHandler(service StoreSubscriptionHandlerService, authBacke
 		if !ok {
 			return
 		}
-		r = r.WithContext(ctx)
 
 		// Trace the service function handler execution
-		span := sentry.StartSpan(r.Context(), "http.server", sentry.WithDescription("StoreSubscriptionHandler"))
+		span := sentry.StartSpan(ctx, "http.server", sentry.WithDescription("StoreSubscriptionHandler"))
 		defer span.Finish()
 
 		ctx = span.Context()
@@ -2719,7 +2685,7 @@ func StoreSubscriptionHandler(service StoreSubscriptionHandlerService, authBacke
 			ResponseWriter: metrics.NewMetric("poi", "/beta/subscriptions/{id}", w, r),
 		}
 		request := StoreSubscriptionRequest{
-			Request: r.WithContext(ctx),
+			Request: r,
 		}
 
 		// Scan and validate incoming request parameters
@@ -2763,10 +2729,9 @@ func GetTilesHandler(service GetTilesHandlerService, authBackend AuthorizationBa
 		if !ok {
 			return
 		}
-		r = r.WithContext(ctx)
 
 		// Trace the service function handler execution
-		span := sentry.StartSpan(r.Context(), "http.server", sentry.WithDescription("GetTilesHandler"))
+		span := sentry.StartSpan(ctx, "http.server", sentry.WithDescription("GetTilesHandler"))
 		defer span.Finish()
 
 		ctx = span.Context()
@@ -2777,7 +2742,7 @@ func GetTilesHandler(service GetTilesHandlerService, authBackend AuthorizationBa
 			ResponseWriter: metrics.NewMetric("poi", "/v1/tiles/query", w, r),
 		}
 		request := GetTilesRequest{
-			Request: r.WithContext(ctx),
+			Request: r,
 		}
 
 		// Scan and validate incoming request parameters

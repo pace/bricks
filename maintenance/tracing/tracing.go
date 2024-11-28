@@ -76,22 +76,22 @@ type traceLogHandler struct {
 
 // Trace the service function handler execution
 func (h *traceLogHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	ctx := r.Context()
+	span := sentry.TransactionFromContext(r.Context())
 
-	span := sentry.TransactionFromContext(ctx)
-	defer span.Finish()
-
-	r = r.WithContext(span.Context())
-
-	span.SetData("req_id", log.RequestIDFromContext(ctx))
-	span.SetData("path", r.URL.Path)
-	span.SetData("method", r.Method)
+	if span != nil {
+		span.SetData("req_id", log.RequestIDFromContext(r.Context()))
+		span.SetData("path", r.URL.Path)
+		span.SetData("method", r.Method)
+	}
 
 	ww := mutil.WrapWriter(w)
 
 	h.next.ServeHTTP(ww, r)
-	span.SetData("bytes", ww.BytesWritten())
-	span.SetData("status_code", ww.Status())
+
+	if span != nil {
+		span.SetData("bytes", ww.BytesWritten())
+		span.SetData("status_code", ww.Status())
+	}
 }
 
 // TraceLogHandler generates a tracing handler that adds logging data to existing handler.

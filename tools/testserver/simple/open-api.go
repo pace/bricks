@@ -32,7 +32,7 @@ func GetTestHandler(service GetTestHandlerService) http.Handler {
 			ResponseWriter: metrics.NewMetric("simple", "/beta/test", w, r),
 		}
 		request := GetTestRequest{
-			Request: r.WithContext(ctx),
+			Request: r,
 		}
 
 		// Scan and validate incoming request parameters

@@ -17,9 +17,11 @@ import (
 // Transfer takes the logger, log.Sink, authentication, request and
 // error info from the given context and returns a complete
 // new context with all these objects.
+// Deprecated: Use context.WithoutCancel instead.
 func Transfer(in context.Context) context.Context {
 	// transfer logger, log.Sink, authentication and error info
-	out := log.Ctx(in).WithContext(context.Background())
+	out := TransferTracingContext(in, context.Background())
+	out = log.Ctx(in).WithContext(out)
 	out = log.SinkContextTransfer(in, out)
 	out = oauth2.ContextTransfer(in, out)
 	out = errors.ContextTransfer(in, out)
@@ -27,7 +29,6 @@ func Transfer(in context.Context) context.Context {
 	out = redact.ContextTransfer(in, out)
 	out = utm.ContextTransfer(in, out)
 	out = hlog.ContextTransfer(in, out)
-	out = TransferTracingContext(in, out)
 	out = locale.ContextTransfer(in, out)
 	out = TransferExternalDependencyContext(in, out)
 
@@ -36,10 +37,11 @@ func Transfer(in context.Context) context.Context {
 
 func TransferTracingContext(in, out context.Context) context.Context {
 	span := sentry.SpanFromContext(in)
-	if span != nil {
-		out = span.Context()
+	if span == nil {
+		return out
 	}
-	return out
+
+	return span.Context()
 }
 
 func TransferExternalDependencyContext(in, out context.Context) context.Context {

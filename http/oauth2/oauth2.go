@@ -67,7 +67,6 @@ func introspectRequest(r *http.Request, w http.ResponseWriter, tokenIntro TokenI
 	defer span.Finish()
 
 	ctx := span.Context()
-	r = r.WithContext(ctx)
 
 	tok := security.GetBearerTokenFromHeader(r.Header.Get(oAuth2Header))
 	if tok == "" {

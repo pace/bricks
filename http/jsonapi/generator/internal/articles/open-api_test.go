@@ -76,7 +76,7 @@ func GetArticleCommentsHandler(service GetArticleCommentsHandlerService) http.Ha
 			ResponseWriter: metrics.NewMetric("articles", "/api/articles/{uuid}/relationships/comments", w, r),
 		}
 		request := GetArticleCommentsRequest{
-			Request: r.WithContext(ctx),
+			Request: r,
 		}
 
 		// Scan and validate incoming request parameters
@@ -134,7 +134,7 @@ func UpdateArticleCommentsHandler(service UpdateArticleCommentsHandlerService) h
 			ResponseWriter: metrics.NewMetric("articles", "/api/articles/{uuid}/relationships/comments", w, r),
 		}
 		request := UpdateArticleCommentsRequest{
-			Request: r.WithContext(ctx),
+			Request: r,
 		}
 
 		// Scan and validate incoming request parameters
@@ -200,7 +200,7 @@ func UpdateArticleInlineTypeHandler(service UpdateArticleInlineTypeHandlerServic
 			ResponseWriter: metrics.NewMetric("articles", "/api/articles/{uuid}/relationships/inline", w, r),
 		}
 		request := UpdateArticleInlineTypeRequest{
-			Request: r.WithContext(ctx),
+			Request: r,
 		}
 
 		// Scan and validate incoming request parameters
@@ -261,7 +261,7 @@ func UpdateArticleInlineRefHandler(service UpdateArticleInlineRefHandlerService)
 			ResponseWriter: metrics.NewMetric("articles", "/api/articles/{uuid}/relationships/inlineref", w, r),
 		}
 		request := UpdateArticleInlineRefRequest{
-			Request: r.WithContext(ctx),
+			Request: r,
 		}
 
 		// Scan and validate incoming request parameters
