@@ -77,40 +77,6 @@ func Handler(ignoredPrefixes ...string) func(http.Handler) http.Handler {
 	}, ignoredPrefixes...)
 }
 
-type traceLogHandler struct {
-	next http.Handler
-}
-
-// Trace the service function handler execution
-func (h *traceLogHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	span := sentry.TransactionFromContext(r.Context())
-
-	if span != nil {
-		span.SetData("req_id", log.RequestIDFromContext(r.Context()))
-		span.SetData("path", r.URL.Path)
-		span.SetData("method", r.Method)
-	}
-
-	ww := mutil.WrapWriter(w)
-
-	h.next.ServeHTTP(ww, r)
-
-	if span != nil {
-		span.SetData("bytes", ww.BytesWritten())
-		span.SetData("status_code", ww.Status())
-	}
-}
-
-// TraceLogHandler generates a tracing handler that adds logging data to existing handler.
-// The tracing handler will not start traces for the list of ignoredPrefixes.
-func TraceLogHandler(ignoredPrefixes ...string) func(http.Handler) http.Handler {
-	return util.NewIgnorePrefixMiddleware(func(next http.Handler) http.Handler {
-		return &traceLogHandler{
-			next: next,
-		}
-	}, ignoredPrefixes...)
-}
-
 // getHTTPSpanName grab needed fields from *http.Request to generate a span name for `http.server` span op.
 func getHTTPSpanName(r *http.Request) string {
 	if r.Pattern != "" {
