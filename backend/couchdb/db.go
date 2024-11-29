@@ -79,7 +79,6 @@ func Client(cfg *Config) (*kivik.Client, error) {
 			Username: cfg.User,
 			Password: cfg.Password,
 		},
-		&transport.TracingRoundTripper{},
 		transport.NewDumpRoundTripperEnv(),
 	}
 	if !cfg.DisableRequestLogging {
