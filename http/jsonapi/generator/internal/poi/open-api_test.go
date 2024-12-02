@@ -429,17 +429,17 @@ func DeduplicatePoiHandler(service DeduplicatePoiHandlerService, authBackend Aut
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		defer errors.HandleRequest("DeduplicatePoiHandler", w, r)
 
+		// Trace the service function handler execution
+		span := sentry.StartSpan(r.Context(), "http.server", sentry.WithDescription("DeduplicatePoiHandler"))
+		defer span.Finish()
+
+		ctx := span.Context()
+		r = r.WithContext(ctx)
+
 		ctx, ok := authBackend.AuthorizeOAuth2(r, w, "poi:pois:update")
 		if !ok {
 			return
 		}
-
-		// Trace the service function handler execution
-		span := sentry.StartSpan(ctx, "http.server", sentry.WithDescription("DeduplicatePoiHandler"))
-		defer span.Finish()
-
-		ctx = span.Context()
-		r = r.WithContext(ctx)
 
 		// Setup context, response writer and request type
 		writer := deduplicatePoiResponseWriter{
@@ -486,17 +486,17 @@ func MovePoiAtPositionHandler(service MovePoiAtPositionHandlerService, authBacke
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		defer errors.HandleRequest("MovePoiAtPositionHandler", w, r)
 
+		// Trace the service function handler execution
+		span := sentry.StartSpan(r.Context(), "http.server", sentry.WithDescription("MovePoiAtPositionHandler"))
+		defer span.Finish()
+
+		ctx := span.Context()
+		r = r.WithContext(ctx)
+
 		ctx, ok := authBackend.AuthorizeOAuth2(r, w, "poi:pois:update")
 		if !ok {
 			return
 		}
-
-		// Trace the service function handler execution
-		span := sentry.StartSpan(ctx, "http.server", sentry.WithDescription("MovePoiAtPositionHandler"))
-		defer span.Finish()
-
-		ctx = span.Context()
-		r = r.WithContext(ctx)
 
 		// Setup context, response writer and request type
 		writer := movePoiAtPositionResponseWriter{
@@ -543,17 +543,17 @@ func GetAppsHandler(service GetAppsHandlerService, authBackend AuthorizationBack
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		defer errors.HandleRequest("GetAppsHandler", w, r)
 
+		// Trace the service function handler execution
+		span := sentry.StartSpan(r.Context(), "http.server", sentry.WithDescription("GetAppsHandler"))
+		defer span.Finish()
+
+		ctx := span.Context()
+		r = r.WithContext(ctx)
+
 		ctx, ok := authBackend.AuthorizeOAuth2(r, w, "poi:apps:read")
 		if !ok {
 			return
 		}
-
-		// Trace the service function handler execution
-		span := sentry.StartSpan(ctx, "http.server", sentry.WithDescription("GetAppsHandler"))
-		defer span.Finish()
-
-		ctx = span.Context()
-		r = r.WithContext(ctx)
 
 		// Setup context, response writer and request type
 		writer := getAppsResponseWriter{
@@ -620,17 +620,17 @@ func CreateAppHandler(service CreateAppHandlerService, authBackend Authorization
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		defer errors.HandleRequest("CreateAppHandler", w, r)
 
+		// Trace the service function handler execution
+		span := sentry.StartSpan(r.Context(), "http.server", sentry.WithDescription("CreateAppHandler"))
+		defer span.Finish()
+
+		ctx := span.Context()
+		r = r.WithContext(ctx)
+
 		ctx, ok := authBackend.AuthorizeOAuth2(r, w, "poi:apps:create")
 		if !ok {
 			return
 		}
-
-		// Trace the service function handler execution
-		span := sentry.StartSpan(ctx, "http.server", sentry.WithDescription("CreateAppHandler"))
-		defer span.Finish()
-
-		ctx = span.Context()
-		r = r.WithContext(ctx)
 
 		// Setup context, response writer and request type
 		writer := createAppResponseWriter{
@@ -677,17 +677,17 @@ func CheckForPaceAppHandler(service CheckForPaceAppHandlerService, authBackend A
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		defer errors.HandleRequest("CheckForPaceAppHandler", w, r)
 
+		// Trace the service function handler execution
+		span := sentry.StartSpan(r.Context(), "http.server", sentry.WithDescription("CheckForPaceAppHandler"))
+		defer span.Finish()
+
+		ctx := span.Context()
+		r = r.WithContext(ctx)
+
 		ctx, ok := authBackend.AuthorizeOAuth2(r, w, "poi:apps:read")
 		if !ok {
 			return
 		}
-
-		// Trace the service function handler execution
-		span := sentry.StartSpan(ctx, "http.server", sentry.WithDescription("CheckForPaceAppHandler"))
-		defer span.Finish()
-
-		ctx = span.Context()
-		r = r.WithContext(ctx)
 
 		// Setup context, response writer and request type
 		writer := checkForPaceAppResponseWriter{
@@ -746,17 +746,17 @@ func DeleteAppHandler(service DeleteAppHandlerService, authBackend Authorization
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		defer errors.HandleRequest("DeleteAppHandler", w, r)
 
+		// Trace the service function handler execution
+		span := sentry.StartSpan(r.Context(), "http.server", sentry.WithDescription("DeleteAppHandler"))
+		defer span.Finish()
+
+		ctx := span.Context()
+		r = r.WithContext(ctx)
+
 		ctx, ok := authBackend.AuthorizeOAuth2(r, w, "poi:apps:delete")
 		if !ok {
 			return
 		}
-
-		// Trace the service function handler execution
-		span := sentry.StartSpan(ctx, "http.server", sentry.WithDescription("DeleteAppHandler"))
-		defer span.Finish()
-
-		ctx = span.Context()
-		r = r.WithContext(ctx)
 
 		// Setup context, response writer and request type
 		writer := deleteAppResponseWriter{
@@ -809,17 +809,17 @@ func GetAppHandler(service GetAppHandlerService, authBackend AuthorizationBacken
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		defer errors.HandleRequest("GetAppHandler", w, r)
 
+		// Trace the service function handler execution
+		span := sentry.StartSpan(r.Context(), "http.server", sentry.WithDescription("GetAppHandler"))
+		defer span.Finish()
+
+		ctx := span.Context()
+		r = r.WithContext(ctx)
+
 		ctx, ok := authBackend.AuthorizeOAuth2(r, w, "poi:apps:read")
 		if !ok {
 			return
 		}
-
-		// Trace the service function handler execution
-		span := sentry.StartSpan(ctx, "http.server", sentry.WithDescription("GetAppHandler"))
-		defer span.Finish()
-
-		ctx = span.Context()
-		r = r.WithContext(ctx)
 
 		// Setup context, response writer and request type
 		writer := getAppResponseWriter{
@@ -872,17 +872,17 @@ func UpdateAppHandler(service UpdateAppHandlerService, authBackend Authorization
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		defer errors.HandleRequest("UpdateAppHandler", w, r)
 
+		// Trace the service function handler execution
+		span := sentry.StartSpan(r.Context(), "http.server", sentry.WithDescription("UpdateAppHandler"))
+		defer span.Finish()
+
+		ctx := span.Context()
+		r = r.WithContext(ctx)
+
 		ctx, ok := authBackend.AuthorizeOAuth2(r, w, "poi:apps:update")
 		if !ok {
 			return
 		}
-
-		// Trace the service function handler execution
-		span := sentry.StartSpan(ctx, "http.server", sentry.WithDescription("UpdateAppHandler"))
-		defer span.Finish()
-
-		ctx = span.Context()
-		r = r.WithContext(ctx)
 
 		// Setup context, response writer and request type
 		writer := updateAppResponseWriter{
@@ -938,17 +938,17 @@ func GetAppPOIsRelationshipsHandler(service GetAppPOIsRelationshipsHandlerServic
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		defer errors.HandleRequest("GetAppPOIsRelationshipsHandler", w, r)
 
+		// Trace the service function handler execution
+		span := sentry.StartSpan(r.Context(), "http.server", sentry.WithDescription("GetAppPOIsRelationshipsHandler"))
+		defer span.Finish()
+
+		ctx := span.Context()
+		r = r.WithContext(ctx)
+
 		ctx, ok := authBackend.AuthorizeOAuth2(r, w, "poi:apps:read")
 		if !ok {
 			return
 		}
-
-		// Trace the service function handler execution
-		span := sentry.StartSpan(ctx, "http.server", sentry.WithDescription("GetAppPOIsRelationshipsHandler"))
-		defer span.Finish()
-
-		ctx = span.Context()
-		r = r.WithContext(ctx)
 
 		// Setup context, response writer and request type
 		writer := getAppPOIsRelationshipsResponseWriter{
@@ -1001,17 +1001,17 @@ func UpdateAppPOIsRelationshipsHandler(service UpdateAppPOIsRelationshipsHandler
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		defer errors.HandleRequest("UpdateAppPOIsRelationshipsHandler", w, r)
 
+		// Trace the service function handler execution
+		span := sentry.StartSpan(r.Context(), "http.server", sentry.WithDescription("UpdateAppPOIsRelationshipsHandler"))
+		defer span.Finish()
+
+		ctx := span.Context()
+		r = r.WithContext(ctx)
+
 		ctx, ok := authBackend.AuthorizeOAuth2(r, w, "poi:apps:update")
 		if !ok {
 			return
 		}
-
-		// Trace the service function handler execution
-		span := sentry.StartSpan(ctx, "http.server", sentry.WithDescription("UpdateAppPOIsRelationshipsHandler"))
-		defer span.Finish()
-
-		ctx = span.Context()
-		r = r.WithContext(ctx)
 
 		// Setup context, response writer and request type
 		writer := updateAppPOIsRelationshipsResponseWriter{
@@ -1067,17 +1067,17 @@ func GetDuplicatesKMLHandler(service GetDuplicatesKMLHandlerService, authBackend
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		defer errors.HandleRequest("GetDuplicatesKMLHandler", w, r)
 
+		// Trace the service function handler execution
+		span := sentry.StartSpan(r.Context(), "http.server", sentry.WithDescription("GetDuplicatesKMLHandler"))
+		defer span.Finish()
+
+		ctx := span.Context()
+		r = r.WithContext(ctx)
+
 		ctx, ok := authBackend.AuthorizeOAuth2(r, w, "poi:dumps:duplicatemap")
 		if !ok {
 			return
 		}
-
-		// Trace the service function handler execution
-		span := sentry.StartSpan(ctx, "http.server", sentry.WithDescription("GetDuplicatesKMLHandler"))
-		defer span.Finish()
-
-		ctx = span.Context()
-		r = r.WithContext(ctx)
 
 		// Setup context, response writer and request type
 		writer := getDuplicatesKMLResponseWriter{
@@ -1130,17 +1130,17 @@ func GetPoisDumpHandler(service GetPoisDumpHandlerService, authBackend Authoriza
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		defer errors.HandleRequest("GetPoisDumpHandler", w, r)
 
+		// Trace the service function handler execution
+		span := sentry.StartSpan(r.Context(), "http.server", sentry.WithDescription("GetPoisDumpHandler"))
+		defer span.Finish()
+
+		ctx := span.Context()
+		r = r.WithContext(ctx)
+
 		ctx, ok := authBackend.AuthorizeOAuth2(r, w, "poi:dumps:pois")
 		if !ok {
 			return
 		}
-
-		// Trace the service function handler execution
-		span := sentry.StartSpan(ctx, "http.server", sentry.WithDescription("GetPoisDumpHandler"))
-		defer span.Finish()
-
-		ctx = span.Context()
-		r = r.WithContext(ctx)
 
 		// Setup context, response writer and request type
 		writer := getPoisDumpResponseWriter{
@@ -1191,17 +1191,17 @@ func DeleteGasStationReferenceStatusHandler(service DeleteGasStationReferenceSta
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		defer errors.HandleRequest("DeleteGasStationReferenceStatusHandler", w, r)
 
+		// Trace the service function handler execution
+		span := sentry.StartSpan(r.Context(), "http.server", sentry.WithDescription("DeleteGasStationReferenceStatusHandler"))
+		defer span.Finish()
+
+		ctx := span.Context()
+		r = r.WithContext(ctx)
+
 		ctx, ok := authBackend.AuthorizeOAuth2(r, w, "poi:gas-stations.references:update")
 		if !ok {
 			return
 		}
-
-		// Trace the service function handler execution
-		span := sentry.StartSpan(ctx, "http.server", sentry.WithDescription("DeleteGasStationReferenceStatusHandler"))
-		defer span.Finish()
-
-		ctx = span.Context()
-		r = r.WithContext(ctx)
 
 		// Setup context, response writer and request type
 		writer := deleteGasStationReferenceStatusResponseWriter{
@@ -1259,17 +1259,17 @@ func PutGasStationReferenceStatusHandler(service PutGasStationReferenceStatusHan
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		defer errors.HandleRequest("PutGasStationReferenceStatusHandler", w, r)
 
+		// Trace the service function handler execution
+		span := sentry.StartSpan(r.Context(), "http.server", sentry.WithDescription("PutGasStationReferenceStatusHandler"))
+		defer span.Finish()
+
+		ctx := span.Context()
+		r = r.WithContext(ctx)
+
 		ctx, ok := authBackend.AuthorizeOAuth2(r, w, "poi:gas-stations.references:update")
 		if !ok {
 			return
 		}
-
-		// Trace the service function handler execution
-		span := sentry.StartSpan(ctx, "http.server", sentry.WithDescription("PutGasStationReferenceStatusHandler"))
-		defer span.Finish()
-
-		ctx = span.Context()
-		r = r.WithContext(ctx)
 
 		// Setup context, response writer and request type
 		writer := putGasStationReferenceStatusResponseWriter{
@@ -1330,17 +1330,17 @@ func GetEventsHandler(service GetEventsHandlerService, authBackend Authorization
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		defer errors.HandleRequest("GetEventsHandler", w, r)
 
+		// Trace the service function handler execution
+		span := sentry.StartSpan(r.Context(), "http.server", sentry.WithDescription("GetEventsHandler"))
+		defer span.Finish()
+
+		ctx := span.Context()
+		r = r.WithContext(ctx)
+
 		ctx, ok := authBackend.AuthorizeOAuth2(r, w, "poi:events:read")
 		if !ok {
 			return
 		}
-
-		// Trace the service function handler execution
-		span := sentry.StartSpan(ctx, "http.server", sentry.WithDescription("GetEventsHandler"))
-		defer span.Finish()
-
-		ctx = span.Context()
-		r = r.WithContext(ctx)
 
 		// Setup context, response writer and request type
 		writer := getEventsResponseWriter{
@@ -1403,17 +1403,17 @@ func GetGasStationsHandler(service GetGasStationsHandlerService, authBackend Aut
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		defer errors.HandleRequest("GetGasStationsHandler", w, r)
 
+		// Trace the service function handler execution
+		span := sentry.StartSpan(r.Context(), "http.server", sentry.WithDescription("GetGasStationsHandler"))
+		defer span.Finish()
+
+		ctx := span.Context()
+		r = r.WithContext(ctx)
+
 		ctx, ok := authBackend.AuthorizeOAuth2(r, w, "poi:gas-stations:read")
 		if !ok {
 			return
 		}
-
-		// Trace the service function handler execution
-		span := sentry.StartSpan(ctx, "http.server", sentry.WithDescription("GetGasStationsHandler"))
-		defer span.Finish()
-
-		ctx = span.Context()
-		r = r.WithContext(ctx)
 
 		// Setup context, response writer and request type
 		writer := getGasStationsResponseWriter{
@@ -1500,17 +1500,17 @@ func GetGasStationHandler(service GetGasStationHandlerService, authBackend Autho
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		defer errors.HandleRequest("GetGasStationHandler", w, r)
 
+		// Trace the service function handler execution
+		span := sentry.StartSpan(r.Context(), "http.server", sentry.WithDescription("GetGasStationHandler"))
+		defer span.Finish()
+
+		ctx := span.Context()
+		r = r.WithContext(ctx)
+
 		ctx, ok := authBackend.AuthorizeOAuth2(r, w, "poi:gas-stations:read")
 		if !ok {
 			return
 		}
-
-		// Trace the service function handler execution
-		span := sentry.StartSpan(ctx, "http.server", sentry.WithDescription("GetGasStationHandler"))
-		defer span.Finish()
-
-		ctx = span.Context()
-		r = r.WithContext(ctx)
 
 		// Setup context, response writer and request type
 		writer := getGasStationResponseWriter{
@@ -1567,17 +1567,17 @@ func GetPriceHistoryHandler(service GetPriceHistoryHandlerService, authBackend A
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		defer errors.HandleRequest("GetPriceHistoryHandler", w, r)
 
+		// Trace the service function handler execution
+		span := sentry.StartSpan(r.Context(), "http.server", sentry.WithDescription("GetPriceHistoryHandler"))
+		defer span.Finish()
+
+		ctx := span.Context()
+		r = r.WithContext(ctx)
+
 		ctx, ok := authBackend.AuthorizeOAuth2(r, w, "poi:gas-stations:read")
 		if !ok {
 			return
 		}
-
-		// Trace the service function handler execution
-		span := sentry.StartSpan(ctx, "http.server", sentry.WithDescription("GetPriceHistoryHandler"))
-		defer span.Finish()
-
-		ctx = span.Context()
-		r = r.WithContext(ctx)
 
 		// Setup context, response writer and request type
 		writer := getPriceHistoryResponseWriter{
@@ -1647,17 +1647,17 @@ func GetGasStationFuelTypeNameMappingHandler(service GetGasStationFuelTypeNameMa
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		defer errors.HandleRequest("GetGasStationFuelTypeNameMappingHandler", w, r)
 
+		// Trace the service function handler execution
+		span := sentry.StartSpan(r.Context(), "http.server", sentry.WithDescription("GetGasStationFuelTypeNameMappingHandler"))
+		defer span.Finish()
+
+		ctx := span.Context()
+		r = r.WithContext(ctx)
+
 		ctx, ok := authBackend.AuthorizeOAuth2(r, w, "poi:gas-stations:read")
 		if !ok {
 			return
 		}
-
-		// Trace the service function handler execution
-		span := sentry.StartSpan(ctx, "http.server", sentry.WithDescription("GetGasStationFuelTypeNameMappingHandler"))
-		defer span.Finish()
-
-		ctx = span.Context()
-		r = r.WithContext(ctx)
 
 		// Setup context, response writer and request type
 		writer := getGasStationFuelTypeNameMappingResponseWriter{
@@ -1714,17 +1714,17 @@ func GetMetadataFiltersHandler(service GetMetadataFiltersHandlerService, authBac
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		defer errors.HandleRequest("GetMetadataFiltersHandler", w, r)
 
+		// Trace the service function handler execution
+		span := sentry.StartSpan(r.Context(), "http.server", sentry.WithDescription("GetMetadataFiltersHandler"))
+		defer span.Finish()
+
+		ctx := span.Context()
+		r = r.WithContext(ctx)
+
 		ctx, ok := authBackend.AuthorizeOAuth2(r, w, "poi:gas-stations:read")
 		if !ok {
 			return
 		}
-
-		// Trace the service function handler execution
-		span := sentry.StartSpan(ctx, "http.server", sentry.WithDescription("GetMetadataFiltersHandler"))
-		defer span.Finish()
-
-		ctx = span.Context()
-		r = r.WithContext(ctx)
 
 		// Setup context, response writer and request type
 		writer := getMetadataFiltersResponseWriter{
@@ -1779,17 +1779,17 @@ func GetPoisHandler(service GetPoisHandlerService, authBackend AuthorizationBack
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		defer errors.HandleRequest("GetPoisHandler", w, r)
 
+		// Trace the service function handler execution
+		span := sentry.StartSpan(r.Context(), "http.server", sentry.WithDescription("GetPoisHandler"))
+		defer span.Finish()
+
+		ctx := span.Context()
+		r = r.WithContext(ctx)
+
 		ctx, ok := authBackend.AuthorizeOAuth2(r, w, "poi:pois:read")
 		if !ok {
 			return
 		}
-
-		// Trace the service function handler execution
-		span := sentry.StartSpan(ctx, "http.server", sentry.WithDescription("GetPoisHandler"))
-		defer span.Finish()
-
-		ctx = span.Context()
-		r = r.WithContext(ctx)
 
 		// Setup context, response writer and request type
 		writer := getPoisResponseWriter{
@@ -1852,17 +1852,17 @@ func GetPoiHandler(service GetPoiHandlerService, authBackend AuthorizationBacken
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		defer errors.HandleRequest("GetPoiHandler", w, r)
 
+		// Trace the service function handler execution
+		span := sentry.StartSpan(r.Context(), "http.server", sentry.WithDescription("GetPoiHandler"))
+		defer span.Finish()
+
+		ctx := span.Context()
+		r = r.WithContext(ctx)
+
 		ctx, ok := authBackend.AuthorizeOAuth2(r, w, "poi:pois:read")
 		if !ok {
 			return
 		}
-
-		// Trace the service function handler execution
-		span := sentry.StartSpan(ctx, "http.server", sentry.WithDescription("GetPoiHandler"))
-		defer span.Finish()
-
-		ctx = span.Context()
-		r = r.WithContext(ctx)
 
 		// Setup context, response writer and request type
 		writer := getPoiResponseWriter{
@@ -1915,17 +1915,17 @@ func ChangePoiHandler(service ChangePoiHandlerService, authBackend Authorization
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		defer errors.HandleRequest("ChangePoiHandler", w, r)
 
+		// Trace the service function handler execution
+		span := sentry.StartSpan(r.Context(), "http.server", sentry.WithDescription("ChangePoiHandler"))
+		defer span.Finish()
+
+		ctx := span.Context()
+		r = r.WithContext(ctx)
+
 		ctx, ok := authBackend.AuthorizeOAuth2(r, w, "poi:pois:update")
 		if !ok {
 			return
 		}
-
-		// Trace the service function handler execution
-		span := sentry.StartSpan(ctx, "http.server", sentry.WithDescription("ChangePoiHandler"))
-		defer span.Finish()
-
-		ctx = span.Context()
-		r = r.WithContext(ctx)
 
 		// Setup context, response writer and request type
 		writer := changePoiResponseWriter{
@@ -1981,17 +1981,17 @@ func GetPoliciesHandler(service GetPoliciesHandlerService, authBackend Authoriza
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		defer errors.HandleRequest("GetPoliciesHandler", w, r)
 
+		// Trace the service function handler execution
+		span := sentry.StartSpan(r.Context(), "http.server", sentry.WithDescription("GetPoliciesHandler"))
+		defer span.Finish()
+
+		ctx := span.Context()
+		r = r.WithContext(ctx)
+
 		ctx, ok := authBackend.AuthorizeOAuth2(r, w, "poi:policies:read")
 		if !ok {
 			return
 		}
-
-		// Trace the service function handler execution
-		span := sentry.StartSpan(ctx, "http.server", sentry.WithDescription("GetPoliciesHandler"))
-		defer span.Finish()
-
-		ctx = span.Context()
-		r = r.WithContext(ctx)
 
 		// Setup context, response writer and request type
 		writer := getPoliciesResponseWriter{
@@ -2058,17 +2058,17 @@ func CreatePolicyHandler(service CreatePolicyHandlerService, authBackend Authori
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		defer errors.HandleRequest("CreatePolicyHandler", w, r)
 
+		// Trace the service function handler execution
+		span := sentry.StartSpan(r.Context(), "http.server", sentry.WithDescription("CreatePolicyHandler"))
+		defer span.Finish()
+
+		ctx := span.Context()
+		r = r.WithContext(ctx)
+
 		ctx, ok := authBackend.AuthorizeOAuth2(r, w, "poi:policies:create")
 		if !ok {
 			return
 		}
-
-		// Trace the service function handler execution
-		span := sentry.StartSpan(ctx, "http.server", sentry.WithDescription("CreatePolicyHandler"))
-		defer span.Finish()
-
-		ctx = span.Context()
-		r = r.WithContext(ctx)
 
 		// Setup context, response writer and request type
 		writer := createPolicyResponseWriter{
@@ -2115,17 +2115,17 @@ func GetPolicyHandler(service GetPolicyHandlerService, authBackend Authorization
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		defer errors.HandleRequest("GetPolicyHandler", w, r)
 
+		// Trace the service function handler execution
+		span := sentry.StartSpan(r.Context(), "http.server", sentry.WithDescription("GetPolicyHandler"))
+		defer span.Finish()
+
+		ctx := span.Context()
+		r = r.WithContext(ctx)
+
 		ctx, ok := authBackend.AuthorizeOAuth2(r, w, "poi:policies:read")
 		if !ok {
 			return
 		}
-
-		// Trace the service function handler execution
-		span := sentry.StartSpan(ctx, "http.server", sentry.WithDescription("GetPolicyHandler"))
-		defer span.Finish()
-
-		ctx = span.Context()
-		r = r.WithContext(ctx)
 
 		// Setup context, response writer and request type
 		writer := getPolicyResponseWriter{
@@ -2238,17 +2238,17 @@ func GetSourcesHandler(service GetSourcesHandlerService, authBackend Authorizati
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		defer errors.HandleRequest("GetSourcesHandler", w, r)
 
+		// Trace the service function handler execution
+		span := sentry.StartSpan(r.Context(), "http.server", sentry.WithDescription("GetSourcesHandler"))
+		defer span.Finish()
+
+		ctx := span.Context()
+		r = r.WithContext(ctx)
+
 		ctx, ok := authBackend.AuthorizeOAuth2(r, w, "poi:sources:read")
 		if !ok {
 			return
 		}
-
-		// Trace the service function handler execution
-		span := sentry.StartSpan(ctx, "http.server", sentry.WithDescription("GetSourcesHandler"))
-		defer span.Finish()
-
-		ctx = span.Context()
-		r = r.WithContext(ctx)
 
 		// Setup context, response writer and request type
 		writer := getSourcesResponseWriter{
@@ -2311,17 +2311,17 @@ func CreateSourceHandler(service CreateSourceHandlerService, authBackend Authori
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		defer errors.HandleRequest("CreateSourceHandler", w, r)
 
+		// Trace the service function handler execution
+		span := sentry.StartSpan(r.Context(), "http.server", sentry.WithDescription("CreateSourceHandler"))
+		defer span.Finish()
+
+		ctx := span.Context()
+		r = r.WithContext(ctx)
+
 		ctx, ok := authBackend.AuthorizeOAuth2(r, w, "poi:sources:create")
 		if !ok {
 			return
 		}
-
-		// Trace the service function handler execution
-		span := sentry.StartSpan(ctx, "http.server", sentry.WithDescription("CreateSourceHandler"))
-		defer span.Finish()
-
-		ctx = span.Context()
-		r = r.WithContext(ctx)
 
 		// Setup context, response writer and request type
 		writer := createSourceResponseWriter{
@@ -2368,17 +2368,17 @@ func DeleteSourceHandler(service DeleteSourceHandlerService, authBackend Authori
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		defer errors.HandleRequest("DeleteSourceHandler", w, r)
 
+		// Trace the service function handler execution
+		span := sentry.StartSpan(r.Context(), "http.server", sentry.WithDescription("DeleteSourceHandler"))
+		defer span.Finish()
+
+		ctx := span.Context()
+		r = r.WithContext(ctx)
+
 		ctx, ok := authBackend.AuthorizeOAuth2(r, w, "poi:sources:delete")
 		if !ok {
 			return
 		}
-
-		// Trace the service function handler execution
-		span := sentry.StartSpan(ctx, "http.server", sentry.WithDescription("DeleteSourceHandler"))
-		defer span.Finish()
-
-		ctx = span.Context()
-		r = r.WithContext(ctx)
 
 		// Setup context, response writer and request type
 		writer := deleteSourceResponseWriter{
@@ -2431,17 +2431,17 @@ func GetSourceHandler(service GetSourceHandlerService, authBackend Authorization
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		defer errors.HandleRequest("GetSourceHandler", w, r)
 
+		// Trace the service function handler execution
+		span := sentry.StartSpan(r.Context(), "http.server", sentry.WithDescription("GetSourceHandler"))
+		defer span.Finish()
+
+		ctx := span.Context()
+		r = r.WithContext(ctx)
+
 		ctx, ok := authBackend.AuthorizeOAuth2(r, w, "poi:sources:read")
 		if !ok {
 			return
 		}
-
-		// Trace the service function handler execution
-		span := sentry.StartSpan(ctx, "http.server", sentry.WithDescription("GetSourceHandler"))
-		defer span.Finish()
-
-		ctx = span.Context()
-		r = r.WithContext(ctx)
 
 		// Setup context, response writer and request type
 		writer := getSourceResponseWriter{
@@ -2494,17 +2494,17 @@ func UpdateSourceHandler(service UpdateSourceHandlerService, authBackend Authori
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		defer errors.HandleRequest("UpdateSourceHandler", w, r)
 
+		// Trace the service function handler execution
+		span := sentry.StartSpan(r.Context(), "http.server", sentry.WithDescription("UpdateSourceHandler"))
+		defer span.Finish()
+
+		ctx := span.Context()
+		r = r.WithContext(ctx)
+
 		ctx, ok := authBackend.AuthorizeOAuth2(r, w, "poi:sources:update")
 		if !ok {
 			return
 		}
-
-		// Trace the service function handler execution
-		span := sentry.StartSpan(ctx, "http.server", sentry.WithDescription("UpdateSourceHandler"))
-		defer span.Finish()
-
-		ctx = span.Context()
-		r = r.WithContext(ctx)
 
 		// Setup context, response writer and request type
 		writer := updateSourceResponseWriter{
@@ -2560,17 +2560,17 @@ func GetSubscriptionsHandler(service GetSubscriptionsHandlerService, authBackend
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		defer errors.HandleRequest("GetSubscriptionsHandler", w, r)
 
+		// Trace the service function handler execution
+		span := sentry.StartSpan(r.Context(), "http.server", sentry.WithDescription("GetSubscriptionsHandler"))
+		defer span.Finish()
+
+		ctx := span.Context()
+		r = r.WithContext(ctx)
+
 		ctx, ok := authBackend.AuthorizeOAuth2(r, w, "poi:subscriptions:read")
 		if !ok {
 			return
 		}
-
-		// Trace the service function handler execution
-		span := sentry.StartSpan(ctx, "http.server", sentry.WithDescription("GetSubscriptionsHandler"))
-		defer span.Finish()
-
-		ctx = span.Context()
-		r = r.WithContext(ctx)
 
 		// Setup context, response writer and request type
 		writer := getSubscriptionsResponseWriter{
@@ -2617,17 +2617,17 @@ func DeleteSubscriptionHandler(service DeleteSubscriptionHandlerService, authBac
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		defer errors.HandleRequest("DeleteSubscriptionHandler", w, r)
 
+		// Trace the service function handler execution
+		span := sentry.StartSpan(r.Context(), "http.server", sentry.WithDescription("DeleteSubscriptionHandler"))
+		defer span.Finish()
+
+		ctx := span.Context()
+		r = r.WithContext(ctx)
+
 		ctx, ok := authBackend.AuthorizeOAuth2(r, w, "poi:subscriptions:delete")
 		if !ok {
 			return
 		}
-
-		// Trace the service function handler execution
-		span := sentry.StartSpan(ctx, "http.server", sentry.WithDescription("DeleteSubscriptionHandler"))
-		defer span.Finish()
-
-		ctx = span.Context()
-		r = r.WithContext(ctx)
 
 		// Setup context, response writer and request type
 		writer := deleteSubscriptionResponseWriter{
@@ -2668,17 +2668,17 @@ func StoreSubscriptionHandler(service StoreSubscriptionHandlerService, authBacke
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		defer errors.HandleRequest("StoreSubscriptionHandler", w, r)
 
+		// Trace the service function handler execution
+		span := sentry.StartSpan(r.Context(), "http.server", sentry.WithDescription("StoreSubscriptionHandler"))
+		defer span.Finish()
+
+		ctx := span.Context()
+		r = r.WithContext(ctx)
+
 		ctx, ok := authBackend.AuthorizeOAuth2(r, w, "poi:subscriptions:create")
 		if !ok {
 			return
 		}
-
-		// Trace the service function handler execution
-		span := sentry.StartSpan(ctx, "http.server", sentry.WithDescription("StoreSubscriptionHandler"))
-		defer span.Finish()
-
-		ctx = span.Context()
-		r = r.WithContext(ctx)
 
 		// Setup context, response writer and request type
 		writer := storeSubscriptionResponseWriter{
@@ -2725,17 +2725,17 @@ func GetTilesHandler(service GetTilesHandlerService, authBackend AuthorizationBa
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		defer errors.HandleRequest("GetTilesHandler", w, r)
 
+		// Trace the service function handler execution
+		span := sentry.StartSpan(r.Context(), "http.server", sentry.WithDescription("GetTilesHandler"))
+		defer span.Finish()
+
+		ctx := span.Context()
+		r = r.WithContext(ctx)
+
 		ctx, ok := authBackend.AuthorizeOAuth2(r, w, "poi:tiles:read")
 		if !ok {
 			return
 		}
-
-		// Trace the service function handler execution
-		span := sentry.StartSpan(ctx, "http.server", sentry.WithDescription("GetTilesHandler"))
-		defer span.Finish()
-
-		ctx = span.Context()
-		r = r.WithContext(ctx)
 
 		// Setup context, response writer and request type
 		writer := getTilesResponseWriter{

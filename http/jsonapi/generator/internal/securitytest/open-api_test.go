@@ -46,7 +46,13 @@ func GetTestHandler(service GetTestHandlerService, authBackend AuthorizationBack
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		defer errors.HandleRequest("GetTestHandler", w, r)
 
-		var ctx context.Context
+		// Trace the service function handler execution
+		span := sentry.StartSpan(r.Context(), "http.server", sentry.WithDescription("GetTestHandler"))
+		defer span.Finish()
+
+		ctx := span.Context()
+		r = r.WithContext(ctx)
+
 		var ok bool
 		if authBackend.CanAuthorizeOAuth2(r) {
 
@@ -64,13 +70,6 @@ func GetTestHandler(service GetTestHandlerService, authBackend AuthorizationBack
 			http.Error(w, "Authorization Error", http.StatusUnauthorized)
 			return
 		}
-
-		// Trace the service function handler execution
-		span := sentry.StartSpan(ctx, "http.server", sentry.WithDescription("GetTestHandler"))
-		defer span.Finish()
-
-		ctx = span.Context()
-		r = r.WithContext(ctx)
 
 		// Setup context, response writer and request type
 		writer := getTestResponseWriter{
