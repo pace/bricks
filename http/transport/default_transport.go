@@ -8,7 +8,6 @@ func NewDefaultTransportChain() *RoundTripperChain {
 	return Chain(
 		&ExternalDependencyRoundTripper{},
 		NewDefaultRetryRoundTripper(),
-		&TracingRoundTripper{},
 		&LoggingRoundTripper{},
 		&LocaleRoundTripper{},
 		&RequestIDRoundTripper{},
@@ -24,7 +23,6 @@ func NewDefaultTransportChainWithExternalName(name string) *RoundTripperChain {
 	return Chain(
 		&ExternalDependencyRoundTripper{name: name},
 		NewDefaultRetryRoundTripper(),
-		&TracingRoundTripper{},
 		&LoggingRoundTripper{},
 		&LocaleRoundTripper{},
 		&RequestIDRoundTripper{},

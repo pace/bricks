@@ -132,6 +132,11 @@ func RequestIDHandler(fieldKey, headerName string) func(next http.Handler) http.
 			ctx = hlog.WithValue(ctx, id)
 			r = r.WithContext(ctx)
 
+			transaction := sentry.TransactionFromContext(ctx)
+			if transaction != nil {
+				transaction.SetData("http.request.id", id.String())
+			}
+
 			// log requests with request id
 			log := zerolog.Ctx(ctx)
 			log.UpdateContext(func(c zerolog.Context) zerolog.Context {

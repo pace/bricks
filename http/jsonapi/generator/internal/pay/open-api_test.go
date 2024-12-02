@@ -207,7 +207,13 @@ func CreatePaymentMethodSEPAHandler(service CreatePaymentMethodSEPAHandlerServic
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		defer errors.HandleRequest("CreatePaymentMethodSEPAHandler", w, r)
 
-		var ctx context.Context
+		// Trace the service function handler execution
+		span := sentry.StartSpan(r.Context(), "http.server", sentry.WithDescription("CreatePaymentMethodSEPAHandler"))
+		defer span.Finish()
+
+		ctx := span.Context()
+		r = r.WithContext(ctx)
+
 		var ok bool
 		if authBackend.CanAuthorizeOAuth2(r) {
 
@@ -231,13 +237,6 @@ func CreatePaymentMethodSEPAHandler(service CreatePaymentMethodSEPAHandlerServic
 			http.Error(w, "Authorization Error", http.StatusUnauthorized)
 			return
 		}
-
-		// Trace the service function handler execution
-		span := sentry.StartSpan(ctx, "http.server", sentry.WithDescription("CreatePaymentMethodSEPAHandler"))
-		defer span.Finish()
-
-		ctx = span.Context()
-		r = r.WithContext(ctx)
 
 		// Setup context, response writer and request type
 		writer := createPaymentMethodSEPAResponseWriter{
@@ -284,7 +283,13 @@ func DeletePaymentMethodHandler(service DeletePaymentMethodHandlerService, authB
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		defer errors.HandleRequest("DeletePaymentMethodHandler", w, r)
 
-		var ctx context.Context
+		// Trace the service function handler execution
+		span := sentry.StartSpan(r.Context(), "http.server", sentry.WithDescription("DeletePaymentMethodHandler"))
+		defer span.Finish()
+
+		ctx := span.Context()
+		r = r.WithContext(ctx)
+
 		var ok bool
 		if authBackend.CanAuthorizeOAuth2(r) {
 
@@ -302,13 +307,6 @@ func DeletePaymentMethodHandler(service DeletePaymentMethodHandlerService, authB
 			http.Error(w, "Authorization Error", http.StatusUnauthorized)
 			return
 		}
-
-		// Trace the service function handler execution
-		span := sentry.StartSpan(ctx, "http.server", sentry.WithDescription("DeletePaymentMethodHandler"))
-		defer span.Finish()
-
-		ctx = span.Context()
-		r = r.WithContext(ctx)
 
 		// Setup context, response writer and request type
 		writer := deletePaymentMethodResponseWriter{

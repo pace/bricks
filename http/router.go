@@ -45,14 +45,6 @@ func Router() *mux.Router {
 	// last resort error handler
 	r.Use(errors.Handler())
 
-	// this second handler is needed in order to have access to data managed by the log handler from above
-	r.Use(tracing.TraceLogHandler(
-		// no tracing for these prefixes
-		"/metrics",
-		"/health",
-		"/debug",
-	))
-
 	r.Use(locale.Handler())
 
 	// report use of external dependencies

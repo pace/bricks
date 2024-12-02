@@ -595,30 +595,18 @@ func (g *Generator) buildHandler(method string, op *openapi3.Operation, pattern 
 				// recover panics
 				g.Defer().Qual(pkgMaintErrors, "HandleRequest").Call(jen.Lit(handler), jen.Id("w"), jen.Id("r"))
 
-				g.Add(auth)
-				// set tracing context
-
-				ctxStmt := jen.Id("r").Dot("Context").Call()
-
-				if auth != nil {
-					ctxStmt = jen.Id("ctx")
-				}
-
 				g.Line().Comment("Trace the service function handler execution")
 				g.Id("span").Op(":=").Qual(pkgSentry, "StartSpan").Call(
-					ctxStmt, jen.Lit("http.server"), jen.Qual(pkgSentry, "WithDescription").Call(jen.Lit(handler)))
+					jen.Id("r").Dot("Context").Call(), jen.Lit("http.server"), jen.Qual(pkgSentry, "WithDescription").Call(jen.Lit(handler)))
 				g.Defer().Id("span").Dot("Finish").Call()
 				g.Line().Empty()
 
-				operator := ":="
-
-				if auth != nil {
-					operator = "="
-				}
-
-				g.Id("ctx").Op(operator).Id("span").Dot("Context").Call()
+				// set tracing context
+				g.Id("ctx").Op(":=").Id("span").Dot("Context").Call()
 
 				g.Id("r").Op("=").Id("r.WithContext").Call(jen.Id("ctx"))
+
+				g.Add(auth)
 
 				g.Line().Comment("Setup context, response writer and request type")
 
@@ -830,7 +818,6 @@ func generateAuthorizationForMultipleSecSchemas(op *openapi3.Operation, secSchem
 
 	caser := cases.Title(language.Und, cases.NoLower)
 
-	r.Line().Var().Id("ctx").Id("context.Context")
 	r.Line().Var().Id("ok").Id("bool")
 	for _, val := range orderedSec {
 		name := val[0]
