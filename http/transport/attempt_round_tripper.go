@@ -4,8 +4,11 @@ package transport
 
 import (
 	"context"
+	"fmt"
 	"net/http"
 	"sync/atomic"
+
+	"github.com/getsentry/sentry-go"
 )
 
 type ctxkey int
@@ -29,7 +32,16 @@ func (l *attemptRoundTripper) RoundTrip(req *http.Request) (*http.Response, erro
 	a := atomic.AddInt32(&l.attempt, 1)
 	ctx := context.WithValue(req.Context(), attemptKey, a)
 
-	return l.Transport().RoundTrip(req.WithContext(ctx))
+	resp, err := l.Transport().RoundTrip(req.WithContext(ctx))
+
+	if a > 0 {
+		transaction := sentry.TransactionFromContext(req.Context())
+		if transaction != nil {
+			transaction.SetData("attempt", fmt.Sprintf("%d", a))
+		}
+	}
+
+	return resp, err
 }
 
 func attemptFromCtx(ctx context.Context) int32 {
