@@ -1,25 +1,25 @@
 # Copyright © 2018 by PACE Telematics GmbH. All rights reserved.
-.PHONY: install test jsonapi build integration ci
-
 JSONAPITEST=http/jsonapi/generator/internal
 JSONAPIGEN="./tools/jsonapigen/main.go"
 GOPATH?=~/go
 
 GO:=go
-GO_TEST_FLAGS:=-mod=vendor -count=1 -v -cover -race
-PROTO_TMP:=$(shell pwd)/proto.tmp
+GO_TEST_FLAGS:=-count=1 -v -cover -race
 
 export JAEGER_SERVICE_NAME:=unittest
-export JAEGER_SAMPLER_TYPE:=const
-export JAEGER_SAMPLER_PARAM:=1
 export LOG_FORMAT:=console
 
+.PHONY: install
 install:
 	$(GO) install ./cmd/pb
 
+.PHONY: vuln-scan
 vuln-scan:
-	$(GO) run -mod=vendor golang.org/x/vuln/cmd/govulncheck ./...
+	(cd /; $(GO) install -v -x golang.org/x/vuln/cmd/govulncheck@latest)
 
+	govulncheck ./...
+
+.PHONY: jsonapi
 jsonapi:
 	$(GO) run $(JSONAPIGEN) -pkg poi \
 		-path $(JSONAPITEST)/poi/open-api_test.go \
@@ -40,29 +40,34 @@ jsonapi:
 		-path tools/testserver/simple/open-api.go \
 		-source tools/testserver/simple/open-api.json
 
+.PHONY: grpc
 grpc: tools/testserver/math/math.pb.go
 
 tools/testserver/math/math.pb.go: tools/testserver/math/math.proto
-	mkdir -p $(PROTO_TMP)
-	GOBIN=$(PROTO_TMP) $(GO) install -mod=vendor google.golang.org/grpc/cmd/protoc-gen-go-grpc
-	GOBIN=$(PROTO_TMP) $(GO) install -mod=vendor google.golang.org/protobuf/cmd/protoc-gen-go
-	protoc --plugin=$(PROTO_TMP)/protoc-gen-go-grpc \
-		--plugin=$(PROTO_TMP)/protoc-gen-go \
-		-I=./ --go-grpc_out=$(dir @) --go_out=$(dir @) $<
-	rm -rf $(PROTO_TMP)
+	(cd /; $(GO) install -v -x google.golang.org/grpc/cmd/protoc-gen-go-grpc@latest)
+	(cd /; $(GO) install -v -x google.golang.org/protobuf/cmd/protoc-gen-go@latest)
 
+	protoc -I=./ --go-grpc_out=$(dir @) --go_out=$(dir @) $<
+
+.PHONY: lint
 lint:
-	$(GO) run -mod=vendor github.com/golangci/golangci-lint/cmd/golangci-lint run --timeout 2m
+	(cd /; $(GO) install -v -x github.com/golangci/golangci-lint/cmd/golangci-lint@latest)
 
+	golangci-lint run --timeout 2m
+
+.PHONY: test
 test:
 	$(GO) test $(GO_TEST_FLAGS) -covermode=atomic -coverprofile=coverage.out -short ./...
 
+.PHONY: integration
 integration:
 	$(GO) test $(GO_TEST_FLAGS) -run TestIntegration ./...
 	$(GO) test $(GO_TEST_FLAGS) -run Example_clusterBackgroundTask ./pkg/routine
 
+.PHONY: testserver
 testserver:
 	docker-compose up
 
+.PHONY: ci
 ci:
 	$(GO) test $(GO_TEST_FLAGS) -covermode=atomic -coverprofile=coverage.out ./...
