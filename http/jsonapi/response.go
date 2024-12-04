@@ -19,7 +19,7 @@ import (
 var (
 	// ErrBadJSONAPIStructTag is returned when the Struct field's JSON API
 	// annotation is invalid.
-	ErrBadJSONAPIStructTag = errors.New("Bad jsonapi struct tag format")
+	ErrBadJSONAPIStructTag = errors.New("bad jsonapi struct tag format")
 	// ErrBadJSONAPIID is returned when the Struct JSON API annotated "id" field
 	// was not a valid numeric type.
 	ErrBadJSONAPIID = errors.New(
@@ -96,6 +96,7 @@ func Marshal(models interface{}) (Payloader, error) {
 			if er := jl.validate(); er != nil {
 				return nil, er
 			}
+
 			payload.Links = linkableModels.JSONAPILinks()
 		}
 
@@ -109,6 +110,7 @@ func Marshal(models interface{}) (Payloader, error) {
 		if reflect.Indirect(vals).Kind() != reflect.Struct {
 			return nil, ErrUnexpectedType
 		}
+
 		return marshalOne(models)
 	default:
 		return nil, ErrUnexpectedType
@@ -127,6 +129,7 @@ func MarshalPayloadWithoutIncluded(w io.Writer, model interface{}) error {
 	if err != nil {
 		return err
 	}
+
 	payload.clearIncluded()
 
 	return json.NewEncoder(w).Encode(payload)
@@ -142,6 +145,7 @@ func marshalOne(model interface{}) (*OnePayload, error) {
 	if err != nil {
 		return nil, err
 	}
+
 	payload := &OnePayload{Data: rootNode}
 
 	payload.Included = nodeMapValues(&included)
@@ -163,8 +167,10 @@ func marshalMany(models []interface{}) (*ManyPayload, error) {
 		if err != nil {
 			return nil, err
 		}
+
 		payload.Data = append(payload.Data, node)
 	}
+
 	payload.Included = nodeMapValues(&included)
 
 	return payload, nil
@@ -202,6 +208,7 @@ func visitModelNode(model interface{}, included *map[string]*Node,
 	node := new(Node)
 
 	var er error
+
 	value := reflect.ValueOf(model)
 	if value.IsNil() {
 		return nil, nil
@@ -212,6 +219,7 @@ func visitModelNode(model interface{}, included *map[string]*Node,
 
 	for i := 0; i < modelValue.NumField(); i++ {
 		structField := modelValue.Type().Field(i)
+
 		tag := structField.Tag.Get(annotationJSONAPI)
 		if tag == "" {
 			continue
@@ -250,27 +258,77 @@ func visitModelNode(model interface{}, included *map[string]*Node,
 			// Handle allowed types
 			switch kind {
 			case reflect.String:
-				node.ID = v.Interface().(string)
+				node.ID, _ = v.Interface().(string)
 			case reflect.Int:
-				node.ID = strconv.FormatInt(int64(v.Interface().(int)), 10)
+				val, ok := v.Interface().(int)
+				if !ok {
+					return nil, errors.New("could not assert int")
+				}
+
+				node.ID = strconv.FormatInt(int64(val), 10)
 			case reflect.Int8:
-				node.ID = strconv.FormatInt(int64(v.Interface().(int8)), 10)
+				val, ok := v.Interface().(int8)
+				if !ok {
+					return nil, errors.New("could not assert int8")
+				}
+
+				node.ID = strconv.FormatInt(int64(val), 10)
 			case reflect.Int16:
-				node.ID = strconv.FormatInt(int64(v.Interface().(int16)), 10)
+				val, ok := v.Interface().(int16)
+				if !ok {
+					return nil, errors.New("could not assert int16")
+				}
+
+				node.ID = strconv.FormatInt(int64(val), 10)
 			case reflect.Int32:
-				node.ID = strconv.FormatInt(int64(v.Interface().(int32)), 10)
+				val, ok := v.Interface().(int32)
+				if !ok {
+					return nil, errors.New("could not assert int32")
+				}
+
+				node.ID = strconv.FormatInt(int64(val), 10)
 			case reflect.Int64:
-				node.ID = strconv.FormatInt(v.Interface().(int64), 10)
+				val, ok := v.Interface().(int64)
+				if !ok {
+					return nil, errors.New("could not assert int64")
+				}
+
+				node.ID = strconv.FormatInt(val, 10)
 			case reflect.Uint:
-				node.ID = strconv.FormatUint(uint64(v.Interface().(uint)), 10)
+				val, ok := v.Interface().(uint)
+				if !ok {
+					return nil, errors.New("could not assert uint")
+				}
+
+				node.ID = strconv.FormatUint(uint64(val), 10)
 			case reflect.Uint8:
-				node.ID = strconv.FormatUint(uint64(v.Interface().(uint8)), 10)
+				val, ok := v.Interface().(uint8)
+				if !ok {
+					return nil, errors.New("could not assert uint8")
+				}
+
+				node.ID = strconv.FormatUint(uint64(val), 10)
 			case reflect.Uint16:
-				node.ID = strconv.FormatUint(uint64(v.Interface().(uint16)), 10)
+				val, ok := v.Interface().(uint16)
+				if !ok {
+					return nil, errors.New("could not assert uint16")
+				}
+
+				node.ID = strconv.FormatUint(uint64(val), 10)
 			case reflect.Uint32:
-				node.ID = strconv.FormatUint(uint64(v.Interface().(uint32)), 10)
+				val, ok := v.Interface().(uint32)
+				if !ok {
+					return nil, errors.New("could not assert uint32")
+				}
+
+				node.ID = strconv.FormatUint(uint64(val), 10)
 			case reflect.Uint64:
-				node.ID = strconv.FormatUint(v.Interface().(uint64), 10)
+				val, ok := v.Interface().(uint64)
+				if !ok {
+					return nil, errors.New("could not assert uint64")
+				}
+
+				node.ID = strconv.FormatUint(val, 10)
 			default:
 				// We had a JSON float (numeric), but our field was not one of the
 				// allowed numeric types
@@ -304,14 +362,19 @@ func visitModelNode(model interface{}, included *map[string]*Node,
 			if node.Attributes == nil {
 				node.Attributes = make(map[string]json.RawMessage)
 			}
+
 			var err error
 
 			if fieldValue.Type() == reflect.TypeOf(decimal.Decimal{}) {
-				d := fieldValue.Interface().(decimal.Decimal)
+				d, ok := fieldValue.Interface().(decimal.Decimal)
+				if !ok {
+					return nil, fmt.Errorf("could not assert decimal.Decimal")
+				}
 
 				if !decimal.MarshalJSONWithoutQuotes {
 					return nil, fmt.Errorf("decimal.MarshalJSONWithoutQuotes needs to be turned on to export decimals as numbers")
 				}
+
 				node.Attributes[args[1]] = json.RawMessage(d.String())
 			} else if fieldValue.Type() == reflect.TypeOf(new(decimal.Decimal)) {
 				// A decimal pointer may be nil
@@ -322,15 +385,22 @@ func visitModelNode(model interface{}, included *map[string]*Node,
 
 					node.Attributes[args[1]] = []byte("null")
 				} else {
-					d := fieldValue.Interface().(*decimal.Decimal)
+					d, ok := fieldValue.Interface().(*decimal.Decimal)
+					if !ok {
+						return nil, fmt.Errorf("could not assert decimal.Decimal")
+					}
 
 					if !decimal.MarshalJSONWithoutQuotes {
 						return nil, fmt.Errorf("decimal.MarshalJSONWithoutQuotes needs to be turned on to export decimals as numbers")
 					}
+
 					node.Attributes[args[1]] = json.RawMessage(d.String())
 				}
 			} else if fieldValue.Type() == reflect.TypeOf(time.Time{}) {
-				t := fieldValue.Interface().(time.Time)
+				t, ok := fieldValue.Interface().(time.Time)
+				if !ok {
+					return nil, fmt.Errorf("could not assert time.Time")
+				}
 
 				if t.IsZero() {
 					continue
@@ -341,6 +411,7 @@ func visitModelNode(model interface{}, included *map[string]*Node,
 				} else {
 					node.Attributes[args[1]], err = json.Marshal(t.Unix())
 				}
+
 				if err != nil {
 					return nil, err
 				}
@@ -353,7 +424,10 @@ func visitModelNode(model interface{}, included *map[string]*Node,
 
 					node.Attributes[args[1]] = []byte("null")
 				} else {
-					tm := fieldValue.Interface().(*time.Time)
+					tm, ok := fieldValue.Interface().(*time.Time)
+					if !ok {
+						return nil, fmt.Errorf("could not assert time.Time")
+					}
 
 					if tm.IsZero() && omitEmpty {
 						continue
@@ -364,6 +438,7 @@ func visitModelNode(model interface{}, included *map[string]*Node,
 					} else {
 						node.Attributes[args[1]], err = json.Marshal(tm.Unix())
 					}
+
 					if err != nil {
 						return nil, err
 					}
@@ -383,20 +458,24 @@ func visitModelNode(model interface{}, included *map[string]*Node,
 					// We need to pass a pointer value
 					ptr := reflect.New(fieldValue.Type())
 					ptr.Elem().Set(fieldValue)
+
 					n, err1 := visitModelNode(ptr.Interface(), nil, false)
 					if err1 != nil {
 						return nil, err1
 					}
+
 					node.Attributes[args[1]], err = json.Marshal(n.Attributes)
 				} else if fieldValue.Type().Kind() == reflect.Ptr && fieldValue.Elem().Kind() == reflect.Struct {
 					n, err1 := visitModelNode(fieldValue.Interface(), nil, false)
 					if err1 != nil {
 						return nil, err1
 					}
+
 					node.Attributes[args[1]], err = json.Marshal(n.Attributes)
 				} else {
 					node.Attributes[args[1]], err = json.Marshal(fieldValue.Interface())
 				}
+
 				if err != nil {
 					return nil, err
 				}
@@ -441,11 +520,13 @@ func visitModelNode(model interface{}, included *map[string]*Node,
 					er = err
 					break
 				}
+
 				relationship.Links = relLinks
 				relationship.Meta = relMeta
 
 				if sideload {
 					shallowNodes := []*Node{}
+
 					for _, n := range relationship.Data {
 						appendIncluded(included, n)
 						shallowNodes = append(shallowNodes, toShallowNode(n))
@@ -461,7 +542,6 @@ func visitModelNode(model interface{}, included *map[string]*Node,
 				}
 			} else {
 				// to-one relationships
-
 				// Handle null relationship case
 				if fieldValue.IsNil() {
 					node.Relationships[args[1]] = &RelationshipOneNode{Data: nil}
@@ -480,6 +560,7 @@ func visitModelNode(model interface{}, included *map[string]*Node,
 
 				if sideload {
 					appendIncluded(included, relationship)
+
 					node.Relationships[args[1]] = &RelationshipOneNode{
 						Data:  toShallowNode(relationship),
 						Links: relLinks,
@@ -493,7 +574,6 @@ func visitModelNode(model interface{}, included *map[string]*Node,
 					}
 				}
 			}
-
 		} else {
 			er = ErrBadJSONAPIStructTag
 			break
@@ -509,6 +589,7 @@ func visitModelNode(model interface{}, included *map[string]*Node,
 		if er := jl.validate(); er != nil {
 			return nil, er
 		}
+
 		node.Links = linkableModel.JSONAPILinks()
 	}
 
@@ -564,6 +645,7 @@ func nodeMapValues(m *map[string]*Node) []*Node {
 	nodes := make([]*Node, len(mp))
 
 	i := 0
+
 	for _, n := range mp {
 		nodes[i] = n
 		i++
@@ -577,9 +659,11 @@ func convertToSliceInterface(i *interface{}) ([]interface{}, error) {
 	if vals.Kind() != reflect.Slice {
 		return nil, ErrExpectedSlice
 	}
+
 	var response []interface{}
 	for x := 0; x < vals.Len(); x++ {
 		response = append(response, vals.Index(x).Interface())
 	}
+
 	return response, nil
 }

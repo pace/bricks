@@ -12,20 +12,28 @@ import (
 	"time"
 
 	"github.com/go-pg/pg/orm"
+	"github.com/stretchr/testify/require"
+
 	http2 "github.com/pace/bricks/http"
 	"github.com/pace/bricks/maintenance/errors"
 	"github.com/pace/bricks/maintenance/health/servicehealthcheck"
 	"github.com/pace/bricks/maintenance/log"
-	"github.com/stretchr/testify/require"
 )
 
 func setup() *http.Response {
 	r := http2.Router()
 	rec := httptest.NewRecorder()
-	req := httptest.NewRequest("GET", "/health/check", nil)
+	req := httptest.NewRequest(http.MethodGet, "/health/check", nil)
 	r.ServeHTTP(rec, req)
+
 	resp := rec.Result()
-	defer resp.Body.Close()
+
+	defer func() {
+		if err := resp.Body.Close(); err != nil {
+			log.Println(err)
+		}
+	}()
+
 	return resp
 }
 
@@ -33,9 +41,18 @@ func TestIntegrationHealthCheck(t *testing.T) {
 	if testing.Short() {
 		t.SkipNow()
 	}
+
 	time.Sleep(1 * time.Second) // by the magic of asynchronous code, I here-by present a magic wait
+
 	resp := setup()
-	if resp.StatusCode != 200 {
+
+	defer func() {
+		if err := resp.Body.Close(); err != nil {
+			log.Println(err)
+		}
+	}()
+
+	if resp.StatusCode != http.StatusOK {
 		t.Errorf("Expected /health/check to respond with 200, got: %d", resp.StatusCode)
 	}
 
@@ -43,6 +60,7 @@ func TestIntegrationHealthCheck(t *testing.T) {
 	if err != nil {
 		log.Fatal(err)
 	}
+
 	if !strings.Contains(string(data[:]), "postgresdefault        OK") {
 		t.Errorf("Expected /health/check to return OK, got: %q", string(data[:]))
 	}
@@ -68,6 +86,7 @@ func TestHealthCheckCaching(t *testing.T) {
 	// get the error for the first time
 	require.Equal(t, servicehealthcheck.Err, res.State)
 	require.Equal(t, "TestHealthCheckCaching", res.Msg)
+
 	res = h.HealthCheck(ctx)
 	pool.err = nil
 	// getting the cached error

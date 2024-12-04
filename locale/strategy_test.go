@@ -18,6 +18,7 @@ func TestStrategy(t *testing.T) {
 
 func TestStrategyWithCtx(t *testing.T) {
 	var sl StrategyList
+
 	sl.PushBack(
 		NewContextStrategy(),
 		NewFallbackStrategy("de-DE", "Europe/Berlin"),

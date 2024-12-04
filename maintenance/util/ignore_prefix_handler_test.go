@@ -35,9 +35,15 @@ func TestMiddlewareWithBlacklist(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.title, func(t *testing.T) {
 			rec := httptest.NewRecorder()
-			req := httptest.NewRequest("GET", tc.path, nil)
+			req := httptest.NewRequest(http.MethodGet, tc.path, nil)
 			r.ServeHTTP(rec, req)
+
 			resp := rec.Result()
+
+			defer func() {
+				_ = resp.Body.Close()
+			}()
+
 			require.Equal(t, tc.statusCodeExpected, resp.StatusCode)
 		})
 	}

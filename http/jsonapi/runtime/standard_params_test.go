@@ -4,6 +4,7 @@ package runtime_test
 
 import (
 	"context"
+	"net/http"
 	"net/http/httptest"
 	"sort"
 	"testing"
@@ -34,6 +35,7 @@ func TestIntegrationFilterParameter(t *testing.T) {
 	// Setup
 	a := assert.New(t)
 	db := setupDatabase(a)
+
 	defer func() {
 		// Tear Down
 		err := db.DropTable(&TestModel{}, &orm.DropTableOptions{})
@@ -45,20 +47,24 @@ func TestIntegrationFilterParameter(t *testing.T) {
 	}
 	mapper := runtime.NewMapMapper(mappingNames)
 	// filter
-	r := httptest.NewRequest("GET", "http://abc.de/whatEver?filter[test]=b", nil)
+	r := httptest.NewRequest(http.MethodGet, "http://abc.de/whatEver?filter[test]=b", nil)
 	urlParams, err := runtime.ReadURLQueryParameters(r, mapper, &testValueSanitizer{})
 	a.NoError(err)
+
 	var modelsFilter []TestModel
+
 	q := db.Model(&modelsFilter)
 	q = urlParams.AddToQuery(q)
 	count, _ := q.SelectAndCount()
 	a.Equal(1, count)
 	a.Equal("b", modelsFilter[0].FilterName)
 
-	r = httptest.NewRequest("GET", "http://abc.de/whatEver?filter[test]=a,b", nil)
+	r = httptest.NewRequest(http.MethodGet, "http://abc.de/whatEver?filter[test]=a,b", nil)
 	urlParams, err = runtime.ReadURLQueryParameters(r, mapper, &testValueSanitizer{})
 	a.NoError(err)
+
 	var modelsFilter2 []TestModel
+
 	q = db.Model(&modelsFilter2)
 	q = urlParams.AddToQuery(q)
 	count, _ = q.SelectAndCount()
@@ -70,10 +76,12 @@ func TestIntegrationFilterParameter(t *testing.T) {
 	a.Equal("b", modelsFilter2[1].FilterName)
 
 	// Paging
-	r = httptest.NewRequest("GET", "http://abc.de/whatEver?page[number]=1&page[size]=2", nil)
+	r = httptest.NewRequest(http.MethodGet, "http://abc.de/whatEver?page[number]=1&page[size]=2", nil)
 	urlParams, err = runtime.ReadURLQueryParameters(r, mapper, &testValueSanitizer{})
 	assert.NoError(t, err)
+
 	var modelsPaging []TestModel
+
 	q = db.Model(&modelsPaging)
 	q = urlParams.AddToQuery(q)
 	err = q.Select()
@@ -85,10 +93,12 @@ func TestIntegrationFilterParameter(t *testing.T) {
 	a.Equal("d", modelsPaging[1].FilterName)
 
 	// Sorting
-	r = httptest.NewRequest("GET", "http://abc.de/whatEver?sort=-test", nil)
+	r = httptest.NewRequest(http.MethodGet, "http://abc.de/whatEver?sort=-test", nil)
 	urlParams, err = runtime.ReadURLQueryParameters(r, mapper, &testValueSanitizer{})
 	assert.NoError(t, err)
+
 	var modelsSort []TestModel
+
 	q = db.Model(&modelsSort)
 	q = urlParams.AddToQuery(q)
 	err = q.Select()
@@ -102,10 +112,12 @@ func TestIntegrationFilterParameter(t *testing.T) {
 	a.Equal("a", modelsSort[5].FilterName)
 
 	// Combine all
-	r = httptest.NewRequest("GET", "http://abc.de/whatEver?sort=-test&filter[test]=a,b,e,f&page[number]=1&page[size]=2", nil)
+	r = httptest.NewRequest(http.MethodGet, "http://abc.de/whatEver?sort=-test&filter[test]=a,b,e,f&page[number]=1&page[size]=2", nil)
 	urlParams, err = runtime.ReadURLQueryParameters(r, mapper, &testValueSanitizer{})
 	assert.NoError(t, err)
+
 	var modelsCombined []TestModel
+
 	q = db.Model(&modelsCombined)
 	q = urlParams.AddToQuery(q)
 	err = q.Select()
@@ -121,6 +133,7 @@ func setupDatabase(a *assert.Assertions) *pg.DB {
 
 	err := db.CreateTable(&TestModel{}, &orm.CreateTableOptions{})
 	a.NoError(err)
+
 	_, err = db.Model(&TestModel{
 		FilterName: "a",
 	}).Insert()

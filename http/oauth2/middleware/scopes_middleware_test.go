@@ -11,6 +11,8 @@ import (
 	"testing"
 
 	"github.com/gorilla/mux"
+	"github.com/stretchr/testify/assert"
+
 	"github.com/pace/bricks/http/oauth2"
 )
 
@@ -23,12 +25,17 @@ func TestScopesMiddleware(t *testing.T) {
 
 		resp := w.Result()
 		body, err := io.ReadAll(resp.Body)
-		defer resp.Body.Close()
+
+		defer func() {
+			err := resp.Body.Close()
+			assert.NoError(t, err)
+		}()
+
 		if err != nil {
 			t.Fatal(err)
 		}
 
-		if got, ex := resp.StatusCode, 200; got != ex {
+		if got, ex := resp.StatusCode, http.StatusOK; got != ex {
 			t.Errorf("Expected status code %d, got %d", ex, got)
 		}
 
@@ -45,7 +52,12 @@ func TestScopesMiddleware(t *testing.T) {
 
 		resp := w.Result()
 		body, err := io.ReadAll(resp.Body)
-		defer resp.Body.Close()
+
+		defer func() {
+			err := resp.Body.Close()
+			assert.NoError(t, err)
+		}()
+
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -64,21 +76,23 @@ func setupRouter(requiredScope string, tokenScope string) *mux.Router {
 	rs := RequiredScopes{
 		"GetFoo": oauth2.Scope(requiredScope),
 	}
-	m := NewScopesMiddleware(rs)                                              // nolint: staticcheck
-	om := oauth2.NewMiddleware(&tokenIntrospecter{returnedScope: tokenScope}) // nolint: staticcheck
+	m := NewScopesMiddleware(rs)
+	om := oauth2.NewMiddleware(&tokenIntrospecter{returnedScope: tokenScope}) //nolint:staticcheck
 
 	r := mux.NewRouter()
 	r.Use(om.Handler)
 	r.Use(m.Handler)
 	r.HandleFunc("/foo", func(w http.ResponseWriter, r *http.Request) {
-		fmt.Fprint(w, "Hello")
+		if _, err := fmt.Fprint(w, "Hello"); err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+		}
 	}).Name("GetFoo")
 
 	return r
 }
 
 func setupRequest() *http.Request {
-	req := httptest.NewRequest("GET", "/foo", nil)
+	req := httptest.NewRequest(http.MethodGet, "/foo", nil)
 	req.Header.Set("Authorization", "Bearer some-token")
 
 	return req

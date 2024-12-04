@@ -14,9 +14,11 @@ func NewException(err error, stacktrace *Stacktrace) *Exception {
 		Value:      msg,
 		Type:       reflect.TypeOf(err).String(),
 	}
+
 	if m := errorMsgPattern.FindStringSubmatch(msg); m != nil {
 		ex.Module, ex.Value = m[1], m[2]
 	}
+
 	return ex
 }
 
@@ -37,6 +39,7 @@ func (e *Exception) Culprit() string {
 	if e.Stacktrace == nil {
 		return ""
 	}
+
 	return e.Stacktrace.Culprit()
 }
 

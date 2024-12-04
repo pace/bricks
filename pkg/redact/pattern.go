@@ -7,7 +7,7 @@ import "regexp"
 // Sources:
 // CreditCard: https://www.regular-expressions.info/creditcard.html
 
-// AllPatterns is a list of all default redaction patterns
+// AllPatterns is a list of all default redaction patterns.
 var AllPatterns = []*regexp.Regexp{
 	PatternIBAN,
 	PatternJWT,
@@ -47,9 +47,9 @@ var (
 	// JCB cards beginning with 2131 or 1800 have 15 digits. JCB cards beginning with 35 have 16 digits.
 	PatternCCJCB = regexp.MustCompile(`(?:2131|1800|35\d{3})\d{11}`)
 
-	// PatternJWT JsonWebToken
+	// PatternJWT JsonWebToken.
 	PatternJWT = regexp.MustCompile(`(?:ey[a-zA-Z0-9=_-]+\.){2}[a-zA-Z0-9=_-]+`)
 
-	// PatternBasicAuthBase match any: Basic YW55IGNhcm5hbCBwbGVhcw== does not validate base64 string
+	// PatternBasicAuthBase match any: Basic YW55IGNhcm5hbCBwbGVhcw== does not validate base64 string.
 	PatternBasicAuthBase64 = regexp.MustCompile(`Authorization: Basic ([a-zA-Z0-9=]*)`)
 )
