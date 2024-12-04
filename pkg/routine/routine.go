@@ -81,8 +81,7 @@ func RunNamed(parentCtx context.Context, name string, routine func(context.Conte
 	return Run(parentCtx, routine)
 }
 
-// Run runs the given function in a new background context. The new context
-// inherits the logger and oauth2 authentication of the parent context. Panics
+// Run runs the given function in a new background context. Panics
 // thrown in the function are logged and sent to sentry. The routines context is
 // canceled if the program receives a shutdown signal (SIGINT, SIGTERM), if the
 // returned CancelFunc is called, or if the routine returned.
