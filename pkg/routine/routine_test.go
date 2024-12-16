@@ -17,7 +17,7 @@ import (
 	"github.com/pace/bricks/http/security"
 	"github.com/pace/bricks/locale"
 	"github.com/pace/bricks/maintenance/log"
-	. "github.com/pace/bricks/pkg/routine"
+	"github.com/pace/bricks/pkg/routine"
 )
 
 func TestRun_catchesPanics(t *testing.T) {
@@ -90,7 +90,7 @@ func testRunBlocksAfterShutdown(t *testing.T) {
 
 	// start routine that gets canceled by the shutdown
 	routineCtx := make(chan context.Context)
-	Run(context.Background(), func(ctx context.Context) {
+	routine.Run(context.Background(), func(ctx context.Context) {
 		routineCtx <- ctx
 		endOfTest.Wait()
 	})
@@ -141,7 +141,7 @@ func testRunCancelsContextsOn(t *testing.T, signum syscall.Signal) {
 	routinesStarted.Add(len(routineContexts))
 	for i := range routineContexts {
 		i := i
-		Run(context.Background(), func(ctx context.Context) {
+		routine.Run(context.Background(), func(ctx context.Context) {
 			routineContexts[i] = ctx
 			routinesStarted.Done()
 			endOfTest.Wait()
@@ -176,11 +176,11 @@ func exitAfterTest(t *testing.T, name string, testFunc func(*testing.T)) {
 }
 
 // Calls Run and returns once the routine is finished.
-func waitForRun(ctx context.Context, routine func(context.Context)) {
+func waitForRun(ctx context.Context, fn func(context.Context)) {
 	done := make(chan struct{})
-	Run(ctx, func(ctx context.Context) {
+	routine.Run(ctx, func(ctx context.Context) {
 		defer func() { done <- struct{}{} }()
-		routine(ctx)
+		fn(ctx)
 	})
 	<-done
 }
