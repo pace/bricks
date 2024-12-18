@@ -3,19 +3,22 @@
 package errors
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
 	"net/http"
 	"net/http/httptest"
 	"strings"
 	"testing"
+	"time"
 
+	"github.com/getsentry/sentry-go"
 	"github.com/gorilla/mux"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	"github.com/pace/bricks/http/transport"
-	"github.com/pace/bricks/maintenance/errors/raven"
 	"github.com/pace/bricks/maintenance/log"
 )
 
@@ -61,28 +64,14 @@ func TestWrapWithExtra(t *testing.T) {
 	}
 }
 
-func TestStackTrace(t *testing.T) {
-	e := sentryEvent{
-		ctx:         context.Background(),
-		handlerName: "TestStackTrace",
-		r:           nil,
-		level:       1,
-		req:         nil,
-	}
-	pak := e.build()
-
-	d, err := pak.JSON()
-	assert.NoError(t, err)
-
-	assert.NotContains(t, string(d), `"module":"testing"`)
-	assert.NotContains(t, string(d), `"filename":"testing/testing.go"`)
-}
-
 func Test_createBreadcrumb(t *testing.T) {
+	tm, err := time.Parse(time.RFC3339, "2020-02-27T10:19:28+01:00")
+	require.NoError(t, err)
+
 	tests := []struct {
 		name    string
 		data    map[string]interface{}
-		want    *raven.Breadcrumb
+		want    *sentry.Breadcrumb
 		wantErr bool
 	}{
 		{
@@ -93,10 +82,10 @@ func Test_createBreadcrumb(t *testing.T) {
 				"time":    "2020-02-27T10:19:28+01:00",
 				"req_id":  "bpboj6bipt34r4teo7g0",
 			},
-			want: &raven.Breadcrumb{
+			want: &sentry.Breadcrumb{
 				Level:     "error",
 				Message:   "this is an error message",
-				Timestamp: 1582795168,
+				Timestamp: tm,
 				Data:      map[string]interface{}{},
 			},
 		},
@@ -115,11 +104,11 @@ func Test_createBreadcrumb(t *testing.T) {
 				"url":             "https://www.pace.car/",
 				"req_id":          "bpboj6bipt34r4teo7g0",
 			},
-			want: &raven.Breadcrumb{
+			want: &sentry.Breadcrumb{
 				Category:  "http",
 				Level:     "debug",
 				Message:   "HTTPS GET www.pace.car",
-				Timestamp: 1582795168,
+				Timestamp: tm,
 				Type:      "http",
 				Data: map[string]interface{}{
 					"method":      "GET",
@@ -137,11 +126,11 @@ func Test_createBreadcrumb(t *testing.T) {
 				"message": "this is a panic message",
 				"time":    "2020-02-27T10:19:28+01:00",
 			},
-			want: &raven.Breadcrumb{
+			want: &sentry.Breadcrumb{
 				Level:     "fatal",
 				Type:      "error",
 				Message:   "this is a panic message",
-				Timestamp: 1582795168,
+				Timestamp: tm,
 				Data:      map[string]interface{}{},
 			},
 		},
@@ -155,10 +144,10 @@ func Test_createBreadcrumb(t *testing.T) {
 				"time":            "2020-02-27T10:19:28+01:00",
 				"req_id":          "bpboj6bipt34r4teo7g0",
 			},
-			want: &raven.Breadcrumb{
+			want: &sentry.Breadcrumb{
 				Category:  "redis",
 				Level:     "info",
-				Timestamp: 1582795168,
+				Timestamp: tm,
 				Message:   "this is an error message",
 				Type:      "error",
 				Data:      map[string]interface{}{},
@@ -268,4 +257,63 @@ func TestHandlerWithLogSink(t *testing.T) {
 	assert.Contains(t, string(sink2LogLines[3]), "ONLY FOR SINK2", "missing log line")
 
 	assert.Contains(t, string(sink2LogLines[4]), "Sink2 Test Error, IGNORE", "missing log line")
+}
+
+func TestHandle(t *testing.T) {
+	tests := []struct {
+		name         string
+		ctx          context.Context
+		err          error
+		handlerName  string
+		expectLogMsg string
+	}{
+		{
+			name:         "handle panic error",
+			ctx:          context.Background(),
+			err:          NewPanic("test panic"),
+			handlerName:  "testHandler",
+			expectLogMsg: "Panic",
+		},
+		{
+			name:         "handle regular error",
+			ctx:          context.Background(),
+			err:          errors.New("test error"),
+			handlerName:  "testHandler",
+			expectLogMsg: "Error",
+		},
+		{
+			name:         "handle error without handler name",
+			ctx:          context.Background(),
+			err:          errors.New("test error"),
+			handlerName:  "",
+			expectLogMsg: "Error",
+		},
+	}
+
+	type logEntry struct {
+		Level   string `json:"level"`
+		Message string `json:"message"`
+		Error   string `json:"error"`
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			var (
+				buf   bytes.Buffer
+				entry logEntry
+			)
+
+			l := log.Logger().Output(&buf)
+
+			handle(l.WithContext(tt.ctx), tt.err, tt.handlerName)
+
+			line, err := buf.ReadString('\n')
+			require.NoError(t, err, "failed reading log line")
+
+			err = json.Unmarshal([]byte(line), &entry)
+			require.NoError(t, err, "failed unmarshalling log line")
+
+			assert.Equal(t, logEntry{Level: "error", Message: tt.expectLogMsg, Error: tt.err.Error()}, entry, "wrong log entry")
+		})
+	}
 }
