@@ -40,10 +40,10 @@ const Label = "github.com.pace.bricks.activepassive"
 // of each of the members in the cluster.
 type ActivePassive struct {
 	// OnActive will be called in case the current processes is elected to be the active one
-	OnActive func()
+	OnActive func(ctx context.Context)
 
 	// OnPassive will be called in case the current process is the passive one
-	OnPassive func()
+	OnPassive func(ctx context.Context)
 
 	// OnStop is called after the ActivePassive process stops
 	OnStop func()
@@ -200,7 +200,7 @@ func (a *ActivePassive) label(s status) string {
 func (a *ActivePassive) becomeActive(ctx context.Context) {
 	if a.setState(ctx, ACTIVE) {
 		if a.OnActive != nil {
-			a.OnActive()
+			a.OnActive(ctx)
 		}
 	}
 }
@@ -208,7 +208,7 @@ func (a *ActivePassive) becomeActive(ctx context.Context) {
 func (a *ActivePassive) becomePassive(ctx context.Context) {
 	if a.setState(ctx, PASSIVE) {
 		if a.OnPassive != nil {
-			a.OnPassive()
+			a.OnPassive(ctx)
 		}
 	}
 }
