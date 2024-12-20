@@ -137,29 +137,29 @@ func (a *ActivePassive) Run(ctx context.Context) error {
 					RetryStrategy: redislock.LimitRetry(redislock.LinearBackoff(a.timeToFailover/3), 3),
 				})
 				if err != nil {
-					// Couldn't obtain the lock; becoming passive
 					if a.getState() != PASSIVE {
-						logger.Debug().Err(err).Msg("becoming passive")
+						logger.Debug().Err(err).Msg("couldn't obtain the lock; becoming passive...")
 						a.becomePassive(ctx)
 					}
 
 					continue
 				}
 
-				// Lock acquired, transitioning to active
-				logger.Debug().Msg("becoming active")
+				logger.Debug().Msg("lock acquired; becoming active...")
 				a.becomeActive(ctx)
 
 				// Check TTL of the newly acquired lock
 				ttl, err := safeGetTTL(ctx, lock, logger)
 				if err != nil {
-					logger.Info().Err(err).Msg("failed to get activepassive lock TTL")
+					logger.Info().Err(err).Msg("failed to get lock TTL")
 				}
 
 				if ttl == 0 {
 					// Since the lock is very fresh with a TTL well > 0 this case is just a safeguard against rare occasions.
-					logger.Info().Msg("activepassive lock TTL is expired although the lock has been just acquired; becoming undefined...")
+					logger.Info().Msg("lock TTL is expired although the lock has been just acquired; becoming undefined...")
 					a.becomeUndefined(ctx)
+
+					continue
 				}
 
 				refreshTime := ttl / 2
