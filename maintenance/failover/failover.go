@@ -5,11 +5,12 @@ package failover
 import (
 	"context"
 	"fmt"
-	"github.com/rs/zerolog"
 	"net/http"
 	"strings"
 	"sync"
 	"time"
+
+	"github.com/rs/zerolog"
 
 	"github.com/bsm/redislock"
 	"github.com/pace/bricks/backend/k8sapi"
