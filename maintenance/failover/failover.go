@@ -69,7 +69,7 @@ type ActivePassive struct {
 func NewActivePassive(clusterName string, timeToFailover time.Duration, redisClient *redis.Client) (*ActivePassive, error) {
 	k8sClient, err := k8sapi.NewClient()
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to create k8s client: %w", err)
 	}
 
 	activePassive := &ActivePassive{
