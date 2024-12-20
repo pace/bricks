@@ -5,6 +5,7 @@ package failover
 import (
 	"context"
 	"fmt"
+	"github.com/rs/zerolog"
 	"net/http"
 	"strings"
 	"sync"
@@ -150,7 +151,7 @@ func (a *ActivePassive) Run(ctx context.Context) error {
 				a.becomeActive(ctx)
 
 				// Check TTL of the newly acquired lock
-				ttl, err := lock.TTL(ctx)
+				ttl, err := safeGetTTL(ctx, lock, logger)
 				if err != nil {
 					logger.Info().Err(err).Msg("failed to get activepassive lock TTL")
 				}
@@ -236,4 +237,22 @@ func (a *ActivePassive) getState() status {
 	state := a.state
 	a.stateMu.RUnlock()
 	return state
+}
+
+// safeGetTTL tries to get the TTL from the provided redis lock and recovers from a panic inside TTL().
+func safeGetTTL(ctx context.Context, lock *redislock.Lock, logger zerolog.Logger) (time.Duration, error) {
+	var (
+		err error
+		ttl time.Duration
+	)
+
+	defer func() {
+		if r := recover(); r != nil {
+			logger.Error().Msgf("Recovered from panic in lock.TTL(): %v", r)
+			err = fmt.Errorf("panic during lock.TTL(): %v", r)
+		}
+	}()
+
+	ttl, err = lock.TTL(ctx)
+	return ttl, err
 }
