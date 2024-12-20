@@ -153,6 +153,8 @@ func (a *ActivePassive) Run(ctx context.Context) error {
 				ttl, err := safeGetTTL(ctx, lock, logger)
 				if err != nil {
 					logger.Info().Err(err).Msg("failed to get lock TTL")
+
+					continue
 				}
 
 				if ttl == 0 {
@@ -183,7 +185,11 @@ func (a *ActivePassive) Stop() {
 func (a *ActivePassive) Handler(w http.ResponseWriter, r *http.Request) {
 	label := a.label(a.getState())
 	w.WriteHeader(http.StatusOK)
-	fmt.Fprintln(w, strings.ToUpper(label))
+
+	_, err := fmt.Fprintln(w, strings.ToUpper(label))
+	if err != nil {
+		log.Println("failed to write label '%s' to response: %v", label, err)
+	}
 }
 
 func (a *ActivePassive) label(s status) string {
