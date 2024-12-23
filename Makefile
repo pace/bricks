@@ -51,7 +51,7 @@ tools/testserver/math/math.pb.go: tools/testserver/math/math.proto
 
 .PHONY: lint
 lint:
-	(cd /; $(GO) install -v -x github.com/golangci/golangci-lint/cmd/golangci-lint@latest)
+	(cd /; $(GO) install -x github.com/golangci/golangci-lint/cmd/golangci-lint@latest)
 
 	golangci-lint run --timeout 2m
 
