@@ -61,6 +61,8 @@ type ActivePassive struct {
 	// current status of the failover (to show it in the readiness status)
 	state   status
 	stateMu sync.RWMutex
+
+	lockOptions *redislock.Options
 }
 
 // NewActivePassive creates a new active passive cluster
@@ -81,6 +83,10 @@ func NewActivePassive(clusterName string, timeToFailover time.Duration, client *
 		timeToFailover: timeToFailover,
 		locker:         redislock.New(client),
 		client:         cl,
+		lockOptions: &redislock.Options{
+			RetryStrategy: redislock.LimitRetry(redislock.LinearBackoff(timeToFailover/3), 3),
+			Token:         "FF3000B8-EFD9-4FC2-AF5D-70D2EA9DA00E",
+		},
 	}
 	health.SetCustomReadinessCheck(ap.Handler)
 
@@ -126,9 +132,7 @@ func (a *ActivePassive) Run(ctx context.Context) error {
 			return nil
 		case <-t.C:
 			if a.getState() == ACTIVE {
-				err := lock.Refresh(ctx, a.timeToFailover, &redislock.Options{
-					RetryStrategy: redislock.LimitRetry(redislock.LinearBackoff(a.timeToFailover/3), 3),
-				})
+				err := lock.Refresh(ctx, a.timeToFailover, a.lockOptions)
 				if err != nil {
 					logger.Debug().Err(err).Msg("failed to refresh")
 					a.becomeUndefined(ctx)
@@ -138,9 +142,7 @@ func (a *ActivePassive) Run(ctx context.Context) error {
 			// try to acquire the lock, as we are not the active
 			if a.getState() != ACTIVE {
 				var err error
-				lock, err = a.locker.Obtain(ctx, lockName, a.timeToFailover, &redislock.Options{
-					RetryStrategy: redislock.LimitRetry(redislock.LinearBackoff(a.timeToFailover/3), 3),
-				})
+				lock, err = a.locker.Obtain(ctx, lockName, a.timeToFailover, a.lockOptions)
 				if err != nil {
 					// we became passive, trigger callback
 					if a.getState() != PASSIVE {
