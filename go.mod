@@ -8,7 +8,7 @@ require (
 	github.com/PuerkitoBio/rehttp v1.4.0
 	github.com/adjust/rmq/v5 v5.2.0
 	github.com/asaskevich/govalidator v0.0.0-20210307081110-f21760c49a8d
-	github.com/bsm/redislock v0.9.3
+	github.com/bsm/redislock v0.9.5-0.20240321122937-bfd385b776d1
 	github.com/caarlos0/env/v10 v10.0.0
 	github.com/certifi/gocertifi v0.0.0-20210507211836-431795d63e8d
 	github.com/dave/jennifer v1.4.1
