@@ -188,7 +188,7 @@ func (a *ActivePassive) Handler(w http.ResponseWriter, r *http.Request) {
 
 	_, err := fmt.Fprintln(w, strings.ToUpper(label))
 	if err != nil {
-		log.Println("failed to write label '%s' to response: %v", label, err)
+		log.Printf("failed to write label '%s' to response: %v", label, err)
 	}
 }
 
