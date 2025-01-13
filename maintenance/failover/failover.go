@@ -5,6 +5,7 @@ package failover
 import (
 	"context"
 	"fmt"
+	"github.com/pace/bricks/pkg/lock/redislock"
 	"net/http"
 	"strings"
 	"sync"
@@ -12,7 +13,6 @@ import (
 
 	"github.com/rs/zerolog"
 
-	"github.com/bsm/redislock"
 	"github.com/pace/bricks/backend/k8sapi"
 	"github.com/pace/bricks/maintenance/errors"
 	"github.com/pace/bricks/maintenance/health"
@@ -52,6 +52,7 @@ type ActivePassive struct {
 	clusterName    string
 	timeToFailover time.Duration
 	locker         *redislock.Client
+	redisClient    *redis.Client
 
 	// access to the kubernetes api
 	k8sClient *k8sapi.Client
@@ -77,6 +78,7 @@ func NewActivePassive(clusterName string, timeToFailover time.Duration, redisCli
 		clusterName:    clusterName,
 		timeToFailover: timeToFailover,
 		locker:         redislock.New(redisClient),
+		redisClient:    redisClient,
 		k8sClient:      k8sClient,
 	}
 	health.SetCustomReadinessCheck(activePassive.Handler)
@@ -92,6 +94,8 @@ func (a *ActivePassive) Run(ctx context.Context) error {
 	defer errors.HandleWithCtx(ctx, "activepassive failover handler")
 
 	lockName := "activepassive:lock:" + a.clusterName
+	token := "activepassive:token:" + a.clusterName
+
 	logger := log.Ctx(ctx).With().Str("failover", lockName).Logger()
 	ctx = logger.WithContext(ctx)
 
@@ -124,6 +128,7 @@ func (a *ActivePassive) Run(ctx context.Context) error {
 			if a.getState() == ACTIVE {
 				err := lock.Refresh(ctx, a.timeToFailover, &redislock.Options{
 					RetryStrategy: redislock.LimitRetry(redislock.LinearBackoff(a.timeToFailover/3), 3),
+					Token:         token,
 				})
 				if err != nil {
 					logger.Info().Err(err).Msg("failed to refresh the lock; becoming undefined...")
@@ -136,6 +141,7 @@ func (a *ActivePassive) Run(ctx context.Context) error {
 
 				lock, err = a.locker.Obtain(ctx, lockName, a.timeToFailover, &redislock.Options{
 					RetryStrategy: redislock.LimitRetry(redislock.LinearBackoff(a.timeToFailover/3), 3),
+					Token:         token,
 				})
 				if err != nil {
 					if a.getState() != PASSIVE {
@@ -148,6 +154,31 @@ func (a *ActivePassive) Run(ctx context.Context) error {
 
 				logger.Debug().Msg("lock acquired; becoming active...")
 				a.becomeActive(ctx)
+
+				logger.Debug().Msg("check if lock exists")
+
+				// Verify that key exists, then, retrieve the value
+				keyExists, err := a.redisClient.Exists(ctx, lockName).Result()
+				if err != nil {
+					logger.Error().Err(err).Msgf("Stefan: Failed to check that lock/key '%v' exists", lockName)
+
+					continue
+				}
+
+				if keyExists == 0 {
+					logger.Info().Msgf("Stefan: Lock/Key '%s' does not exist", lockName)
+
+					continue
+				}
+
+				lockValue, err := a.redisClient.Get(ctx, lockName).Result()
+				if err != nil {
+					logger.Error().Err(err).Msg("Error getting key value")
+
+					continue
+				}
+
+				logger.Info().Msgf("Stefan: Key value is: %v", lockValue)
 
 				// Check TTL of the newly acquired lock
 				ttl, err := safeGetTTL(ctx, lock, logger)

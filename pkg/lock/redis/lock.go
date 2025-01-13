@@ -7,13 +7,13 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"github.com/pace/bricks/pkg/lock/redislock"
 	"sync"
 	"time"
 
 	redisbackend "github.com/pace/bricks/backend/redis"
 	pberrors "github.com/pace/bricks/maintenance/errors"
 
-	"github.com/bsm/redislock"
 	"github.com/redis/go-redis/v9"
 	"github.com/rs/zerolog/log"
 )
