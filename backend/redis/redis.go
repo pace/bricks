@@ -201,7 +201,6 @@ func (lt *logtracer) ProcessHook(next redis.ProcessHook) redis.ProcessHook {
 
 		// do log statement
 		dur := float64(time.Since(vals.startedAt)) / float64(time.Millisecond)
-		le.Float64("duration", dur).Msg("Redis query")
 
 		paceRedisCmdDurationSeconds.With(prometheus.Labels{
 			"method": cmd.Name(),
