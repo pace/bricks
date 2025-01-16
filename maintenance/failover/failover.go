@@ -155,23 +155,8 @@ func (a *ActivePassive) Run(ctx context.Context) error {
 				logger.Debug().Msg("becoming active")
 				a.becomeActive(ctx)
 
-				// we are active, renew if required
-				d, err := lock.TTL(ctx)
-				if err != nil {
-					logger.Debug().Err(err).Msg("failed to get TTL")
-				}
-				if d == 0 {
-					// TTL seems to be expired, retry to get lock or become
-					// passive in next iteration
-					logger.Debug().Msg("ttl expired")
-					a.becomeUndefined(ctx)
-				}
-				refreshTime := d / 2
-
-				logger.Debug().Msgf("set refresh to %v", refreshTime)
-
 				// set to trigger refresh after TTL / 2
-				t.Reset(refreshTime)
+				t.Reset(a.timeToFailover / 2)
 			}
 		}
 	}
