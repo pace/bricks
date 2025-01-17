@@ -16,7 +16,7 @@ import (
 	"github.com/pace/bricks/maintenance/log"
 
 	grpc_prometheus "github.com/grpc-ecosystem/go-grpc-middleware/providers/prometheus"
-	grpc_retry "github.com/grpc-ecosystem/go-grpc-middleware/retry"
+	grpc_retry "github.com/grpc-ecosystem/go-grpc-middleware/v2/interceptors/retry"
 )
 
 // Deprecated: Use NewClient instead.
