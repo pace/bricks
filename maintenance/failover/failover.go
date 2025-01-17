@@ -109,8 +109,7 @@ func (a *ActivePassive) Run(ctx context.Context) error {
 	tryRefreshLock := time.NewTicker(a.timeToFailover)
 
 	// Ticker to try to acquire the lock if in passive or undefined state
-	tryAcquireInterval := 500 * time.Millisecond
-	tryAcquireLock := time.NewTicker(tryAcquireInterval)
+	tryAcquireLock := time.NewTicker(500 * time.Millisecond)
 
 	for {
 		select {
