@@ -6,7 +6,7 @@ import (
 	"strings"
 )
 
-// Scope represents an OAuth 2 access token scope
+// Scope represents an OAuth 2 access token scope.
 type Scope string
 
 // IsIncludedIn checks if the permissions of a scope s are also included

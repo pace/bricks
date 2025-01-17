@@ -5,9 +5,10 @@ package cache_test
 import (
 	"testing"
 
+	"github.com/stretchr/testify/suite"
+
 	"github.com/pace/bricks/pkg/cache"
 	"github.com/pace/bricks/pkg/cache/testsuite"
-	"github.com/stretchr/testify/suite"
 )
 
 func TestMemory(t *testing.T) {

@@ -17,21 +17,27 @@ import (
 func setup() *http.Response {
 	r := http2.Router()
 	rec := httptest.NewRecorder()
-	req := httptest.NewRequest("GET", "/health/check", nil)
+	req := httptest.NewRequest(http.MethodGet, "/health/check", nil)
 	r.ServeHTTP(rec, req)
-	resp := rec.Result()
-	defer resp.Body.Close()
-	return resp
+
+	return rec.Result()
 }
 
-// TestIntegrationHealthCheck tests if redis health check ist working like expected
+// TestIntegrationHealthCheck tests if redis health check ist working like expected.
 func TestIntegrationHealthCheck(t *testing.T) {
 	if testing.Short() {
 		t.SkipNow()
 	}
+
 	time.Sleep(time.Second)
+
 	resp := setup()
-	if resp.StatusCode != 200 {
+
+	defer func() {
+		_ = resp.Body.Close()
+	}()
+
+	if resp.StatusCode != http.StatusOK {
 		t.Errorf("Expected /health/check to respond with 200, got: %d", resp.StatusCode)
 	}
 
@@ -39,6 +45,7 @@ func TestIntegrationHealthCheck(t *testing.T) {
 	if err != nil {
 		log.Fatal(err)
 	}
+
 	if !strings.Contains(string(data), "redis                  OK") {
 		t.Errorf("Expected /health/check to return OK, got: %q", string(data[:]))
 	}

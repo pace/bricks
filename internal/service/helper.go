@@ -12,17 +12,17 @@ import (
 	"path/filepath"
 )
 
-// PaceBase for all go projects
+// PaceBase for all go projects.
 const PaceBase = "git.pace.cloud/pace"
 
-// ServiceBase for all go microservices
+// ServiceBase for all go microservices.
 const ServiceBase = "web/service"
 
-// GitLabTemplate git clone template for cloning repositories
+// GitLabTemplate git clone template for cloning repositories.
 const GitLabTemplate = "git@git.pace.cloud:pace/web/service/%s.git"
 
 // GoPath returns the gopath for the current system,
-// uses GOPATH env and fallback to default go dir
+// uses GOPATH env and fallback to default go dir.
 func GoPath() string {
 	path, ok := os.LookupEnv("GOPATH")
 	if !ok {
@@ -30,6 +30,7 @@ func GoPath() string {
 		if err != nil {
 			log.Fatal(err)
 		}
+
 		return filepath.Join(usr.HomeDir, "go")
 	}
 
@@ -37,7 +38,7 @@ func GoPath() string {
 }
 
 // PacePath returns the pace path for the current system,
-// uses PACE_PATH env and fallback to default go dir
+// uses PACE_PATH env and fallback to default go dir.
 func PacePath() string {
 	path, ok := os.LookupEnv("PACE_PATH")
 	if !ok {
@@ -45,26 +46,27 @@ func PacePath() string {
 		if err != nil {
 			log.Fatal(err)
 		}
+
 		return filepath.Join(usr.HomeDir, "PACE")
 	}
 
 	return path
 }
 
-// GoServicePath returns the path of the go service for given name
+// GoServicePath returns the path of the go service for given name.
 func GoServicePath(name string) (string, error) {
 	return filepath.Abs(filepath.Join(PacePath(), ServiceBase, name))
 }
 
-// GoServicePackagePath returns a go package path for given service name
+// GoServicePackagePath returns a go package path for given service name.
 func GoServicePackagePath(name string) string {
 	return filepath.Join(PaceBase, ServiceBase, name)
 }
 
-// AutoInstall cmdName if not installed already using go get -u goGetPath
+// AutoInstall cmdName if not installed already using go get -u goGetPath.
 func AutoInstall(cmdName, goGetPath string) {
 	if _, err := os.Stat(GoBinCommand(cmdName)); os.IsNotExist(err) {
-		fmt.Fprintf(os.Stderr, "Installing %s using: go get -u %s\n", cmdName, goGetPath) // nolint: errcheck
+		fmt.Fprintf(os.Stderr, "Installing %s using: go get -u %s\n", cmdName, goGetPath)
 		// assume error means no file
 		SimpleExec("go", "get", "-u", goGetPath)
 	} else if err != nil {
@@ -72,44 +74,44 @@ func AutoInstall(cmdName, goGetPath string) {
 	}
 }
 
-// GoBinCommand returns the path to a binary installed in the gopath
+// GoBinCommand returns the path to a binary installed in the gopath.
 func GoBinCommand(cmdName string) string {
 	return filepath.Join(GoPath(), "bin", cmdName)
 }
 
-// SimpleExec executes the command and uses the parent process STDIN,STDOUT,STDERR
+// SimpleExec executes the command and uses the parent process STDIN,STDOUT,STDERR.
 func SimpleExec(cmdName string, arguments ...string) {
-	cmd := exec.Command(cmdName, arguments...) // nolint: gosec
+	cmd := exec.Command(cmdName, arguments...)
 	cmd.Stdin = os.Stdin
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
-	err := cmd.Run()
-	if err != nil {
+
+	if err := cmd.Run(); err != nil {
 		log.Fatal(err)
 	}
 }
 
-// SimpleExecInPath executes the command and uses the parent process STDIN,STDOUT,STDERR in passed dir
+// SimpleExecInPath executes the command and uses the parent process STDIN,STDOUT,STDERR in passed dir.
 func SimpleExecInPath(dir, cmdName string, arguments ...string) {
-	cmd := exec.Command(cmdName, arguments...) // nolint: gosec
+	cmd := exec.Command(cmdName, arguments...)
 	cmd.Stdin = os.Stdin
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 	cmd.Dir = dir
-	err := cmd.Run()
-	if err != nil {
+
+	if err := cmd.Run(); err != nil {
 		log.Fatal(err)
 	}
 }
 
-// GoBinCommandText writes the command output to the passed writer
+// GoBinCommandText writes the command output to the passed writer.
 func GoBinCommandText(w io.Writer, cmdName string, arguments ...string) {
-	cmd := exec.Command(cmdName, arguments...) // nolint: gosec
+	cmd := exec.Command(cmdName, arguments...)
 	cmd.Stdin = os.Stdin
 	cmd.Stdout = w
 	cmd.Stderr = os.Stderr
-	err := cmd.Run()
-	if err != nil {
+
+	if err := cmd.Run(); err != nil {
 		log.Fatal(err)
 	}
 }

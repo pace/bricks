@@ -19,14 +19,14 @@ func IsErrConnectionFailed(err error) bool {
 	}
 
 	// go-pg has this check internally for network errors
-	_, ok := err.(net.Error)
-	if ok {
+	var netErr net.Error
+	if errors.As(err, &netErr) {
 		return true
 	}
 
 	// go-pg has similar check for integrity violation issues, here we check network issues
-	pgErr, ok := err.(pg.Error)
-	if ok {
+	var pgErr pg.Error
+	if errors.As(err, &pgErr) {
 		code := pgErr.Field('C')
 		// We check on error codes of Class 08 — Connection Exception.
 		// https://www.postgresql.org/docs/10/errcodes-appendix.html
@@ -34,5 +34,6 @@ func IsErrConnectionFailed(err error) bool {
 			return true
 		}
 	}
+
 	return false
 }

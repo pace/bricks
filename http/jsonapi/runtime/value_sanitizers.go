@@ -31,6 +31,7 @@ func (d datetimeSanitizer) SanitizeValue(fieldName string, value string) (interf
 	if err != nil {
 		return nil, err
 	}
+
 	return t, nil
 }
 
@@ -58,6 +59,7 @@ func (u uuidSanitizer) SanitizeValue(fieldName string, value string) (interface{
 	if _, err := uuid.Parse(value); err != nil {
 		return nil, err
 	}
+
 	return value, nil
 }
 
@@ -68,6 +70,7 @@ func (c composableAndFieldRestrictedSanitizer) SanitizeValue(fieldName string, v
 	if !found {
 		return nil, fmt.Errorf("%w: %v", ErrInvalidFieldname, fieldName)
 	}
+
 	return san.SanitizeValue(fieldName, value)
 }
 

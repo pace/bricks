@@ -15,6 +15,7 @@ func IsErrConnectionFailed(err error) bool {
 	}
 
 	// go-redis has this check internally for network errors
-	_, ok := err.(net.Error)
+	_, ok := err.(net.Error) //nolint:errorlint
+
 	return ok
 }

@@ -51,7 +51,7 @@ func TestRoundTripper_RoundTrip(t *testing.T) {
 	})
 	req := httptest.NewRequest(http.MethodGet, "http://example.org/?utm_source=internet", nil)
 	req = req.WithContext(ctx)
-	resp, err := tripper.RoundTrip(req)
+	resp, err := tripper.RoundTrip(req) //nolint:bodyclose
 	require.NoError(t, err)
 	require.NotNil(t, resp)
 }
@@ -71,5 +71,6 @@ func (m *mockTripper) RoundTrip(req *http.Request) (*http.Response, error) {
 			assert.Equal(m.t, v, h, fmt.Sprintf("expected query paramater %q to match value", k))
 		}
 	}
+
 	return m.resp, nil
 }

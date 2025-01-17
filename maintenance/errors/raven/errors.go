@@ -21,7 +21,7 @@ func (ewx *errWrappedWithExtra) ExtraInfo() Extra {
 	return ewx.extraInfo
 }
 
-// Adds extra data to an error before reporting to Sentry
+// Adds extra data to an error before reporting to Sentry.
 func WrapWithExtra(err error, extraInfo map[string]interface{}) error {
 	return &errWrappedWithExtra{
 		err:       err,

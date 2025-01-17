@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func Test_ExternalDependency_Middleare(t *testing.T) {
@@ -22,7 +23,15 @@ func Test_ExternalDependency_Middleare(t *testing.T) {
 			w.WriteHeader(http.StatusOK)
 		}))
 		h.ServeHTTP(rec, req)
-		assert.Nil(t, rec.Result().Header[ExternalDependencyHeaderName])
+
+		res := rec.Result()
+
+		defer func() {
+			err := res.Body.Close()
+			assert.NoError(t, err)
+		}()
+
+		assert.Nil(t, res.Header[ExternalDependencyHeaderName])
 	})
 	t.Run("one dependency set", func(t *testing.T) {
 		rec := httptest.NewRecorder()
@@ -30,10 +39,20 @@ func Test_ExternalDependency_Middleare(t *testing.T) {
 
 		h := ExternalDependency(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			AddExternalDependency(r.Context(), "test", time.Second)
-			w.Write(nil) // nolint: errcheck
+
+			_, err := w.Write(nil)
+			require.NoError(t, err)
 		}))
 		h.ServeHTTP(rec, req)
-		assert.Equal(t, rec.Result().Header[ExternalDependencyHeaderName][0], "test:1000")
+
+		res := rec.Result()
+
+		defer func() {
+			err := res.Body.Close()
+			assert.NoError(t, err)
+		}()
+
+		assert.Equal(t, res.Header[ExternalDependencyHeaderName][0], "test:1000")
 	})
 }
 

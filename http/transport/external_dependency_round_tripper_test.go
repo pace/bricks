@@ -8,8 +8,10 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/pace/bricks/http/middleware"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+
+	"github.com/pace/bricks/http/middleware"
 )
 
 type edRoundTripperMock struct {
@@ -24,9 +26,10 @@ func (m *edRoundTripperMock) RoundTrip(req *http.Request) (*http.Response, error
 
 func TestExternalDependencyRoundTripper(t *testing.T) {
 	var edc middleware.ExternalDependencyContext
+
 	ctx := middleware.ContextWithExternalDependency(context.Background(), &edc)
 
-	r := httptest.NewRequest("GET", "http://example.com/test", nil)
+	r := httptest.NewRequest(http.MethodGet, "http://example.com/test", nil)
 	r = r.WithContext(ctx)
 
 	mock := &edRoundTripperMock{
@@ -38,17 +41,18 @@ func TestExternalDependencyRoundTripper(t *testing.T) {
 	}
 	lrt := &ExternalDependencyRoundTripper{transport: mock}
 
-	_, err := lrt.RoundTrip(r)
-	assert.NoError(t, err)
+	_, err := lrt.RoundTrip(r) //nolint:bodyclose
+	require.NoError(t, err)
 
 	assert.EqualValues(t, "test1:123,test2:53", edc.String())
 }
 
 func TestExternalDependencyRoundTripperWithName(t *testing.T) {
 	var edc middleware.ExternalDependencyContext
+
 	ctx := middleware.ContextWithExternalDependency(context.Background(), &edc)
 
-	r := httptest.NewRequest("GET", "http://example.com/test", nil)
+	r := httptest.NewRequest(http.MethodGet, "http://example.com/test", nil)
 	r = r.WithContext(ctx)
 
 	mock := &edRoundTripperMock{
@@ -60,8 +64,8 @@ func TestExternalDependencyRoundTripperWithName(t *testing.T) {
 	}
 	lrt := &ExternalDependencyRoundTripper{name: "ext", transport: mock}
 
-	_, err := lrt.RoundTrip(r)
-	assert.NoError(t, err)
+	_, err := lrt.RoundTrip(r) //nolint:bodyclose
+	require.NoError(t, err)
 
 	assert.EqualValues(t, "ext:0,test1:123,test2:53", edc.String())
 }

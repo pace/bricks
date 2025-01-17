@@ -4,10 +4,13 @@ package livetest
 
 import (
 	"context"
+	"net/http"
 	"net/http/httptest"
 	"strings"
 	"testing"
 	"time"
+
+	"github.com/stretchr/testify/require"
 
 	"github.com/pace/bricks/maintenance/metric"
 )
@@ -56,14 +59,13 @@ func TestIntegrationExample(t *testing.T) {
 			t.Errorf("formatted")
 		},
 	})
-	if err != context.DeadlineExceeded {
-		t.Error(err)
-		return
-	}
 
-	req := httptest.NewRequest("GET", "/metrics", nil)
+	require.ErrorIs(t, err, context.DeadlineExceeded)
+
+	req := httptest.NewRequest(http.MethodGet, "/metrics", nil)
 	resp := httptest.NewRecorder()
 	metric.Handler().ServeHTTP(resp, req)
+
 	body := resp.Body.String()
 
 	sn := cfg.ServiceName
