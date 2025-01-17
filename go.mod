@@ -10,10 +10,9 @@ require (
 	github.com/asaskevich/govalidator v0.0.0-20210307081110-f21760c49a8d
 	github.com/bsm/redislock v0.9.3
 	github.com/caarlos0/env/v10 v10.0.0
-	github.com/certifi/gocertifi v0.0.0-20210507211836-431795d63e8d
 	github.com/dave/jennifer v1.4.1
 	github.com/getkin/kin-openapi v0.0.0-20180813063848-e1956e8013e5
-	github.com/getsentry/sentry-go v0.29.0
+	github.com/getsentry/sentry-go v0.31.1
 	github.com/go-kivik/couchdb/v3 v3.2.6
 	github.com/go-kivik/kivik/v3 v3.2.3
 	github.com/go-pg/pg v6.14.5+incompatible
@@ -25,7 +24,6 @@ require (
 	github.com/jpillora/backoff v1.0.0
 	github.com/mattn/go-isatty v0.0.20
 	github.com/minio/minio-go/v7 v7.0.7
-	github.com/pkg/errors v0.9.1
 	github.com/pmezard/go-difflib v1.0.0
 	github.com/prometheus/client_golang v1.19.0
 	github.com/redis/go-redis/v9 v9.5.1

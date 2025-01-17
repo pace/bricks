@@ -210,9 +210,9 @@ func registerHealthCheck(checks *sync.Map, name string, check HealthCheck, opts 
 // initHealthCheck will recover from panics and return a proper error
 func initHealthCheck(ctx context.Context, initHC Initializable) (err error) {
 	defer func() {
-		if rp := recover(); rp != nil {
-			err = fmt.Errorf("panic: %v", rp)
-			errors.Handle(ctx, rp)
+		if r := recover(); r != nil {
+			err = fmt.Errorf("panic: %v", r)
+			errors.Handle(ctx, errors.NewPanic(r))
 		}
 	}()
 
