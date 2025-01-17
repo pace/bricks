@@ -11,7 +11,6 @@ import (
 	"time"
 
 	"github.com/bsm/redislock"
-	"github.com/pace/bricks/backend/k8sapi"
 	"github.com/pace/bricks/maintenance/errors"
 	"github.com/pace/bricks/maintenance/health"
 	"github.com/pace/bricks/maintenance/log"
@@ -25,8 +24,6 @@ const (
 	UNDEFINED status = 0
 	ACTIVE    status = 1
 )
-
-const Label = "github.com.pace.bricks.activepassive"
 
 // ActivePassive implements a failover mechanism that allows
 // to deploy a service multiple times but ony one will accept
@@ -51,12 +48,47 @@ type ActivePassive struct {
 	timeToFailover time.Duration
 	locker         *redislock.Client
 
-	// access to the kubernetes api
-	k8sClient *k8sapi.Client
+	stateSetter StateSetter
 
 	// current status of the failover (to show it in the readiness status)
 	state   status
 	stateMu sync.RWMutex
+}
+
+type ActivePassiveOption func(*ActivePassive) error
+
+func WithCustomStateSetter(fn func(ctx context.Context, state string) error) ActivePassiveOption {
+	return func(ap *ActivePassive) error {
+		stateSetter, err := NewCustomStateSetter(fn)
+		if err != nil {
+			return fmt.Errorf("failed to create state setter: %w", err)
+		}
+
+		ap.stateSetter = stateSetter
+
+		return nil
+	}
+}
+
+func WithNoopStateSetter() ActivePassiveOption {
+	return func(ap *ActivePassive) error {
+		ap.stateSetter = &NoopStateSetter{}
+
+		return nil
+	}
+}
+
+func WithPodStateSetter() ActivePassiveOption {
+	return func(ap *ActivePassive) error {
+		stateSetter, err := NewPodStateSetter()
+		if err != nil {
+			return fmt.Errorf("failed to create pod state setter: %w", err)
+		}
+
+		ap.stateSetter = stateSetter
+
+		return nil
+	}
 }
 
 // NewActivePassive creates a new active passive cluster
@@ -65,17 +97,27 @@ type ActivePassive struct {
 // keep the active state.
 // NOTE: creating multiple ActivePassive in one process
 // is not working correctly as there is only one readiness probe.
-func NewActivePassive(clusterName string, timeToFailover time.Duration, client *redis.Client) (*ActivePassive, error) {
-	k8sClient, err := k8sapi.NewClient()
-	if err != nil {
-		return nil, err
-	}
-
+func NewActivePassive(clusterName string, timeToFailover time.Duration, client *redis.Client, opts ...ActivePassiveOption) (*ActivePassive, error) {
 	activePassive := &ActivePassive{
 		clusterName:    clusterName,
 		timeToFailover: timeToFailover,
 		locker:         redislock.New(client),
-		k8sClient:      k8sClient,
+	}
+
+	for _, opt := range opts {
+		if err := opt(activePassive); err != nil {
+			return nil, fmt.Errorf("failed to apply option: %w", err)
+		}
+	}
+
+	if activePassive.stateSetter == nil {
+		var err error
+
+		// Default state setter uses the k8s api to set the state.
+		activePassive.stateSetter, err = NewPodStateSetter()
+		if err != nil {
+			return nil, fmt.Errorf("failed to create default state setter: %w", err)
+		}
 	}
 
 	health.SetCustomReadinessCheck(activePassive.Handler)
@@ -198,7 +240,7 @@ func (a *ActivePassive) becomeUndefined(ctx context.Context) {
 
 // setState returns true if the state was set successfully
 func (a *ActivePassive) setState(ctx context.Context, state status) bool {
-	err := a.k8sClient.SetCurrentPodLabel(ctx, Label, a.label(state))
+	err := a.stateSetter.SetState(ctx, a.label(state))
 	if err != nil {
 		log.Ctx(ctx).Error().Err(err).Msg("failed to mark pod as undefined")
 		a.stateMu.Lock()
