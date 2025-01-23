@@ -13,7 +13,6 @@ import (
 	grpc_auth "github.com/grpc-ecosystem/go-grpc-middleware/auth"
 	grpc_prometheus "github.com/grpc-ecosystem/go-grpc-middleware/providers/prometheus"
 	grpc_ctxtags "github.com/grpc-ecosystem/go-grpc-middleware/tags"
-	grpc_opentracing "github.com/grpc-ecosystem/go-grpc-middleware/tracing/opentracing"
 	"github.com/pace/bricks/http/middleware"
 	"github.com/pace/bricks/http/security"
 	"github.com/pace/bricks/locale"
@@ -74,7 +73,6 @@ func Server(ab AuthBackend) *grpc.Server {
 	myServer := grpc.NewServer(
 		grpc.StreamInterceptor(grpc_middleware.ChainStreamServer(
 			grpc_ctxtags.StreamServerInterceptor(),
-			grpc_opentracing.StreamServerInterceptor(),
 			serverMetrics.StreamServerInterceptor(),
 			func(srv interface{}, stream grpc.ServerStream, info *grpc.StreamServerInfo, handler grpc.StreamHandler) error {
 				ctx := stream.Context()
@@ -110,7 +108,6 @@ func Server(ab AuthBackend) *grpc.Server {
 		)),
 		grpc.UnaryInterceptor(grpc_middleware.ChainUnaryServer(
 			grpc_ctxtags.UnaryServerInterceptor(),
-			grpc_opentracing.UnaryServerInterceptor(),
 			serverMetrics.UnaryServerInterceptor(),
 			func(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (resp interface{}, err error) {
 				ctx, md := prepareContext(ctx)
