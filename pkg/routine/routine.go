@@ -19,6 +19,7 @@ import (
 
 type options struct {
 	keepRunningOneInstance bool
+	startTransaction       bool
 }
 
 // Option specifies how a routine is run.
@@ -57,6 +58,12 @@ func KeepRunningOneInstance() Option {
 	}
 }
 
+func StartAsTransaction() Option {
+	return func(o *options) {
+		o.startTransaction = true
+	}
+}
+
 // RunNamed runs a routine like Run does. Additionally it assigns the routine a
 // name and allows using options to control how the routine is run. Routines
 // with the same name show consistent behaviour for the options, like mutual
@@ -73,19 +80,25 @@ func RunNamed(parentCtx context.Context, name string, routine func(context.Conte
 
 	if o.keepRunningOneInstance {
 		routine = (&routineThatKeepsRunningOneInstance{
-			Name:    name,
-			Routine: routine,
+			Name:             name,
+			Routine:          routine,
+			startTransaction: o.startTransaction,
 		}).Run
 	}
 
-	return Run(parentCtx, routine)
+	return Run(parentCtx, routine, opts...)
 }
 
 // Run runs the given function in a new background context. Panics
 // thrown in the function are logged and sent to sentry. The routines context is
 // canceled if the program receives a shutdown signal (SIGINT, SIGTERM), if the
 // returned CancelFunc is called, or if the routine returned.
-func Run(ctx context.Context, routine func(context.Context)) (cancel context.CancelFunc) {
+func Run(ctx context.Context, routine func(context.Context), opts ...Option) (cancel context.CancelFunc) {
+	o := options{}
+	for _, opt := range opts {
+		opt(&o)
+	}
+
 	ctx = context.WithoutCancel(ctx)
 
 	// add routine number to context and logger
@@ -114,7 +127,14 @@ func Run(ctx context.Context, routine func(context.Context)) (cancel context.Can
 		defer errors.HandleWithCtx(ctx, fmt.Sprintf("routine %d", num)) // handle panics
 		defer cancel()
 
-		span := sentry.StartSpan(ctx, "function", sentry.WithDescription(fmt.Sprintf("routine %d", num)))
+		var span *sentry.Span
+
+		if o.startTransaction {
+			span = sentry.StartTransaction(ctx, fmt.Sprintf("routine %d", num), sentry.WithOpName("function"))
+		} else {
+			span = sentry.StartSpan(ctx, "function", sentry.WithDescription(fmt.Sprintf("routine %d", num)))
+		}
+
 		defer span.Finish()
 
 		routine(span.Context())

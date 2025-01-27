@@ -18,10 +18,11 @@ type routineThatKeepsRunningOneInstance struct {
 	Name    string
 	Routine func(context.Context)
 
-	lockTTL       time.Duration
-	retryInterval time.Duration
-	backoff       combinedExponentialBackoff
-	num           int64
+	lockTTL          time.Duration
+	retryInterval    time.Duration
+	backoff          combinedExponentialBackoff
+	num              int64
+	startTransaction bool
 }
 
 func (r *routineThatKeepsRunningOneInstance) Run(ctx context.Context) {
@@ -70,7 +71,14 @@ func (r *routineThatKeepsRunningOneInstance) singleRun(ctx context.Context) time
 		func() {
 			defer errors.HandleWithCtx(ctx, fmt.Sprintf("routine %d", r.num)) // handle panics
 
-			span := sentry.StartSpan(lockCtx, "function", sentry.WithDescription(fmt.Sprintf("routine %d", r.num)))
+			var span *sentry.Span
+
+			if r.startTransaction {
+				span = sentry.StartTransaction(lockCtx, fmt.Sprintf("routine %d", r.num), sentry.WithOpName("function"))
+			} else {
+				span = sentry.StartSpan(lockCtx, "function", sentry.WithDescription(fmt.Sprintf("routine %d", r.num)))
+			}
+
 			defer span.Finish()
 
 			r.Routine(span.Context())
