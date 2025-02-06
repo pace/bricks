@@ -3,6 +3,7 @@
 package postgres
 
 import (
+	"context"
 	"errors"
 	"io"
 	"net"
@@ -13,14 +14,20 @@ import (
 var ErrNotUnique = errors.New("not unique")
 
 func IsErrConnectionFailed(err error) bool {
+	// Context errors are checked separately otherwise they would be considered a network error.
+	if err == context.DeadlineExceeded || err == context.Canceled {
+		return false
+	}
+
 	// bun has this check internally for network errors
 	if errors.Is(err, io.EOF) {
 		return true
 	}
 
+	var netError net.Error
+
 	// bun has this check internally for network errors
-	_, ok := err.(net.Error)
-	if ok {
+	if ok := errors.As(err, &netError); ok {
 		return true
 	}
 
