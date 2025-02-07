@@ -5,7 +5,9 @@ package middleware
 import (
 	"context"
 	"fmt"
+	"maps"
 	"net/http"
+	"slices"
 	"strconv"
 	"strings"
 	"sync"
@@ -13,9 +15,6 @@ import (
 
 	"github.com/pace/bricks/maintenance/log"
 )
-
-// depFormat is the format of a single dependency report
-const depFormat = "%s:%d"
 
 // ExternalDependencyHeaderName name of the HTTP header that is used for reporting
 const ExternalDependencyHeaderName = "External-Dependencies"
@@ -85,30 +84,29 @@ func ExternalDependencyContextFromContext(ctx context.Context) *ExternalDependen
 // during the request livecycle
 type ExternalDependencyContext struct {
 	mu           sync.RWMutex
-	dependencies []externalDependency
+	dependencies map[string]time.Duration
 }
 
 func (c *ExternalDependencyContext) AddDependency(name string, duration time.Duration) {
 	c.mu.Lock()
-	c.dependencies = append(c.dependencies, externalDependency{
-		Name:     name,
-		Duration: duration,
-	})
-	c.mu.Unlock()
+	defer c.mu.Unlock()
+
+	if c.dependencies == nil {
+		c.dependencies = make(map[string]time.Duration)
+	}
+
+	c.dependencies[name] += duration
 }
 
-// String formats all external dependencies
+// String formats all external dependencies. The format is "name:duration[,name:duration]..." and sorted by name.
 func (c *ExternalDependencyContext) String() string {
 	var b strings.Builder
-	sep := len(c.dependencies) - 1
-	for _, dep := range c.dependencies {
-		b.WriteString(dep.String())
-		if sep > 0 {
-			b.WriteByte(',')
-			sep--
-		}
+
+	for _, key := range slices.Sorted(maps.Keys(c.dependencies)) {
+		b.WriteString(fmt.Sprintf("%s:%d,", key, c.dependencies[key].Milliseconds()))
 	}
-	return b.String()
+
+	return strings.TrimRight(b.String(), ",")
 }
 
 // Parse a external dependency value
@@ -126,16 +124,4 @@ func (c *ExternalDependencyContext) Parse(s string) {
 
 		c.AddDependency(value[:index], time.Millisecond*time.Duration(dur))
 	}
-}
-
-// externalDependency represents one external dependency that
-// was involved in the process to creating a response
-type externalDependency struct {
-	Name     string        // canonical name of the source
-	Duration time.Duration // time spend with the external dependency
-}
-
-// String returns a formated single external dependency
-func (r externalDependency) String() string {
-	return fmt.Sprintf(depFormat, r.Name, r.Duration.Milliseconds())
 }
