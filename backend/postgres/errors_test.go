@@ -30,4 +30,14 @@ func TestIsErrConnectionFailed(t *testing.T) {
 		err := errors.New("any other error")
 		require.False(t, pbpostgres.IsErrConnectionFailed(err))
 	})
+
+	t.Run("context deadline exceeded error", func(t *testing.T) {
+		err := context.DeadlineExceeded
+		require.False(t, pbpostgres.IsErrConnectionFailed(err))
+	})
+
+	t.Run("context cancelled error", func(t *testing.T) {
+		err := context.Canceled
+		require.False(t, pbpostgres.IsErrConnectionFailed(err))
+	})
 }
