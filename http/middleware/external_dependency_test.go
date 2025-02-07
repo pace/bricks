@@ -56,6 +56,10 @@ func Test_ExternalDependencyContext_String(t *testing.T) {
 
 	edc.AddDependency("test4", time.Millisecond*123)
 	assert.EqualValues(t, "test1:1,test2:0,test3:1000,test4:123", edc.String())
+
+	// This should update the previous value
+	edc.AddDependency("test4", time.Millisecond*123)
+	assert.EqualValues(t, "test1:1,test2:0,test3:1000,test4:246", edc.String())
 }
 
 func Test_ExternalDependencyContext_Parse(t *testing.T) {
@@ -78,4 +82,8 @@ func Test_ExternalDependencyContext_Parse(t *testing.T) {
 
 	edc.Parse("test3:1000,test4:123")
 	assert.EqualValues(t, "test1:1,test2:0,test3:1000,test4:123", edc.String())
+
+	// This should update the previous value
+	edc.Parse("test3:1000")
+	assert.EqualValues(t, "test1:1,test2:0,test3:2000,test4:123", edc.String())
 }
