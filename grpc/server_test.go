@@ -79,7 +79,8 @@ func TestPrepareContext(t *testing.T) {
 
 	externalDependencyContext := middleware.ExternalDependencyContextFromContext(ctx3)
 	require.NotNil(t, externalDependencyContext)
-	assert.Equal(t, "foo:60000,bar:1000", externalDependencyContext.String())
+	// Output is sorted by name
+	assert.Equal(t, "bar:1000,foo:60000", externalDependencyContext.String())
 
 	ctx = metadata.NewIncomingContext(context.Background(), metadata.MD{})
 
