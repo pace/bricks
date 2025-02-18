@@ -88,6 +88,10 @@ func Server(ab AuthBackend, logger grpc_logging.Logger) *grpc.Server {
 				start := time.Now()
 				err := handler(srv, wrappedStream)
 
+				if err := addExternalDependencyToTrailer(ctx); err != nil {
+					log.Ctx(ctx).Warn().Err(err).Msg("unable to add external dependencies to trailer")
+				}
+
 				log.Ctx(ctx).Info().Str("method", info.FullMethod).
 					Dur("duration", time.Since(start)).
 					Str("type", "stream").
@@ -120,6 +124,10 @@ func Server(ab AuthBackend, logger grpc_logging.Logger) *grpc.Server {
 				start := time.Now()
 				resp, err = handler(ctx, req)
 
+				if err := addExternalDependencyToTrailer(ctx); err != nil {
+					log.Ctx(ctx).Warn().Err(err).Msg("unable to add external dependencies to trailer")
+				}
+
 				log.Ctx(ctx).Info().Str("method", info.FullMethod).
 					Dur("duration", time.Since(start)).
 					Str("type", "unary").
@@ -141,6 +149,19 @@ func Server(ab AuthBackend, logger grpc_logging.Logger) *grpc.Server {
 	)
 
 	return myServer
+}
+
+// addExternalDependencyToTrailer adds the external dependencies to the grpc trailer.
+// This is used to track external dependencies which are updated during the request lifecycle.
+func addExternalDependencyToTrailer(ctx context.Context) error {
+	edc := middleware.ExternalDependencyContextFromContext(ctx)
+	if edc == nil {
+		return nil
+	}
+
+	md := metadata.Pairs(MetadataKeyExternalDependencies, edc.String())
+
+	return grpc.SetTrailer(ctx, md)
 }
 
 func prepareContext(ctx context.Context) (context.Context, metadata.MD) {
