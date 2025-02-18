@@ -6,6 +6,7 @@ import (
 	"context"
 	"testing"
 
+	"github.com/pace/bricks/http/middleware"
 	"github.com/pace/bricks/pkg/tracking/utm"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/grpc/metadata"
@@ -30,4 +31,30 @@ func TestEncodeContextWithUTMData(t *testing.T) {
 	utmData, exists := utm.FromContext(ctx2)
 	require.True(t, exists)
 	require.Equal(t, data, utmData)
+}
+
+func TestAddExternalDependencyMetadataToContext(t *testing.T) {
+	md := metadata.New(map[string]string{
+		MetadataKeyExternalDependencies: "dep1:1,dep2:2,dep3:3",
+	})
+	ctx := context.Background()
+	ctx = AddExternalDependencyMetadataToContext(ctx, md)
+	edc := middleware.ExternalDependencyContextFromContext(ctx)
+	require.NotNil(t, edc)
+	require.Equal(t, "dep1:1,dep2:2,dep3:3", edc.String())
+
+	ctx = AddExternalDependencyMetadataToContext(ctx, metadata.New(map[string]string{
+		MetadataKeyExternalDependencies: "dep4:4,dep5:5,dep6:6",
+	}))
+	edc = middleware.ExternalDependencyContextFromContext(ctx)
+	require.NotNil(t, edc)
+	require.Equal(t, "dep1:1,dep2:2,dep3:3,dep4:4,dep5:5,dep6:6", edc.String())
+}
+
+func TestAddExternalDependencyMetadataToContext_NoDependencies(t *testing.T) {
+	md := metadata.New(map[string]string{})
+	ctx := context.Background()
+	ctx = AddExternalDependencyMetadataToContext(ctx, md)
+	edc := middleware.ExternalDependencyContextFromContext(ctx)
+	require.Nil(t, edc)
 }

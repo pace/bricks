@@ -7,6 +7,7 @@ import (
 	"encoding/gob"
 	"strings"
 
+	"github.com/pace/bricks/http/middleware"
 	"github.com/pace/bricks/pkg/tracking/utm"
 	"google.golang.org/grpc/metadata"
 )
@@ -35,4 +36,23 @@ func EncodeContextWithUTMData(parentCtx context.Context) context.Context {
 		return parentCtx
 	}
 	return metadata.AppendToOutgoingContext(parentCtx, utmMetadataKey, w.String())
+}
+
+// AddExternalDependencyMetadataToContext adds external dependencies to the context if they are present in the metadata.
+func AddExternalDependencyMetadataToContext(ctx context.Context, md metadata.MD) context.Context {
+	// If there are no external dependencies in the metadata, we can return the context as is.
+	externalDependencies := md.Get(MetadataKeyExternalDependencies)
+	if len(externalDependencies) == 0 {
+		return ctx
+	}
+
+	// If there are external dependencies in the metadata, we need to parse them and add them to the context.
+	edc := middleware.ExternalDependencyContextFromContext(ctx)
+	if edc == nil {
+		edc = &middleware.ExternalDependencyContext{}
+	}
+
+	edc.Parse(externalDependencies[0])
+
+	return middleware.ContextWithExternalDependency(ctx, edc)
 }
