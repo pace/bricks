@@ -42,51 +42,29 @@ func Until(ctx context.Context, d time.Duration, fn LongPollFunc) (ok bool, err 
 // budget is communicated via the provided context. This is a defence measure to not have accidental
 // long running routines. If no duration is given (0) the long poll will have exactly one execution.
 func (c Config) LongPollUntil(ctx context.Context, d time.Duration, fn LongPollFunc) (ok bool, err error) {
-	until := time.Now()
+	var cancel context.CancelFunc
 
 	if d != 0 {
-		if d < c.MinWaitTime { // guard lower bound
-			until = until.Add(c.MinWaitTime)
-		} else if d > c.MaxWaitTime { // guard upper bound
-			until = until.Add(c.MaxWaitTime)
-		} else {
-			until = until.Add(d)
+		if d < c.MinWaitTime {
+			d = c.MinWaitTime
+		} else if d > c.MaxWaitTime {
+			d = c.MaxWaitTime
 		}
+
+		ctx, cancel = context.WithTimeout(ctx, d)
+		defer cancel()
 	}
 
-	fnCtx, cancel := context.WithDeadline(ctx, until)
-	defer cancel()
-
-loop:
 	for {
-		ok, err = fn(fnCtx)
-		if err != nil {
+		ok, err = fn(ctx)
+		if ok || err != nil || d == 0 {
 			return
 		}
 
-		// fn returns true, break the loop
-		if ok {
-			break
-		}
-
-		// no long polling
-		if d <= 0 {
-			break
-		}
-
-		// long pooling desired?
-		if !time.Now().Add(c.RetryTime).Before(until) {
-			break
-		}
-
 		select {
-		// handle context cancelation
 		case <-ctx.Done():
 			return false, ctx.Err()
 		case <-time.After(c.RetryTime):
-			continue loop
 		}
 	}
-
-	return
 }
