@@ -11,14 +11,14 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/caarlos0/env/v10"
-	"github.com/pace/bricks/backend/postgres/hooks"
+	"github.com/caarlos0/env/v11"
 	"github.com/pace/bricks/maintenance/health/servicehealthcheck"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/uptrace/bun"
 	"github.com/uptrace/bun/dialect/pgdialect"
 	"github.com/uptrace/bun/driver/pgdriver"
 
+	"github.com/pace/bricks/backend/postgres/hooks"
 	"github.com/pace/bricks/maintenance/log"
 )
 

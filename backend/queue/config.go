@@ -4,7 +4,7 @@ import (
 	"log"
 	"time"
 
-	"github.com/caarlos0/env/v10"
+	"github.com/caarlos0/env/v11"
 )
 
 type config struct {

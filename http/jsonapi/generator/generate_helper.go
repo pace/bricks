@@ -40,8 +40,7 @@ type typeGenerator struct {
 }
 
 func (g *typeGenerator) invoke() error { // nolint: gocyclo
-	switch g.schema.Type {
-	case "string":
+	if g.schema.Type.Is("string") {
 		switch g.schema.Format {
 		case "byte": // TODO: needs to be base64 encoded/decoded
 			g.stmt.Index().Byte()
@@ -87,7 +86,7 @@ func (g *typeGenerator) invoke() error { // nolint: gocyclo
 				g.stmt.String()
 			}
 		}
-	case "integer":
+	} else if g.schema.Type.Is("integer") {
 		removeOmitempty(g.tags)
 		switch g.schema.Format {
 		case "int32":
@@ -103,7 +102,7 @@ func (g *typeGenerator) invoke() error { // nolint: gocyclo
 				g.stmt.Int64()
 			}
 		}
-	case "number":
+	} else if g.schema.Type.Is("number") {
 		switch g.schema.Format {
 		case "decimal":
 			if g.isParam {
@@ -129,20 +128,20 @@ func (g *typeGenerator) invoke() error { // nolint: gocyclo
 				g.stmt.Float64()
 			}
 		}
-	case "boolean":
+	} else if g.schema.Type.Is("boolean") {
 		removeOmitempty(g.tags)
 		if g.schema.Nullable {
 			g.stmt.Op("*").Bool()
 		} else {
 			g.stmt.Bool()
 		}
-	case "array": // nolint: goconst
+	} else if g.schema.Type.Is("array") {
 		removeOmitempty(g.tags)
 		err := g.g.goType(g.stmt.Index(), g.schema.Items.Value, g.tags).invoke()
 		if err != nil {
 			return err
 		}
-	default:
+	} else {
 		return fmt.Errorf("unknown type: %s", g.schema.Type)
 	}
 
@@ -173,7 +172,7 @@ func (g *Generator) commentOrExample(stmt *jen.Statement, schema *openapi3.Schem
 	}
 }
 
-func hasSecuritySchema(swagger *openapi3.Swagger) bool {
+func hasSecuritySchema(swagger *openapi3.T) bool {
 	return len(swagger.Components.SecuritySchemes) > 0
 }
 

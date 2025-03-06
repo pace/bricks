@@ -3,15 +3,14 @@
 package couchdb
 
 import (
-	"context"
+	"net/http"
 
-	"github.com/caarlos0/env/v10"
-	"github.com/go-kivik/couchdb/v3"
-	kivik "github.com/go-kivik/kivik/v3"
+	"github.com/caarlos0/env/v11"
+	kivik "github.com/go-kivik/kivik/v4"
+	"github.com/go-kivik/kivik/v4/couchdb"
 
 	"github.com/pace/bricks/http/transport"
 	"github.com/pace/bricks/maintenance/health/servicehealthcheck"
-	"github.com/pace/bricks/maintenance/log"
 )
 
 func DefaultDatabase() (*kivik.DB, error) {
@@ -19,20 +18,18 @@ func DefaultDatabase() (*kivik.DB, error) {
 }
 
 func Database(name string) (*kivik.DB, error) {
-	ctx := log.WithContext(context.Background())
-
 	cfg, err := ParseConfig()
 	if err != nil {
 		return nil, err
 	}
 	// Primary client+db
-	_, db, err := clientAndDB(ctx, name, cfg)
+	_, db, err := clientAndDB(name, cfg)
 	if err != nil {
 		return nil, err
 	}
 
 	// Secondary (healthcheck) client+db
-	healthCheckClient, healthCheckDB, err := clientAndDB(ctx, name, cfg)
+	healthCheckClient, healthCheckDB, err := clientAndDB(name, cfg)
 	if err != nil {
 		return nil, err
 	}
@@ -49,7 +46,7 @@ func Database(name string) (*kivik.DB, error) {
 	return db, nil
 }
 
-func clientAndDB(ctx context.Context, dbName string, cfg *Config) (*kivik.Client, *kivik.DB, error) {
+func clientAndDB(dbName string, cfg *Config) (*kivik.Client, *kivik.DB, error) {
 	client, err := Client(cfg)
 	if err != nil {
 		return nil, nil, err
@@ -60,7 +57,7 @@ func clientAndDB(ctx context.Context, dbName string, cfg *Config) (*kivik.Client
 		dbName = cfg.Database
 	}
 
-	db := client.DB(ctx, dbName, nil)
+	db := client.DB(dbName)
 	if db.Err() != nil {
 		return nil, nil, db.Err()
 	}
@@ -68,12 +65,6 @@ func clientAndDB(ctx context.Context, dbName string, cfg *Config) (*kivik.Client
 }
 
 func Client(cfg *Config) (*kivik.Client, error) {
-	ctx := log.WithContext(context.Background())
-
-	client, err := kivik.New("couch", cfg.URL)
-	if err != nil {
-		return nil, err
-	}
 	rts := []transport.ChainableRoundTripper{
 		&AuthTransport{
 			Username: cfg.User,
@@ -84,9 +75,8 @@ func Client(cfg *Config) (*kivik.Client, error) {
 	if !cfg.DisableRequestLogging {
 		rts = append(rts, &transport.LoggingRoundTripper{})
 	}
-	chain := transport.Chain(rts...)
-	tr := couchdb.SetTransport(chain)
-	err = client.Authenticate(ctx, tr)
+
+	client, err := kivik.New("couch", cfg.URL, couchdb.OptionHTTPClient(&http.Client{Transport: transport.Chain(rts...)}))
 	if err != nil {
 		return nil, err
 	}
