@@ -174,7 +174,7 @@ func main() {
 
 	h.HandleFunc("/couch", func(w http.ResponseWriter, r *http.Request) {
 		row := cdb.Get(r.Context(), "$health_check")
-		if row.Err != nil {
+		if err := row.Err(); err != nil {
 			log.Println(err)
 			w.WriteHeader(http.StatusInternalServerError)
 			return

@@ -14,7 +14,7 @@ import (
 	"os"
 	"strings"
 
-	"github.com/caarlos0/env/v10"
+	"github.com/caarlos0/env/v11"
 	"github.com/pace/bricks/http/transport"
 	"github.com/pace/bricks/maintenance/log"
 )

@@ -234,7 +234,7 @@ func TestHandlerDecimal(t *testing.T) {
 }
 
 func assertDecimal(t *testing.T, got, want decimal.Decimal) {
-	if !got.Equals(want) {
+	if !got.Equal(want) {
 		t.Errorf(`expected decimal.Decimal %q, got %q`, want, got)
 	}
 }

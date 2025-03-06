@@ -53,14 +53,14 @@ var generatorResponseBlacklist = map[string]bool{
 	// result in retry later / also rate limiting
 }
 
-type routeGeneratorFunc func([]*route, *openapi3.Swagger) error
+type routeGeneratorFunc func([]*route, *openapi3.T) error
 
 // BuildHandler generates the request handlers based on gorilla mux
-func (g *Generator) BuildHandler(schema *openapi3.Swagger) error {
+func (g *Generator) BuildHandler(schema *openapi3.T) error {
 	paths := schema.Paths
 	// sort by key
-	keys := make([]string, 0, len(paths))
-	for k := range paths {
+	keys := make([]string, 0, paths.Len())
+	for k := range paths.Map() {
 		keys = append(keys, k)
 	}
 	sort.Stable(sort.StringSlice(keys))
@@ -68,7 +68,7 @@ func (g *Generator) BuildHandler(schema *openapi3.Swagger) error {
 	var routes []*route
 
 	for _, pattern := range keys {
-		path := paths[pattern]
+		path := paths.Map()[pattern]
 		err := g.buildPath(pattern, path, &routes, schema.Components.SecuritySchemes)
 		if err != nil {
 			return err
@@ -130,7 +130,7 @@ func (g *Generator) buildPath(pattern string, pathItem *openapi3.PathItem, route
 	return nil
 }
 
-func (g *Generator) generateRequestResponseTypes(routes []*route, schema *openapi3.Swagger) error {
+func (g *Generator) generateRequestResponseTypes(routes []*route, schema *openapi3.T) error {
 	for _, route := range routes {
 		// generate ...ResponseWriter for each route
 		err := g.generateResponseInterface(route, schema)
@@ -148,19 +148,19 @@ func (g *Generator) generateRequestResponseTypes(routes []*route, schema *openap
 	return nil
 }
 
-func (g *Generator) generateResponseInterface(route *route, schema *openapi3.Swagger) error {
+func (g *Generator) generateResponseInterface(route *route, schema *openapi3.T) error {
 	var methods []jen.Code
 	methods = append(methods, jen.Qual("net/http", "ResponseWriter"))
 
 	// sort by key
-	keys := make([]string, 0, len(route.operation.Responses))
-	for k := range route.operation.Responses {
+	keys := make([]string, 0, route.operation.Responses.Len())
+	for k := range route.operation.Responses.Map() {
 		keys = append(keys, k)
 	}
 	sort.Stable(sort.StringSlice(keys))
 
 	for _, code := range keys {
-		response := route.operation.Responses[code]
+		response := route.operation.Responses.Map()[code]
 
 		// don't generate response helpers for things that are handled by the framework
 		if generatorResponseBlacklist[code] {
@@ -177,8 +177,8 @@ func (g *Generator) generateResponseInterface(route *route, schema *openapi3.Swa
 		var methodName string
 		if response.Ref != "" {
 			methodName = generateMethodName(filepath.Base(response.Ref))
-		} else {
-			methodName = generateMethodName(response.Value.Description)
+		} else if response.Value.Description != nil {
+			methodName = generateMethodName(*response.Value.Description)
 		}
 
 		method := jen.Id(methodName)
@@ -255,7 +255,7 @@ func (g *Generator) generateResponseInterface(route *route, schema *openapi3.Swa
 	return nil
 }
 
-func (g *Generator) generateRequestStruct(route *route, schema *openapi3.Swagger) error {
+func (g *Generator) generateRequestStruct(route *route, schema *openapi3.T) error {
 	body := route.operation.RequestBody
 	var fields []jen.Code
 
@@ -314,7 +314,7 @@ func (g *Generator) generateRequestStruct(route *route, schema *openapi3.Swagger
 	return nil
 }
 
-func (g *Generator) buildServiceInterface(routes []*route, schema *openapi3.Swagger) error {
+func (g *Generator) buildServiceInterface(routes []*route, schema *openapi3.T) error {
 	for _, route := range routes {
 		if err := g.buildSubServiceInterface(route, schema); err != nil {
 			return err
@@ -335,7 +335,7 @@ func (g *Generator) buildServiceInterface(routes []*route, schema *openapi3.Swag
 	return nil
 }
 
-func (g *Generator) buildSubServiceInterface(route *route, schema *openapi3.Swagger) error {
+func (g *Generator) buildSubServiceInterface(route *route, schema *openapi3.T) error {
 	methods := make([]jen.Code, 0)
 
 	if route.operation.Description != "" {
@@ -355,7 +355,7 @@ func (g *Generator) buildSubServiceInterface(route *route, schema *openapi3.Swag
 	return nil
 }
 
-func (g *Generator) buildRouter(routes []*route, schema *openapi3.Swagger) error {
+func (g *Generator) buildRouter(routes []*route, schema *openapi3.T) error {
 	routerBody, err := g.buildRouterBodyWithFallback(routes, schema, jen.Id(rootRouterName).Dot("NotFoundHandler"))
 	if err != nil {
 		return nil
@@ -372,7 +372,7 @@ func (g *Generator) buildRouter(routes []*route, schema *openapi3.Swagger) error
 	return nil
 }
 
-func (g *Generator) buildRouterWithFallbackAsArg(routes []*route, schema *openapi3.Swagger) error {
+func (g *Generator) buildRouterWithFallbackAsArg(routes []*route, schema *openapi3.T) error {
 	routerBody, err := g.buildRouterBodyWithFallback(routes, schema, jen.Id("fallback"))
 	if err != nil {
 		return nil
@@ -389,7 +389,7 @@ func (g *Generator) buildRouterWithFallbackAsArg(routes []*route, schema *openap
 	return nil
 }
 
-func (g *Generator) buildRouterHelpers(routes []*route, schema *openapi3.Swagger) error {
+func (g *Generator) buildRouterHelpers(routes []*route, schema *openapi3.T) error {
 	needsSecurity := hasSecuritySchema(schema)
 
 	// sort the routes with query parameter to the top
@@ -441,7 +441,7 @@ func (g *Generator) buildRouterHelpers(routes []*route, schema *openapi3.Swagger
 	return nil
 }
 
-func (g *Generator) buildRouterBodyWithFallback(routes []*route, schema *openapi3.Swagger, fallback jen.Code) ([]jen.Code, error) {
+func (g *Generator) buildRouterBodyWithFallback(routes []*route, schema *openapi3.T, fallback jen.Code) ([]jen.Code, error) {
 	needsSecurity := hasSecuritySchema(schema)
 	startInd := 0
 	var routeStmts []jen.Code
@@ -706,7 +706,7 @@ func (g *Generator) buildHandler(method string, op *openapi3.Operation, pattern 
 					mt := op.RequestBody.Value.Content.Get(jsonapiContent)
 					if mt != nil {
 						data := mt.Schema.Value.Properties["data"]
-						if data != nil && data.Value.Type == "array" {
+						if data != nil && data.Value.Type.Is("array") {
 							if data.Ref != "" && data.Value.Items.Ref != "" {
 								isArray = true
 							}

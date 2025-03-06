@@ -3,7 +3,6 @@
 package generator
 
 import (
-	"encoding/json"
 	"sort"
 
 	"github.com/dave/jennifer/jen"
@@ -23,7 +22,7 @@ const (
 // buildSecurityBackendInterface builds the interface that is used to do the authentication.
 // It creates one method for each security type and an init method for handling the securityConfigs.
 // The Methods are named AuthenticateNAME and Init.
-func (g *Generator) buildSecurityBackendInterface(schema *openapi3.Swagger) error {
+func (g *Generator) buildSecurityBackendInterface(schema *openapi3.T) error {
 	if !hasSecuritySchema(schema) {
 		return nil
 	}
@@ -38,7 +37,7 @@ func (g *Generator) buildSecurityBackendInterface(schema *openapi3.Swagger) erro
 	}
 	sort.Stable(sort.StringSlice(keys))
 	hasDuplicatedSecuritySchema := false
-	for _, pathItem := range schema.Paths {
+	for _, pathItem := range schema.Paths.Map() {
 		for _, op := range pathItem.Operations() {
 			if op.Security != nil {
 				hasDuplicatedSecuritySchema = hasDuplicatedSecuritySchema || len((*op.Security)[0]) > 1
@@ -74,7 +73,7 @@ func (g *Generator) buildSecurityBackendInterface(schema *openapi3.Swagger) erro
 }
 
 // BuildSecurityConfigs creates structs with the config of each security schema
-func (g *Generator) buildSecurityConfigs(schema *openapi3.Swagger) error {
+func (g *Generator) buildSecurityConfigs(schema *openapi3.T) error {
 	if !hasSecuritySchema(schema) {
 		return nil
 	}
@@ -112,16 +111,7 @@ func (g *Generator) buildSecurityConfigs(schema *openapi3.Swagger) error {
 		case "openIdConnect":
 			pkgName = pkgOIDC
 			instanceVal[jen.Id("Description")] = jen.Lit(value.Value.Description)
-			if e, ok := value.Value.Extensions["openIdConnectUrl"]; ok {
-				var url string
-				if data, ok := e.(json.RawMessage); ok {
-					err := json.Unmarshal(data, &url)
-					if err != nil {
-						return err
-					}
-					instanceVal[jen.Id("OpenIdConnectURL")] = jen.Lit(url)
-				}
-			}
+			instanceVal[jen.Id("OpenIdConnectURL")] = jen.Lit(value.Value.OpenIdConnectUrl)
 		case "apiKey":
 			pkgName = pkgApiKey
 			instanceVal[jen.Id("Description")] = jen.Lit(value.Value.Description)

@@ -18,7 +18,7 @@ const (
 )
 
 // BuildTypes transforms all component schemas into go types
-func (g *Generator) BuildTypes(schema *openapi3.Swagger) error {
+func (g *Generator) BuildTypes(schema *openapi3.T) error {
 	schemas := schema.Components.Schemas
 
 	// sort by key
@@ -59,8 +59,7 @@ func (g *Generator) buildType(prefix string, stmt *jen.Statement, schema *openap
 	name := nameFromSchemaRef(schema)
 	val := schema.Value
 
-	switch val.Type {
-	case "array": // nolint: goconst
+	if val.Type.Is("array") {
 		if schema.Ref != "" { // handle references
 			stmt.Id(name)
 			return nil
@@ -68,7 +67,7 @@ func (g *Generator) buildType(prefix string, stmt *jen.Statement, schema *openap
 
 		g.generatedArrayTypes[prefix] = true
 		return g.buildType(prefix, stmt.Index(), val.Items, tags, ptr)
-	case "object": // nolint: goconst
+	} else if val.Type.Is("object") {
 		if schema.Ref != "" { // handle references
 			if ptr {
 				stmt.Op("*").Id(name)
@@ -77,24 +76,25 @@ func (g *Generator) buildType(prefix string, stmt *jen.Statement, schema *openap
 			}
 			return nil
 		}
-		if val.AdditionalPropertiesAllowed != nil && *val.AdditionalPropertiesAllowed {
+
+		if val.AdditionalProperties.Has != nil && *val.AdditionalProperties.Has {
 			if len(val.Properties) > 0 {
 				log.Warnf("%s properties are ignored. Only %s of type map[string]interface{} is generated ", prefix, prefix)
 			}
 			stmt.Map(jen.String()).Interface()
 			return nil
 		}
-		if val.AdditionalProperties != nil {
+		if val.AdditionalProperties.Schema != nil {
 			if len(val.Properties) > 0 {
 				log.Warnf("%s properties are ignored. Only %s of type map[string]type is generated ", prefix, prefix)
 			}
 			stmt.Map(jen.String())
-			if val.AdditionalProperties.Ref != "" {
-				stmt.Op("*").Id(nameFromSchemaRef(val.AdditionalProperties))
+			if val.AdditionalProperties.Schema.Ref != "" {
+				stmt.Op("*").Id(nameFromSchemaRef(val.AdditionalProperties.Schema))
 				return nil
 			}
-			if val.AdditionalProperties.Value != nil {
-				err := g.goType(stmt, val.AdditionalProperties.Value, make(map[string]string)).invoke()
+			if val.AdditionalProperties.Schema.Value != nil {
+				err := g.goType(stmt, val.AdditionalProperties.Schema.Value, make(map[string]string)).invoke()
 				if err != nil {
 					return err
 				}
@@ -105,7 +105,7 @@ func (g *Generator) buildType(prefix string, stmt *jen.Statement, schema *openap
 		if data := val.Properties["data"]; data != nil {
 			if data.Ref != "" {
 				return g.buildType(prefix+"Ref", stmt, data, make(map[string]string), ptr)
-			} else if data.Value.Type == "array" { // nolint: goconst
+			} else if data.Value.Type.Is("array") { // nolint: goconst
 				item := prefix + "Item"
 				if ptr {
 					stmt.Index().Op("*").Id(item)
@@ -115,7 +115,7 @@ func (g *Generator) buildType(prefix string, stmt *jen.Statement, schema *openap
 				g.addGoDoc(item, data.Value.Description)
 				itemStmt := g.goSource.Type().Id(item)
 				return g.structJSONAPI(prefix, itemStmt, data.Value.Items.Value)
-			} else if data.Value.Type == "object" { // This ensures that the code does only treat objects with data properties that
+			} else if data.Value.Type.Is("object") { // This ensures that the code does only treat objects with data properties that
 				// are objects themselves as legitimate JSONAPI struct, otherwise we want them to be treated as simple data objects.
 				// This only partially addresses the issue of why this check is being done. In essence, just having a property named "data"
 				// does not require treating the object with that entity as JSONAPI struct, however we do not know at this point where in the
@@ -131,7 +131,7 @@ func (g *Generator) buildType(prefix string, stmt *jen.Statement, schema *openap
 		}
 
 		return g.buildTypeStruct(prefix, stmt, val, ptr)
-	default:
+	} else {
 		if schema.Ref != "" { // handle references
 			stmt.Id(name)
 			return nil
@@ -191,7 +191,7 @@ func (g *Generator) generateTypeReference(fallbackName string, schema *openapi3.
 
 	// in case the type referenced is defined already directly reference it
 	sv := schema.Value
-	if sv.Type == "object" && sv.Properties["data"] != nil && sv.Properties["data"].Ref != "" { // nolint: goconst
+	if sv.Type.Is("object") && sv.Properties["data"] != nil && sv.Properties["data"].Ref != "" { // nolint: goconst
 		id := nameFromSchemaRef(schema.Value.Properties["data"])
 		if g.generatedArrayTypes[id] {
 			return jen.Id(id), nil
@@ -319,9 +319,7 @@ func (g *Generator) generateStructFields(prefix string, schema *openapi3.Schema,
 		attrSchema := schema.Properties[attrName]
 		tags := make(map[string]string)
 		addJSONAPITags(tags, "attr", attrName)
-		if attrSchema.Value.AdditionalPropertiesAllowed != nil &&
-			*attrSchema.Value.AdditionalPropertiesAllowed ||
-			attrSchema.Value.AdditionalProperties != nil {
+		if attrSchema.Value.AdditionalProperties.Has != nil && *attrSchema.Value.AdditionalProperties.Has || attrSchema.Value.AdditionalProperties.Schema != nil {
 			addValidator(tags, "-")
 		} else {
 			addRequiredOptionalTag(tags, attrName, schema)
@@ -361,13 +359,12 @@ func (g *Generator) generateStructRelationships(prefix string, schema *openapi3.
 		// generate relationship field
 		rel := jen.Id(goNameHelper(relName))
 
-		switch data.Value.Type {
-		// case array = one-to-many
-		case "array": // nolint: goconst
+		if data.Value.Type.Is("array") {
+			// case array = one-to-many
 			name := data.Value.Items.Value.Properties["type"].Value.Enum[0].(string)
 			rel.Index().Op("*").Id(goNameHelper(name)).Tag(tags)
-		// case object = belongs-to
-		case "object": // nolint: goconst
+			// case object = belongs-to
+		} else if data.Value.Type.Is("object") {
 			name := data.Value.Properties["type"].Value.Enum[0].(string)
 			rel.Op("*").Id(goNameHelper(name)).Tag(tags)
 		}

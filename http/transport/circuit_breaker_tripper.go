@@ -6,7 +6,7 @@ import (
 	"net/http"
 
 	"github.com/prometheus/client_golang/prometheus"
-	"github.com/sony/gobreaker"
+	"github.com/sony/gobreaker/v2"
 )
 
 // circuitBreakerTripper implements a ChainableRoundTripper with
@@ -27,7 +27,7 @@ import (
 // problems, but because of other RoundTrippers.
 type circuitBreakerTripper struct {
 	transport http.RoundTripper
-	breaker   *gobreaker.CircuitBreaker
+	breaker   *gobreaker.CircuitBreaker[*http.Response]
 }
 
 func NewDefaultCircuitBreakerTripper(name string) *circuitBreakerTripper {
@@ -68,7 +68,7 @@ func NewCircuitBreakerTripper(settings gobreaker.Settings) *circuitBreakerTrippe
 		stateSwitchCounterVec.With(labels).Inc()
 	}
 
-	return &circuitBreakerTripper{breaker: gobreaker.NewCircuitBreaker(settings)}
+	return &circuitBreakerTripper{breaker: gobreaker.NewCircuitBreaker[*http.Response](settings)}
 }
 
 // Transport returns the RoundTripper to make HTTP requests
@@ -83,7 +83,7 @@ func (c *circuitBreakerTripper) SetTransport(rt http.RoundTripper) {
 
 // RoundTrip executes a single HTTP transaction via Transport()
 func (c *circuitBreakerTripper) RoundTrip(req *http.Request) (*http.Response, error) {
-	resp, err := c.breaker.Execute(func() (interface{}, error) {
+	resp, err := c.breaker.Execute(func() (*http.Response, error) {
 		return c.transport.RoundTrip(req)
 	})
 	if err != nil {
@@ -96,5 +96,5 @@ func (c *circuitBreakerTripper) RoundTrip(req *http.Request) (*http.Response, er
 		}
 	}
 
-	return resp.(*http.Response), nil
+	return resp, nil
 }

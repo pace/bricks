@@ -6,7 +6,7 @@ import (
 	"net/http"
 	"time"
 
-	kivik "github.com/go-kivik/kivik/v3"
+	kivik "github.com/go-kivik/kivik/v4"
 	"github.com/pace/bricks/maintenance/health/servicehealthcheck"
 )
 
@@ -37,9 +37,12 @@ func (h *HealthCheck) HealthCheck(ctx context.Context) servicehealthcheck.Health
 
 	checkTime := time.Now()
 
-	var doc Doc
-	var err error
-	var row *kivik.Row
+	var (
+		doc Doc
+		err error
+		row *kivik.Document
+		rev string
+	)
 
 check:
 	// check if context was canceled
@@ -51,20 +54,25 @@ check:
 	}
 
 	row = h.DB.Get(ctx, h.Config.HealthCheckKey)
-	if row.Err != nil {
-		if kivik.StatusCode(row.Err) == http.StatusNotFound {
+	if err := row.Err(); err != nil {
+		if kivik.HTTPStatus(err) == http.StatusNotFound {
 			goto put
 		}
-		h.state.SetErrorState(fmt.Errorf("failed to get: %#v", row.Err))
+		h.state.SetErrorState(fmt.Errorf("failed to get: %#v", err))
 		return h.state.GetState()
 	}
-	defer row.Body.Close()
+	defer row.Close()
 
 	// check if document exists
-	if row.Rev != "" {
+	rev, err = row.Rev()
+	if err != nil {
+		h.state.SetErrorState(fmt.Errorf("failed to get document revision: %v", err))
+	}
+
+	if rev != "" {
 		err = row.ScanDoc(&doc)
 		if err != nil {
-			h.state.SetErrorState(fmt.Errorf("failed to get: %v", row.Err))
+			h.state.SetErrorState(fmt.Errorf("failed to get: %v", err))
 			return h.state.GetState()
 		}
 
@@ -81,7 +89,7 @@ put:
 	_, err = h.DB.Put(ctx, h.Config.HealthCheckKey, doc)
 	if err != nil {
 		// not yet created, try to create
-		if h.Config.DatabaseAutoCreate && kivik.StatusCode(err) == http.StatusNotFound {
+		if h.Config.DatabaseAutoCreate && kivik.HTTPStatus(err) == http.StatusNotFound {
 			err := h.Client.CreateDB(ctx, h.Name)
 			if err != nil {
 				h.state.SetErrorState(fmt.Errorf("failed to put object: %v", err))
@@ -90,7 +98,7 @@ put:
 			goto put
 		}
 
-		if kivik.StatusCode(err) == http.StatusConflict {
+		if kivik.HTTPStatus(err) == http.StatusConflict {
 			goto check
 		}
 		h.state.SetErrorState(fmt.Errorf("failed to put object: %v", err))
