@@ -94,7 +94,7 @@ func introspectRequest(r *http.Request, w http.ResponseWriter, tokenIntro TokenI
 	t := fromIntrospectResponse(s, tok)
 	ctx = security.ContextWithToken(ctx, &t)
 
-	log.Req(r).Info().
+	log.Req(r).Debug().
 		Str("client_id", t.clientID).
 		Str("user_id", t.userID).
 		Msg("Oauth2")
