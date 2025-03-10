@@ -61,7 +61,9 @@ func (h *LoggingHook) AfterQuery(ctx context.Context, event *bun.QueryEvent) {
 	// add general info
 	logEvent := logger.Debug().
 		Float64("duration", dur).
-		Str("sentry:category", "postgres")
+		Str("sentry:category", "postgres").
+		Bool("data:security", true).
+		Bool("data:privacy", true)
 
 	// add error or result set info
 	if event.Err != nil {
