@@ -155,7 +155,7 @@ var cfgProfileKey = &apikey.Config{
 /*
 GetPaymentMethodsHandler handles request/response marshaling and validation for
 
-	Get /beta/payment-methods
+	Get /beta/payment-methods.
 */
 func GetPaymentMethodsHandler(service GetPaymentMethodsHandlerService, authBackend AuthorizationBackend) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -201,7 +201,7 @@ func GetPaymentMethodsHandler(service GetPaymentMethodsHandlerService, authBacke
 /*
 CreatePaymentMethodSEPAHandler handles request/response marshaling and validation for
 
-	Post /beta/payment-methods/sepa-direct-debit
+	Post /beta/payment-methods/sepa-direct-debit.
 */
 func CreatePaymentMethodSEPAHandler(service CreatePaymentMethodSEPAHandlerService, authBackend AuthorizationBackend) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -277,7 +277,7 @@ func CreatePaymentMethodSEPAHandler(service CreatePaymentMethodSEPAHandlerServic
 /*
 DeletePaymentMethodHandler handles request/response marshaling and validation for
 
-	Delete /beta/payment-methods/{paymentMethodId}
+	Delete /beta/payment-methods/{paymentMethodId}.
 */
 func DeletePaymentMethodHandler(service DeletePaymentMethodHandlerService, authBackend AuthorizationBackend) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -353,7 +353,7 @@ func DeletePaymentMethodHandler(service DeletePaymentMethodHandlerService, authB
 /*
 AuthorizePaymentMethodHandler handles request/response marshaling and validation for
 
-	Post /beta/payment-methods/{paymentMethodId}/authorize
+	Post /beta/payment-methods/{paymentMethodId}/authorize.
 */
 func AuthorizePaymentMethodHandler(service AuthorizePaymentMethodHandlerService, authBackend AuthorizationBackend) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -414,7 +414,7 @@ func AuthorizePaymentMethodHandler(service AuthorizePaymentMethodHandlerService,
 /*
 DeletePaymentTokenHandler handles request/response marshaling and validation for
 
-	Delete /beta/payment-methods/{paymentMethodId}/paymentTokens/{paymentTokenId}
+	Delete /beta/payment-methods/{paymentMethodId}/paymentTokens/{paymentTokenId}.
 */
 func DeletePaymentTokenHandler(service DeletePaymentTokenHandlerService, authBackend AuthorizationBackend) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -477,7 +477,7 @@ func DeletePaymentTokenHandler(service DeletePaymentTokenHandlerService, authBac
 /*
 GetPaymentMethodsIncludingCreditCheckHandler handles request/response marshaling and validation for
 
-	Get /beta/payment-methods?include=creditCheck
+	Get /beta/payment-methods?include=creditCheck.
 */
 func GetPaymentMethodsIncludingCreditCheckHandler(service GetPaymentMethodsIncludingCreditCheckHandlerService, authBackend AuthorizationBackend) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -533,7 +533,7 @@ func GetPaymentMethodsIncludingCreditCheckHandler(service GetPaymentMethodsInclu
 /*
 GetPaymentMethodsIncludingPaymentTokenHandler handles request/response marshaling and validation for
 
-	Get /beta/payment-methods?include=paymentToken
+	Get /beta/payment-methods?include=paymentToken.
 */
 func GetPaymentMethodsIncludingPaymentTokenHandler(service GetPaymentMethodsIncludingPaymentTokenHandlerService, authBackend AuthorizationBackend) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -589,7 +589,7 @@ func GetPaymentMethodsIncludingPaymentTokenHandler(service GetPaymentMethodsIncl
 /*
 ProcessPaymentHandler handles request/response marshaling and validation for
 
-	Post /beta/transaction/{pathDecimal}
+	Post /beta/transaction/{pathDecimal}.
 */
 func ProcessPaymentHandler(service ProcessPaymentHandlerService, authBackend AuthorizationBackend) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -653,7 +653,7 @@ func ProcessPaymentHandler(service ProcessPaymentHandlerService, authBackend Aut
 
 /*
 GetPaymentMethodsResponseWriter is a standard http.ResponseWriter extended with methods
-to generate the respective responses easily
+to generate the respective responses easily.
 */
 type GetPaymentMethodsResponseWriter interface {
 	http.ResponseWriter
@@ -663,14 +663,14 @@ type getPaymentMethodsResponseWriter struct {
 	http.ResponseWriter
 }
 
-// AllThePaymentMethodsForUser responds with jsonapi marshaled data (HTTP code 200)
+// AllThePaymentMethodsForUser responds with jsonapi marshaled data (HTTP code 200).
 func (w *getPaymentMethodsResponseWriter) AllThePaymentMethodsForUser(data AllPaymentMethods) {
 	runtime.Marshal(w, data, 200)
 }
 
 /*
 GetPaymentMethodsRequest is a standard http.Request extended with the
-un-marshaled content object
+un-marshaled content object.
 */
 type GetPaymentMethodsRequest struct {
 	Request *http.Request `valid:"-"`
@@ -685,7 +685,7 @@ type CreatePaymentMethodSEPACreated struct {
 
 /*
 CreatePaymentMethodSEPAResponseWriter is a standard http.ResponseWriter extended with methods
-to generate the respective responses easily
+to generate the respective responses easily.
 */
 type CreatePaymentMethodSEPAResponseWriter interface {
 	http.ResponseWriter
@@ -696,12 +696,12 @@ type createPaymentMethodSEPAResponseWriter struct {
 	http.ResponseWriter
 }
 
-// BadRequest responds with jsonapi error (HTTP code 400)
+// BadRequest responds with jsonapi error (HTTP code 400).
 func (w *createPaymentMethodSEPAResponseWriter) BadRequest(err error) {
 	runtime.WriteError(w, 400, err)
 }
 
-// Created responds with jsonapi marshaled data (HTTP code 201)
+// Created responds with jsonapi marshaled data (HTTP code 201).
 func (w *createPaymentMethodSEPAResponseWriter) Created(data *CreatePaymentMethodSEPACreated) {
 	runtime.Marshal(w, data, 201)
 }
@@ -714,7 +714,7 @@ type CreatePaymentMethodSEPARequest struct {
 
 /*
 DeletePaymentMethodResponseWriter is a standard http.ResponseWriter extended with methods
-to generate the respective responses easily
+to generate the respective responses easily.
 */
 type DeletePaymentMethodResponseWriter interface {
 	http.ResponseWriter
@@ -725,12 +725,12 @@ type deletePaymentMethodResponseWriter struct {
 	http.ResponseWriter
 }
 
-// NotFound responds with jsonapi error (HTTP code 404)
+// NotFound responds with jsonapi error (HTTP code 404).
 func (w *deletePaymentMethodResponseWriter) NotFound(err error) {
 	runtime.WriteError(w, 404, err)
 }
 
-// ThePaymentMethodWasDeletedSuccessfully responds with empty response (HTTP code 204)
+// ThePaymentMethodWasDeletedSuccessfully responds with empty response (HTTP code 204).
 func (w *deletePaymentMethodResponseWriter) ThePaymentMethodWasDeletedSuccessfully() {
 	w.Header().Set("Content-Type", "application/vnd.api+json")
 	w.WriteHeader(204)
@@ -738,7 +738,7 @@ func (w *deletePaymentMethodResponseWriter) ThePaymentMethodWasDeletedSuccessful
 
 /*
 DeletePaymentMethodRequest is a standard http.Request extended with the
-un-marshaled content object
+un-marshaled content object.
 */
 type DeletePaymentMethodRequest struct {
 	Request              *http.Request `valid:"-"`
@@ -755,7 +755,7 @@ type AuthorizePaymentMethodOK struct {
 
 /*
 AuthorizePaymentMethodResponseWriter is a standard http.ResponseWriter extended with methods
-to generate the respective responses easily
+to generate the respective responses easily.
 */
 type AuthorizePaymentMethodResponseWriter interface {
 	http.ResponseWriter
@@ -768,22 +768,22 @@ type authorizePaymentMethodResponseWriter struct {
 	http.ResponseWriter
 }
 
-// BadGateway responds with jsonapi error (HTTP code 502)
+// BadGateway responds with jsonapi error (HTTP code 502).
 func (w *authorizePaymentMethodResponseWriter) BadGateway(err error) {
 	runtime.WriteError(w, 502, err)
 }
 
-// PaymentMethodIsUnknown responds with jsonapi error (HTTP code 404)
+// PaymentMethodIsUnknown responds with jsonapi error (HTTP code 404).
 func (w *authorizePaymentMethodResponseWriter) PaymentMethodIsUnknown(err error) {
 	runtime.WriteError(w, 404, err)
 }
 
-// AmountCannotBeAuthorized responds with jsonapi error (HTTP code 403)
+// AmountCannotBeAuthorized responds with jsonapi error (HTTP code 403).
 func (w *authorizePaymentMethodResponseWriter) AmountCannotBeAuthorized(err error) {
 	runtime.WriteError(w, 403, err)
 }
 
-// OK responds with jsonapi marshaled data (HTTP code 200)
+// OK responds with jsonapi marshaled data (HTTP code 200).
 func (w *authorizePaymentMethodResponseWriter) OK(data *AuthorizePaymentMethodOK) {
 	runtime.Marshal(w, data, 200)
 }
@@ -804,7 +804,7 @@ type AuthorizePaymentMethodRequest struct {
 
 /*
 DeletePaymentTokenResponseWriter is a standard http.ResponseWriter extended with methods
-to generate the respective responses easily
+to generate the respective responses easily.
 */
 type DeletePaymentTokenResponseWriter interface {
 	http.ResponseWriter
@@ -815,12 +815,12 @@ type deletePaymentTokenResponseWriter struct {
 	http.ResponseWriter
 }
 
-// NotFound responds with jsonapi error (HTTP code 404)
+// NotFound responds with jsonapi error (HTTP code 404).
 func (w *deletePaymentTokenResponseWriter) NotFound(err error) {
 	runtime.WriteError(w, 404, err)
 }
 
-// ThePaymentTokenWasRemovedSuccessfully responds with empty response (HTTP code 204)
+// ThePaymentTokenWasRemovedSuccessfully responds with empty response (HTTP code 204).
 func (w *deletePaymentTokenResponseWriter) ThePaymentTokenWasRemovedSuccessfully() {
 	w.Header().Set("Content-Type", "application/vnd.api+json")
 	w.WriteHeader(204)
@@ -828,7 +828,7 @@ func (w *deletePaymentTokenResponseWriter) ThePaymentTokenWasRemovedSuccessfully
 
 /*
 DeletePaymentTokenRequest is a standard http.Request extended with the
-un-marshaled content object
+un-marshaled content object.
 */
 type DeletePaymentTokenRequest struct {
 	Request              *http.Request `valid:"-"`
@@ -838,7 +838,7 @@ type DeletePaymentTokenRequest struct {
 
 /*
 GetPaymentMethodsIncludingCreditCheckResponseWriter is a standard http.ResponseWriter extended with methods
-to generate the respective responses easily
+to generate the respective responses easily.
 */
 type GetPaymentMethodsIncludingCreditCheckResponseWriter interface {
 	http.ResponseWriter
@@ -848,14 +848,14 @@ type getPaymentMethodsIncludingCreditCheckResponseWriter struct {
 	http.ResponseWriter
 }
 
-// AllThePaymentMethodsThatCouldBeUsed responds with jsonapi marshaled data (HTTP code 200)
+// AllThePaymentMethodsThatCouldBeUsed responds with jsonapi marshaled data (HTTP code 200).
 func (w *getPaymentMethodsIncludingCreditCheckResponseWriter) AllThePaymentMethodsThatCouldBeUsed(data AllPaymentMethods) {
 	runtime.Marshal(w, data, 200)
 }
 
 /*
 GetPaymentMethodsIncludingCreditCheckRequest is a standard http.Request extended with the
-un-marshaled content object
+un-marshaled content object.
 */
 type GetPaymentMethodsIncludingCreditCheckRequest struct {
 	Request      *http.Request `valid:"-"`
@@ -864,7 +864,7 @@ type GetPaymentMethodsIncludingCreditCheckRequest struct {
 
 /*
 GetPaymentMethodsIncludingPaymentTokenResponseWriter is a standard http.ResponseWriter extended with methods
-to generate the respective responses easily
+to generate the respective responses easily.
 */
 type GetPaymentMethodsIncludingPaymentTokenResponseWriter interface {
 	http.ResponseWriter
@@ -874,14 +874,14 @@ type getPaymentMethodsIncludingPaymentTokenResponseWriter struct {
 	http.ResponseWriter
 }
 
-// AllThePaymentMethodsWithPreAuthorisedAmounts responds with jsonapi marshaled data (HTTP code 200)
+// AllThePaymentMethodsWithPreAuthorisedAmounts responds with jsonapi marshaled data (HTTP code 200).
 func (w *getPaymentMethodsIncludingPaymentTokenResponseWriter) AllThePaymentMethodsWithPreAuthorisedAmounts(data PaymentMethodsWithPaymentTokens) {
 	runtime.Marshal(w, data, 200)
 }
 
 /*
 GetPaymentMethodsIncludingPaymentTokenRequest is a standard http.Request extended with the
-un-marshaled content object
+un-marshaled content object.
 */
 type GetPaymentMethodsIncludingPaymentTokenRequest struct {
 	Request      *http.Request `valid:"-"`
@@ -915,7 +915,7 @@ type ProcessPaymentCreatedFueling struct {
 
 /*
 ProcessPaymentResponseWriter is a standard http.ResponseWriter extended with methods
-to generate the respective responses easily
+to generate the respective responses easily.
 */
 type ProcessPaymentResponseWriter interface {
 	http.ResponseWriter
@@ -928,22 +928,22 @@ type processPaymentResponseWriter struct {
 	http.ResponseWriter
 }
 
-// Conflict responds with jsonapi error (HTTP code 409)
+// Conflict responds with jsonapi error (HTTP code 409).
 func (w *processPaymentResponseWriter) Conflict(err error) {
 	runtime.WriteError(w, 409, err)
 }
 
-// NotFound responds with jsonapi error (HTTP code 404)
+// NotFound responds with jsonapi error (HTTP code 404).
 func (w *processPaymentResponseWriter) NotFound(err error) {
 	runtime.WriteError(w, 404, err)
 }
 
-// BadRequest responds with jsonapi error (HTTP code 400)
+// BadRequest responds with jsonapi error (HTTP code 400).
 func (w *processPaymentResponseWriter) BadRequest(err error) {
 	runtime.WriteError(w, 400, err)
 }
 
-// Created responds with jsonapi marshaled data (HTTP code 201)
+// Created responds with jsonapi marshaled data (HTTP code 201).
 func (w *processPaymentResponseWriter) Created(data *ProcessPaymentCreated) {
 	runtime.Marshal(w, data, 201)
 }
@@ -952,17 +952,17 @@ func (w *processPaymentResponseWriter) Created(data *ProcessPaymentCreated) {
 type ProcessPaymentRequest struct {
 	Request           *http.Request      `valid:"-"`
 	Content           TransactionRequest `valid:"-"`
-	ParamPathDecimal  decimal.Decimal    `valid:"required,matches(^(\d*\.)?\d+$)"`
-	ParamQueryDecimal decimal.Decimal    `valid:"required,matches(^(\d*\.)?\d+$)"`
+	ParamPathDecimal  decimal.Decimal    `valid:"required,matches(^([0-9]*\\.)?[0-9]+$)"`
+	ParamQueryDecimal decimal.Decimal    `valid:"required,matches(^([0-9]*\\.)?[0-9]+$)"`
 }
 
-// Service interface for GetPaymentMethodsHandler handler
+// Service interface for GetPaymentMethodsHandler handler.
 type GetPaymentMethodsHandlerService interface {
 	// GetPaymentMethods Get all payment methods for user
 	GetPaymentMethods(context.Context, GetPaymentMethodsResponseWriter, *GetPaymentMethodsRequest) error
 }
 
-// Service interface for CreatePaymentMethodSEPAHandler handler
+// Service interface for CreatePaymentMethodSEPAHandler handler.
 type CreatePaymentMethodSEPAHandlerService interface {
 	/*
 	   CreatePaymentMethodSEPA Register SEPA direct debit as a payment method
@@ -973,13 +973,13 @@ type CreatePaymentMethodSEPAHandlerService interface {
 	CreatePaymentMethodSEPA(context.Context, CreatePaymentMethodSEPAResponseWriter, *CreatePaymentMethodSEPARequest) error
 }
 
-// Service interface for DeletePaymentMethodHandler handler
+// Service interface for DeletePaymentMethodHandler handler.
 type DeletePaymentMethodHandlerService interface {
 	// DeletePaymentMethod Delete a payment method
 	DeletePaymentMethod(context.Context, DeletePaymentMethodResponseWriter, *DeletePaymentMethodRequest) error
 }
 
-// Service interface for AuthorizePaymentMethodHandler handler
+// Service interface for AuthorizePaymentMethodHandler handler.
 type AuthorizePaymentMethodHandlerService interface {
 	/*
 	   AuthorizePaymentMethod Authorize a payment using the payment method whose ID is paymentMethodId
@@ -989,13 +989,13 @@ type AuthorizePaymentMethodHandlerService interface {
 	AuthorizePaymentMethod(context.Context, AuthorizePaymentMethodResponseWriter, *AuthorizePaymentMethodRequest) error
 }
 
-// Service interface for DeletePaymentTokenHandler handler
+// Service interface for DeletePaymentTokenHandler handler.
 type DeletePaymentTokenHandlerService interface {
 	// DeletePaymentToken Delete the paymentToken record.
 	DeletePaymentToken(context.Context, DeletePaymentTokenResponseWriter, *DeletePaymentTokenRequest) error
 }
 
-// Service interface for GetPaymentMethodsIncludingCreditCheckHandler handler
+// Service interface for GetPaymentMethodsIncludingCreditCheckHandler handler.
 type GetPaymentMethodsIncludingCreditCheckHandlerService interface {
 	/*
 	   GetPaymentMethodsIncludingCreditCheck Get all ready-to-use payment methods for user
@@ -1008,7 +1008,7 @@ type GetPaymentMethodsIncludingCreditCheckHandlerService interface {
 	GetPaymentMethodsIncludingCreditCheck(context.Context, GetPaymentMethodsIncludingCreditCheckResponseWriter, *GetPaymentMethodsIncludingCreditCheckRequest) error
 }
 
-// Service interface for GetPaymentMethodsIncludingPaymentTokenHandler handler
+// Service interface for GetPaymentMethodsIncludingPaymentTokenHandler handler.
 type GetPaymentMethodsIncludingPaymentTokenHandlerService interface {
 	/*
 	   GetPaymentMethodsIncludingPaymentToken Get all payment methods with pre-authorized amounts
@@ -1020,7 +1020,7 @@ type GetPaymentMethodsIncludingPaymentTokenHandlerService interface {
 	GetPaymentMethodsIncludingPaymentToken(context.Context, GetPaymentMethodsIncludingPaymentTokenResponseWriter, *GetPaymentMethodsIncludingPaymentTokenRequest) error
 }
 
-// Service interface for ProcessPaymentHandler handler
+// Service interface for ProcessPaymentHandler handler.
 type ProcessPaymentHandlerService interface {
 	/*
 	   ProcessPayment Process payment
@@ -1044,7 +1044,7 @@ type Service interface {
 }
 
 // DeletePaymentTokenHandlerWithFallbackHelper helper that checks if the given service fulfills the interface. Returns fallback handler if not, otherwise returns matching handler.
-func DeletePaymentTokenHandlerWithFallbackHelper(service interface{}, fallback http.Handler, authBackend AuthorizationBackend) http.Handler {
+func DeletePaymentTokenHandlerWithFallbackHelper(service any, fallback http.Handler, authBackend AuthorizationBackend) http.Handler {
 	if service, ok := service.(DeletePaymentTokenHandlerService); ok {
 		return DeletePaymentTokenHandler(service, authBackend)
 	} else {
@@ -1053,7 +1053,7 @@ func DeletePaymentTokenHandlerWithFallbackHelper(service interface{}, fallback h
 }
 
 // AuthorizePaymentMethodHandlerWithFallbackHelper helper that checks if the given service fulfills the interface. Returns fallback handler if not, otherwise returns matching handler.
-func AuthorizePaymentMethodHandlerWithFallbackHelper(service interface{}, fallback http.Handler, authBackend AuthorizationBackend) http.Handler {
+func AuthorizePaymentMethodHandlerWithFallbackHelper(service any, fallback http.Handler, authBackend AuthorizationBackend) http.Handler {
 	if service, ok := service.(AuthorizePaymentMethodHandlerService); ok {
 		return AuthorizePaymentMethodHandler(service, authBackend)
 	} else {
@@ -1062,7 +1062,7 @@ func AuthorizePaymentMethodHandlerWithFallbackHelper(service interface{}, fallba
 }
 
 // CreatePaymentMethodSEPAHandlerWithFallbackHelper helper that checks if the given service fulfills the interface. Returns fallback handler if not, otherwise returns matching handler.
-func CreatePaymentMethodSEPAHandlerWithFallbackHelper(service interface{}, fallback http.Handler, authBackend AuthorizationBackend) http.Handler {
+func CreatePaymentMethodSEPAHandlerWithFallbackHelper(service any, fallback http.Handler, authBackend AuthorizationBackend) http.Handler {
 	if service, ok := service.(CreatePaymentMethodSEPAHandlerService); ok {
 		return CreatePaymentMethodSEPAHandler(service, authBackend)
 	} else {
@@ -1071,7 +1071,7 @@ func CreatePaymentMethodSEPAHandlerWithFallbackHelper(service interface{}, fallb
 }
 
 // DeletePaymentMethodHandlerWithFallbackHelper helper that checks if the given service fulfills the interface. Returns fallback handler if not, otherwise returns matching handler.
-func DeletePaymentMethodHandlerWithFallbackHelper(service interface{}, fallback http.Handler, authBackend AuthorizationBackend) http.Handler {
+func DeletePaymentMethodHandlerWithFallbackHelper(service any, fallback http.Handler, authBackend AuthorizationBackend) http.Handler {
 	if service, ok := service.(DeletePaymentMethodHandlerService); ok {
 		return DeletePaymentMethodHandler(service, authBackend)
 	} else {
@@ -1080,7 +1080,7 @@ func DeletePaymentMethodHandlerWithFallbackHelper(service interface{}, fallback 
 }
 
 // ProcessPaymentHandlerWithFallbackHelper helper that checks if the given service fulfills the interface. Returns fallback handler if not, otherwise returns matching handler.
-func ProcessPaymentHandlerWithFallbackHelper(service interface{}, fallback http.Handler, authBackend AuthorizationBackend) http.Handler {
+func ProcessPaymentHandlerWithFallbackHelper(service any, fallback http.Handler, authBackend AuthorizationBackend) http.Handler {
 	if service, ok := service.(ProcessPaymentHandlerService); ok {
 		return ProcessPaymentHandler(service, authBackend)
 	} else {
@@ -1089,7 +1089,7 @@ func ProcessPaymentHandlerWithFallbackHelper(service interface{}, fallback http.
 }
 
 // GetPaymentMethodsIncludingCreditCheckHandlerWithFallbackHelper helper that checks if the given service fulfills the interface. Returns fallback handler if not, otherwise returns matching handler.
-func GetPaymentMethodsIncludingCreditCheckHandlerWithFallbackHelper(service interface{}, fallback http.Handler, authBackend AuthorizationBackend) http.Handler {
+func GetPaymentMethodsIncludingCreditCheckHandlerWithFallbackHelper(service any, fallback http.Handler, authBackend AuthorizationBackend) http.Handler {
 	if service, ok := service.(GetPaymentMethodsIncludingCreditCheckHandlerService); ok {
 		return GetPaymentMethodsIncludingCreditCheckHandler(service, authBackend)
 	} else {
@@ -1098,7 +1098,7 @@ func GetPaymentMethodsIncludingCreditCheckHandlerWithFallbackHelper(service inte
 }
 
 // GetPaymentMethodsIncludingPaymentTokenHandlerWithFallbackHelper helper that checks if the given service fulfills the interface. Returns fallback handler if not, otherwise returns matching handler.
-func GetPaymentMethodsIncludingPaymentTokenHandlerWithFallbackHelper(service interface{}, fallback http.Handler, authBackend AuthorizationBackend) http.Handler {
+func GetPaymentMethodsIncludingPaymentTokenHandlerWithFallbackHelper(service any, fallback http.Handler, authBackend AuthorizationBackend) http.Handler {
 	if service, ok := service.(GetPaymentMethodsIncludingPaymentTokenHandlerService); ok {
 		return GetPaymentMethodsIncludingPaymentTokenHandler(service, authBackend)
 	} else {
@@ -1107,7 +1107,7 @@ func GetPaymentMethodsIncludingPaymentTokenHandlerWithFallbackHelper(service int
 }
 
 // GetPaymentMethodsHandlerWithFallbackHelper helper that checks if the given service fulfills the interface. Returns fallback handler if not, otherwise returns matching handler.
-func GetPaymentMethodsHandlerWithFallbackHelper(service interface{}, fallback http.Handler, authBackend AuthorizationBackend) http.Handler {
+func GetPaymentMethodsHandlerWithFallbackHelper(service any, fallback http.Handler, authBackend AuthorizationBackend) http.Handler {
 	if service, ok := service.(GetPaymentMethodsHandlerService); ok {
 		return GetPaymentMethodsHandler(service, authBackend)
 	} else {

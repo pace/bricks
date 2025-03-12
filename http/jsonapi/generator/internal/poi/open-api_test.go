@@ -423,7 +423,7 @@ var cfgOIDC = &oidc.Config{
 /*
 DeduplicatePoiHandler handles request/response marshaling and validation for
 
-	Patch /beta/admin/poi/dedupe
+	Patch /beta/admin/poi/dedupe.
 */
 func DeduplicatePoiHandler(service DeduplicatePoiHandlerService, authBackend AuthorizationBackend) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -480,7 +480,7 @@ func DeduplicatePoiHandler(service DeduplicatePoiHandlerService, authBackend Aut
 /*
 MovePoiAtPositionHandler handles request/response marshaling and validation for
 
-	Patch /beta/admin/poi/move
+	Patch /beta/admin/poi/move.
 */
 func MovePoiAtPositionHandler(service MovePoiAtPositionHandlerService, authBackend AuthorizationBackend) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -537,7 +537,7 @@ func MovePoiAtPositionHandler(service MovePoiAtPositionHandlerService, authBacke
 /*
 GetAppsHandler handles request/response marshaling and validation for
 
-	Get /beta/apps
+	Get /beta/apps.
 */
 func GetAppsHandler(service GetAppsHandlerService, authBackend AuthorizationBackend) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -614,7 +614,7 @@ func GetAppsHandler(service GetAppsHandlerService, authBackend AuthorizationBack
 /*
 CreateAppHandler handles request/response marshaling and validation for
 
-	Post /beta/apps
+	Post /beta/apps.
 */
 func CreateAppHandler(service CreateAppHandlerService, authBackend AuthorizationBackend) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -671,7 +671,7 @@ func CreateAppHandler(service CreateAppHandlerService, authBackend Authorization
 /*
 CheckForPaceAppHandler handles request/response marshaling and validation for
 
-	Get /beta/apps/query
+	Get /beta/apps/query.
 */
 func CheckForPaceAppHandler(service CheckForPaceAppHandlerService, authBackend AuthorizationBackend) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -740,7 +740,7 @@ func CheckForPaceAppHandler(service CheckForPaceAppHandlerService, authBackend A
 /*
 DeleteAppHandler handles request/response marshaling and validation for
 
-	Delete /beta/apps/{appID}
+	Delete /beta/apps/{appID}.
 */
 func DeleteAppHandler(service DeleteAppHandlerService, authBackend AuthorizationBackend) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -803,7 +803,7 @@ func DeleteAppHandler(service DeleteAppHandlerService, authBackend Authorization
 /*
 GetAppHandler handles request/response marshaling and validation for
 
-	Get /beta/apps/{appID}
+	Get /beta/apps/{appID}.
 */
 func GetAppHandler(service GetAppHandlerService, authBackend AuthorizationBackend) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -866,7 +866,7 @@ func GetAppHandler(service GetAppHandlerService, authBackend AuthorizationBacken
 /*
 UpdateAppHandler handles request/response marshaling and validation for
 
-	Put /beta/apps/{appID}
+	Put /beta/apps/{appID}.
 */
 func UpdateAppHandler(service UpdateAppHandlerService, authBackend AuthorizationBackend) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -932,7 +932,7 @@ func UpdateAppHandler(service UpdateAppHandlerService, authBackend Authorization
 /*
 GetAppPOIsRelationshipsHandler handles request/response marshaling and validation for
 
-	Get /beta/apps/{appID}/relationships/pois
+	Get /beta/apps/{appID}/relationships/pois.
 */
 func GetAppPOIsRelationshipsHandler(service GetAppPOIsRelationshipsHandlerService, authBackend AuthorizationBackend) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -995,7 +995,7 @@ func GetAppPOIsRelationshipsHandler(service GetAppPOIsRelationshipsHandlerServic
 /*
 UpdateAppPOIsRelationshipsHandler handles request/response marshaling and validation for
 
-	Patch /beta/apps/{appID}/relationships/pois
+	Patch /beta/apps/{appID}/relationships/pois.
 */
 func UpdateAppPOIsRelationshipsHandler(service UpdateAppPOIsRelationshipsHandlerService, authBackend AuthorizationBackend) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -1061,7 +1061,7 @@ func UpdateAppPOIsRelationshipsHandler(service UpdateAppPOIsRelationshipsHandler
 /*
 GetDuplicatesKMLHandler handles request/response marshaling and validation for
 
-	Get /beta/datadumps/duplicatemap/{countryCode}
+	Get /beta/datadumps/duplicatemap/{countryCode}.
 */
 func GetDuplicatesKMLHandler(service GetDuplicatesKMLHandlerService, authBackend AuthorizationBackend) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -1124,7 +1124,7 @@ func GetDuplicatesKMLHandler(service GetDuplicatesKMLHandlerService, authBackend
 /*
 GetPoisDumpHandler handles request/response marshaling and validation for
 
-	Get /beta/datadumps/pois
+	Get /beta/datadumps/pois.
 */
 func GetPoisDumpHandler(service GetPoisDumpHandlerService, authBackend AuthorizationBackend) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -1185,7 +1185,7 @@ func GetPoisDumpHandler(service GetPoisDumpHandlerService, authBackend Authoriza
 /*
 DeleteGasStationReferenceStatusHandler handles request/response marshaling and validation for
 
-	Delete /beta/delivery/gas-stations/{gasStationId}/reference-status/{reference}
+	Delete /beta/delivery/gas-stations/{gasStationId}/reference-status/{reference}.
 */
 func DeleteGasStationReferenceStatusHandler(service DeleteGasStationReferenceStatusHandlerService, authBackend AuthorizationBackend) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -1253,7 +1253,7 @@ func DeleteGasStationReferenceStatusHandler(service DeleteGasStationReferenceSta
 /*
 PutGasStationReferenceStatusHandler handles request/response marshaling and validation for
 
-	Put /beta/delivery/gas-stations/{gasStationId}/reference-status/{reference}
+	Put /beta/delivery/gas-stations/{gasStationId}/reference-status/{reference}.
 */
 func PutGasStationReferenceStatusHandler(service PutGasStationReferenceStatusHandlerService, authBackend AuthorizationBackend) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -1324,7 +1324,7 @@ func PutGasStationReferenceStatusHandler(service PutGasStationReferenceStatusHan
 /*
 GetEventsHandler handles request/response marshaling and validation for
 
-	Get /beta/events
+	Get /beta/events.
 */
 func GetEventsHandler(service GetEventsHandlerService, authBackend AuthorizationBackend) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -1397,7 +1397,7 @@ func GetEventsHandler(service GetEventsHandlerService, authBackend Authorization
 /*
 GetGasStationsHandler handles request/response marshaling and validation for
 
-	Get /beta/gas-stations
+	Get /beta/gas-stations.
 */
 func GetGasStationsHandler(service GetGasStationsHandlerService, authBackend AuthorizationBackend) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -1494,7 +1494,7 @@ func GetGasStationsHandler(service GetGasStationsHandlerService, authBackend Aut
 /*
 GetGasStationHandler handles request/response marshaling and validation for
 
-	Get /beta/gas-stations/{id}
+	Get /beta/gas-stations/{id}.
 */
 func GetGasStationHandler(service GetGasStationHandlerService, authBackend AuthorizationBackend) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -1561,7 +1561,7 @@ func GetGasStationHandler(service GetGasStationHandlerService, authBackend Autho
 /*
 GetPriceHistoryHandler handles request/response marshaling and validation for
 
-	Get /beta/gas-stations/{id}/fuel-price-histories/{fuel_type}
+	Get /beta/gas-stations/{id}/fuel-price-histories/{fuel_type}.
 */
 func GetPriceHistoryHandler(service GetPriceHistoryHandlerService, authBackend AuthorizationBackend) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -1641,7 +1641,7 @@ func GetPriceHistoryHandler(service GetPriceHistoryHandlerService, authBackend A
 /*
 GetGasStationFuelTypeNameMappingHandler handles request/response marshaling and validation for
 
-	Get /beta/gas-stations/{id}/fueltype
+	Get /beta/gas-stations/{id}/fueltype.
 */
 func GetGasStationFuelTypeNameMappingHandler(service GetGasStationFuelTypeNameMappingHandlerService, authBackend AuthorizationBackend) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -1708,7 +1708,7 @@ func GetGasStationFuelTypeNameMappingHandler(service GetGasStationFuelTypeNameMa
 /*
 GetMetadataFiltersHandler handles request/response marshaling and validation for
 
-	Get /beta/meta
+	Get /beta/meta.
 */
 func GetMetadataFiltersHandler(service GetMetadataFiltersHandlerService, authBackend AuthorizationBackend) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -1773,7 +1773,7 @@ func GetMetadataFiltersHandler(service GetMetadataFiltersHandlerService, authBac
 /*
 GetPoisHandler handles request/response marshaling and validation for
 
-	Get /beta/pois
+	Get /beta/pois.
 */
 func GetPoisHandler(service GetPoisHandlerService, authBackend AuthorizationBackend) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -1846,7 +1846,7 @@ func GetPoisHandler(service GetPoisHandlerService, authBackend AuthorizationBack
 /*
 GetPoiHandler handles request/response marshaling and validation for
 
-	Get /beta/pois/{poiId}
+	Get /beta/pois/{poiId}.
 */
 func GetPoiHandler(service GetPoiHandlerService, authBackend AuthorizationBackend) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -1909,7 +1909,7 @@ func GetPoiHandler(service GetPoiHandlerService, authBackend AuthorizationBacken
 /*
 ChangePoiHandler handles request/response marshaling and validation for
 
-	Patch /beta/pois/{poiId}
+	Patch /beta/pois/{poiId}.
 */
 func ChangePoiHandler(service ChangePoiHandlerService, authBackend AuthorizationBackend) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -1975,7 +1975,7 @@ func ChangePoiHandler(service ChangePoiHandlerService, authBackend Authorization
 /*
 GetPoliciesHandler handles request/response marshaling and validation for
 
-	Get /beta/policies
+	Get /beta/policies.
 */
 func GetPoliciesHandler(service GetPoliciesHandlerService, authBackend AuthorizationBackend) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -2052,7 +2052,7 @@ func GetPoliciesHandler(service GetPoliciesHandlerService, authBackend Authoriza
 /*
 CreatePolicyHandler handles request/response marshaling and validation for
 
-	Post /beta/policies
+	Post /beta/policies.
 */
 func CreatePolicyHandler(service CreatePolicyHandlerService, authBackend AuthorizationBackend) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -2109,7 +2109,7 @@ func CreatePolicyHandler(service CreatePolicyHandlerService, authBackend Authori
 /*
 GetPolicyHandler handles request/response marshaling and validation for
 
-	Get /beta/policies/{policyId}
+	Get /beta/policies/{policyId}.
 */
 func GetPolicyHandler(service GetPolicyHandlerService, authBackend AuthorizationBackend) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -2172,7 +2172,7 @@ func GetPolicyHandler(service GetPolicyHandlerService, authBackend Authorization
 /*
 GetRegionalPricesHandler handles request/response marshaling and validation for
 
-	Get /beta/prices/regional
+	Get /beta/prices/regional.
 */
 func GetRegionalPricesHandler(service GetRegionalPricesHandlerService, authBackend AuthorizationBackend) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -2232,7 +2232,7 @@ func GetRegionalPricesHandler(service GetRegionalPricesHandlerService, authBacke
 /*
 GetSourcesHandler handles request/response marshaling and validation for
 
-	Get /beta/sources
+	Get /beta/sources.
 */
 func GetSourcesHandler(service GetSourcesHandlerService, authBackend AuthorizationBackend) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -2305,7 +2305,7 @@ func GetSourcesHandler(service GetSourcesHandlerService, authBackend Authorizati
 /*
 CreateSourceHandler handles request/response marshaling and validation for
 
-	Post /beta/sources
+	Post /beta/sources.
 */
 func CreateSourceHandler(service CreateSourceHandlerService, authBackend AuthorizationBackend) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -2362,7 +2362,7 @@ func CreateSourceHandler(service CreateSourceHandlerService, authBackend Authori
 /*
 DeleteSourceHandler handles request/response marshaling and validation for
 
-	Delete /beta/sources/{sourceId}
+	Delete /beta/sources/{sourceId}.
 */
 func DeleteSourceHandler(service DeleteSourceHandlerService, authBackend AuthorizationBackend) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -2425,7 +2425,7 @@ func DeleteSourceHandler(service DeleteSourceHandlerService, authBackend Authori
 /*
 GetSourceHandler handles request/response marshaling and validation for
 
-	Get /beta/sources/{sourceId}
+	Get /beta/sources/{sourceId}.
 */
 func GetSourceHandler(service GetSourceHandlerService, authBackend AuthorizationBackend) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -2488,7 +2488,7 @@ func GetSourceHandler(service GetSourceHandlerService, authBackend Authorization
 /*
 UpdateSourceHandler handles request/response marshaling and validation for
 
-	Put /beta/sources/{sourceId}
+	Put /beta/sources/{sourceId}.
 */
 func UpdateSourceHandler(service UpdateSourceHandlerService, authBackend AuthorizationBackend) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -2554,7 +2554,7 @@ func UpdateSourceHandler(service UpdateSourceHandlerService, authBackend Authori
 /*
 GetSubscriptionsHandler handles request/response marshaling and validation for
 
-	Get /beta/subscriptions
+	Get /beta/subscriptions.
 */
 func GetSubscriptionsHandler(service GetSubscriptionsHandlerService, authBackend AuthorizationBackend) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -2611,7 +2611,7 @@ func GetSubscriptionsHandler(service GetSubscriptionsHandlerService, authBackend
 /*
 DeleteSubscriptionHandler handles request/response marshaling and validation for
 
-	Delete /beta/subscriptions/{id}
+	Delete /beta/subscriptions/{id}.
 */
 func DeleteSubscriptionHandler(service DeleteSubscriptionHandlerService, authBackend AuthorizationBackend) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -2662,7 +2662,7 @@ func DeleteSubscriptionHandler(service DeleteSubscriptionHandlerService, authBac
 /*
 StoreSubscriptionHandler handles request/response marshaling and validation for
 
-	Put /beta/subscriptions/{id}
+	Put /beta/subscriptions/{id}.
 */
 func StoreSubscriptionHandler(service StoreSubscriptionHandlerService, authBackend AuthorizationBackend) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -2719,7 +2719,7 @@ func StoreSubscriptionHandler(service StoreSubscriptionHandlerService, authBacke
 /*
 GetTilesHandler handles request/response marshaling and validation for
 
-	Post /v1/tiles/query
+	Post /v1/tiles/query.
 */
 func GetTilesHandler(service GetTilesHandlerService, authBackend AuthorizationBackend) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -2769,7 +2769,7 @@ func GetTilesHandler(service GetTilesHandlerService, authBackend AuthorizationBa
 
 /*
 DeduplicatePoiResponseWriter is a standard http.ResponseWriter extended with methods
-to generate the respective responses easily
+to generate the respective responses easily.
 */
 type DeduplicatePoiResponseWriter interface {
 	http.ResponseWriter
@@ -2781,17 +2781,17 @@ type deduplicatePoiResponseWriter struct {
 	http.ResponseWriter
 }
 
-// NotFound responds with jsonapi error (HTTP code 404)
+// NotFound responds with jsonapi error (HTTP code 404).
 func (w *deduplicatePoiResponseWriter) NotFound(err error) {
 	runtime.WriteError(w, 404, err)
 }
 
-// BadRequest responds with jsonapi error (HTTP code 400)
+// BadRequest responds with jsonapi error (HTTP code 400).
 func (w *deduplicatePoiResponseWriter) BadRequest(err error) {
 	runtime.WriteError(w, 400, err)
 }
 
-// OK responds with empty response (HTTP code 204)
+// OK responds with empty response (HTTP code 204).
 func (w *deduplicatePoiResponseWriter) OK() {
 	w.Header().Set("Content-Type", "application/vnd.api+json")
 	w.WriteHeader(204)
@@ -2805,7 +2805,7 @@ type DeduplicatePoiRequest struct {
 
 /*
 MovePoiAtPositionResponseWriter is a standard http.ResponseWriter extended with methods
-to generate the respective responses easily
+to generate the respective responses easily.
 */
 type MovePoiAtPositionResponseWriter interface {
 	http.ResponseWriter
@@ -2817,17 +2817,17 @@ type movePoiAtPositionResponseWriter struct {
 	http.ResponseWriter
 }
 
-// NotFound responds with jsonapi error (HTTP code 404)
+// NotFound responds with jsonapi error (HTTP code 404).
 func (w *movePoiAtPositionResponseWriter) NotFound(err error) {
 	runtime.WriteError(w, 404, err)
 }
 
-// BadRequest responds with jsonapi error (HTTP code 400)
+// BadRequest responds with jsonapi error (HTTP code 400).
 func (w *movePoiAtPositionResponseWriter) BadRequest(err error) {
 	runtime.WriteError(w, 400, err)
 }
 
-// OK responds with empty response (HTTP code 204)
+// OK responds with empty response (HTTP code 204).
 func (w *movePoiAtPositionResponseWriter) OK() {
 	w.Header().Set("Content-Type", "application/vnd.api+json")
 	w.WriteHeader(204)
@@ -2841,7 +2841,7 @@ type MovePoiAtPositionRequest struct {
 
 /*
 GetAppsResponseWriter is a standard http.ResponseWriter extended with methods
-to generate the respective responses easily
+to generate the respective responses easily.
 */
 type GetAppsResponseWriter interface {
 	http.ResponseWriter
@@ -2852,19 +2852,19 @@ type getAppsResponseWriter struct {
 	http.ResponseWriter
 }
 
-// BadRequest responds with jsonapi error (HTTP code 400)
+// BadRequest responds with jsonapi error (HTTP code 400).
 func (w *getAppsResponseWriter) BadRequest(err error) {
 	runtime.WriteError(w, 400, err)
 }
 
-// OK responds with jsonapi marshaled data (HTTP code 200)
+// OK responds with jsonapi marshaled data (HTTP code 200).
 func (w *getAppsResponseWriter) OK(data LocationBasedApps) {
 	runtime.Marshal(w, data, 200)
 }
 
 /*
 GetAppsRequest is a standard http.Request extended with the
-un-marshaled content object
+un-marshaled content object.
 */
 type GetAppsRequest struct {
 	Request            *http.Request `valid:"-"`
@@ -2877,7 +2877,7 @@ type GetAppsRequest struct {
 
 /*
 CreateAppResponseWriter is a standard http.ResponseWriter extended with methods
-to generate the respective responses easily
+to generate the respective responses easily.
 */
 type CreateAppResponseWriter interface {
 	http.ResponseWriter
@@ -2888,12 +2888,12 @@ type createAppResponseWriter struct {
 	http.ResponseWriter
 }
 
-// BadRequest responds with jsonapi error (HTTP code 400)
+// BadRequest responds with jsonapi error (HTTP code 400).
 func (w *createAppResponseWriter) BadRequest(err error) {
 	runtime.WriteError(w, 400, err)
 }
 
-// OK responds with jsonapi marshaled data (HTTP code 201)
+// OK responds with jsonapi marshaled data (HTTP code 201).
 func (w *createAppResponseWriter) OK(data *LocationBasedApp) {
 	runtime.Marshal(w, data, 201)
 }
@@ -2906,7 +2906,7 @@ type CreateAppRequest struct {
 
 /*
 CheckForPaceAppResponseWriter is a standard http.ResponseWriter extended with methods
-to generate the respective responses easily
+to generate the respective responses easily.
 */
 type CheckForPaceAppResponseWriter interface {
 	http.ResponseWriter
@@ -2917,19 +2917,19 @@ type checkForPaceAppResponseWriter struct {
 	http.ResponseWriter
 }
 
-// BadRequest responds with jsonapi error (HTTP code 400)
+// BadRequest responds with jsonapi error (HTTP code 400).
 func (w *checkForPaceAppResponseWriter) BadRequest(err error) {
 	runtime.WriteError(w, 400, err)
 }
 
-// OK responds with jsonapi marshaled data (HTTP code 200)
+// OK responds with jsonapi marshaled data (HTTP code 200).
 func (w *checkForPaceAppResponseWriter) OK(data LocationBasedAppsWithRefs) {
 	runtime.Marshal(w, data, 200)
 }
 
 /*
 CheckForPaceAppRequest is a standard http.Request extended with the
-un-marshaled content object
+un-marshaled content object.
 */
 type CheckForPaceAppRequest struct {
 	Request              *http.Request `valid:"-"`
@@ -2940,7 +2940,7 @@ type CheckForPaceAppRequest struct {
 
 /*
 DeleteAppResponseWriter is a standard http.ResponseWriter extended with methods
-to generate the respective responses easily
+to generate the respective responses easily.
 */
 type DeleteAppResponseWriter interface {
 	http.ResponseWriter
@@ -2951,12 +2951,12 @@ type deleteAppResponseWriter struct {
 	http.ResponseWriter
 }
 
-// NotFound responds with jsonapi error (HTTP code 404)
+// NotFound responds with jsonapi error (HTTP code 404).
 func (w *deleteAppResponseWriter) NotFound(err error) {
 	runtime.WriteError(w, 404, err)
 }
 
-// OK responds with empty response (HTTP code 204)
+// OK responds with empty response (HTTP code 204).
 func (w *deleteAppResponseWriter) OK() {
 	w.Header().Set("Content-Type", "application/vnd.api+json")
 	w.WriteHeader(204)
@@ -2964,7 +2964,7 @@ func (w *deleteAppResponseWriter) OK() {
 
 /*
 DeleteAppRequest is a standard http.Request extended with the
-un-marshaled content object
+un-marshaled content object.
 */
 type DeleteAppRequest struct {
 	Request    *http.Request `valid:"-"`
@@ -2973,7 +2973,7 @@ type DeleteAppRequest struct {
 
 /*
 GetAppResponseWriter is a standard http.ResponseWriter extended with methods
-to generate the respective responses easily
+to generate the respective responses easily.
 */
 type GetAppResponseWriter interface {
 	http.ResponseWriter
@@ -2985,24 +2985,24 @@ type getAppResponseWriter struct {
 	http.ResponseWriter
 }
 
-// NotFound responds with jsonapi error (HTTP code 404)
+// NotFound responds with jsonapi error (HTTP code 404).
 func (w *getAppResponseWriter) NotFound(err error) {
 	runtime.WriteError(w, 404, err)
 }
 
-// BadRequest responds with jsonapi error (HTTP code 400)
+// BadRequest responds with jsonapi error (HTTP code 400).
 func (w *getAppResponseWriter) BadRequest(err error) {
 	runtime.WriteError(w, 400, err)
 }
 
-// OK responds with jsonapi marshaled data (HTTP code 200)
+// OK responds with jsonapi marshaled data (HTTP code 200).
 func (w *getAppResponseWriter) OK(data *LocationBasedApp) {
 	runtime.Marshal(w, data, 200)
 }
 
 /*
 GetAppRequest is a standard http.Request extended with the
-un-marshaled content object
+un-marshaled content object.
 */
 type GetAppRequest struct {
 	Request    *http.Request `valid:"-"`
@@ -3011,7 +3011,7 @@ type GetAppRequest struct {
 
 /*
 UpdateAppResponseWriter is a standard http.ResponseWriter extended with methods
-to generate the respective responses easily
+to generate the respective responses easily.
 */
 type UpdateAppResponseWriter interface {
 	http.ResponseWriter
@@ -3023,17 +3023,17 @@ type updateAppResponseWriter struct {
 	http.ResponseWriter
 }
 
-// NotFound responds with jsonapi error (HTTP code 404)
+// NotFound responds with jsonapi error (HTTP code 404).
 func (w *updateAppResponseWriter) NotFound(err error) {
 	runtime.WriteError(w, 404, err)
 }
 
-// BadRequest responds with jsonapi error (HTTP code 400)
+// BadRequest responds with jsonapi error (HTTP code 400).
 func (w *updateAppResponseWriter) BadRequest(err error) {
 	runtime.WriteError(w, 400, err)
 }
 
-// OK responds with jsonapi marshaled data (HTTP code 200)
+// OK responds with jsonapi marshaled data (HTTP code 200).
 func (w *updateAppResponseWriter) OK(data *LocationBasedApp) {
 	runtime.Marshal(w, data, 200)
 }
@@ -3047,7 +3047,7 @@ type UpdateAppRequest struct {
 
 /*
 GetAppPOIsRelationshipsResponseWriter is a standard http.ResponseWriter extended with methods
-to generate the respective responses easily
+to generate the respective responses easily.
 */
 type GetAppPOIsRelationshipsResponseWriter interface {
 	http.ResponseWriter
@@ -3058,19 +3058,19 @@ type getAppPOIsRelationshipsResponseWriter struct {
 	http.ResponseWriter
 }
 
-// BadRequest responds with jsonapi error (HTTP code 400)
+// BadRequest responds with jsonapi error (HTTP code 400).
 func (w *getAppPOIsRelationshipsResponseWriter) BadRequest(err error) {
 	runtime.WriteError(w, 400, err)
 }
 
-// OK responds with jsonapi marshaled data (HTTP code 200)
+// OK responds with jsonapi marshaled data (HTTP code 200).
 func (w *getAppPOIsRelationshipsResponseWriter) OK(data AppPOIsRelationships) {
 	runtime.Marshal(w, data, 200)
 }
 
 /*
 GetAppPOIsRelationshipsRequest is a standard http.Request extended with the
-un-marshaled content object
+un-marshaled content object.
 */
 type GetAppPOIsRelationshipsRequest struct {
 	Request    *http.Request `valid:"-"`
@@ -3079,7 +3079,7 @@ type GetAppPOIsRelationshipsRequest struct {
 
 /*
 UpdateAppPOIsRelationshipsResponseWriter is a standard http.ResponseWriter extended with methods
-to generate the respective responses easily
+to generate the respective responses easily.
 */
 type UpdateAppPOIsRelationshipsResponseWriter interface {
 	http.ResponseWriter
@@ -3091,17 +3091,17 @@ type updateAppPOIsRelationshipsResponseWriter struct {
 	http.ResponseWriter
 }
 
-// NotFound responds with jsonapi error (HTTP code 404)
+// NotFound responds with jsonapi error (HTTP code 404).
 func (w *updateAppPOIsRelationshipsResponseWriter) NotFound(err error) {
 	runtime.WriteError(w, 404, err)
 }
 
-// BadRequest responds with jsonapi error (HTTP code 400)
+// BadRequest responds with jsonapi error (HTTP code 400).
 func (w *updateAppPOIsRelationshipsResponseWriter) BadRequest(err error) {
 	runtime.WriteError(w, 400, err)
 }
 
-// OK responds with jsonapi marshaled data (HTTP code 200)
+// OK responds with jsonapi marshaled data (HTTP code 200).
 func (w *updateAppPOIsRelationshipsResponseWriter) OK(data AppPOIsRelationships) {
 	runtime.Marshal(w, data, 200)
 }
@@ -3115,7 +3115,7 @@ type UpdateAppPOIsRelationshipsRequest struct {
 
 /*
 GetDuplicatesKMLResponseWriter is a standard http.ResponseWriter extended with methods
-to generate the respective responses easily
+to generate the respective responses easily.
 */
 type GetDuplicatesKMLResponseWriter interface {
 	http.ResponseWriter
@@ -3126,12 +3126,12 @@ type getDuplicatesKMLResponseWriter struct {
 	http.ResponseWriter
 }
 
-// NotFound responds with jsonapi error (HTTP code 404)
+// NotFound responds with jsonapi error (HTTP code 404).
 func (w *getDuplicatesKMLResponseWriter) NotFound(err error) {
 	runtime.WriteError(w, 404, err)
 }
 
-// OK responds with empty response (HTTP code 200)
+// OK responds with empty response (HTTP code 200).
 func (w *getDuplicatesKMLResponseWriter) OK() {
 	w.Header().Set("Content-Type", "application/vnd.google-earth.kml+xml")
 	w.WriteHeader(200)
@@ -3139,7 +3139,7 @@ func (w *getDuplicatesKMLResponseWriter) OK() {
 
 /*
 GetDuplicatesKMLRequest is a standard http.Request extended with the
-un-marshaled content object
+un-marshaled content object.
 */
 type GetDuplicatesKMLRequest struct {
 	Request          *http.Request `valid:"-"`
@@ -3148,7 +3148,7 @@ type GetDuplicatesKMLRequest struct {
 
 /*
 GetPoisDumpResponseWriter is a standard http.ResponseWriter extended with methods
-to generate the respective responses easily
+to generate the respective responses easily.
 */
 type GetPoisDumpResponseWriter interface {
 	http.ResponseWriter
@@ -3158,7 +3158,7 @@ type getPoisDumpResponseWriter struct {
 	http.ResponseWriter
 }
 
-// XLSXPOIReport responds with empty response (HTTP code 200)
+// XLSXPOIReport responds with empty response (HTTP code 200).
 func (w *getPoisDumpResponseWriter) XLSXPOIReport() {
 	w.Header().Set("Content-Type", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
 	w.WriteHeader(200)
@@ -3166,7 +3166,7 @@ func (w *getPoisDumpResponseWriter) XLSXPOIReport() {
 
 /*
 GetPoisDumpRequest is a standard http.Request extended with the
-un-marshaled content object
+un-marshaled content object.
 */
 type GetPoisDumpRequest struct {
 	Request     *http.Request `valid:"-"`
@@ -3175,7 +3175,7 @@ type GetPoisDumpRequest struct {
 
 /*
 DeleteGasStationReferenceStatusResponseWriter is a standard http.ResponseWriter extended with methods
-to generate the respective responses easily
+to generate the respective responses easily.
 */
 type DeleteGasStationReferenceStatusResponseWriter interface {
 	http.ResponseWriter
@@ -3186,12 +3186,12 @@ type deleteGasStationReferenceStatusResponseWriter struct {
 	http.ResponseWriter
 }
 
-// NotFound responds with jsonapi error (HTTP code 404)
+// NotFound responds with jsonapi error (HTTP code 404).
 func (w *deleteGasStationReferenceStatusResponseWriter) NotFound(err error) {
 	runtime.WriteError(w, 404, err)
 }
 
-// NoContent responds with empty response (HTTP code 204)
+// NoContent responds with empty response (HTTP code 204).
 func (w *deleteGasStationReferenceStatusResponseWriter) NoContent() {
 	w.Header().Set("Content-Type", "application/vnd.api+json")
 	w.WriteHeader(204)
@@ -3199,7 +3199,7 @@ func (w *deleteGasStationReferenceStatusResponseWriter) NoContent() {
 
 /*
 DeleteGasStationReferenceStatusRequest is a standard http.Request extended with the
-un-marshaled content object
+un-marshaled content object.
 */
 type DeleteGasStationReferenceStatusRequest struct {
 	Request           *http.Request `valid:"-"`
@@ -3209,7 +3209,7 @@ type DeleteGasStationReferenceStatusRequest struct {
 
 /*
 PutGasStationReferenceStatusResponseWriter is a standard http.ResponseWriter extended with methods
-to generate the respective responses easily
+to generate the respective responses easily.
 */
 type PutGasStationReferenceStatusResponseWriter interface {
 	http.ResponseWriter
@@ -3221,17 +3221,17 @@ type putGasStationReferenceStatusResponseWriter struct {
 	http.ResponseWriter
 }
 
-// NotFound responds with jsonapi error (HTTP code 404)
+// NotFound responds with jsonapi error (HTTP code 404).
 func (w *putGasStationReferenceStatusResponseWriter) NotFound(err error) {
 	runtime.WriteError(w, 404, err)
 }
 
-// BadRequest responds with jsonapi error (HTTP code 400)
+// BadRequest responds with jsonapi error (HTTP code 400).
 func (w *putGasStationReferenceStatusResponseWriter) BadRequest(err error) {
 	runtime.WriteError(w, 400, err)
 }
 
-// NoContent responds with empty response (HTTP code 204)
+// NoContent responds with empty response (HTTP code 204).
 func (w *putGasStationReferenceStatusResponseWriter) NoContent() {
 	w.Header().Set("Content-Type", "application/vnd.api+json")
 	w.WriteHeader(204)
@@ -3247,7 +3247,7 @@ type PutGasStationReferenceStatusRequest struct {
 
 /*
 GetEventsResponseWriter is a standard http.ResponseWriter extended with methods
-to generate the respective responses easily
+to generate the respective responses easily.
 */
 type GetEventsResponseWriter interface {
 	http.ResponseWriter
@@ -3257,14 +3257,14 @@ type getEventsResponseWriter struct {
 	http.ResponseWriter
 }
 
-// OK responds with jsonapi marshaled data (HTTP code 200)
+// OK responds with jsonapi marshaled data (HTTP code 200).
 func (w *getEventsResponseWriter) OK(data Events) {
 	runtime.Marshal(w, data, 200)
 }
 
 /*
 GetEventsRequest is a standard http.Request extended with the
-un-marshaled content object
+un-marshaled content object.
 */
 type GetEventsRequest struct {
 	Request             *http.Request `valid:"-"`
@@ -3276,7 +3276,7 @@ type GetEventsRequest struct {
 
 /*
 GetGasStationsResponseWriter is a standard http.ResponseWriter extended with methods
-to generate the respective responses easily
+to generate the respective responses easily.
 */
 type GetGasStationsResponseWriter interface {
 	http.ResponseWriter
@@ -3287,19 +3287,19 @@ type getGasStationsResponseWriter struct {
 	http.ResponseWriter
 }
 
-// BadRequest responds with jsonapi error (HTTP code 400)
+// BadRequest responds with jsonapi error (HTTP code 400).
 func (w *getGasStationsResponseWriter) BadRequest(err error) {
 	runtime.WriteError(w, 400, err)
 }
 
-// OK responds with jsonapi marshaled data (HTTP code 200)
+// OK responds with jsonapi marshaled data (HTTP code 200).
 func (w *getGasStationsResponseWriter) OK(data GasStations) {
 	runtime.Marshal(w, data, 200)
 }
 
 /*
 GetGasStationsRequest is a standard http.Request extended with the
-un-marshaled content object
+un-marshaled content object.
 */
 type GetGasStationsRequest struct {
 	Request                  *http.Request `valid:"-"`
@@ -3317,7 +3317,7 @@ type GetGasStationsRequest struct {
 
 /*
 GetGasStationResponseWriter is a standard http.ResponseWriter extended with methods
-to generate the respective responses easily
+to generate the respective responses easily.
 */
 type GetGasStationResponseWriter interface {
 	http.ResponseWriter
@@ -3330,30 +3330,30 @@ type getGasStationResponseWriter struct {
 	http.ResponseWriter
 }
 
-// Expired responds with jsonapi error (HTTP code 410)
+// Expired responds with jsonapi error (HTTP code 410).
 func (w *getGasStationResponseWriter) Expired(err error) {
 	runtime.WriteError(w, 410, err)
 }
 
-// NotFound responds with jsonapi error (HTTP code 404)
+// NotFound responds with jsonapi error (HTTP code 404).
 func (w *getGasStationResponseWriter) NotFound(err error) {
 	runtime.WriteError(w, 404, err)
 }
 
-// MovedPermanently responds with empty response (HTTP code 301)
+// MovedPermanently responds with empty response (HTTP code 301).
 func (w *getGasStationResponseWriter) MovedPermanently() {
 	w.Header().Set("Content-Type", "application/vnd.api+json")
 	w.WriteHeader(301)
 }
 
-// OK responds with jsonapi marshaled data (HTTP code 200)
+// OK responds with jsonapi marshaled data (HTTP code 200).
 func (w *getGasStationResponseWriter) OK(data *GasStation) {
 	runtime.Marshal(w, data, 200)
 }
 
 /*
 GetGasStationRequest is a standard http.Request extended with the
-un-marshaled content object
+un-marshaled content object.
 */
 type GetGasStationRequest struct {
 	Request                  *http.Request `valid:"-"`
@@ -3363,7 +3363,7 @@ type GetGasStationRequest struct {
 
 /*
 GetPriceHistoryResponseWriter is a standard http.ResponseWriter extended with methods
-to generate the respective responses easily
+to generate the respective responses easily.
 */
 type GetPriceHistoryResponseWriter interface {
 	http.ResponseWriter
@@ -3375,24 +3375,24 @@ type getPriceHistoryResponseWriter struct {
 	http.ResponseWriter
 }
 
-// NotFound responds with jsonapi error (HTTP code 404)
+// NotFound responds with jsonapi error (HTTP code 404).
 func (w *getPriceHistoryResponseWriter) NotFound(err error) {
 	runtime.WriteError(w, 404, err)
 }
 
-// BadRequest responds with jsonapi error (HTTP code 400)
+// BadRequest responds with jsonapi error (HTTP code 400).
 func (w *getPriceHistoryResponseWriter) BadRequest(err error) {
 	runtime.WriteError(w, 400, err)
 }
 
-// OK responds with jsonapi marshaled data (HTTP code 200)
+// OK responds with jsonapi marshaled data (HTTP code 200).
 func (w *getPriceHistoryResponseWriter) OK(data *PriceHistory) {
 	runtime.Marshal(w, data, 200)
 }
 
 /*
 GetPriceHistoryRequest is a standard http.Request extended with the
-un-marshaled content object
+un-marshaled content object.
 */
 type GetPriceHistoryRequest struct {
 	Request                *http.Request `valid:"-"`
@@ -3405,7 +3405,7 @@ type GetPriceHistoryRequest struct {
 
 /*
 GetGasStationFuelTypeNameMappingResponseWriter is a standard http.ResponseWriter extended with methods
-to generate the respective responses easily
+to generate the respective responses easily.
 */
 type GetGasStationFuelTypeNameMappingResponseWriter interface {
 	http.ResponseWriter
@@ -3416,19 +3416,19 @@ type getGasStationFuelTypeNameMappingResponseWriter struct {
 	http.ResponseWriter
 }
 
-// NotFound responds with jsonapi error (HTTP code 404)
+// NotFound responds with jsonapi error (HTTP code 404).
 func (w *getGasStationFuelTypeNameMappingResponseWriter) NotFound(err error) {
 	runtime.WriteError(w, 404, err)
 }
 
-// OK responds with jsonapi marshaled data (HTTP code 200)
+// OK responds with jsonapi marshaled data (HTTP code 200).
 func (w *getGasStationFuelTypeNameMappingResponseWriter) OK(data *FuelType) {
 	runtime.Marshal(w, data, 200)
 }
 
 /*
 GetGasStationFuelTypeNameMappingRequest is a standard http.Request extended with the
-un-marshaled content object
+un-marshaled content object.
 */
 type GetGasStationFuelTypeNameMappingRequest struct {
 	Request                *http.Request `valid:"-"`
@@ -3438,7 +3438,7 @@ type GetGasStationFuelTypeNameMappingRequest struct {
 
 /*
 GetMetadataFiltersResponseWriter is a standard http.ResponseWriter extended with methods
-to generate the respective responses easily
+to generate the respective responses easily.
 */
 type GetMetadataFiltersResponseWriter interface {
 	http.ResponseWriter
@@ -3449,19 +3449,19 @@ type getMetadataFiltersResponseWriter struct {
 	http.ResponseWriter
 }
 
-// BadRequest responds with jsonapi error (HTTP code 400)
+// BadRequest responds with jsonapi error (HTTP code 400).
 func (w *getMetadataFiltersResponseWriter) BadRequest(err error) {
 	runtime.WriteError(w, 400, err)
 }
 
-// OK responds with jsonapi marshaled data (HTTP code 200)
+// OK responds with jsonapi marshaled data (HTTP code 200).
 func (w *getMetadataFiltersResponseWriter) OK(data Categories) {
 	runtime.Marshal(w, data, 200)
 }
 
 /*
 GetMetadataFiltersRequest is a standard http.Request extended with the
-un-marshaled content object
+un-marshaled content object.
 */
 type GetMetadataFiltersRequest struct {
 	Request        *http.Request `valid:"-"`
@@ -3471,7 +3471,7 @@ type GetMetadataFiltersRequest struct {
 
 /*
 GetPoisResponseWriter is a standard http.ResponseWriter extended with methods
-to generate the respective responses easily
+to generate the respective responses easily.
 */
 type GetPoisResponseWriter interface {
 	http.ResponseWriter
@@ -3482,19 +3482,19 @@ type getPoisResponseWriter struct {
 	http.ResponseWriter
 }
 
-// BadRequest responds with jsonapi error (HTTP code 400)
+// BadRequest responds with jsonapi error (HTTP code 400).
 func (w *getPoisResponseWriter) BadRequest(err error) {
 	runtime.WriteError(w, 400, err)
 }
 
-// OK responds with jsonapi marshaled data (HTTP code 200)
+// OK responds with jsonapi marshaled data (HTTP code 200).
 func (w *getPoisResponseWriter) OK(data POIs) {
 	runtime.Marshal(w, data, 200)
 }
 
 /*
 GetPoisRequest is a standard http.Request extended with the
-un-marshaled content object
+un-marshaled content object.
 */
 type GetPoisRequest struct {
 	Request            *http.Request `valid:"-"`
@@ -3506,7 +3506,7 @@ type GetPoisRequest struct {
 
 /*
 GetPoiResponseWriter is a standard http.ResponseWriter extended with methods
-to generate the respective responses easily
+to generate the respective responses easily.
 */
 type GetPoiResponseWriter interface {
 	http.ResponseWriter
@@ -3520,35 +3520,35 @@ type getPoiResponseWriter struct {
 	http.ResponseWriter
 }
 
-// Expired responds with jsonapi error (HTTP code 410)
+// Expired responds with jsonapi error (HTTP code 410).
 func (w *getPoiResponseWriter) Expired(err error) {
 	runtime.WriteError(w, 410, err)
 }
 
-// NotFound responds with jsonapi error (HTTP code 404)
+// NotFound responds with jsonapi error (HTTP code 404).
 func (w *getPoiResponseWriter) NotFound(err error) {
 	runtime.WriteError(w, 404, err)
 }
 
-// BadRequest responds with jsonapi error (HTTP code 400)
+// BadRequest responds with jsonapi error (HTTP code 400).
 func (w *getPoiResponseWriter) BadRequest(err error) {
 	runtime.WriteError(w, 400, err)
 }
 
-// MovedPermanently responds with empty response (HTTP code 301)
+// MovedPermanently responds with empty response (HTTP code 301).
 func (w *getPoiResponseWriter) MovedPermanently() {
 	w.Header().Set("Content-Type", "application/vnd.api+json")
 	w.WriteHeader(301)
 }
 
-// OK responds with jsonapi marshaled data (HTTP code 200)
+// OK responds with jsonapi marshaled data (HTTP code 200).
 func (w *getPoiResponseWriter) OK(data *POI) {
 	runtime.Marshal(w, data, 200)
 }
 
 /*
 GetPoiRequest is a standard http.Request extended with the
-un-marshaled content object
+un-marshaled content object.
 */
 type GetPoiRequest struct {
 	Request    *http.Request `valid:"-"`
@@ -3557,7 +3557,7 @@ type GetPoiRequest struct {
 
 /*
 ChangePoiResponseWriter is a standard http.ResponseWriter extended with methods
-to generate the respective responses easily
+to generate the respective responses easily.
 */
 type ChangePoiResponseWriter interface {
 	http.ResponseWriter
@@ -3569,17 +3569,17 @@ type changePoiResponseWriter struct {
 	http.ResponseWriter
 }
 
-// NotFound responds with jsonapi error (HTTP code 404)
+// NotFound responds with jsonapi error (HTTP code 404).
 func (w *changePoiResponseWriter) NotFound(err error) {
 	runtime.WriteError(w, 404, err)
 }
 
-// BadRequest responds with jsonapi error (HTTP code 400)
+// BadRequest responds with jsonapi error (HTTP code 400).
 func (w *changePoiResponseWriter) BadRequest(err error) {
 	runtime.WriteError(w, 400, err)
 }
 
-// OK responds with jsonapi marshaled data (HTTP code 200)
+// OK responds with jsonapi marshaled data (HTTP code 200).
 func (w *changePoiResponseWriter) OK(data *POI) {
 	runtime.Marshal(w, data, 200)
 }
@@ -3593,7 +3593,7 @@ type ChangePoiRequest struct {
 
 /*
 GetPoliciesResponseWriter is a standard http.ResponseWriter extended with methods
-to generate the respective responses easily
+to generate the respective responses easily.
 */
 type GetPoliciesResponseWriter interface {
 	http.ResponseWriter
@@ -3604,19 +3604,19 @@ type getPoliciesResponseWriter struct {
 	http.ResponseWriter
 }
 
-// BadRequest responds with jsonapi error (HTTP code 400)
+// BadRequest responds with jsonapi error (HTTP code 400).
 func (w *getPoliciesResponseWriter) BadRequest(err error) {
 	runtime.WriteError(w, 400, err)
 }
 
-// OK responds with jsonapi marshaled data (HTTP code 200)
+// OK responds with jsonapi marshaled data (HTTP code 200).
 func (w *getPoliciesResponseWriter) OK(data Policies) {
 	runtime.Marshal(w, data, 200)
 }
 
 /*
 GetPoliciesRequest is a standard http.Request extended with the
-un-marshaled content object
+un-marshaled content object.
 */
 type GetPoliciesRequest struct {
 	Request              *http.Request `valid:"-"`
@@ -3629,7 +3629,7 @@ type GetPoliciesRequest struct {
 
 /*
 CreatePolicyResponseWriter is a standard http.ResponseWriter extended with methods
-to generate the respective responses easily
+to generate the respective responses easily.
 */
 type CreatePolicyResponseWriter interface {
 	http.ResponseWriter
@@ -3640,12 +3640,12 @@ type createPolicyResponseWriter struct {
 	http.ResponseWriter
 }
 
-// BadRequest responds with jsonapi error (HTTP code 400)
+// BadRequest responds with jsonapi error (HTTP code 400).
 func (w *createPolicyResponseWriter) BadRequest(err error) {
 	runtime.WriteError(w, 400, err)
 }
 
-// OK responds with jsonapi marshaled data (HTTP code 201)
+// OK responds with jsonapi marshaled data (HTTP code 201).
 func (w *createPolicyResponseWriter) OK(data *Policy) {
 	runtime.Marshal(w, data, 201)
 }
@@ -3658,7 +3658,7 @@ type CreatePolicyRequest struct {
 
 /*
 GetPolicyResponseWriter is a standard http.ResponseWriter extended with methods
-to generate the respective responses easily
+to generate the respective responses easily.
 */
 type GetPolicyResponseWriter interface {
 	http.ResponseWriter
@@ -3670,24 +3670,24 @@ type getPolicyResponseWriter struct {
 	http.ResponseWriter
 }
 
-// NotFound responds with jsonapi error (HTTP code 404)
+// NotFound responds with jsonapi error (HTTP code 404).
 func (w *getPolicyResponseWriter) NotFound(err error) {
 	runtime.WriteError(w, 404, err)
 }
 
-// BadRequest responds with jsonapi error (HTTP code 400)
+// BadRequest responds with jsonapi error (HTTP code 400).
 func (w *getPolicyResponseWriter) BadRequest(err error) {
 	runtime.WriteError(w, 400, err)
 }
 
-// OK responds with jsonapi marshaled data (HTTP code 200)
+// OK responds with jsonapi marshaled data (HTTP code 200).
 func (w *getPolicyResponseWriter) OK(data *Policy) {
 	runtime.Marshal(w, data, 200)
 }
 
 /*
 GetPolicyRequest is a standard http.Request extended with the
-un-marshaled content object
+un-marshaled content object.
 */
 type GetPolicyRequest struct {
 	Request       *http.Request `valid:"-"`
@@ -3696,7 +3696,7 @@ type GetPolicyRequest struct {
 
 /*
 GetRegionalPricesResponseWriter is a standard http.ResponseWriter extended with methods
-to generate the respective responses easily
+to generate the respective responses easily.
 */
 type GetRegionalPricesResponseWriter interface {
 	http.ResponseWriter
@@ -3707,19 +3707,19 @@ type getRegionalPricesResponseWriter struct {
 	http.ResponseWriter
 }
 
-// BadRequest responds with jsonapi error (HTTP code 400)
+// BadRequest responds with jsonapi error (HTTP code 400).
 func (w *getRegionalPricesResponseWriter) BadRequest(err error) {
 	runtime.WriteError(w, 400, err)
 }
 
-// OK responds with jsonapi marshaled data (HTTP code 200)
+// OK responds with jsonapi marshaled data (HTTP code 200).
 func (w *getRegionalPricesResponseWriter) OK(data RegionalPrices) {
 	runtime.Marshal(w, data, 200)
 }
 
 /*
 GetRegionalPricesRequest is a standard http.Request extended with the
-un-marshaled content object
+un-marshaled content object.
 */
 type GetRegionalPricesRequest struct {
 	Request              *http.Request `valid:"-"`
@@ -3729,7 +3729,7 @@ type GetRegionalPricesRequest struct {
 
 /*
 GetSourcesResponseWriter is a standard http.ResponseWriter extended with methods
-to generate the respective responses easily
+to generate the respective responses easily.
 */
 type GetSourcesResponseWriter interface {
 	http.ResponseWriter
@@ -3740,19 +3740,19 @@ type getSourcesResponseWriter struct {
 	http.ResponseWriter
 }
 
-// BadRequest responds with jsonapi error (HTTP code 400)
+// BadRequest responds with jsonapi error (HTTP code 400).
 func (w *getSourcesResponseWriter) BadRequest(err error) {
 	runtime.WriteError(w, 400, err)
 }
 
-// OK responds with jsonapi marshaled data (HTTP code 200)
+// OK responds with jsonapi marshaled data (HTTP code 200).
 func (w *getSourcesResponseWriter) OK(data Sources) {
 	runtime.Marshal(w, data, 200)
 }
 
 /*
 GetSourcesRequest is a standard http.Request extended with the
-un-marshaled content object
+un-marshaled content object.
 */
 type GetSourcesRequest struct {
 	Request            *http.Request `valid:"-"`
@@ -3764,7 +3764,7 @@ type GetSourcesRequest struct {
 
 /*
 CreateSourceResponseWriter is a standard http.ResponseWriter extended with methods
-to generate the respective responses easily
+to generate the respective responses easily.
 */
 type CreateSourceResponseWriter interface {
 	http.ResponseWriter
@@ -3775,12 +3775,12 @@ type createSourceResponseWriter struct {
 	http.ResponseWriter
 }
 
-// BadRequest responds with jsonapi error (HTTP code 400)
+// BadRequest responds with jsonapi error (HTTP code 400).
 func (w *createSourceResponseWriter) BadRequest(err error) {
 	runtime.WriteError(w, 400, err)
 }
 
-// OK responds with jsonapi marshaled data (HTTP code 201)
+// OK responds with jsonapi marshaled data (HTTP code 201).
 func (w *createSourceResponseWriter) OK(data *Source) {
 	runtime.Marshal(w, data, 201)
 }
@@ -3793,7 +3793,7 @@ type CreateSourceRequest struct {
 
 /*
 DeleteSourceResponseWriter is a standard http.ResponseWriter extended with methods
-to generate the respective responses easily
+to generate the respective responses easily.
 */
 type DeleteSourceResponseWriter interface {
 	http.ResponseWriter
@@ -3804,12 +3804,12 @@ type deleteSourceResponseWriter struct {
 	http.ResponseWriter
 }
 
-// NotFound responds with jsonapi error (HTTP code 404)
+// NotFound responds with jsonapi error (HTTP code 404).
 func (w *deleteSourceResponseWriter) NotFound(err error) {
 	runtime.WriteError(w, 404, err)
 }
 
-// OK responds with empty response (HTTP code 204)
+// OK responds with empty response (HTTP code 204).
 func (w *deleteSourceResponseWriter) OK() {
 	w.Header().Set("Content-Type", "application/vnd.api+json")
 	w.WriteHeader(204)
@@ -3817,7 +3817,7 @@ func (w *deleteSourceResponseWriter) OK() {
 
 /*
 DeleteSourceRequest is a standard http.Request extended with the
-un-marshaled content object
+un-marshaled content object.
 */
 type DeleteSourceRequest struct {
 	Request       *http.Request `valid:"-"`
@@ -3826,7 +3826,7 @@ type DeleteSourceRequest struct {
 
 /*
 GetSourceResponseWriter is a standard http.ResponseWriter extended with methods
-to generate the respective responses easily
+to generate the respective responses easily.
 */
 type GetSourceResponseWriter interface {
 	http.ResponseWriter
@@ -3838,24 +3838,24 @@ type getSourceResponseWriter struct {
 	http.ResponseWriter
 }
 
-// NotFound responds with jsonapi error (HTTP code 404)
+// NotFound responds with jsonapi error (HTTP code 404).
 func (w *getSourceResponseWriter) NotFound(err error) {
 	runtime.WriteError(w, 404, err)
 }
 
-// BadRequest responds with jsonapi error (HTTP code 400)
+// BadRequest responds with jsonapi error (HTTP code 400).
 func (w *getSourceResponseWriter) BadRequest(err error) {
 	runtime.WriteError(w, 400, err)
 }
 
-// OK responds with jsonapi marshaled data (HTTP code 200)
+// OK responds with jsonapi marshaled data (HTTP code 200).
 func (w *getSourceResponseWriter) OK(data *Source) {
 	runtime.Marshal(w, data, 200)
 }
 
 /*
 GetSourceRequest is a standard http.Request extended with the
-un-marshaled content object
+un-marshaled content object.
 */
 type GetSourceRequest struct {
 	Request       *http.Request `valid:"-"`
@@ -3864,7 +3864,7 @@ type GetSourceRequest struct {
 
 /*
 UpdateSourceResponseWriter is a standard http.ResponseWriter extended with methods
-to generate the respective responses easily
+to generate the respective responses easily.
 */
 type UpdateSourceResponseWriter interface {
 	http.ResponseWriter
@@ -3876,17 +3876,17 @@ type updateSourceResponseWriter struct {
 	http.ResponseWriter
 }
 
-// NotFound responds with jsonapi error (HTTP code 404)
+// NotFound responds with jsonapi error (HTTP code 404).
 func (w *updateSourceResponseWriter) NotFound(err error) {
 	runtime.WriteError(w, 404, err)
 }
 
-// BadRequest responds with jsonapi error (HTTP code 400)
+// BadRequest responds with jsonapi error (HTTP code 400).
 func (w *updateSourceResponseWriter) BadRequest(err error) {
 	runtime.WriteError(w, 400, err)
 }
 
-// OK responds with jsonapi marshaled data (HTTP code 200)
+// OK responds with jsonapi marshaled data (HTTP code 200).
 func (w *updateSourceResponseWriter) OK(data *Source) {
 	runtime.Marshal(w, data, 200)
 }
@@ -3900,7 +3900,7 @@ type UpdateSourceRequest struct {
 
 /*
 GetSubscriptionsResponseWriter is a standard http.ResponseWriter extended with methods
-to generate the respective responses easily
+to generate the respective responses easily.
 */
 type GetSubscriptionsResponseWriter interface {
 	http.ResponseWriter
@@ -3911,12 +3911,12 @@ type getSubscriptionsResponseWriter struct {
 	http.ResponseWriter
 }
 
-// BadRequest responds with jsonapi error (HTTP code 400)
+// BadRequest responds with jsonapi error (HTTP code 400).
 func (w *getSubscriptionsResponseWriter) BadRequest(err error) {
 	runtime.WriteError(w, 400, err)
 }
 
-// OK responds with jsonapi marshaled data (HTTP code 200)
+// OK responds with jsonapi marshaled data (HTTP code 200).
 func (w *getSubscriptionsResponseWriter) OK(data *Subscription) {
 	runtime.Marshal(w, data, 200)
 }
@@ -3967,7 +3967,7 @@ type GetSubscriptionsRequest struct {
 
 /*
 DeleteSubscriptionResponseWriter is a standard http.ResponseWriter extended with methods
-to generate the respective responses easily
+to generate the respective responses easily.
 */
 type DeleteSubscriptionResponseWriter interface {
 	http.ResponseWriter
@@ -3978,12 +3978,12 @@ type deleteSubscriptionResponseWriter struct {
 	http.ResponseWriter
 }
 
-// NotFound responds with jsonapi error (HTTP code 404)
+// NotFound responds with jsonapi error (HTTP code 404).
 func (w *deleteSubscriptionResponseWriter) NotFound(err error) {
 	runtime.WriteError(w, 404, err)
 }
 
-// Deleted responds with empty response (HTTP code 204)
+// Deleted responds with empty response (HTTP code 204).
 func (w *deleteSubscriptionResponseWriter) Deleted() {
 	w.Header().Set("Content-Type", "application/vnd.api+json")
 	w.WriteHeader(204)
@@ -3991,7 +3991,7 @@ func (w *deleteSubscriptionResponseWriter) Deleted() {
 
 /*
 DeleteSubscriptionRequest is a standard http.Request extended with the
-un-marshaled content object
+un-marshaled content object.
 */
 type DeleteSubscriptionRequest struct {
 	Request *http.Request `valid:"-"`
@@ -3999,7 +3999,7 @@ type DeleteSubscriptionRequest struct {
 
 /*
 StoreSubscriptionResponseWriter is a standard http.ResponseWriter extended with methods
-to generate the respective responses easily
+to generate the respective responses easily.
 */
 type StoreSubscriptionResponseWriter interface {
 	http.ResponseWriter
@@ -4010,12 +4010,12 @@ type storeSubscriptionResponseWriter struct {
 	http.ResponseWriter
 }
 
-// BadRequest responds with jsonapi error (HTTP code 400)
+// BadRequest responds with jsonapi error (HTTP code 400).
 func (w *storeSubscriptionResponseWriter) BadRequest(err error) {
 	runtime.WriteError(w, 400, err)
 }
 
-// Stored responds with jsonapi marshaled data (HTTP code 200)
+// Stored responds with jsonapi marshaled data (HTTP code 200).
 func (w *storeSubscriptionResponseWriter) Stored(data *Subscription) {
 	runtime.Marshal(w, data, 200)
 }
@@ -4028,7 +4028,7 @@ type StoreSubscriptionRequest struct {
 
 /*
 GetTilesResponseWriter is a standard http.ResponseWriter extended with methods
-to generate the respective responses easily
+to generate the respective responses easily.
 */
 type GetTilesResponseWriter interface {
 	http.ResponseWriter
@@ -4039,12 +4039,12 @@ type getTilesResponseWriter struct {
 	http.ResponseWriter
 }
 
-// BadRequest responds with jsonapi error (HTTP code 400)
+// BadRequest responds with jsonapi error (HTTP code 400).
 func (w *getTilesResponseWriter) BadRequest(err error) {
 	runtime.WriteError(w, 400, err)
 }
 
-// OK responds with empty response (HTTP code 200)
+// OK responds with empty response (HTTP code 200).
 func (w *getTilesResponseWriter) OK() {
 	w.Header().Set("Content-Type", "application/protobuf")
 	w.WriteHeader(200)
@@ -4055,19 +4055,19 @@ type GetTilesRequest struct {
 	Request *http.Request `valid:"-"`
 }
 
-// Service interface for DeduplicatePoiHandler handler
+// Service interface for DeduplicatePoiHandler handler.
 type DeduplicatePoiHandlerService interface {
 	// DeduplicatePoi Specify if a list of POI are considered to be duplicates of a specific POI
 	DeduplicatePoi(context.Context, DeduplicatePoiResponseWriter, *DeduplicatePoiRequest) error
 }
 
-// Service interface for MovePoiAtPositionHandler handler
+// Service interface for MovePoiAtPositionHandler handler.
 type MovePoiAtPositionHandlerService interface {
 	// MovePoiAtPosition Allows an admin to move a POI identified by its ID to a specific position
 	MovePoiAtPosition(context.Context, MovePoiAtPositionResponseWriter, *MovePoiAtPositionRequest) error
 }
 
-// Service interface for GetAppsHandler handler
+// Service interface for GetAppsHandler handler.
 type GetAppsHandlerService interface {
 	/*
 	   GetApps Returns a paginated list of apps
@@ -4077,7 +4077,7 @@ type GetAppsHandlerService interface {
 	GetApps(context.Context, GetAppsResponseWriter, *GetAppsRequest) error
 }
 
-// Service interface for CreateAppHandler handler
+// Service interface for CreateAppHandler handler.
 type CreateAppHandlerService interface {
 	/*
 	   CreateApp Creates a new application
@@ -4087,7 +4087,7 @@ type CreateAppHandlerService interface {
 	CreateApp(context.Context, CreateAppResponseWriter, *CreateAppRequest) error
 }
 
-// Service interface for CheckForPaceAppHandler handler
+// Service interface for CheckForPaceAppHandler handler.
 type CheckForPaceAppHandlerService interface {
 	/*
 	   CheckForPaceApp Query for location-based apps
@@ -4103,7 +4103,7 @@ type CheckForPaceAppHandlerService interface {
 	CheckForPaceApp(context.Context, CheckForPaceAppResponseWriter, *CheckForPaceAppRequest) error
 }
 
-// Service interface for DeleteAppHandler handler
+// Service interface for DeleteAppHandler handler.
 type DeleteAppHandlerService interface {
 	/*
 	   DeleteApp Deletes App with specified id
@@ -4113,7 +4113,7 @@ type DeleteAppHandlerService interface {
 	DeleteApp(context.Context, DeleteAppResponseWriter, *DeleteAppRequest) error
 }
 
-// Service interface for GetAppHandler handler
+// Service interface for GetAppHandler handler.
 type GetAppHandlerService interface {
 	/*
 	   GetApp Returns App with specified id
@@ -4124,7 +4124,7 @@ type GetAppHandlerService interface {
 	GetApp(context.Context, GetAppResponseWriter, *GetAppRequest) error
 }
 
-// Service interface for UpdateAppHandler handler
+// Service interface for UpdateAppHandler handler.
 type UpdateAppHandlerService interface {
 	/*
 	   UpdateApp Updates App with specified id
@@ -4134,7 +4134,7 @@ type UpdateAppHandlerService interface {
 	UpdateApp(context.Context, UpdateAppResponseWriter, *UpdateAppRequest) error
 }
 
-// Service interface for GetAppPOIsRelationshipsHandler handler
+// Service interface for GetAppPOIsRelationshipsHandler handler.
 type GetAppPOIsRelationshipsHandlerService interface {
 	/*
 	   GetAppPOIsRelationships Returns all POI relations for specified app id
@@ -4144,7 +4144,7 @@ type GetAppPOIsRelationshipsHandlerService interface {
 	GetAppPOIsRelationships(context.Context, GetAppPOIsRelationshipsResponseWriter, *GetAppPOIsRelationshipsRequest) error
 }
 
-// Service interface for UpdateAppPOIsRelationshipsHandler handler
+// Service interface for UpdateAppPOIsRelationshipsHandler handler.
 type UpdateAppPOIsRelationshipsHandlerService interface {
 	/*
 	   UpdateAppPOIsRelationships Update all POI relations for specified app id
@@ -4154,7 +4154,7 @@ type UpdateAppPOIsRelationshipsHandlerService interface {
 	UpdateAppPOIsRelationships(context.Context, UpdateAppPOIsRelationshipsResponseWriter, *UpdateAppPOIsRelationshipsRequest) error
 }
 
-// Service interface for GetDuplicatesKMLHandler handler
+// Service interface for GetDuplicatesKMLHandler handler.
 type GetDuplicatesKMLHandlerService interface {
 	/*
 	   GetDuplicatesKML Duplicate Map for country (KML)
@@ -4164,7 +4164,7 @@ type GetDuplicatesKMLHandlerService interface {
 	GetDuplicatesKML(context.Context, GetDuplicatesKMLResponseWriter, *GetDuplicatesKMLRequest) error
 }
 
-// Service interface for GetPoisDumpHandler handler
+// Service interface for GetPoisDumpHandler handler.
 type GetPoisDumpHandlerService interface {
 	/*
 	   GetPoisDump Create a full POI dump
@@ -4174,7 +4174,7 @@ type GetPoisDumpHandlerService interface {
 	GetPoisDump(context.Context, GetPoisDumpResponseWriter, *GetPoisDumpRequest) error
 }
 
-// Service interface for DeleteGasStationReferenceStatusHandler handler
+// Service interface for DeleteGasStationReferenceStatusHandler handler.
 type DeleteGasStationReferenceStatusHandlerService interface {
 	/*
 	   DeleteGasStationReferenceStatus Deletes a reference status of a gas station
@@ -4184,7 +4184,7 @@ type DeleteGasStationReferenceStatusHandlerService interface {
 	DeleteGasStationReferenceStatus(context.Context, DeleteGasStationReferenceStatusResponseWriter, *DeleteGasStationReferenceStatusRequest) error
 }
 
-// Service interface for PutGasStationReferenceStatusHandler handler
+// Service interface for PutGasStationReferenceStatusHandler handler.
 type PutGasStationReferenceStatusHandlerService interface {
 	/*
 	   PutGasStationReferenceStatus Creates or updates a reference status of a gas station
@@ -4194,7 +4194,7 @@ type PutGasStationReferenceStatusHandlerService interface {
 	PutGasStationReferenceStatus(context.Context, PutGasStationReferenceStatusResponseWriter, *PutGasStationReferenceStatusRequest) error
 }
 
-// Service interface for GetEventsHandler handler
+// Service interface for GetEventsHandler handler.
 type GetEventsHandlerService interface {
 	/*
 	   GetEvents Returns a list of events
@@ -4204,7 +4204,7 @@ type GetEventsHandlerService interface {
 	GetEvents(context.Context, GetEventsResponseWriter, *GetEventsRequest) error
 }
 
-// Service interface for GetGasStationsHandler handler
+// Service interface for GetGasStationsHandler handler.
 type GetGasStationsHandlerService interface {
 	/*
 	   GetGasStations Query for gas stations
@@ -4224,7 +4224,7 @@ type GetGasStationsHandlerService interface {
 	GetGasStations(context.Context, GetGasStationsResponseWriter, *GetGasStationsRequest) error
 }
 
-// Service interface for GetGasStationHandler handler
+// Service interface for GetGasStationHandler handler.
 type GetGasStationHandlerService interface {
 	/*
 	   GetGasStation Get a specific gas station
@@ -4234,7 +4234,7 @@ type GetGasStationHandlerService interface {
 	GetGasStation(context.Context, GetGasStationResponseWriter, *GetGasStationRequest) error
 }
 
-// Service interface for GetPriceHistoryHandler handler
+// Service interface for GetPriceHistoryHandler handler.
 type GetPriceHistoryHandlerService interface {
 	/*
 	   GetPriceHistory Get price history for a specific gas station
@@ -4244,7 +4244,7 @@ type GetPriceHistoryHandlerService interface {
 	GetPriceHistory(context.Context, GetPriceHistoryResponseWriter, *GetPriceHistoryRequest) error
 }
 
-// Service interface for GetGasStationFuelTypeNameMappingHandler handler
+// Service interface for GetGasStationFuelTypeNameMappingHandler handler.
 type GetGasStationFuelTypeNameMappingHandlerService interface {
 	/*
 	   GetGasStationFuelTypeNameMapping Get a mapping from gas station specific fuel product name mapped to a normalized fuel type
@@ -4254,7 +4254,7 @@ type GetGasStationFuelTypeNameMappingHandlerService interface {
 	GetGasStationFuelTypeNameMapping(context.Context, GetGasStationFuelTypeNameMappingResponseWriter, *GetGasStationFuelTypeNameMappingRequest) error
 }
 
-// Service interface for GetMetadataFiltersHandler handler
+// Service interface for GetMetadataFiltersHandler handler.
 type GetMetadataFiltersHandlerService interface {
 	/*
 	   GetMetadataFilters Query for filterable values inside a radius
@@ -4271,7 +4271,7 @@ type GetMetadataFiltersHandlerService interface {
 	GetMetadataFilters(context.Context, GetMetadataFiltersResponseWriter, *GetMetadataFiltersRequest) error
 }
 
-// Service interface for GetPoisHandler handler
+// Service interface for GetPoisHandler handler.
 type GetPoisHandlerService interface {
 	/*
 	   GetPois Returns a paginated list of POIs
@@ -4281,7 +4281,7 @@ type GetPoisHandlerService interface {
 	GetPois(context.Context, GetPoisResponseWriter, *GetPoisRequest) error
 }
 
-// Service interface for GetPoiHandler handler
+// Service interface for GetPoiHandler handler.
 type GetPoiHandlerService interface {
 	/*
 	   GetPoi Returns POI with specified id
@@ -4291,7 +4291,7 @@ type GetPoiHandlerService interface {
 	GetPoi(context.Context, GetPoiResponseWriter, *GetPoiRequest) error
 }
 
-// Service interface for ChangePoiHandler handler
+// Service interface for ChangePoiHandler handler.
 type ChangePoiHandlerService interface {
 	/*
 	   ChangePoi Updates POI with specified id (only passed attributes will be updated)
@@ -4301,7 +4301,7 @@ type ChangePoiHandlerService interface {
 	ChangePoi(context.Context, ChangePoiResponseWriter, *ChangePoiRequest) error
 }
 
-// Service interface for GetPoliciesHandler handler
+// Service interface for GetPoliciesHandler handler.
 type GetPoliciesHandlerService interface {
 	/*
 	   GetPolicies Returns a paginated list of policies
@@ -4311,7 +4311,7 @@ type GetPoliciesHandlerService interface {
 	GetPolicies(context.Context, GetPoliciesResponseWriter, *GetPoliciesRequest) error
 }
 
-// Service interface for CreatePolicyHandler handler
+// Service interface for CreatePolicyHandler handler.
 type CreatePolicyHandlerService interface {
 	/*
 	   CreatePolicy Creates a new policy
@@ -4321,7 +4321,7 @@ type CreatePolicyHandlerService interface {
 	CreatePolicy(context.Context, CreatePolicyResponseWriter, *CreatePolicyRequest) error
 }
 
-// Service interface for GetPolicyHandler handler
+// Service interface for GetPolicyHandler handler.
 type GetPolicyHandlerService interface {
 	/*
 	   GetPolicy Returns policy with specified id
@@ -4331,7 +4331,7 @@ type GetPolicyHandlerService interface {
 	GetPolicy(context.Context, GetPolicyResponseWriter, *GetPolicyRequest) error
 }
 
-// Service interface for GetRegionalPricesHandler handler
+// Service interface for GetRegionalPricesHandler handler.
 type GetRegionalPricesHandlerService interface {
 	/*
 	   GetRegionalPrices Search for regional prices in the area
@@ -4341,7 +4341,7 @@ type GetRegionalPricesHandlerService interface {
 	GetRegionalPrices(context.Context, GetRegionalPricesResponseWriter, *GetRegionalPricesRequest) error
 }
 
-// Service interface for GetSourcesHandler handler
+// Service interface for GetSourcesHandler handler.
 type GetSourcesHandlerService interface {
 	/*
 	   GetSources Returns a paginated list of sources
@@ -4351,7 +4351,7 @@ type GetSourcesHandlerService interface {
 	GetSources(context.Context, GetSourcesResponseWriter, *GetSourcesRequest) error
 }
 
-// Service interface for CreateSourceHandler handler
+// Service interface for CreateSourceHandler handler.
 type CreateSourceHandlerService interface {
 	/*
 	   CreateSource Creates a new source
@@ -4361,7 +4361,7 @@ type CreateSourceHandlerService interface {
 	CreateSource(context.Context, CreateSourceResponseWriter, *CreateSourceRequest) error
 }
 
-// Service interface for DeleteSourceHandler handler
+// Service interface for DeleteSourceHandler handler.
 type DeleteSourceHandlerService interface {
 	/*
 	   DeleteSource Deletes source with specified id
@@ -4371,7 +4371,7 @@ type DeleteSourceHandlerService interface {
 	DeleteSource(context.Context, DeleteSourceResponseWriter, *DeleteSourceRequest) error
 }
 
-// Service interface for GetSourceHandler handler
+// Service interface for GetSourceHandler handler.
 type GetSourceHandlerService interface {
 	/*
 	   GetSource Returns source with specified id
@@ -4381,7 +4381,7 @@ type GetSourceHandlerService interface {
 	GetSource(context.Context, GetSourceResponseWriter, *GetSourceRequest) error
 }
 
-// Service interface for UpdateSourceHandler handler
+// Service interface for UpdateSourceHandler handler.
 type UpdateSourceHandlerService interface {
 	/*
 	   UpdateSource Updates source with specified id
@@ -4391,7 +4391,7 @@ type UpdateSourceHandlerService interface {
 	UpdateSource(context.Context, UpdateSourceResponseWriter, *UpdateSourceRequest) error
 }
 
-// Service interface for GetSubscriptionsHandler handler
+// Service interface for GetSubscriptionsHandler handler.
 type GetSubscriptionsHandlerService interface {
 	/*
 	   GetSubscriptions Get the list of POI subscriptions for the user or device
@@ -4401,7 +4401,7 @@ type GetSubscriptionsHandlerService interface {
 	GetSubscriptions(context.Context, GetSubscriptionsResponseWriter, *GetSubscriptionsRequest) error
 }
 
-// Service interface for DeleteSubscriptionHandler handler
+// Service interface for DeleteSubscriptionHandler handler.
 type DeleteSubscriptionHandlerService interface {
 	/*
 	   DeleteSubscription Deletes a previously created POI subscription
@@ -4409,7 +4409,7 @@ type DeleteSubscriptionHandlerService interface {
 	DeleteSubscription(context.Context, DeleteSubscriptionResponseWriter, *DeleteSubscriptionRequest) error
 }
 
-// Service interface for StoreSubscriptionHandler handler
+// Service interface for StoreSubscriptionHandler handler.
 type StoreSubscriptionHandlerService interface {
 	/*
 	   StoreSubscription Stores a POI subscription
@@ -4434,7 +4434,7 @@ type StoreSubscriptionHandlerService interface {
 	StoreSubscription(context.Context, StoreSubscriptionResponseWriter, *StoreSubscriptionRequest) error
 }
 
-// Service interface for GetTilesHandler handler
+// Service interface for GetTilesHandler handler.
 type GetTilesHandlerService interface {
 	/*
 	   GetTiles Query for tiles
@@ -4486,7 +4486,7 @@ type Service interface {
 }
 
 // DeleteGasStationReferenceStatusHandlerWithFallbackHelper helper that checks if the given service fulfills the interface. Returns fallback handler if not, otherwise returns matching handler.
-func DeleteGasStationReferenceStatusHandlerWithFallbackHelper(service interface{}, fallback http.Handler, authBackend AuthorizationBackend) http.Handler {
+func DeleteGasStationReferenceStatusHandlerWithFallbackHelper(service any, fallback http.Handler, authBackend AuthorizationBackend) http.Handler {
 	if service, ok := service.(DeleteGasStationReferenceStatusHandlerService); ok {
 		return DeleteGasStationReferenceStatusHandler(service, authBackend)
 	} else {
@@ -4495,7 +4495,7 @@ func DeleteGasStationReferenceStatusHandlerWithFallbackHelper(service interface{
 }
 
 // PutGasStationReferenceStatusHandlerWithFallbackHelper helper that checks if the given service fulfills the interface. Returns fallback handler if not, otherwise returns matching handler.
-func PutGasStationReferenceStatusHandlerWithFallbackHelper(service interface{}, fallback http.Handler, authBackend AuthorizationBackend) http.Handler {
+func PutGasStationReferenceStatusHandlerWithFallbackHelper(service any, fallback http.Handler, authBackend AuthorizationBackend) http.Handler {
 	if service, ok := service.(PutGasStationReferenceStatusHandlerService); ok {
 		return PutGasStationReferenceStatusHandler(service, authBackend)
 	} else {
@@ -4504,7 +4504,7 @@ func PutGasStationReferenceStatusHandlerWithFallbackHelper(service interface{}, 
 }
 
 // GetAppPOIsRelationshipsHandlerWithFallbackHelper helper that checks if the given service fulfills the interface. Returns fallback handler if not, otherwise returns matching handler.
-func GetAppPOIsRelationshipsHandlerWithFallbackHelper(service interface{}, fallback http.Handler, authBackend AuthorizationBackend) http.Handler {
+func GetAppPOIsRelationshipsHandlerWithFallbackHelper(service any, fallback http.Handler, authBackend AuthorizationBackend) http.Handler {
 	if service, ok := service.(GetAppPOIsRelationshipsHandlerService); ok {
 		return GetAppPOIsRelationshipsHandler(service, authBackend)
 	} else {
@@ -4513,7 +4513,7 @@ func GetAppPOIsRelationshipsHandlerWithFallbackHelper(service interface{}, fallb
 }
 
 // UpdateAppPOIsRelationshipsHandlerWithFallbackHelper helper that checks if the given service fulfills the interface. Returns fallback handler if not, otherwise returns matching handler.
-func UpdateAppPOIsRelationshipsHandlerWithFallbackHelper(service interface{}, fallback http.Handler, authBackend AuthorizationBackend) http.Handler {
+func UpdateAppPOIsRelationshipsHandlerWithFallbackHelper(service any, fallback http.Handler, authBackend AuthorizationBackend) http.Handler {
 	if service, ok := service.(UpdateAppPOIsRelationshipsHandlerService); ok {
 		return UpdateAppPOIsRelationshipsHandler(service, authBackend)
 	} else {
@@ -4522,7 +4522,7 @@ func UpdateAppPOIsRelationshipsHandlerWithFallbackHelper(service interface{}, fa
 }
 
 // GetPriceHistoryHandlerWithFallbackHelper helper that checks if the given service fulfills the interface. Returns fallback handler if not, otherwise returns matching handler.
-func GetPriceHistoryHandlerWithFallbackHelper(service interface{}, fallback http.Handler, authBackend AuthorizationBackend) http.Handler {
+func GetPriceHistoryHandlerWithFallbackHelper(service any, fallback http.Handler, authBackend AuthorizationBackend) http.Handler {
 	if service, ok := service.(GetPriceHistoryHandlerService); ok {
 		return GetPriceHistoryHandler(service, authBackend)
 	} else {
@@ -4531,7 +4531,7 @@ func GetPriceHistoryHandlerWithFallbackHelper(service interface{}, fallback http
 }
 
 // DeduplicatePoiHandlerWithFallbackHelper helper that checks if the given service fulfills the interface. Returns fallback handler if not, otherwise returns matching handler.
-func DeduplicatePoiHandlerWithFallbackHelper(service interface{}, fallback http.Handler, authBackend AuthorizationBackend) http.Handler {
+func DeduplicatePoiHandlerWithFallbackHelper(service any, fallback http.Handler, authBackend AuthorizationBackend) http.Handler {
 	if service, ok := service.(DeduplicatePoiHandlerService); ok {
 		return DeduplicatePoiHandler(service, authBackend)
 	} else {
@@ -4540,7 +4540,7 @@ func DeduplicatePoiHandlerWithFallbackHelper(service interface{}, fallback http.
 }
 
 // MovePoiAtPositionHandlerWithFallbackHelper helper that checks if the given service fulfills the interface. Returns fallback handler if not, otherwise returns matching handler.
-func MovePoiAtPositionHandlerWithFallbackHelper(service interface{}, fallback http.Handler, authBackend AuthorizationBackend) http.Handler {
+func MovePoiAtPositionHandlerWithFallbackHelper(service any, fallback http.Handler, authBackend AuthorizationBackend) http.Handler {
 	if service, ok := service.(MovePoiAtPositionHandlerService); ok {
 		return MovePoiAtPositionHandler(service, authBackend)
 	} else {
@@ -4549,7 +4549,7 @@ func MovePoiAtPositionHandlerWithFallbackHelper(service interface{}, fallback ht
 }
 
 // GetDuplicatesKMLHandlerWithFallbackHelper helper that checks if the given service fulfills the interface. Returns fallback handler if not, otherwise returns matching handler.
-func GetDuplicatesKMLHandlerWithFallbackHelper(service interface{}, fallback http.Handler, authBackend AuthorizationBackend) http.Handler {
+func GetDuplicatesKMLHandlerWithFallbackHelper(service any, fallback http.Handler, authBackend AuthorizationBackend) http.Handler {
 	if service, ok := service.(GetDuplicatesKMLHandlerService); ok {
 		return GetDuplicatesKMLHandler(service, authBackend)
 	} else {
@@ -4558,7 +4558,7 @@ func GetDuplicatesKMLHandlerWithFallbackHelper(service interface{}, fallback htt
 }
 
 // GetGasStationFuelTypeNameMappingHandlerWithFallbackHelper helper that checks if the given service fulfills the interface. Returns fallback handler if not, otherwise returns matching handler.
-func GetGasStationFuelTypeNameMappingHandlerWithFallbackHelper(service interface{}, fallback http.Handler, authBackend AuthorizationBackend) http.Handler {
+func GetGasStationFuelTypeNameMappingHandlerWithFallbackHelper(service any, fallback http.Handler, authBackend AuthorizationBackend) http.Handler {
 	if service, ok := service.(GetGasStationFuelTypeNameMappingHandlerService); ok {
 		return GetGasStationFuelTypeNameMappingHandler(service, authBackend)
 	} else {
@@ -4567,7 +4567,7 @@ func GetGasStationFuelTypeNameMappingHandlerWithFallbackHelper(service interface
 }
 
 // CheckForPaceAppHandlerWithFallbackHelper helper that checks if the given service fulfills the interface. Returns fallback handler if not, otherwise returns matching handler.
-func CheckForPaceAppHandlerWithFallbackHelper(service interface{}, fallback http.Handler, authBackend AuthorizationBackend) http.Handler {
+func CheckForPaceAppHandlerWithFallbackHelper(service any, fallback http.Handler, authBackend AuthorizationBackend) http.Handler {
 	if service, ok := service.(CheckForPaceAppHandlerService); ok {
 		return CheckForPaceAppHandler(service, authBackend)
 	} else {
@@ -4576,7 +4576,7 @@ func CheckForPaceAppHandlerWithFallbackHelper(service interface{}, fallback http
 }
 
 // GetPoisDumpHandlerWithFallbackHelper helper that checks if the given service fulfills the interface. Returns fallback handler if not, otherwise returns matching handler.
-func GetPoisDumpHandlerWithFallbackHelper(service interface{}, fallback http.Handler, authBackend AuthorizationBackend) http.Handler {
+func GetPoisDumpHandlerWithFallbackHelper(service any, fallback http.Handler, authBackend AuthorizationBackend) http.Handler {
 	if service, ok := service.(GetPoisDumpHandlerService); ok {
 		return GetPoisDumpHandler(service, authBackend)
 	} else {
@@ -4585,7 +4585,7 @@ func GetPoisDumpHandlerWithFallbackHelper(service interface{}, fallback http.Han
 }
 
 // GetRegionalPricesHandlerWithFallbackHelper helper that checks if the given service fulfills the interface. Returns fallback handler if not, otherwise returns matching handler.
-func GetRegionalPricesHandlerWithFallbackHelper(service interface{}, fallback http.Handler, authBackend AuthorizationBackend) http.Handler {
+func GetRegionalPricesHandlerWithFallbackHelper(service any, fallback http.Handler, authBackend AuthorizationBackend) http.Handler {
 	if service, ok := service.(GetRegionalPricesHandlerService); ok {
 		return GetRegionalPricesHandler(service, authBackend)
 	} else {
@@ -4594,7 +4594,7 @@ func GetRegionalPricesHandlerWithFallbackHelper(service interface{}, fallback ht
 }
 
 // GetTilesHandlerWithFallbackHelper helper that checks if the given service fulfills the interface. Returns fallback handler if not, otherwise returns matching handler.
-func GetTilesHandlerWithFallbackHelper(service interface{}, fallback http.Handler, authBackend AuthorizationBackend) http.Handler {
+func GetTilesHandlerWithFallbackHelper(service any, fallback http.Handler, authBackend AuthorizationBackend) http.Handler {
 	if service, ok := service.(GetTilesHandlerService); ok {
 		return GetTilesHandler(service, authBackend)
 	} else {
@@ -4603,7 +4603,7 @@ func GetTilesHandlerWithFallbackHelper(service interface{}, fallback http.Handle
 }
 
 // DeleteAppHandlerWithFallbackHelper helper that checks if the given service fulfills the interface. Returns fallback handler if not, otherwise returns matching handler.
-func DeleteAppHandlerWithFallbackHelper(service interface{}, fallback http.Handler, authBackend AuthorizationBackend) http.Handler {
+func DeleteAppHandlerWithFallbackHelper(service any, fallback http.Handler, authBackend AuthorizationBackend) http.Handler {
 	if service, ok := service.(DeleteAppHandlerService); ok {
 		return DeleteAppHandler(service, authBackend)
 	} else {
@@ -4612,7 +4612,7 @@ func DeleteAppHandlerWithFallbackHelper(service interface{}, fallback http.Handl
 }
 
 // GetAppHandlerWithFallbackHelper helper that checks if the given service fulfills the interface. Returns fallback handler if not, otherwise returns matching handler.
-func GetAppHandlerWithFallbackHelper(service interface{}, fallback http.Handler, authBackend AuthorizationBackend) http.Handler {
+func GetAppHandlerWithFallbackHelper(service any, fallback http.Handler, authBackend AuthorizationBackend) http.Handler {
 	if service, ok := service.(GetAppHandlerService); ok {
 		return GetAppHandler(service, authBackend)
 	} else {
@@ -4621,7 +4621,7 @@ func GetAppHandlerWithFallbackHelper(service interface{}, fallback http.Handler,
 }
 
 // UpdateAppHandlerWithFallbackHelper helper that checks if the given service fulfills the interface. Returns fallback handler if not, otherwise returns matching handler.
-func UpdateAppHandlerWithFallbackHelper(service interface{}, fallback http.Handler, authBackend AuthorizationBackend) http.Handler {
+func UpdateAppHandlerWithFallbackHelper(service any, fallback http.Handler, authBackend AuthorizationBackend) http.Handler {
 	if service, ok := service.(UpdateAppHandlerService); ok {
 		return UpdateAppHandler(service, authBackend)
 	} else {
@@ -4630,7 +4630,7 @@ func UpdateAppHandlerWithFallbackHelper(service interface{}, fallback http.Handl
 }
 
 // GetGasStationHandlerWithFallbackHelper helper that checks if the given service fulfills the interface. Returns fallback handler if not, otherwise returns matching handler.
-func GetGasStationHandlerWithFallbackHelper(service interface{}, fallback http.Handler, authBackend AuthorizationBackend) http.Handler {
+func GetGasStationHandlerWithFallbackHelper(service any, fallback http.Handler, authBackend AuthorizationBackend) http.Handler {
 	if service, ok := service.(GetGasStationHandlerService); ok {
 		return GetGasStationHandler(service, authBackend)
 	} else {
@@ -4639,7 +4639,7 @@ func GetGasStationHandlerWithFallbackHelper(service interface{}, fallback http.H
 }
 
 // GetPoiHandlerWithFallbackHelper helper that checks if the given service fulfills the interface. Returns fallback handler if not, otherwise returns matching handler.
-func GetPoiHandlerWithFallbackHelper(service interface{}, fallback http.Handler, authBackend AuthorizationBackend) http.Handler {
+func GetPoiHandlerWithFallbackHelper(service any, fallback http.Handler, authBackend AuthorizationBackend) http.Handler {
 	if service, ok := service.(GetPoiHandlerService); ok {
 		return GetPoiHandler(service, authBackend)
 	} else {
@@ -4648,7 +4648,7 @@ func GetPoiHandlerWithFallbackHelper(service interface{}, fallback http.Handler,
 }
 
 // ChangePoiHandlerWithFallbackHelper helper that checks if the given service fulfills the interface. Returns fallback handler if not, otherwise returns matching handler.
-func ChangePoiHandlerWithFallbackHelper(service interface{}, fallback http.Handler, authBackend AuthorizationBackend) http.Handler {
+func ChangePoiHandlerWithFallbackHelper(service any, fallback http.Handler, authBackend AuthorizationBackend) http.Handler {
 	if service, ok := service.(ChangePoiHandlerService); ok {
 		return ChangePoiHandler(service, authBackend)
 	} else {
@@ -4657,7 +4657,7 @@ func ChangePoiHandlerWithFallbackHelper(service interface{}, fallback http.Handl
 }
 
 // GetPolicyHandlerWithFallbackHelper helper that checks if the given service fulfills the interface. Returns fallback handler if not, otherwise returns matching handler.
-func GetPolicyHandlerWithFallbackHelper(service interface{}, fallback http.Handler, authBackend AuthorizationBackend) http.Handler {
+func GetPolicyHandlerWithFallbackHelper(service any, fallback http.Handler, authBackend AuthorizationBackend) http.Handler {
 	if service, ok := service.(GetPolicyHandlerService); ok {
 		return GetPolicyHandler(service, authBackend)
 	} else {
@@ -4666,7 +4666,7 @@ func GetPolicyHandlerWithFallbackHelper(service interface{}, fallback http.Handl
 }
 
 // DeleteSourceHandlerWithFallbackHelper helper that checks if the given service fulfills the interface. Returns fallback handler if not, otherwise returns matching handler.
-func DeleteSourceHandlerWithFallbackHelper(service interface{}, fallback http.Handler, authBackend AuthorizationBackend) http.Handler {
+func DeleteSourceHandlerWithFallbackHelper(service any, fallback http.Handler, authBackend AuthorizationBackend) http.Handler {
 	if service, ok := service.(DeleteSourceHandlerService); ok {
 		return DeleteSourceHandler(service, authBackend)
 	} else {
@@ -4675,7 +4675,7 @@ func DeleteSourceHandlerWithFallbackHelper(service interface{}, fallback http.Ha
 }
 
 // GetSourceHandlerWithFallbackHelper helper that checks if the given service fulfills the interface. Returns fallback handler if not, otherwise returns matching handler.
-func GetSourceHandlerWithFallbackHelper(service interface{}, fallback http.Handler, authBackend AuthorizationBackend) http.Handler {
+func GetSourceHandlerWithFallbackHelper(service any, fallback http.Handler, authBackend AuthorizationBackend) http.Handler {
 	if service, ok := service.(GetSourceHandlerService); ok {
 		return GetSourceHandler(service, authBackend)
 	} else {
@@ -4684,7 +4684,7 @@ func GetSourceHandlerWithFallbackHelper(service interface{}, fallback http.Handl
 }
 
 // UpdateSourceHandlerWithFallbackHelper helper that checks if the given service fulfills the interface. Returns fallback handler if not, otherwise returns matching handler.
-func UpdateSourceHandlerWithFallbackHelper(service interface{}, fallback http.Handler, authBackend AuthorizationBackend) http.Handler {
+func UpdateSourceHandlerWithFallbackHelper(service any, fallback http.Handler, authBackend AuthorizationBackend) http.Handler {
 	if service, ok := service.(UpdateSourceHandlerService); ok {
 		return UpdateSourceHandler(service, authBackend)
 	} else {
@@ -4693,7 +4693,7 @@ func UpdateSourceHandlerWithFallbackHelper(service interface{}, fallback http.Ha
 }
 
 // DeleteSubscriptionHandlerWithFallbackHelper helper that checks if the given service fulfills the interface. Returns fallback handler if not, otherwise returns matching handler.
-func DeleteSubscriptionHandlerWithFallbackHelper(service interface{}, fallback http.Handler, authBackend AuthorizationBackend) http.Handler {
+func DeleteSubscriptionHandlerWithFallbackHelper(service any, fallback http.Handler, authBackend AuthorizationBackend) http.Handler {
 	if service, ok := service.(DeleteSubscriptionHandlerService); ok {
 		return DeleteSubscriptionHandler(service, authBackend)
 	} else {
@@ -4702,7 +4702,7 @@ func DeleteSubscriptionHandlerWithFallbackHelper(service interface{}, fallback h
 }
 
 // StoreSubscriptionHandlerWithFallbackHelper helper that checks if the given service fulfills the interface. Returns fallback handler if not, otherwise returns matching handler.
-func StoreSubscriptionHandlerWithFallbackHelper(service interface{}, fallback http.Handler, authBackend AuthorizationBackend) http.Handler {
+func StoreSubscriptionHandlerWithFallbackHelper(service any, fallback http.Handler, authBackend AuthorizationBackend) http.Handler {
 	if service, ok := service.(StoreSubscriptionHandlerService); ok {
 		return StoreSubscriptionHandler(service, authBackend)
 	} else {
@@ -4711,7 +4711,7 @@ func StoreSubscriptionHandlerWithFallbackHelper(service interface{}, fallback ht
 }
 
 // GetAppsHandlerWithFallbackHelper helper that checks if the given service fulfills the interface. Returns fallback handler if not, otherwise returns matching handler.
-func GetAppsHandlerWithFallbackHelper(service interface{}, fallback http.Handler, authBackend AuthorizationBackend) http.Handler {
+func GetAppsHandlerWithFallbackHelper(service any, fallback http.Handler, authBackend AuthorizationBackend) http.Handler {
 	if service, ok := service.(GetAppsHandlerService); ok {
 		return GetAppsHandler(service, authBackend)
 	} else {
@@ -4720,7 +4720,7 @@ func GetAppsHandlerWithFallbackHelper(service interface{}, fallback http.Handler
 }
 
 // CreateAppHandlerWithFallbackHelper helper that checks if the given service fulfills the interface. Returns fallback handler if not, otherwise returns matching handler.
-func CreateAppHandlerWithFallbackHelper(service interface{}, fallback http.Handler, authBackend AuthorizationBackend) http.Handler {
+func CreateAppHandlerWithFallbackHelper(service any, fallback http.Handler, authBackend AuthorizationBackend) http.Handler {
 	if service, ok := service.(CreateAppHandlerService); ok {
 		return CreateAppHandler(service, authBackend)
 	} else {
@@ -4729,7 +4729,7 @@ func CreateAppHandlerWithFallbackHelper(service interface{}, fallback http.Handl
 }
 
 // GetEventsHandlerWithFallbackHelper helper that checks if the given service fulfills the interface. Returns fallback handler if not, otherwise returns matching handler.
-func GetEventsHandlerWithFallbackHelper(service interface{}, fallback http.Handler, authBackend AuthorizationBackend) http.Handler {
+func GetEventsHandlerWithFallbackHelper(service any, fallback http.Handler, authBackend AuthorizationBackend) http.Handler {
 	if service, ok := service.(GetEventsHandlerService); ok {
 		return GetEventsHandler(service, authBackend)
 	} else {
@@ -4738,7 +4738,7 @@ func GetEventsHandlerWithFallbackHelper(service interface{}, fallback http.Handl
 }
 
 // GetGasStationsHandlerWithFallbackHelper helper that checks if the given service fulfills the interface. Returns fallback handler if not, otherwise returns matching handler.
-func GetGasStationsHandlerWithFallbackHelper(service interface{}, fallback http.Handler, authBackend AuthorizationBackend) http.Handler {
+func GetGasStationsHandlerWithFallbackHelper(service any, fallback http.Handler, authBackend AuthorizationBackend) http.Handler {
 	if service, ok := service.(GetGasStationsHandlerService); ok {
 		return GetGasStationsHandler(service, authBackend)
 	} else {
@@ -4747,7 +4747,7 @@ func GetGasStationsHandlerWithFallbackHelper(service interface{}, fallback http.
 }
 
 // GetMetadataFiltersHandlerWithFallbackHelper helper that checks if the given service fulfills the interface. Returns fallback handler if not, otherwise returns matching handler.
-func GetMetadataFiltersHandlerWithFallbackHelper(service interface{}, fallback http.Handler, authBackend AuthorizationBackend) http.Handler {
+func GetMetadataFiltersHandlerWithFallbackHelper(service any, fallback http.Handler, authBackend AuthorizationBackend) http.Handler {
 	if service, ok := service.(GetMetadataFiltersHandlerService); ok {
 		return GetMetadataFiltersHandler(service, authBackend)
 	} else {
@@ -4756,7 +4756,7 @@ func GetMetadataFiltersHandlerWithFallbackHelper(service interface{}, fallback h
 }
 
 // GetPoisHandlerWithFallbackHelper helper that checks if the given service fulfills the interface. Returns fallback handler if not, otherwise returns matching handler.
-func GetPoisHandlerWithFallbackHelper(service interface{}, fallback http.Handler, authBackend AuthorizationBackend) http.Handler {
+func GetPoisHandlerWithFallbackHelper(service any, fallback http.Handler, authBackend AuthorizationBackend) http.Handler {
 	if service, ok := service.(GetPoisHandlerService); ok {
 		return GetPoisHandler(service, authBackend)
 	} else {
@@ -4765,7 +4765,7 @@ func GetPoisHandlerWithFallbackHelper(service interface{}, fallback http.Handler
 }
 
 // GetPoliciesHandlerWithFallbackHelper helper that checks if the given service fulfills the interface. Returns fallback handler if not, otherwise returns matching handler.
-func GetPoliciesHandlerWithFallbackHelper(service interface{}, fallback http.Handler, authBackend AuthorizationBackend) http.Handler {
+func GetPoliciesHandlerWithFallbackHelper(service any, fallback http.Handler, authBackend AuthorizationBackend) http.Handler {
 	if service, ok := service.(GetPoliciesHandlerService); ok {
 		return GetPoliciesHandler(service, authBackend)
 	} else {
@@ -4774,7 +4774,7 @@ func GetPoliciesHandlerWithFallbackHelper(service interface{}, fallback http.Han
 }
 
 // CreatePolicyHandlerWithFallbackHelper helper that checks if the given service fulfills the interface. Returns fallback handler if not, otherwise returns matching handler.
-func CreatePolicyHandlerWithFallbackHelper(service interface{}, fallback http.Handler, authBackend AuthorizationBackend) http.Handler {
+func CreatePolicyHandlerWithFallbackHelper(service any, fallback http.Handler, authBackend AuthorizationBackend) http.Handler {
 	if service, ok := service.(CreatePolicyHandlerService); ok {
 		return CreatePolicyHandler(service, authBackend)
 	} else {
@@ -4783,7 +4783,7 @@ func CreatePolicyHandlerWithFallbackHelper(service interface{}, fallback http.Ha
 }
 
 // GetSourcesHandlerWithFallbackHelper helper that checks if the given service fulfills the interface. Returns fallback handler if not, otherwise returns matching handler.
-func GetSourcesHandlerWithFallbackHelper(service interface{}, fallback http.Handler, authBackend AuthorizationBackend) http.Handler {
+func GetSourcesHandlerWithFallbackHelper(service any, fallback http.Handler, authBackend AuthorizationBackend) http.Handler {
 	if service, ok := service.(GetSourcesHandlerService); ok {
 		return GetSourcesHandler(service, authBackend)
 	} else {
@@ -4792,7 +4792,7 @@ func GetSourcesHandlerWithFallbackHelper(service interface{}, fallback http.Hand
 }
 
 // CreateSourceHandlerWithFallbackHelper helper that checks if the given service fulfills the interface. Returns fallback handler if not, otherwise returns matching handler.
-func CreateSourceHandlerWithFallbackHelper(service interface{}, fallback http.Handler, authBackend AuthorizationBackend) http.Handler {
+func CreateSourceHandlerWithFallbackHelper(service any, fallback http.Handler, authBackend AuthorizationBackend) http.Handler {
 	if service, ok := service.(CreateSourceHandlerService); ok {
 		return CreateSourceHandler(service, authBackend)
 	} else {
@@ -4801,7 +4801,7 @@ func CreateSourceHandlerWithFallbackHelper(service interface{}, fallback http.Ha
 }
 
 // GetSubscriptionsHandlerWithFallbackHelper helper that checks if the given service fulfills the interface. Returns fallback handler if not, otherwise returns matching handler.
-func GetSubscriptionsHandlerWithFallbackHelper(service interface{}, fallback http.Handler, authBackend AuthorizationBackend) http.Handler {
+func GetSubscriptionsHandlerWithFallbackHelper(service any, fallback http.Handler, authBackend AuthorizationBackend) http.Handler {
 	if service, ok := service.(GetSubscriptionsHandlerService); ok {
 		return GetSubscriptionsHandler(service, authBackend)
 	} else {
