@@ -14,7 +14,7 @@ import (
 // TestRoundTripperRace will detect race conditions
 // in any RoundTripper by sending concurrent requests.
 // Make sure to use the -race parameter when
-// executing this test
+// executing this test.
 func TestRoundTripperRace(t *testing.T) {
 	client := http.Client{
 		Transport: NewDefaultTransportChain(),
@@ -32,13 +32,19 @@ func TestRoundTripperRace(t *testing.T) {
 	server := httptest.NewServer(router)
 
 	go func() {
-		for i := 0; i < 10; i++ {
-			client.Get(server.URL + "/test001") // nolint: errcheck
+		for range 10 {
+			resp, err := client.Get(server.URL + "/test001")
+			if err == nil {
+				_ = resp.Body.Close()
+			}
 		}
 	}()
 
-	for i := 0; i < 10; i++ {
-		client.Get(server.URL + "/test002") // nolint: errcheck
+	for range 10 {
+		resp, err := client.Get(server.URL + "/test002")
+		if err == nil {
+			_ = resp.Body.Close()
+		}
 	}
 }
 
@@ -48,16 +54,17 @@ func TestRoundTripperChaining(t *testing.T) {
 		c := Chain().Final(transport)
 
 		url := "/foo"
-		req := httptest.NewRequest("GET", url, nil)
+		req := httptest.NewRequest(http.MethodGet, url, nil)
 
-		_, err := c.RoundTrip(req)
+		_, err := c.RoundTrip(req) //nolint:bodyclose
 		if err != nil {
 			t.Fatalf("Expected err to be nil, got %#v", err)
 		}
 
-		if v := transport.req.Method; v != "GET" {
-			t.Errorf("Expected method %q, got %q", "GET", v)
+		if v := transport.req.Method; v != http.MethodGet {
+			t.Errorf("Expected method %q, got %q", http.MethodGet, v)
 		}
+
 		if v := transport.req.URL.String(); v != url {
 			t.Errorf("Expected URL %q, got %q", url, v)
 		}
@@ -68,19 +75,21 @@ func TestRoundTripperChaining(t *testing.T) {
 		c.Use(&addHeaderRoundTripper{key: "foo", value: "bar"}).Final(transport)
 
 		url := "/foo"
-		req := httptest.NewRequest("GET", url, nil)
+		req := httptest.NewRequest(http.MethodGet, url, nil)
 
-		_, err := c.RoundTrip(req)
+		_, err := c.RoundTrip(req) //nolint:bodyclose
 		if err != nil {
 			t.Fatalf("Expected err to be nil, got %#v", err)
 		}
 
-		if v := transport.req.Method; v != "GET" {
-			t.Errorf("Expected method %v, got %v", "GET", v)
+		if v := transport.req.Method; v != http.MethodGet {
+			t.Errorf("Expected method %v, got %v", http.MethodGet, v)
 		}
+
 		if v := transport.req.URL.String(); v != url {
 			t.Errorf("Expected URL %v, got %v", url, v)
 		}
+
 		if v, ex := transport.req.Header.Get("foo"), "bar"; v != ex {
 			t.Errorf("Expected header foo to eq %v, got %v", ex, v)
 		}
@@ -93,22 +102,25 @@ func TestRoundTripperChaining(t *testing.T) {
 		c := Chain(rt1, rt2, rt3).Final(transport)
 
 		url := "/foo"
-		req := httptest.NewRequest("GET", url, nil)
+		req := httptest.NewRequest(http.MethodGet, url, nil)
 
-		_, err := c.RoundTrip(req)
+		_, err := c.RoundTrip(req) //nolint:bodyclose
 		if err != nil {
 			t.Fatalf("Expected err to be nil, got %#v", err)
 		}
 
-		if v := transport.req.Method; v != "GET" {
-			t.Errorf("Expected method %v, got %v", "GET", v)
+		if v := transport.req.Method; v != http.MethodGet {
+			t.Errorf("Expected method %v, got %v", http.MethodGet, v)
 		}
+
 		if v := transport.req.URL.String(); v != url {
 			t.Errorf("Expected URL %v, got %v", url, v)
 		}
+
 		if v, ex := transport.req.Header.Get("foo"), "baroverride"; v != ex {
 			t.Errorf("Expected header foo to eq %v, got %v", ex, v)
 		}
+
 		if v, ex := transport.req.Header.Get("Authorization"), "Bearer 123"; v != ex {
 			t.Errorf("Expected header Authorization to eq %v, got %v", ex, v)
 		}

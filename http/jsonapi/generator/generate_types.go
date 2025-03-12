@@ -4,6 +4,7 @@ package generator
 
 import (
 	"fmt"
+	"slices"
 	"sort"
 	"strings"
 
@@ -17,7 +18,7 @@ const (
 	pkgJSONAPI = "github.com/pace/bricks/http/jsonapi"
 )
 
-// BuildTypes transforms all component schemas into go types
+// BuildTypes transforms all component schemas into go types.
 func (g *Generator) BuildTypes(schema *openapi3.T) error {
 	schemas := schema.Components.Schemas
 
@@ -26,6 +27,7 @@ func (g *Generator) BuildTypes(schema *openapi3.T) error {
 	for k := range schemas {
 		keys = append(keys, k)
 	}
+
 	sort.Stable(sort.StringSlice(keys))
 
 	for _, name := range keys {
@@ -43,8 +45,7 @@ func (g *Generator) BuildTypes(schema *openapi3.T) error {
 			continue
 		}
 
-		err := g.buildType(name, t, schemaType, make(map[string]string), true)
-		if err != nil {
+		if err := g.buildType(name, t, schemaType, make(map[string]string), true); err != nil {
 			return err
 		}
 		// document type
@@ -55,7 +56,7 @@ func (g *Generator) BuildTypes(schema *openapi3.T) error {
 	return nil
 }
 
-func (g *Generator) buildType(prefix string, stmt *jen.Statement, schema *openapi3.SchemaRef, tags map[string]string, ptr bool) error { // nolint: gocyclo
+func (g *Generator) buildType(prefix string, stmt *jen.Statement, schema *openapi3.SchemaRef, tags map[string]string, ptr bool) error {
 	name := nameFromSchemaRef(schema)
 	val := schema.Value
 
@@ -66,6 +67,7 @@ func (g *Generator) buildType(prefix string, stmt *jen.Statement, schema *openap
 		}
 
 		g.generatedArrayTypes[prefix] = true
+
 		return g.buildType(prefix, stmt.Index(), val.Items, tags, ptr)
 	} else if val.Type.Is("object") {
 		if schema.Ref != "" { // handle references
@@ -74,46 +76,57 @@ func (g *Generator) buildType(prefix string, stmt *jen.Statement, schema *openap
 			} else {
 				stmt.Id(name)
 			}
+
 			return nil
 		}
 
 		if val.AdditionalProperties.Has != nil && *val.AdditionalProperties.Has {
 			if len(val.Properties) > 0 {
-				log.Warnf("%s properties are ignored. Only %s of type map[string]interface{} is generated ", prefix, prefix)
+				log.Warnf("%s properties are ignored. Only %s of type map[string]any is generated ", prefix, prefix)
 			}
+
 			stmt.Map(jen.String()).Interface()
+
 			return nil
 		}
+
 		if val.AdditionalProperties.Schema != nil {
 			if len(val.Properties) > 0 {
 				log.Warnf("%s properties are ignored. Only %s of type map[string]type is generated ", prefix, prefix)
 			}
+
 			stmt.Map(jen.String())
+
 			if val.AdditionalProperties.Schema.Ref != "" {
 				stmt.Op("*").Id(nameFromSchemaRef(val.AdditionalProperties.Schema))
 				return nil
 			}
+
 			if val.AdditionalProperties.Schema.Value != nil {
 				err := g.goType(stmt, val.AdditionalProperties.Schema.Value, make(map[string]string)).invoke()
 				if err != nil {
 					return err
 				}
 			}
+
 			return nil
 		}
 
 		if data := val.Properties["data"]; data != nil {
 			if data.Ref != "" {
 				return g.buildType(prefix+"Ref", stmt, data, make(map[string]string), ptr)
-			} else if data.Value.Type.Is("array") { // nolint: goconst
+			} else if data.Value.Type.Is("array") {
 				item := prefix + "Item"
 				if ptr {
 					stmt.Index().Op("*").Id(item)
 				} else {
 					stmt.Index().Id(item)
 				}
+
 				g.addGoDoc(item, data.Value.Description)
+
 				itemStmt := g.goSource.Type().Id(item)
+
 				return g.structJSONAPI(prefix, itemStmt, data.Value.Items.Value)
 			} else if data.Value.Type.Is("object") { // This ensures that the code does only treat objects with data properties that
 				// are objects themselves as legitimate JSONAPI struct, otherwise we want them to be treated as simple data objects.
@@ -141,11 +154,11 @@ func (g *Generator) buildType(prefix string, stmt *jen.Statement, schema *openap
 		if len(val.AllOf)+len(val.AnyOf)+len(val.OneOf) > 0 {
 			log.Warnf("Can't generate allOf, anyOf and oneOf for type %q", prefix)
 			stmt.Qual("encoding/json", "RawMessage")
+
 			return nil
 		}
 
-		err := g.goType(stmt, val, tags).invoke()
-		if err != nil {
+		if err := g.goType(stmt, val, tags).invoke(); err != nil {
 			return err
 		}
 	}
@@ -172,6 +185,7 @@ func (g *Generator) buildTypeStruct(name string, stmt *jen.Statement, schema *op
 		} else {
 			stmt.Id(name)
 		}
+
 		return nil
 	}
 
@@ -181,7 +195,7 @@ func (g *Generator) buildTypeStruct(name string, stmt *jen.Statement, schema *op
 }
 
 // references the type from the schema or generates a new type (inline)
-// and returns
+// and returns.
 func (g *Generator) generateTypeReference(fallbackName string, schema *openapi3.SchemaRef, noPtr bool) (jen.Code, error) {
 	// handle references
 	if schema.Ref != "" {
@@ -191,11 +205,13 @@ func (g *Generator) generateTypeReference(fallbackName string, schema *openapi3.
 
 	// in case the type referenced is defined already directly reference it
 	sv := schema.Value
-	if sv.Type.Is("object") && sv.Properties["data"] != nil && sv.Properties["data"].Ref != "" { // nolint: goconst
+
+	if sv.Type.Is("object") && sv.Properties["data"] != nil && sv.Properties["data"].Ref != "" {
 		id := nameFromSchemaRef(schema.Value.Properties["data"])
 		if g.generatedArrayTypes[id] {
 			return jen.Id(id), nil
 		}
+
 		if noPtr {
 			return jen.Id(id), nil
 		}
@@ -207,11 +223,12 @@ func (g *Generator) generateTypeReference(fallbackName string, schema *openapi3.
 	t, ok := g.newType(fallbackName)
 	if ok {
 		g.addGoDoc(fallbackName, schema.Value.Description)
-		err := g.buildType(fallbackName, g.goSource.Add(t), schema, make(map[string]string), true)
-		if err != nil {
+
+		if err := g.buildType(fallbackName, g.goSource.Add(t), schema, make(map[string]string), true); err != nil {
 			return nil, err
 		}
 	}
+
 	if noPtr {
 		return jen.Id(fallbackName), nil
 	}
@@ -219,7 +236,7 @@ func (g *Generator) generateTypeReference(fallbackName string, schema *openapi3.
 	return jen.Op("*").Id(fallbackName), nil
 }
 
-func (g *Generator) structJSONAPI(prefix string, stmt *jen.Statement, schema *openapi3.Schema) error { // nolint: gocyclo
+func (g *Generator) structJSONAPI(prefix string, stmt *jen.Statement, schema *openapi3.Schema) error {
 	var fields []jen.Code
 
 	propID := schema.Properties["id"]
@@ -234,6 +251,7 @@ func (g *Generator) structJSONAPI(prefix string, stmt *jen.Statement, schema *op
 	if err != nil {
 		return err
 	}
+
 	fields = append(fields, id)
 
 	// add attributes
@@ -242,6 +260,7 @@ func (g *Generator) structJSONAPI(prefix string, stmt *jen.Statement, schema *op
 		if err != nil {
 			return err
 		}
+
 		fields = append(fields, attrFields...)
 	}
 
@@ -249,10 +268,11 @@ func (g *Generator) structJSONAPI(prefix string, stmt *jen.Statement, schema *op
 	links := schema.Properties["links"]
 	if links != nil {
 		linksAttr := jen.Id("Links")
-		err := g.buildTypeStruct(prefix+"Links", linksAttr, links.Value, true)
-		if err != nil {
+
+		if err := g.buildTypeStruct(prefix+"Links", linksAttr, links.Value, true); err != nil {
 			return err
 		}
+
 		fields = append(fields, linksAttr)
 	}
 
@@ -261,12 +281,13 @@ func (g *Generator) structJSONAPI(prefix string, stmt *jen.Statement, schema *op
 	if meta != nil {
 		metaAttr := jen.Id("Meta")
 		defer func() {
-			err := g.buildTypeStruct(prefix+"Meta", metaAttr, meta.Value, true)
-			if err != nil {
+			if err := g.buildTypeStruct(prefix+"Meta", metaAttr, meta.Value, true); err != nil {
 				log.Fatal(err)
 			}
+
 			metaAttr.Comment("Resource meta data (json:api meta)")
 		}()
+
 		fields = append(fields, metaAttr)
 	}
 
@@ -276,6 +297,7 @@ func (g *Generator) structJSONAPI(prefix string, stmt *jen.Statement, schema *op
 		if err != nil {
 			return err
 		}
+
 		fields = append(fields, relFields...)
 	}
 
@@ -283,10 +305,7 @@ func (g *Generator) structJSONAPI(prefix string, stmt *jen.Statement, schema *op
 
 	// generate meta function if any
 	if meta != nil {
-		err := g.generateJSONAPIMeta(prefix, stmt, meta.Value)
-		if err != nil {
-			return err
-		}
+		g.generateJSONAPIMeta(prefix, stmt, meta.Value)
 	}
 
 	return nil
@@ -295,30 +314,35 @@ func (g *Generator) structJSONAPI(prefix string, stmt *jen.Statement, schema *op
 func (g *Generator) generateAttrField(prefix, name string, schema *openapi3.SchemaRef, tags map[string]string) (*jen.Statement, error) {
 	field := jen.Id(goNameHelper(name))
 
-	err := g.buildType(prefix+goNameHelper(name), field, schema, tags, false)
-	if err != nil {
+	if err := g.buildType(prefix+goNameHelper(name), field, schema, tags, false); err != nil {
 		return nil, err
 	}
+
 	field.Tag(tags)
+
 	if schema.Ref == "" {
 		g.commentOrExample(field, schema.Value)
 	}
+
 	return field, nil
 }
 
-func (g *Generator) generateStructFields(prefix string, schema *openapi3.Schema, jsonAPIObject bool) ([]jen.Code, error) {
+func (g *Generator) generateStructFields(prefix string, schema *openapi3.Schema, _ bool) ([]jen.Code, error) {
 	// sort by key
 	keys := make([]string, 0, len(schema.Properties))
 	for k := range schema.Properties {
 		keys = append(keys, k)
 	}
+
 	sort.Stable(sort.StringSlice(keys))
 
-	var fields []jen.Code
+	fields := make([]jen.Code, 0)
+
 	for _, attrName := range keys {
 		attrSchema := schema.Properties[attrName]
 		tags := make(map[string]string)
 		addJSONAPITags(tags, "attr", attrName)
+
 		if attrSchema.Value.AdditionalProperties.Has != nil && *attrSchema.Value.AdditionalProperties.Has || attrSchema.Value.AdditionalProperties.Schema != nil {
 			addValidator(tags, "-")
 		} else {
@@ -330,20 +354,24 @@ func (g *Generator) generateStructFields(prefix string, schema *openapi3.Schema,
 		if err != nil {
 			return nil, err
 		}
+
 		fields = append(fields, field)
 	}
+
 	return fields, nil
 }
 
-func (g *Generator) generateStructRelationships(prefix string, schema *openapi3.Schema, jsonAPI bool) ([]jen.Code, error) {
+func (g *Generator) generateStructRelationships(prefix string, schema *openapi3.Schema, _ bool) ([]jen.Code, error) {
 	// sort by key
 	keys := make([]string, 0, len(schema.Properties))
 	for k := range schema.Properties {
 		keys = append(keys, k)
 	}
+
 	sort.Stable(sort.StringSlice(keys))
 
-	var relationships []jen.Code
+	relationships := make([]jen.Code, 0)
+
 	for _, relName := range keys {
 		relSchema := schema.Properties[relName]
 		tags := make(map[string]string)
@@ -361,21 +389,22 @@ func (g *Generator) generateStructRelationships(prefix string, schema *openapi3.
 
 		if data.Value.Type.Is("array") {
 			// case array = one-to-many
-			name := data.Value.Items.Value.Properties["type"].Value.Enum[0].(string)
+			name, _ := data.Value.Items.Value.Properties["type"].Value.Enum[0].(string)
 			rel.Index().Op("*").Id(goNameHelper(name)).Tag(tags)
 			// case object = belongs-to
 		} else if data.Value.Type.Is("object") {
-			name := data.Value.Properties["type"].Value.Enum[0].(string)
+			name, _ := data.Value.Properties["type"].Value.Enum[0].(string)
 			rel.Op("*").Id(goNameHelper(name)).Tag(tags)
 		}
 
 		relationships = append(relationships, rel)
 	}
+
 	return relationships, nil
 }
 
-// generateJSONAPIMeta generates a function that implements JSONAPIMeta
-func (g *Generator) generateJSONAPIMeta(typeName string, stmt *jen.Statement, schema *openapi3.Schema) error {
+// generateJSONAPIMeta generates a function that implements JSONAPIMeta.
+func (g *Generator) generateJSONAPIMeta(typeName string, stmt *jen.Statement, schema *openapi3.Schema) {
 	stmt.Line().Comment("JSONAPIMeta implements the meta data API for json:api").Line().
 		Func().Params(jen.Id("r").Op("*").Id(typeName)).Id("JSONAPIMeta").Params().Op("*").Qual(pkgJSONAPI, "Meta").BlockFunc(
 		func(g *jen.Group) {
@@ -388,6 +417,7 @@ func (g *Generator) generateJSONAPIMeta(typeName string, stmt *jen.Statement, sc
 			for k := range schema.Properties {
 				keys = append(keys, k)
 			}
+
 			sort.Stable(sort.StringSlice(keys))
 
 			for _, attrName := range keys {
@@ -396,8 +426,6 @@ func (g *Generator) generateJSONAPIMeta(typeName string, stmt *jen.Statement, sc
 
 			g.Return(jen.Op("&").Id("meta"))
 		})
-
-	return nil
 }
 
 func (g *Generator) generateIDField(idType, objectType *openapi3.Schema) (*jen.Statement, error) {
@@ -405,35 +433,33 @@ func (g *Generator) generateIDField(idType, objectType *openapi3.Schema) (*jen.S
 	tags := map[string]string{
 		"jsonapi": fmt.Sprintf("primary,%s,omitempty", objectType.Enum[0]),
 	}
-	err := g.goType(id, idType, tags).invoke()
-	if err != nil {
+
+	if err := g.goType(id, idType, tags).invoke(); err != nil {
 		return nil, err
 	}
+
 	addValidator(tags, "optional")
 	id.Tag(tags)
 	g.commentOrExample(id, idType)
+
 	return id, nil
 }
 
 // newType generates a new type only if it was not generated yet.
-// returns nil, false if type already exists
+// returns nil, false if type already exists.
 func (g *Generator) newType(name string) (*jen.Statement, bool) {
 	if g.generatedTypes[name] {
 		return nil, false
 	}
+
 	g.generatedTypes[name] = true
+
 	return jen.Type().Id(name), true
 }
 
 func addRequiredOptionalTag(tags map[string]string, name string, schema *openapi3.Schema) {
 	// check if field is required
-	isRequired := false
-	for _, required := range schema.Required {
-		if required == name {
-			isRequired = true
-			break
-		}
-	}
+	isRequired := slices.Contains(schema.Required, name)
 
 	// add required if otherwise optional validation
 	if isRequired {
@@ -452,6 +478,7 @@ func removeOmitempty(tags map[string]string) {
 	if v, ok := tags["jsonapi"]; ok {
 		tags["jsonapi"] = strings.ReplaceAll(v, ",omitempty", "")
 	}
+
 	if v, ok := tags["json"]; ok {
 		tags["json"] = strings.ReplaceAll(v, ",omitempty", "")
 	}

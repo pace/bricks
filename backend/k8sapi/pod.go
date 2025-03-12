@@ -9,13 +9,13 @@ import (
 )
 
 // SetCurrentPodLabel set the label for the current pod in the current
-// namespace (requires patch on pods resource)
+// namespace (requires patch on pods resource).
 func (c *Client) SetCurrentPodLabel(ctx context.Context, label, value string) error {
 	return c.SetPodLabel(ctx, c.Namespace, c.Podname, label, value)
 }
 
 // SetPodLabel sets the label and value for the pod of the given namespace
-// (requires patch on pods resource in the given namespace)
+// (requires patch on pods resource in the given namespace).
 func (c *Client) SetPodLabel(ctx context.Context, namespace, podname, label, value string) error {
 	pr := []struct {
 		Op    string `json:"op"`
@@ -30,7 +30,8 @@ func (c *Client) SetPodLabel(ctx context.Context, namespace, podname, label, val
 	}
 	url := fmt.Sprintf("https://%s:%d/api/v1/namespaces/%s/pods/%s",
 		c.cfg.Host, c.cfg.Port, namespace, podname)
-	var resp interface{}
+
+	var resp any
 
 	return c.SimpleRequest(ctx, http.MethodPatch, url, &pr, &resp)
 }

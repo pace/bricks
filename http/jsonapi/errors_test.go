@@ -13,7 +13,8 @@ import (
 )
 
 func TestErrorObjectWritesExpectedErrorMessage(t *testing.T) {
-	err := &ErrorObject{Title: "Title test.", Detail: "Detail test."}
+	err := &ObjectError{Title: "Title test.", Detail: "Detail test."}
+
 	var input error = err
 
 	output := input.Error()
@@ -26,32 +27,33 @@ func TestErrorObjectWritesExpectedErrorMessage(t *testing.T) {
 func TestMarshalErrorsWritesTheExpectedPayload(t *testing.T) {
 	marshalErrorsTableTasts := []struct {
 		Title string
-		In    []*ErrorObject
-		Out   map[string]interface{}
+		In    []*ObjectError
+		Out   map[string]any
 	}{
 		{
 			Title: "TestFieldsAreSerializedAsNeeded",
-			In:    []*ErrorObject{{ID: "0", Title: "Test title.", Detail: "Test detail", Status: "400", Code: "E1100"}},
-			Out: map[string]interface{}{"errors": []interface{}{
-				map[string]interface{}{"id": "0", "title": "Test title.", "detail": "Test detail", "status": "400", "code": "E1100"},
+			In:    []*ObjectError{{ID: "0", Title: "Test title.", Detail: "Test detail", Status: "http.StatusBadRequest", Code: "E1100"}},
+			Out: map[string]any{"errors": []any{
+				map[string]any{"id": "0", "title": "Test title.", "detail": "Test detail", "status": "http.StatusBadRequest", "code": "E1100"},
 			}},
 		},
 		{
 			Title: "TestMetaFieldIsSerializedProperly",
-			In:    []*ErrorObject{{Title: "Test title.", Detail: "Test detail", Meta: &map[string]interface{}{"key": "val"}}},
-			Out: map[string]interface{}{"errors": []interface{}{
-				map[string]interface{}{"title": "Test title.", "detail": "Test detail", "meta": map[string]interface{}{"key": "val"}},
+			In:    []*ObjectError{{Title: "Test title.", Detail: "Test detail", Meta: &map[string]any{"key": "val"}}},
+			Out: map[string]any{"errors": []any{
+				map[string]any{"title": "Test title.", "detail": "Test detail", "meta": map[string]any{"key": "val"}},
 			}},
 		},
 	}
 	for _, testRow := range marshalErrorsTableTasts {
 		t.Run(testRow.Title, func(t *testing.T) {
-			buffer, output := bytes.NewBuffer(nil), map[string]interface{}{}
+			buffer, output := bytes.NewBuffer(nil), map[string]any{}
+
 			var writer io.Writer = buffer
 
 			_ = MarshalErrors(writer, testRow.In)
-			err := json.Unmarshal(buffer.Bytes(), &output)
-			if err != nil {
+
+			if err := json.Unmarshal(buffer.Bytes(), &output); err != nil {
 				t.Fatal(err)
 			}
 

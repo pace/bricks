@@ -8,13 +8,14 @@ import (
 	"net/http"
 	"testing"
 
-	. "github.com/pace/bricks/http/middleware"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	. "github.com/pace/bricks/http/middleware"
 )
 
 func TestContextTransfer(t *testing.T) {
-	r, err := http.NewRequest("GET", "http://example.com/", nil)
+	r, err := http.NewRequest(http.MethodGet, "http://example.com/", nil)
 	require.NoError(t, err)
 	r.Header.Set("User-Agent", "Foobar")
 	RequestInContext(http.HandlerFunc(func(_ http.ResponseWriter, r *http.Request) {
@@ -72,12 +73,14 @@ func TestGetXForwardedForHeaderFromContext(t *testing.T) {
 	}
 	for name, c := range cases {
 		t.Run(name, func(t *testing.T) {
-			r, err := http.NewRequest("GET", "http://example.com/", nil)
+			r, err := http.NewRequest(http.MethodGet, "http://example.com/", nil)
 			require.NoError(t, err)
+
 			r.RemoteAddr = c.RemoteAddr
 			if c.XForwardedFor != "" {
 				r.Header.Set("X-Forwarded-For", c.XForwardedFor)
 			}
+
 			RequestInContext(http.HandlerFunc(func(_ http.ResponseWriter, r *http.Request) {
 				ctx := r.Context()
 				xForwardedFor, err := GetXForwardedForHeaderFromContext(ctx)
@@ -98,7 +101,7 @@ func TestGetXForwardedForHeaderFromContext(t *testing.T) {
 }
 
 func TestGetUserAgentFromContext(t *testing.T) {
-	r, err := http.NewRequest("GET", "http://example.com/", nil)
+	r, err := http.NewRequest(http.MethodGet, "http://example.com/", nil)
 	require.NoError(t, err)
 	r.Header.Set("User-Agent", "Foobar")
 	RequestInContext(http.HandlerFunc(func(_ http.ResponseWriter, r *http.Request) {

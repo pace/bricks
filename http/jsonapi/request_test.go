@@ -17,13 +17,14 @@ import (
 	"time"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestUnmarshall_attrStringSlice(t *testing.T) {
 	out := &Book{}
 	tags := []string{"fiction", "sale"}
-	data := map[string]interface{}{
-		"data": map[string]interface{}{
+	data := map[string]any{
+		"data": map[string]any{
 			"type": "books",
 			"id":   "1",
 			"attributes": map[string]json.RawMessage{
@@ -34,6 +35,7 @@ func TestUnmarshall_attrStringSlice(t *testing.T) {
 			},
 		},
 	}
+
 	b, err := json.Marshal(data)
 	if err != nil {
 		t.Fatal(err)
@@ -53,9 +55,11 @@ func TestUnmarshall_attrStringSlice(t *testing.T) {
 	if out.Decimal1.String() != "9.9999999999999999999" {
 		t.Fatalf("Expected json dec1 data to be %#v got: %#v", "9.9999999999999999999", out.Decimal1.String())
 	}
+
 	if out.Decimal2.String() != "9.9999999999999999999" {
 		t.Fatalf("Expected json dec2 data to be %#v got: %#v", "9.9999999999999999999", out.Decimal2.String())
 	}
+
 	if out.Decimal3.String() != "10" {
 		t.Fatalf("Expected json dec2 data to be %#v got: %#v", 10, out.Decimal3.String())
 	}
@@ -71,13 +75,13 @@ func TestUnmarshall_MapStringSlice(t *testing.T) {
 	tcs := []struct {
 		name  string
 		fail  bool
-		input interface{}
+		input any
 	}{
 		{
 			name: "succeed",
 			fail: false,
-			input: map[string]interface{}{
-				"data": map[string]interface{}{
+			input: map[string]any{
+				"data": map[string]any{
 					"type": "books",
 					"id":   "1",
 					"attributes": map[string]json.RawMessage{
@@ -89,8 +93,8 @@ func TestUnmarshall_MapStringSlice(t *testing.T) {
 		{
 			name: "fail because slice contains numbers",
 			fail: true,
-			input: map[string]interface{}{
-				"data": map[string]interface{}{
+			input: map[string]any{
+				"data": map[string]any{
 					"type": "books",
 					"id":   "1",
 					"attributes": map[string]json.RawMessage{
@@ -104,6 +108,7 @@ func TestUnmarshall_MapStringSlice(t *testing.T) {
 	for _, tc := range tcs {
 		t.Run(tc.name, func(t *testing.T) {
 			out := &Book{}
+
 			b, err := json.Marshal(tc.input)
 			if err != nil {
 				t.Fatal(err)
@@ -123,18 +128,26 @@ func TestUnmarshalToStructWithPointerAttr(t *testing.T) {
 		"int-val":   json.RawMessage(`8`),
 		"float-val": json.RawMessage(`1.1`),
 	}
-	if err := UnmarshalPayload(sampleWithPointerPayload(in), out); err != nil {
+
+	payload, err := sampleWithPointerPayload(in)
+	require.NoError(t, err)
+
+	if err := UnmarshalPayload(payload, out); err != nil {
 		t.Fatal(err)
 	}
+
 	if *out.Name != "The name" {
 		t.Fatalf("Error unmarshalling to string ptr")
 	}
+
 	if !*out.IsActive {
 		t.Fatalf("Error unmarshalling to bool ptr")
 	}
+
 	if *out.IntVal != 8 {
 		t.Fatalf("Error unmarshalling to int ptr")
 	}
+
 	if *out.FloatVal != 1.1 {
 		t.Fatalf("Error unmarshalling to float ptr")
 	}
@@ -156,7 +169,10 @@ func TestUnmarshalPayloadWithPointerID(t *testing.T) {
 	out := new(WithPointer)
 	attrs := map[string]json.RawMessage{}
 
-	if err := UnmarshalPayload(sampleWithPointerPayload(attrs), out); err != nil {
+	payload, err := sampleWithPointerPayload(attrs)
+	require.NoError(t, err)
+
+	if err := UnmarshalPayload(payload, out); err != nil {
 		t.Fatalf("Error unmarshalling to Foo")
 	}
 
@@ -164,6 +180,7 @@ func TestUnmarshalPayloadWithPointerID(t *testing.T) {
 	if out.ID == nil {
 		t.Fatalf("Error unmarshalling; expected ID ptr to be not nil")
 	}
+
 	if e, a := uint64(2), *out.ID; e != a {
 		t.Fatalf("Was expecting the ID to have a value of %d, got %d", e, a)
 	}
@@ -176,7 +193,10 @@ func TestUnmarshalPayloadWithPointerAttr_AbsentVal(t *testing.T) {
 		"is-active": json.RawMessage(`true`),
 	}
 
-	if err := UnmarshalPayload(sampleWithPointerPayload(in), out); err != nil {
+	payload, err := sampleWithPointerPayload(in)
+	require.NoError(t, err)
+
+	if err := UnmarshalPayload(payload, out); err != nil {
 		t.Fatalf("Error unmarshalling to Foo")
 	}
 
@@ -198,15 +218,19 @@ func TestUnmarshalToStructWithPointerAttr_BadType_bool(t *testing.T) {
 	}
 	expectedErrorMessage := "jsonapi: Can't unmarshal true (bool) to struct field `Name`, which is a pointer to `string`"
 
-	err := UnmarshalPayload(sampleWithPointerPayload(in), out)
+	payload, err := sampleWithPointerPayload(in)
+	require.NoError(t, err)
 
+	err = UnmarshalPayload(payload, out)
 	if err == nil {
 		t.Fatalf("Expected error due to invalid type.")
 	}
+
 	if err.Error() != expectedErrorMessage {
 		t.Fatalf("Unexpected error message: %s", err.Error())
 	}
-	if _, ok := err.(ErrUnsupportedPtrType); !ok {
+
+	if _, ok := err.(UnsupportedPtrTypeError); !ok { //nolint:errorlint
 		t.Fatalf("Unexpected error type: %s", reflect.TypeOf(err))
 	}
 }
@@ -218,15 +242,19 @@ func TestUnmarshalToStructWithPointerAttr_BadType_MapPtr(t *testing.T) {
 	}
 	expectedErrorMessage := "jsonapi: Can't unmarshal map[a:5] (map) to struct field `Name`, which is a pointer to `string`"
 
-	err := UnmarshalPayload(sampleWithPointerPayload(in), out)
+	payload, err := sampleWithPointerPayload(in)
+	require.NoError(t, err)
 
+	err = UnmarshalPayload(payload, out)
 	if err == nil {
 		t.Fatalf("Expected error due to invalid type.")
 	}
+
 	if err.Error() != expectedErrorMessage {
 		t.Fatalf("Unexpected error message: %s", err.Error())
 	}
-	if _, ok := err.(ErrUnsupportedPtrType); !ok {
+
+	if _, ok := err.(UnsupportedPtrTypeError); !ok { //nolint:errorlint
 		t.Fatalf("Unexpected error type: %s", reflect.TypeOf(err))
 	}
 }
@@ -238,15 +266,19 @@ func TestUnmarshalToStructWithPointerAttr_BadType_Struct(t *testing.T) {
 	}
 	expectedErrorMessage := "jsonapi: Can't unmarshal map[A:5] (map) to struct field `Name`, which is a pointer to `string`"
 
-	err := UnmarshalPayload(sampleWithPointerPayload(in), out)
+	payload, err := sampleWithPointerPayload(in)
+	require.NoError(t, err)
 
+	err = UnmarshalPayload(payload, out)
 	if err == nil {
 		t.Fatalf("Expected error due to invalid type.")
 	}
+
 	if err.Error() != expectedErrorMessage {
 		t.Fatalf("Unexpected error message: %s", err.Error())
 	}
-	if _, ok := err.(ErrUnsupportedPtrType); !ok {
+
+	if _, ok := err.(UnsupportedPtrTypeError); !ok { //nolint:errorlint
 		t.Fatalf("Unexpected error type: %s", reflect.TypeOf(err))
 	}
 }
@@ -258,15 +290,19 @@ func TestUnmarshalToStructWithPointerAttr_BadType_IntSlice(t *testing.T) {
 	}
 	expectedErrorMessage := "jsonapi: Can't unmarshal [4 5] (slice) to struct field `Name`, which is a pointer to `string`"
 
-	err := UnmarshalPayload(sampleWithPointerPayload(in), out)
+	payload, err := sampleWithPointerPayload(in)
+	require.NoError(t, err)
 
+	err = UnmarshalPayload(payload, out)
 	if err == nil {
 		t.Fatalf("Expected error due to invalid type.")
 	}
+
 	if err.Error() != expectedErrorMessage {
 		t.Fatalf("Unexpected error message: %s", err.Error())
 	}
-	if _, ok := err.(ErrUnsupportedPtrType); !ok {
+
+	if _, ok := err.(UnsupportedPtrTypeError); !ok { //nolint:errorlint
 		t.Fatalf("Unexpected error type: %s", reflect.TypeOf(err))
 	}
 }
@@ -274,17 +310,18 @@ func TestUnmarshalToStructWithPointerAttr_BadType_IntSlice(t *testing.T) {
 func TestStringPointerField(t *testing.T) {
 	// Build Book payload
 	description := "Hello World!"
-	data := map[string]interface{}{
-		"data": map[string]interface{}{
+	data := map[string]any{
+		"data": map[string]any{
 			"type": "books",
 			"id":   "5",
-			"attributes": map[string]interface{}{
+			"attributes": map[string]any{
 				"author":      "aren55555",
 				"description": description,
 				"isbn":        "",
 			},
 		},
 	}
+
 	payload, err := json.Marshal(data)
 	if err != nil {
 		t.Fatal(err)
@@ -299,6 +336,7 @@ func TestStringPointerField(t *testing.T) {
 	if book.Description == nil {
 		t.Fatal("Was not expecting a nil pointer for book.Description")
 	}
+
 	if expected, actual := description, *book.Description; expected != actual {
 		t.Fatalf("Was expecting descript to be `%s`, got `%s`", expected, actual)
 	}
@@ -306,10 +344,12 @@ func TestStringPointerField(t *testing.T) {
 
 func TestMalformedTag(t *testing.T) {
 	out := new(BadModel)
-	err := UnmarshalPayload(samplePayload(), out)
-	if err == nil || err != ErrBadJSONAPIStructTag {
-		t.Fatalf("Did not error out with wrong number of arguments in tag")
-	}
+
+	payload, err := samplePayload()
+	require.NoError(t, err)
+
+	err = UnmarshalPayload(payload, out)
+	require.ErrorIs(t, err, ErrBadJSONAPIStructTag)
 }
 
 func TestUnmarshalInvalidJSON(t *testing.T) {
@@ -317,7 +357,6 @@ func TestUnmarshalInvalidJSON(t *testing.T) {
 	out := new(Blog)
 
 	err := UnmarshalPayload(in, out)
-
 	if err == nil {
 		t.Fatalf("Did not error out the invalid JSON.")
 	}
@@ -330,7 +369,7 @@ func TestUnmarshalInvalidJSON_BadType(t *testing.T) {
 		Error    error
 	}{ // The `Field` values here correspond to the `ModelBadTypes` jsonapi fields.
 		{Field: "string_field", BadValue: json.RawMessage(`0`), Error: ErrUnknownFieldNumberType},                                                                   // Expected string.
-		{Field: "float_field", BadValue: json.RawMessage(`"A string."`), Error: errors.New("got value \"A string.\" expected type float64: Invalid type provided")}, // Expected float64.
+		{Field: "float_field", BadValue: json.RawMessage(`"A string."`), Error: errors.New("got value \"A string.\" expected type float64: invalid type provided")}, // Expected float64.
 		{Field: "time_field", BadValue: json.RawMessage(`"A string."`), Error: ErrInvalidTime},                                                                      // Expected int64.
 		{Field: "time_ptr_field", BadValue: json.RawMessage(`"A string."`), Error: ErrInvalidTime},                                                                  // Expected *time / int64.
 	}
@@ -341,20 +380,23 @@ func TestUnmarshalInvalidJSON_BadType(t *testing.T) {
 			in[test.Field] = test.BadValue
 			expectedErrorMessage := test.Error.Error()
 
-			err := UnmarshalPayload(samplePayloadWithBadTypes(in), out)
+			payload, err := samplePayloadWithBadTypes(in)
+			require.NoError(t, err)
 
+			err = UnmarshalPayload(payload, out)
 			if err == nil {
 				t.Fatalf("(Test %d) Expected error due to invalid type.", i+1)
 			}
-			if err.Error() != expectedErrorMessage {
-				t.Fatalf("(Test %d) Unexpected error message: %q \nexpected: %q", i+1, expectedErrorMessage, err.Error())
-			}
+
+			require.Equal(t, expectedErrorMessage, err.Error())
 		})
 	}
 }
 
 func TestUnmarshalSetsID(t *testing.T) {
-	in := samplePayloadWithID()
+	in, err := samplePayloadWithID()
+	require.NoError(t, err)
+
 	out := new(Blog)
 
 	if err := UnmarshalPayload(in, out); err != nil {
@@ -368,21 +410,24 @@ func TestUnmarshalSetsID(t *testing.T) {
 
 func TestUnmarshal_nonNumericID(t *testing.T) {
 	data := samplePayloadWithoutIncluded()
-	data["data"].(map[string]interface{})["id"] = "non-numeric-id"
+
+	dataMap, ok := data["data"].(map[string]any)
+	if !ok {
+		t.Fatal("data is not a map")
+	}
+
+	dataMap["id"] = "non-numeric-id"
+
 	payload, err := json.Marshal(data)
 	if err != nil {
 		t.Fatal(err)
 	}
+
 	in := bytes.NewReader(payload)
 	out := new(Post)
 
-	if err := UnmarshalPayload(in, out); err != ErrBadJSONAPIID {
-		t.Fatalf(
-			"Was expecting a `%s` error, got `%s`",
-			ErrBadJSONAPIID,
-			err,
-		)
-	}
+	err = UnmarshalPayload(in, out)
+	require.ErrorIs(t, err, ErrBadJSONAPIID)
 }
 
 func TestUnmarshalSetsAttrs(t *testing.T) {
@@ -411,8 +456,8 @@ func TestUnmarshalParsesISO8601(t *testing.T) {
 	}
 
 	in := bytes.NewBuffer(nil)
-	err := json.NewEncoder(in).Encode(payload)
-	if err != nil {
+
+	if err := json.NewEncoder(in).Encode(payload); err != nil {
 		log.Fatal(err)
 	}
 
@@ -440,8 +485,8 @@ func TestUnmarshalParsesISO8601TimePointer(t *testing.T) {
 	}
 
 	in := bytes.NewBuffer(nil)
-	err := json.NewEncoder(in).Encode(payload)
-	if err != nil {
+
+	if err := json.NewEncoder(in).Encode(payload); err != nil {
 		t.Fatal(err)
 	}
 
@@ -469,16 +514,15 @@ func TestUnmarshalInvalidISO8601(t *testing.T) {
 	}
 
 	in := bytes.NewBuffer(nil)
-	err := json.NewEncoder(in).Encode(payload)
-	if err != nil {
+
+	if err := json.NewEncoder(in).Encode(payload); err != nil {
 		t.Fatal(err)
 	}
 
 	out := new(Timestamp)
 
-	if err := UnmarshalPayload(in, out); err != ErrInvalidISO8601 {
-		t.Fatalf("Expected ErrInvalidISO8601, got %v", err)
-	}
+	err := UnmarshalPayload(in, out)
+	require.ErrorIs(t, err, ErrInvalidISO8601)
 }
 
 func TestUnmarshalRelationshipsWithoutIncluded(t *testing.T) {
@@ -486,6 +530,7 @@ func TestUnmarshalRelationshipsWithoutIncluded(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+
 	in := bytes.NewReader(data)
 	out := new(Post)
 
@@ -521,21 +566,22 @@ func TestUnmarshalRelationships(t *testing.T) {
 }
 
 func TestUnmarshalNullRelationship(t *testing.T) {
-	sample := map[string]interface{}{
-		"data": map[string]interface{}{
+	sample := map[string]any{
+		"data": map[string]any{
 			"type": "posts",
 			"id":   "1",
-			"attributes": map[string]interface{}{
+			"attributes": map[string]any{
 				"body":  "Hello",
 				"title": "World",
 			},
-			"relationships": map[string]interface{}{
-				"latest_comment": map[string]interface{}{
+			"relationships": map[string]any{
+				"latest_comment": map[string]any{
 					"data": nil, // empty to-one relationship
 				},
 			},
 		},
 	}
+
 	data, err := json.Marshal(sample)
 	if err != nil {
 		t.Fatal(err)
@@ -554,21 +600,22 @@ func TestUnmarshalNullRelationship(t *testing.T) {
 }
 
 func TestUnmarshalNullRelationshipInSlice(t *testing.T) {
-	sample := map[string]interface{}{
-		"data": map[string]interface{}{
+	sample := map[string]any{
+		"data": map[string]any{
 			"type": "posts",
 			"id":   "1",
-			"attributes": map[string]interface{}{
+			"attributes": map[string]any{
 				"body":  "Hello",
 				"title": "World",
 			},
-			"relationships": map[string]interface{}{
-				"comments": map[string]interface{}{
-					"data": []interface{}{}, // empty to-many relationships
+			"relationships": map[string]any{
+				"comments": map[string]any{
+					"data": []any{}, // empty to-many relationships
 				},
 			},
 		},
 	}
+
 	data, err := json.Marshal(sample)
 	if err != nil {
 		t.Fatal(err)
@@ -703,7 +750,10 @@ func TestUnmarshalNestedRelationshipsSideloaded(t *testing.T) {
 func TestUnmarshalNestedRelationshipsEmbedded_withClientIDs(t *testing.T) {
 	model := new(Blog)
 
-	if err := UnmarshalPayload(samplePayload(), model); err != nil {
+	payload, err := samplePayload()
+	require.NoError(t, err)
+
+	if err := UnmarshalPayload(payload, model); err != nil {
 		t.Fatal(err)
 	}
 
@@ -713,7 +763,11 @@ func TestUnmarshalNestedRelationshipsEmbedded_withClientIDs(t *testing.T) {
 }
 
 func unmarshalSamplePayload() (*Blog, error) {
-	in := samplePayload()
+	in, err := samplePayload()
+	if err != nil {
+		return nil, err
+	}
+
 	out := new(Blog)
 
 	if err := UnmarshalPayload(in, out); err != nil {
@@ -724,20 +778,20 @@ func unmarshalSamplePayload() (*Blog, error) {
 }
 
 func TestUnmarshalManyPayload(t *testing.T) {
-	sample := map[string]interface{}{
-		"data": []interface{}{
-			map[string]interface{}{
+	sample := map[string]any{
+		"data": []any{
+			map[string]any{
 				"type": "posts",
 				"id":   "1",
-				"attributes": map[string]interface{}{
+				"attributes": map[string]any{
 					"body":  "First",
 					"title": "Post",
 				},
 			},
-			map[string]interface{}{
+			map[string]any{
 				"type": "posts",
 				"id":   "2",
-				"attributes": map[string]interface{}{
+				"attributes": map[string]any{
 					"body":  "Second",
 					"title": "Post",
 				},
@@ -749,6 +803,7 @@ func TestUnmarshalManyPayload(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+
 	in := bytes.NewReader(data)
 
 	posts, err := UnmarshalManyPayload(in, reflect.TypeOf(new(Post)))
@@ -774,26 +829,26 @@ func TestManyPayload_withLinks(t *testing.T) {
 	nextPageURL := "http://somesite.com/movies?page[limit]=50&page[offset]=100"
 	lastPageURL := "http://somesite.com/movies?page[limit]=50&page[offset]=500"
 
-	sample := map[string]interface{}{
-		"data": []interface{}{
-			map[string]interface{}{
+	sample := map[string]any{
+		"data": []any{
+			map[string]any{
 				"type": "posts",
 				"id":   "1",
-				"attributes": map[string]interface{}{
+				"attributes": map[string]any{
 					"body":  "First",
 					"title": "Post",
 				},
 			},
-			map[string]interface{}{
+			map[string]any{
 				"type": "posts",
 				"id":   "2",
-				"attributes": map[string]interface{}{
+				"attributes": map[string]any{
 					"body":  "Second",
 					"title": "Post",
 				},
 			},
 		},
-		"links": map[string]interface{}{
+		"links": map[string]any{
 			KeyFirstPage:    firstPageURL,
 			KeyPreviousPage: prevPageURL,
 			KeyNextPage:     nextPageURL,
@@ -805,6 +860,7 @@ func TestManyPayload_withLinks(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+
 	in := bytes.NewReader(data)
 
 	payload := new(ManyPayload)
@@ -822,6 +878,7 @@ func TestManyPayload_withLinks(t *testing.T) {
 	if !ok {
 		t.Fatal("Was expecting a non nil ptr Link field")
 	}
+
 	if e, a := firstPageURL, first; e != a {
 		t.Fatalf("Was expecting links.%s to have a value of %s, got %s", KeyFirstPage, e, a)
 	}
@@ -830,6 +887,7 @@ func TestManyPayload_withLinks(t *testing.T) {
 	if !ok {
 		t.Fatal("Was expecting a non nil ptr Link field")
 	}
+
 	if e, a := prevPageURL, prev; e != a {
 		t.Fatalf("Was expecting links.%s to have a value of %s, got %s", KeyPreviousPage, e, a)
 	}
@@ -838,6 +896,7 @@ func TestManyPayload_withLinks(t *testing.T) {
 	if !ok {
 		t.Fatal("Was expecting a non nil ptr Link field")
 	}
+
 	if e, a := nextPageURL, next; e != a {
 		t.Fatalf("Was expecting links.%s to have a value of %s, got %s", KeyNextPage, e, a)
 	}
@@ -846,6 +905,7 @@ func TestManyPayload_withLinks(t *testing.T) {
 	if !ok {
 		t.Fatal("Was expecting a non nil ptr Link field")
 	}
+
 	if e, a := lastPageURL, last; e != a {
 		t.Fatalf("Was expecting links.%s to have a value of %s, got %s", KeyLastPage, e, a)
 	}
@@ -856,8 +916,8 @@ func TestUnmarshalCustomTypeAttributes(t *testing.T) {
 	customFloat := CustomFloatType(1.5)
 	customString := CustomStringType("Test")
 
-	data := map[string]interface{}{
-		"data": map[string]interface{}{
+	data := map[string]any{
+		"data": map[string]any{
 			"type": "customtypes",
 			"id":   "1",
 			"attributes": map[string]json.RawMessage{
@@ -869,6 +929,7 @@ func TestUnmarshalCustomTypeAttributes(t *testing.T) {
 			},
 		},
 	}
+
 	payload, err := json.Marshal(data)
 	if err != nil {
 		t.Fatal(err)
@@ -883,9 +944,11 @@ func TestUnmarshalCustomTypeAttributes(t *testing.T) {
 	if expected, actual := customInt, customAttributeTypes.Int; expected != actual {
 		t.Fatalf("Was expecting custom int to be `%d`, got `%d`", expected, actual)
 	}
+
 	if expected, actual := customInt, *customAttributeTypes.IntPtr; expected != actual {
 		t.Fatalf("Was expecting custom int pointer to be `%d`, got `%d`", expected, actual)
 	}
+
 	if customAttributeTypes.IntPtrNull != nil {
 		t.Fatalf("Was expecting custom int pointer to be <nil>, got `%d`", customAttributeTypes.IntPtrNull)
 	}
@@ -893,14 +956,15 @@ func TestUnmarshalCustomTypeAttributes(t *testing.T) {
 	if expected, actual := customFloat, customAttributeTypes.Float; expected != actual {
 		t.Fatalf("Was expecting custom float to be `%f`, got `%f`", expected, actual)
 	}
+
 	if expected, actual := customString, customAttributeTypes.String; expected != actual {
 		t.Fatalf("Was expecting custom string to be `%s`, got `%s`", expected, actual)
 	}
 }
 
 func TestUnmarshalCustomTypeAttributes_ErrInvalidType(t *testing.T) {
-	data := map[string]interface{}{
-		"data": map[string]interface{}{
+	data := map[string]any{
+		"data": map[string]any{
 			"type": "customtypes",
 			"id":   "1",
 			"attributes": map[string]json.RawMessage{
@@ -912,6 +976,7 @@ func TestUnmarshalCustomTypeAttributes_ErrInvalidType(t *testing.T) {
 			},
 		},
 	}
+
 	payload, err := json.Marshal(data)
 	if err != nil {
 		t.Fatal(err)
@@ -919,41 +984,42 @@ func TestUnmarshalCustomTypeAttributes_ErrInvalidType(t *testing.T) {
 
 	// Parse JSON API payload
 	customAttributeTypes := new(CustomAttributeTypes)
+
 	err = UnmarshalPayload(bytes.NewReader(payload), customAttributeTypes)
 	if err == nil {
 		t.Fatal("Expected an error unmarshalling the payload due to type mismatch, got none")
 	}
 
-	e := errors.New("got value \"bad\" expected type jsonapi.CustomIntType: Invalid type provided")
+	e := errors.New("got value \"bad\" expected type jsonapi.CustomIntType: invalid type provided")
 	if err.Error() != e.Error() {
 		t.Fatalf("Expected error to be %q,\nwas %q", e, err)
 	}
 }
 
-func samplePayloadWithoutIncluded() map[string]interface{} {
-	return map[string]interface{}{
-		"data": map[string]interface{}{
+func samplePayloadWithoutIncluded() map[string]any {
+	return map[string]any{
+		"data": map[string]any{
 			"type": "posts",
 			"id":   "1",
 			"attributes": map[string]json.RawMessage{
 				"body":  json.RawMessage(`"Hello"`),
 				"title": json.RawMessage(`"World"`),
 			},
-			"relationships": map[string]interface{}{
-				"comments": map[string]interface{}{
-					"data": []interface{}{
-						map[string]interface{}{
+			"relationships": map[string]any{
+				"comments": map[string]any{
+					"data": []any{
+						map[string]any{
 							"type": "comments",
 							"id":   "123",
 						},
-						map[string]interface{}{
+						map[string]any{
 							"type": "comments",
 							"id":   "456",
 						},
 					},
 				},
-				"latest_comment": map[string]interface{}{
-					"data": map[string]interface{}{
+				"latest_comment": map[string]any{
+					"data": map[string]any{
 						"type": "comments",
 						"id":   "55555",
 					},
@@ -963,7 +1029,7 @@ func samplePayloadWithoutIncluded() map[string]interface{} {
 	}
 }
 
-func samplePayload() io.Reader {
+func samplePayload() (io.Reader, error) {
 	payload := &OnePayload{
 		Data: &Node{
 			Type: "blogs",
@@ -972,7 +1038,7 @@ func samplePayload() io.Reader {
 				"created_at": json.RawMessage(`1436216820`),
 				"view_count": json.RawMessage(`1000`),
 			},
-			Relationships: map[string]interface{}{
+			Relationships: map[string]any{
 				"posts": &RelationshipManyNode{
 					Data: []*Node{
 						{
@@ -1001,7 +1067,7 @@ func samplePayload() io.Reader {
 							"body":  json.RawMessage(`"Fuubar"`),
 						},
 						ClientID: "3",
-						Relationships: map[string]interface{}{
+						Relationships: map[string]any{
 							"comments": &RelationshipManyNode{
 								Data: []*Node{
 									{
@@ -1028,12 +1094,15 @@ func samplePayload() io.Reader {
 	}
 
 	out := bytes.NewBuffer(nil)
-	json.NewEncoder(out).Encode(payload) // nolint: errcheck
 
-	return out
+	if err := json.NewEncoder(out).Encode(payload); err != nil {
+		return nil, err
+	}
+
+	return out, nil
 }
 
-func samplePayloadWithID() io.Reader {
+func samplePayloadWithID() (io.Reader, error) {
 	payload := &OnePayload{
 		Data: &Node{
 			ID:   "2",
@@ -1046,12 +1115,15 @@ func samplePayloadWithID() io.Reader {
 	}
 
 	out := bytes.NewBuffer(nil)
-	json.NewEncoder(out).Encode(payload) // nolint: errcheck
 
-	return out
+	if err := json.NewEncoder(out).Encode(payload); err != nil {
+		return nil, err
+	}
+
+	return out, nil
 }
 
-func samplePayloadWithBadTypes(m map[string]json.RawMessage) io.Reader {
+func samplePayloadWithBadTypes(m map[string]json.RawMessage) (io.Reader, error) {
 	payload := &OnePayload{
 		Data: &Node{
 			ID:         "2",
@@ -1061,12 +1133,15 @@ func samplePayloadWithBadTypes(m map[string]json.RawMessage) io.Reader {
 	}
 
 	out := bytes.NewBuffer(nil)
-	json.NewEncoder(out).Encode(payload) // nolint: errcheck
 
-	return out
+	if err := json.NewEncoder(out).Encode(payload); err != nil {
+		return nil, err
+	}
+
+	return out, nil
 }
 
-func sampleWithPointerPayload(m map[string]json.RawMessage) io.Reader {
+func sampleWithPointerPayload(m map[string]json.RawMessage) (io.Reader, error) {
 	payload := &OnePayload{
 		Data: &Node{
 			ID:         "2",
@@ -1076,9 +1151,12 @@ func sampleWithPointerPayload(m map[string]json.RawMessage) io.Reader {
 	}
 
 	out := bytes.NewBuffer(nil)
-	json.NewEncoder(out).Encode(payload) // nolint: errcheck
 
-	return out
+	if err := json.NewEncoder(out).Encode(payload); err != nil {
+		return nil, err
+	}
+
+	return out, nil
 }
 
 func testModel() *Blog {
@@ -1153,8 +1231,8 @@ func samplePayloadWithSideloaded() io.Reader {
 	testModel := testModel()
 
 	out := bytes.NewBuffer(nil)
-	err := MarshalPayload(out, testModel)
-	if err != nil {
+
+	if err := MarshalPayload(out, testModel); err != nil {
 		panic(err)
 	}
 
@@ -1163,14 +1241,14 @@ func samplePayloadWithSideloaded() io.Reader {
 
 func sampleSerializedEmbeddedTestModel() *Blog {
 	out := bytes.NewBuffer(nil)
-	err := MarshalOnePayloadEmbedded(out, testModel())
-	if err != nil {
+
+	if err := MarshalOnePayloadEmbedded(out, testModel()); err != nil {
 		panic(err)
 	}
 
 	blog := new(Blog)
-	err = UnmarshalPayload(out, blog)
-	if err != nil {
+
+	if err := UnmarshalPayload(out, blog); err != nil {
 		panic(err)
 	}
 
@@ -1182,18 +1260,20 @@ func TestUnmarshalNestedStructPtr(t *testing.T) {
 		Firstname string `jsonapi:"attr,firstname"`
 		Surname   string `jsonapi:"attr,surname"`
 	}
+
 	type Movie struct {
 		ID       string    `jsonapi:"primary,movies"`
 		Name     string    `jsonapi:"attr,name"`
 		Director *Director `jsonapi:"attr,director"`
 	}
-	sample := map[string]interface{}{
-		"data": map[string]interface{}{
+
+	sample := map[string]any{
+		"data": map[string]any{
 			"type": "movies",
 			"id":   "123",
-			"attributes": map[string]interface{}{
+			"attributes": map[string]any{
 				"name": "The Shawshank Redemption",
-				"director": map[string]interface{}{
+				"director": map[string]any{
 					"firstname": "Frank",
 					"surname":   "Darabont",
 				},
@@ -1205,6 +1285,7 @@ func TestUnmarshalNestedStructPtr(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+
 	in := bytes.NewReader(data)
 	out := new(Movie)
 
@@ -1215,46 +1296,48 @@ func TestUnmarshalNestedStructPtr(t *testing.T) {
 	if out.Name != "The Shawshank Redemption" {
 		t.Fatalf("expected out.Name to be `The Shawshank Redemption`, but got `%s`", out.Name)
 	}
+
 	if out.Director.Firstname != "Frank" {
 		t.Fatalf("expected out.Director.Firstname to be `Frank`, but got `%s`", out.Director.Firstname)
 	}
+
 	if out.Director.Surname != "Darabont" {
 		t.Fatalf("expected out.Director.Surname to be `Darabont`, but got `%s`", out.Director.Surname)
 	}
 }
 
 func TestUnmarshalNestedStruct(t *testing.T) {
-	boss := map[string]interface{}{
+	boss := map[string]any{
 		"firstname": "Hubert",
 		"surname":   "Farnsworth",
 		"age":       176,
 		"hired-at":  "2016-08-17T08:27:12Z",
 	}
 
-	sample := map[string]interface{}{
-		"data": map[string]interface{}{
+	sample := map[string]any{
+		"data": map[string]any{
 			"type": "companies",
 			"id":   "123",
-			"attributes": map[string]interface{}{
+			"attributes": map[string]any{
 				"name":       "Planet Express",
 				"boss":       boss,
 				"founded-at": "2016-08-17T08:27:12Z",
-				"teams": []map[string]interface{}{
+				"teams": []map[string]any{
 					{
 						"name": "Dev",
-						"members": []map[string]interface{}{
+						"members": []map[string]any{
 							{"firstname": "Sean"},
 							{"firstname": "Iz"},
 						},
-						"leader": map[string]interface{}{"firstname": "Iz"},
+						"leader": map[string]any{"firstname": "Iz"},
 					},
 					{
 						"name": "DxE",
-						"members": []map[string]interface{}{
+						"members": []map[string]any{
 							{"firstname": "Akshay"},
 							{"firstname": "Peri"},
 						},
-						"leader": map[string]interface{}{"firstname": "Peri"},
+						"leader": map[string]any{"firstname": "Peri"},
 					},
 				},
 			},
@@ -1265,6 +1348,7 @@ func TestUnmarshalNestedStruct(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+
 	in := bytes.NewReader(data)
 	out := new(Company)
 
@@ -1330,35 +1414,35 @@ func TestUnmarshalNestedStruct(t *testing.T) {
 }
 
 func TestUnmarshalNestedStructSlice(t *testing.T) {
-	fry := map[string]interface{}{
+	fry := map[string]any{
 		"firstname": "Philip J.",
 		"surname":   "Fry",
 		"age":       25,
 		"hired-at":  "2016-08-17T08:27:12Z",
 	}
 
-	bender := map[string]interface{}{
+	bender := map[string]any{
 		"firstname": "Bender Bending",
 		"surname":   "Rodriguez",
 		"age":       19,
 		"hired-at":  "2016-08-17T08:27:12Z",
 	}
 
-	deliveryCrew := map[string]interface{}{
+	deliveryCrew := map[string]any{
 		"name": "Delivery Crew",
-		"members": []interface{}{
+		"members": []any{
 			fry,
 			bender,
 		},
 	}
 
-	sample := map[string]interface{}{
-		"data": map[string]interface{}{
+	sample := map[string]any{
+		"data": map[string]any{
 			"type": "companies",
 			"id":   "123",
-			"attributes": map[string]interface{}{
+			"attributes": map[string]any{
 				"name": "Planet Express",
-				"teams": []interface{}{
+				"teams": []any{
 					deliveryCrew,
 				},
 			},
@@ -1369,6 +1453,7 @@ func TestUnmarshalNestedStructSlice(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+
 	in := bytes.NewReader(data)
 	out := new(Company)
 

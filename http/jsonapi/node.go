@@ -8,13 +8,13 @@ import (
 	"fmt"
 )
 
-// Payloader is used to encapsulate the One and Many payload types
+// Payloader is used to encapsulate the One and Many payload types.
 type Payloader interface {
 	clearIncluded()
 }
 
 // OnePayload is used to represent a generic JSON API payload where a single
-// resource (Node) was included as an {} in the "data" key
+// resource (Node) was included as an {} in the "data" key.
 type OnePayload struct {
 	Data     *Node   `json:"data"`
 	Included []*Node `json:"included,omitempty"`
@@ -27,7 +27,7 @@ func (p *OnePayload) clearIncluded() {
 }
 
 // ManyPayload is used to represent a generic JSON API payload where many
-// resources (Nodes) were included in an [] in the "data" key
+// resources (Nodes) were included in an [] in the "data" key.
 type ManyPayload struct {
 	Data     []*Node `json:"data"`
 	Included []*Node `json:"included,omitempty"`
@@ -39,18 +39,18 @@ func (p *ManyPayload) clearIncluded() {
 	p.Included = []*Node{}
 }
 
-// Node is used to represent a generic JSON API Resource
+// Node is used to represent a generic JSON API Resource.
 type Node struct {
 	Type          string                     `json:"type"`
 	ID            string                     `json:"id,omitempty"`
 	ClientID      string                     `json:"client-id,omitempty"`
 	Attributes    map[string]json.RawMessage `json:"attributes,omitempty"`
-	Relationships map[string]interface{}     `json:"relationships,omitempty"`
+	Relationships map[string]any             `json:"relationships,omitempty"`
 	Links         *Links                     `json:"links,omitempty"`
 	Meta          *Meta                      `json:"meta,omitempty"`
 }
 
-// RelationshipOneNode is used to represent a generic has one JSON API relation
+// RelationshipOneNode is used to represent a generic has one JSON API relation.
 type RelationshipOneNode struct {
 	Data  *Node  `json:"data"`
 	Links *Links `json:"links,omitempty"`
@@ -58,7 +58,7 @@ type RelationshipOneNode struct {
 }
 
 // RelationshipManyNode is used to represent a generic has many JSON API
-// relation
+// relation.
 type RelationshipManyNode struct {
 	Data  []*Node `json:"data"`
 	Links *Links  `json:"links,omitempty"`
@@ -67,7 +67,7 @@ type RelationshipManyNode struct {
 
 // Links is used to represent a `links` object.
 // http://jsonapi.org/format/#document-links
-type Links map[string]interface{}
+type Links map[string]any
 
 func (l *Links) validate() (err error) {
 	// Each member of a links object is a “link”. A link MUST be represented as
@@ -83,11 +83,12 @@ func (l *Links) validate() (err error) {
 
 		if !(isString || isLink) {
 			return fmt.Errorf(
-				"The %s member of the links object was not a string or link object",
+				"the %s member of the links object was not a string or link object",
 				k,
 			)
 		}
 	}
+
 	return
 }
 
@@ -112,15 +113,15 @@ type RelationshipLinkable interface {
 
 // Meta is used to represent a `meta` object.
 // http://jsonapi.org/format/#document-meta
-type Meta map[string]interface{}
+type Meta map[string]any
 
 // Metable is used to include document meta in response data
-// e.g. {"foo": "bar"}
+// e.g. {"foo": "bar"}.
 type Metable interface {
 	JSONAPIMeta() *Meta
 }
 
-// RelationshipMetable is used to include relationship meta in response data
+// RelationshipMetable is used to include relationship meta in response data.
 type RelationshipMetable interface {
 	// JSONRelationshipMeta will be invoked for each relationship with the corresponding relation name (e.g. `comments`)
 	JSONAPIRelationshipMeta(relation string) *Meta

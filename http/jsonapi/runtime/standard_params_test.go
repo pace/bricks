@@ -4,6 +4,7 @@ package runtime_test
 
 import (
 	"context"
+	"net/http"
 	"net/http/httptest"
 	"sort"
 	"testing"
@@ -22,7 +23,7 @@ type TestModel struct {
 
 type testValueSanitizer struct{}
 
-func (t *testValueSanitizer) SanitizeValue(fieldName string, value string) (interface{}, error) {
+func (t *testValueSanitizer) SanitizeValue(fieldName string, value string) (any, error) {
 	return value, nil
 }
 
@@ -48,7 +49,7 @@ func TestIntegrationFilterParameter(t *testing.T) {
 	mapper := runtime.NewMapMapper(mappingNames)
 
 	// filter
-	r := httptest.NewRequest("GET", "http://abc.de/whatEver?filter[test]=b", nil)
+	r := httptest.NewRequest(http.MethodGet, "http://abc.de/whatEver?filter[test]=b", nil)
 
 	urlParams, err := runtime.ReadURLQueryParameters(r, mapper, &testValueSanitizer{})
 	require.NoError(t, err)
@@ -64,7 +65,7 @@ func TestIntegrationFilterParameter(t *testing.T) {
 	assert.Equal(t, 1, count)
 	assert.Equal(t, "b", modelsFilter[0].FilterName)
 
-	r = httptest.NewRequest("GET", "http://abc.de/whatEver?filter[test]=a,b", nil)
+	r = httptest.NewRequest(http.MethodGet, "http://abc.de/whatEver?filter[test]=a,b", nil)
 
 	urlParams, err = runtime.ReadURLQueryParameters(r, mapper, &testValueSanitizer{})
 	require.NoError(t, err)
@@ -87,7 +88,7 @@ func TestIntegrationFilterParameter(t *testing.T) {
 	assert.Equal(t, "b", modelsFilter2[1].FilterName)
 
 	// Paging
-	r = httptest.NewRequest("GET", "http://abc.de/whatEver?page[number]=1&page[size]=2", nil)
+	r = httptest.NewRequest(http.MethodGet, "http://abc.de/whatEver?page[number]=1&page[size]=2", nil)
 
 	urlParams, err = runtime.ReadURLQueryParameters(r, mapper, &testValueSanitizer{})
 	require.NoError(t, err)
@@ -108,7 +109,7 @@ func TestIntegrationFilterParameter(t *testing.T) {
 	assert.Equal(t, "d", modelsPaging[1].FilterName)
 
 	// Sorting
-	r = httptest.NewRequest("GET", "http://abc.de/whatEver?sort=-test", nil)
+	r = httptest.NewRequest(http.MethodGet, "http://abc.de/whatEver?sort=-test", nil)
 
 	urlParams, err = runtime.ReadURLQueryParameters(r, mapper, &testValueSanitizer{})
 	require.NoError(t, err)
@@ -130,7 +131,7 @@ func TestIntegrationFilterParameter(t *testing.T) {
 	assert.Equal(t, "a", modelsSort[5].FilterName)
 
 	// Combine all
-	r = httptest.NewRequest("GET", "http://abc.de/whatEver?sort=-test&filter[test]=a,b,e,f&page[number]=1&page[size]=2", nil)
+	r = httptest.NewRequest(http.MethodGet, "http://abc.de/whatEver?sort=-test&filter[test]=a,b,e,f&page[number]=1&page[size]=2", nil)
 
 	urlParams, err = runtime.ReadURLQueryParameters(r, mapper, &testValueSanitizer{})
 	require.NoError(t, err)

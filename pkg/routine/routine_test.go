@@ -45,6 +45,7 @@ func TestRun_transfersLogger(t *testing.T) {
 
 func TestRun_transfersSink(t *testing.T) {
 	var sink log.Sink
+
 	logger := log.Logger()
 	ctx := log.ContextWithSink(logger.WithContext(context.Background()), &sink)
 	waitForRun(ctx, func(ctx context.Context) {
@@ -75,6 +76,7 @@ func TestRun_transfersOAuth2Token(t *testing.T) {
 
 func TestRun_cancelsContextAfterRoutineIsFinished(t *testing.T) {
 	routineCtx := contextAfterRun(context.Background(), nil)
+
 	require.Eventually(t, func() bool {
 		return routineCtx.Err() == context.Canceled
 	}, time.Second, time.Millisecond)
@@ -86,12 +88,15 @@ func TestRun_blocksAfterShutdown(t *testing.T) {
 
 func testRunBlocksAfterShutdown(t *testing.T) {
 	var endOfTest sync.WaitGroup
+
 	endOfTest.Add(1)
 
 	// start routine that gets canceled by the shutdown
 	routineCtx := make(chan context.Context)
+
 	routine.Run(context.Background(), func(ctx context.Context) {
 		routineCtx <- ctx
+
 		endOfTest.Wait()
 	})
 
@@ -134,19 +139,24 @@ func TestRun_cancelsContextsOnSIGTERM(t *testing.T) {
 
 func testRunCancelsContextsOn(t *testing.T, signum syscall.Signal) {
 	var endOfTest, routinesStarted sync.WaitGroup
+
 	endOfTest.Add(1)
 
 	// start a few routines
 	routineContexts := [3]context.Context{}
 	routinesStarted.Add(len(routineContexts))
+
 	for i := range routineContexts {
 		i := i
+
 		routine.Run(context.Background(), func(ctx context.Context) {
 			routineContexts[i] = ctx
+
 			routinesStarted.Done()
 			endOfTest.Wait()
 		})
 	}
+
 	routinesStarted.Wait()
 
 	// kill this process
@@ -170,7 +180,8 @@ func exitAfterTest(t *testing.T, name string, testFunc func(*testing.T)) {
 		testFunc(t)
 		os.Exit(0)
 	}
-	cmd := exec.Command(os.Args[0], "-test.run="+name)
+
+	cmd := exec.Command(os.Args[0], "-test.run="+name) //nolint:gosec
 	cmd.Env = append(os.Environ(), "ROUTINE_EXIT_AFTER_TEST=1")
 	require.NoError(t, cmd.Run())
 }
@@ -178,6 +189,7 @@ func exitAfterTest(t *testing.T, name string, testFunc func(*testing.T)) {
 // Calls Run and returns once the routine is finished.
 func waitForRun(ctx context.Context, fn func(context.Context)) {
 	done := make(chan struct{})
+
 	routine.Run(ctx, func(ctx context.Context) {
 		defer func() { done <- struct{}{} }()
 		fn(ctx)
@@ -189,12 +201,15 @@ func waitForRun(ctx context.Context, fn func(context.Context)) {
 // routine is finished.
 func contextAfterRun(ctx context.Context, routine func(context.Context)) context.Context {
 	var routineCtx context.Context
+
 	waitForRun(ctx, func(ctx context.Context) {
 		if routine != nil {
 			routine(ctx)
 		}
+
 		routineCtx = ctx
 	})
+
 	return routineCtx
 }
 

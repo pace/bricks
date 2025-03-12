@@ -30,20 +30,28 @@ func TestGenerator(t *testing.T) {
 			}
 
 			g := Generator{}
+
 			result, err := g.BuildSource(testCase.source, filepath.Dir(testCase.pkg), filepath.Base(testCase.pkg))
 			if err != nil {
 				t.Fatal(err)
 			}
+
 			if os.Getenv("PACE_TEST_GENERATOR_WRITE") != "" {
+				if err := os.MkdirAll("testout", 0o750); err != nil {
+					t.Fatal(err)
+				}
+
 				f, err := os.Create(fmt.Sprintf("testout/test.%s.out.go", testCase.pkg))
 				if err != nil {
 					t.Fatal(err)
 				}
+
 				_, err = f.WriteString(result)
 				if err != nil {
 					t.Fatal(err)
 				}
 			}
+
 			if string(expected[:]) != result {
 				diff := difflib.UnifiedDiff{
 					A:        difflib.SplitLines(string(expected[:])),

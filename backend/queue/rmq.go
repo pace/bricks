@@ -6,13 +6,13 @@ import (
 	"sync"
 	"time"
 
+	"github.com/adjust/rmq/v5"
+
 	"github.com/pace/bricks/backend/redis"
 	pberrors "github.com/pace/bricks/maintenance/errors"
 	"github.com/pace/bricks/maintenance/health/servicehealthcheck"
 	"github.com/pace/bricks/maintenance/log"
 	"github.com/pace/bricks/pkg/routine"
-
-	"github.com/adjust/rmq/v5"
 )
 
 var (
@@ -32,29 +32,34 @@ type queueHealth struct {
 func (h *queueHealth) isMarkedHealthy() bool {
 	h.mu.Lock()
 	defer h.mu.Unlock()
+
 	return h.markedUnhealthyAt.IsZero()
 }
 
 func (h *queueHealth) markUnhealthy() {
 	h.mu.Lock()
 	defer h.mu.Unlock()
+
 	h.markedUnhealthyAt = time.Now()
 }
 
 func (h *queueHealth) markHealthy() {
 	h.mu.Lock()
 	defer h.mu.Unlock()
+
 	h.markedUnhealthyAt = time.Time{}
 }
 
 func (h *queueHealth) getMarkedUnhealthyAt() time.Time {
 	h.mu.Lock()
 	defer h.mu.Unlock()
+
 	return h.markedUnhealthyAt
 }
 
 func initDefault() error {
 	var err error
+
 	initMutex.Lock()
 	defer initMutex.Unlock()
 
@@ -67,9 +72,8 @@ func initDefault() error {
 	ctx := log.ContextWithSink(log.WithContext(context.Background()), new(log.Sink))
 	routine.Run(ctx, func(ctx context.Context) {
 		for {
-			err := <-errChan
-			if err != nil {
-				pberrors.Handle(ctx, fmt.Errorf("rmq reported error in background task: %s", err))
+			if err := <-errChan; err != nil {
+				pberrors.Handle(ctx, fmt.Errorf("rmq reported error in background task: %w", err))
 			}
 		}
 	})
@@ -79,8 +83,10 @@ func initDefault() error {
 		rmqConnection = nil
 		return err
 	}
+
 	gatherMetrics(rmqConnection)
 	servicehealthcheck.RegisterHealthCheck("rmq", &HealthCheck{})
+
 	return nil
 }
 
@@ -88,20 +94,23 @@ func initDefault() error {
 // Whenever the number of items in the queue exceeds the healthyLimit
 // The queue will be reported as unhealthy
 // If the queue has already been opened, it will just be returned. Limits will not
-// be updated
+// be updated.
 func NewQueue(name string, healthyLimit int) (rmq.Queue, error) {
-	err := initDefault()
-	if err != nil {
+	if err := initDefault(); err != nil {
 		return nil, err
 	}
+
 	queue, err := rmqConnection.OpenQueue(name)
 	if err != nil {
 		return nil, err
 	}
+
 	if _, ok := queueHealthLimits.Load(name); ok {
 		return queue, nil
 	}
+
 	queueHealthLimits.Store(name, &queueHealth{limit: healthyLimit})
+
 	return queue, nil
 }
 
@@ -113,7 +122,7 @@ type HealthCheck struct {
 }
 
 // HealthCheck checks if the queues are healthy, i.e. whether the number of
-// items accumulated is below the healthyLimit defined when opening the queue
+// items accumulated is below the healthyLimit defined when opening the queue.
 func (h *HealthCheck) HealthCheck(ctx context.Context) servicehealthcheck.HealthCheckResult {
 	if !h.IgnoreInterval && time.Since(h.state.LastChecked()) <= cfg.HealthCheckResultTTL {
 		return h.state.GetState()
@@ -122,23 +131,34 @@ func (h *HealthCheck) HealthCheck(ctx context.Context) servicehealthcheck.Health
 	queues, err := rmqConnection.GetOpenQueues()
 	if err != nil {
 		log.Ctx(ctx).Debug().Err(err).Msg("rmq HealthCheck: could not get open queues")
-		h.state.SetErrorState(fmt.Errorf("error while retrieving open queues: %s", err))
+		h.state.SetErrorState(fmt.Errorf("error while retrieving open queues: %w", err))
+
 		return h.state.GetState()
 	}
+
 	stats, err := rmqConnection.CollectStats(queues)
 	if err != nil {
 		log.Ctx(ctx).Debug().Err(err).Msg("rmq HealthCheck: could not collect stats")
-		h.state.SetErrorState(fmt.Errorf("error while collecting stats: %s", err))
+		h.state.SetErrorState(fmt.Errorf("error while collecting stats: %w", err))
+
 		return h.state.GetState()
 	}
-	queueHealthLimits.Range(func(k, v interface{}) bool {
-		name := k.(string)
-		hl := v.(*queueHealth)
+
+	queueHealthLimits.Range(func(k, v any) bool {
+		name, _ := k.(string)
+
+		hl, ok := v.(*queueHealth)
+		if !ok {
+			return false
+		}
+
 		stat := stats.QueueStats[name]
+
 		if stat.ReadyCount > int64(hl.limit) {
 			if hl.isMarkedHealthy() {
 				hl.markUnhealthy()
 				h.state.SetHealthy()
+
 				return true
 			}
 			// queue health is still pending
@@ -146,12 +166,16 @@ func (h *HealthCheck) HealthCheck(ctx context.Context) servicehealthcheck.Health
 				return true
 			}
 
-			h.state.SetErrorState(fmt.Errorf("Queue '%s' exceeded safe health limit of '%d'", name, hl.limit))
+			h.state.SetErrorState(fmt.Errorf("queue '%s' exceeded safe health limit of '%d'", name, hl.limit))
+
 			return false
 		}
+
 		h.state.SetHealthy()
 		hl.markHealthy()
+
 		return true
 	})
+
 	return h.state.GetState()
 }

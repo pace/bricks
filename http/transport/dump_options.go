@@ -3,16 +3,17 @@ package transport
 import (
 	"context"
 	"fmt"
+	"slices"
 )
 
 func NewDumpOptions(opts ...DumpOption) (DumpOptions, error) {
 	dumpOptions := DumpOptions(map[string]bool{})
 	for _, opt := range opts {
-		err := opt(dumpOptions)
-		if err != nil {
+		if err := opt(dumpOptions); err != nil {
 			return nil, err
 		}
 	}
+
 	return dumpOptions, nil
 }
 
@@ -24,12 +25,9 @@ func (o DumpOptions) IsEnabled(option string) bool {
 }
 
 func (o DumpOptions) AnyEnabled(options ...string) bool {
-	for _, option := range options {
-		if o.IsEnabled(option) {
-			return true
-		}
-	}
-	return false
+	return slices.ContainsFunc(options, func(s string) bool {
+		return o.IsEnabled(s)
+	})
 }
 
 type DumpOption func(o DumpOptions) error
@@ -39,7 +37,9 @@ func WithDumpOption(option string, enabled bool) DumpOption {
 		if !isDumpOptionValid(option) {
 			return fmt.Errorf("invalid dump option %q", option)
 		}
+
 		o[option] = enabled
+
 		return nil
 	}
 }
@@ -80,8 +80,10 @@ func mergeDumpOptions(globalOptions, reqOptions DumpOptions) DumpOptions {
 			// req option already exists, ignore the global one
 			continue
 		}
+
 		reqOptions[globalKey] = globalVal
 	}
+
 	return reqOptions
 }
 
@@ -91,11 +93,13 @@ func CtxWithDumpRoundTripperOptions(ctx context.Context, opts DumpOptions) conte
 	if opts == nil {
 		return ctx
 	}
+
 	return context.WithValue(ctx, dumpRoundTripperCtxKey{}, opts)
 }
 
 func DumpRoundTripperOptionsFromCtx(ctx context.Context) DumpOptions {
 	do := ctx.Value(dumpRoundTripperCtxKey{})
 	dumpOptions, _ := do.(DumpOptions)
+
 	return dumpOptions
 }

@@ -22,7 +22,7 @@ func (g *Generator) addGoDoc(typeName, description string) {
 	}
 }
 
-func (g *Generator) goType(stmt *jen.Statement, schema *openapi3.Schema, tags map[string]string) *typeGenerator { // nolint: gocyclo
+func (g *Generator) goType(stmt *jen.Statement, schema *openapi3.Schema, tags map[string]string) *typeGenerator {
 	return &typeGenerator{
 		g:      g,
 		stmt:   stmt,
@@ -39,7 +39,7 @@ type typeGenerator struct {
 	isParam bool
 }
 
-func (g *typeGenerator) invoke() error { // nolint: gocyclo
+func (g *typeGenerator) invoke() error {
 	if g.schema.Type.Is("string") {
 		switch g.schema.Format {
 		case "byte": // TODO: needs to be base64 encoded/decoded
@@ -60,6 +60,7 @@ func (g *typeGenerator) invoke() error { // nolint: gocyclo
 			}
 		case "date":
 			addValidator(g.tags, "time(2006-01-02)")
+
 			if g.isParam {
 				g.stmt.Qual("time", "Time")
 			} else {
@@ -67,13 +68,15 @@ func (g *typeGenerator) invoke() error { // nolint: gocyclo
 			}
 		case "uuid":
 			addValidator(g.tags, "uuid")
+
 			if g.schema.Nullable {
 				g.stmt.Op("*").String()
 			} else {
 				g.stmt.String()
 			}
 		case "decimal":
-			addValidator(g.tags, "matches(^(\\d*\\.)?\\d+$)")
+			addValidator(g.tags, "matches(^([0-9]*\\\\.)?[0-9]+$)")
+
 			if g.isParam {
 				g.stmt.Qual(pkgDecimal, "Decimal")
 			} else {
@@ -88,6 +91,7 @@ func (g *typeGenerator) invoke() error { // nolint: gocyclo
 		}
 	} else if g.schema.Type.Is("integer") {
 		removeOmitempty(g.tags)
+
 		switch g.schema.Format {
 		case "int32":
 			if g.schema.Nullable {
@@ -113,6 +117,7 @@ func (g *typeGenerator) invoke() error { // nolint: gocyclo
 			}
 		case "float":
 			removeOmitempty(g.tags)
+
 			if g.schema.Nullable {
 				g.stmt.Op("*").Float32()
 			} else {
@@ -122,6 +127,7 @@ func (g *typeGenerator) invoke() error { // nolint: gocyclo
 			fallthrough
 		default:
 			removeOmitempty(g.tags)
+
 			if g.schema.Nullable {
 				g.stmt.Op("*").Float64()
 			} else {
@@ -130,6 +136,7 @@ func (g *typeGenerator) invoke() error { // nolint: gocyclo
 		}
 	} else if g.schema.Type.Is("boolean") {
 		removeOmitempty(g.tags)
+
 		if g.schema.Nullable {
 			g.stmt.Op("*").Bool()
 		} else {
@@ -137,8 +144,8 @@ func (g *typeGenerator) invoke() error { // nolint: gocyclo
 		}
 	} else if g.schema.Type.Is("array") {
 		removeOmitempty(g.tags)
-		err := g.g.goType(g.stmt.Index(), g.schema.Items.Value, g.tags).invoke()
-		if err != nil {
+
+		if err := g.g.goType(g.stmt.Index(), g.schema.Items.Value, g.tags).invoke(); err != nil {
 			return err
 		}
 	} else {
@@ -148,14 +155,14 @@ func (g *typeGenerator) invoke() error { // nolint: gocyclo
 	// add enum validation
 	if len(g.schema.Enum) > 0 {
 		strs := make([]string, len(g.schema.Enum))
-		for i := 0; i < len(g.schema.Enum); i++ {
+		for i := range len(g.schema.Enum) {
 			strs[i] = fmt.Sprintf("%v", g.schema.Enum[i])
 		}
 
 		// in case the field/value is optional
 		// an empty value needs to be added to the enum validator
 		if hasValidator(g.tags, "optional") {
-			strs = append(strs, "")
+			strs = append(strs, "") //nolint:makezero
 		}
 
 		addValidator(g.tags, fmt.Sprintf("in(%v)", strings.Join(strs, "|")))
@@ -181,6 +188,7 @@ func addValidator(tags map[string]string, validator string) {
 	if cur != "" {
 		validator = tags["valid"] + "," + validator
 	}
+
 	tags["valid"] = validator
 }
 
@@ -189,8 +197,8 @@ func hasValidator(tags map[string]string, validator string) bool {
 	if !ok {
 		return false
 	}
-	validators := strings.Split(validatorCfg, ",")
-	for _, v := range validators {
+
+	for v := range strings.SplitSeq(validatorCfg, ",") {
 		if strings.HasPrefix(v, validator) {
 			return true
 		}
@@ -206,6 +214,7 @@ func goNameHelper(name string) string {
 	name = caser.String(name)
 	name = strings.Replace(name, "Url", "URL", -1)
 	name = idRegex.ReplaceAllString(name, "ID")
+
 	return name
 }
 
@@ -214,5 +223,6 @@ func nameFromSchemaRef(ref *openapi3.SchemaRef) string {
 	if name == "." {
 		return ""
 	}
+
 	return name
 }

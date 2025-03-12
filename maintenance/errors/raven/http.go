@@ -15,6 +15,7 @@ func NewHttp(req *http.Request) *Http {
 	if req.TLS != nil || req.Header.Get("X-Forwarded-Proto") == "https" {
 		proto = "https"
 	}
+
 	h := &Http{
 		Method:  req.Method,
 		Cookies: req.Header.Get("Cookie"),
@@ -25,10 +26,13 @@ func NewHttp(req *http.Request) *Http {
 	if addr, port, err := net.SplitHostPort(req.RemoteAddr); err == nil {
 		h.Env = map[string]string{"REMOTE_ADDR": addr, "REMOTE_PORT": port}
 	}
+
 	for k, v := range req.Header {
 		h.Headers[k] = strings.Join(v, ",")
 	}
+
 	h.Headers["Host"] = req.Host
+
 	return h
 }
 
@@ -42,6 +46,7 @@ func sanitizeQuery(query url.Values) url.Values {
 			}
 		}
 	}
+
 	return query
 }
 
@@ -58,7 +63,7 @@ type Http struct {
 	Env     map[string]string `json:"env,omitempty"`
 
 	// Must be either a string or map[string]string
-	Data interface{} `json:"data,omitempty"`
+	Data any `json:"data,omitempty"`
 }
 
 func (h *Http) Class() string { return "request" }
@@ -74,13 +79,17 @@ func RecoveryHandler(handler func(http.ResponseWriter, *http.Request)) func(http
 		defer func() {
 			if rval := recover(); rval != nil {
 				debug.PrintStack()
+
 				rvalStr := fmt.Sprint(rval)
+
 				var packet *Packet
+
 				if err, ok := rval.(error); ok {
 					packet = NewPacket(rvalStr, NewException(errors.New(rvalStr), GetOrNewStacktrace(err, 2, 3, nil)), NewHttp(r))
 				} else {
 					packet = NewPacket(rvalStr, NewException(errors.New(rvalStr), NewStacktrace(2, 3, nil)), NewHttp(r))
 				}
+
 				Capture(packet, nil)
 				w.WriteHeader(http.StatusInternalServerError)
 			}

@@ -15,7 +15,7 @@ var ErrNotUnique = errors.New("not unique")
 
 func IsErrConnectionFailed(err error) bool {
 	// Context errors are checked separately otherwise they would be considered a network error.
-	if err == context.DeadlineExceeded || err == context.Canceled {
+	if errors.Is(err, context.DeadlineExceeded) || errors.Is(err, context.Canceled) {
 		return false
 	}
 
