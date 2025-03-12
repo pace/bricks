@@ -125,7 +125,7 @@ type Currency string
 /*
 ProcessPaymentHandler handles request/response marshaling and validation for
 
-	Post /gas-station/{gasStationId}/payment
+	Post /gas-station/{gasStationId}/payment.
 */
 func ProcessPaymentHandler(service ProcessPaymentHandlerService) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -186,7 +186,7 @@ func ProcessPaymentHandler(service ProcessPaymentHandlerService) http.Handler {
 /*
 ApproachingAtTheForecourtHandler handles request/response marshaling and validation for
 
-	Post /gas-stations/{gasStationId}/approaching
+	Post /gas-stations/{gasStationId}/approaching.
 */
 func ApproachingAtTheForecourtHandler(service ApproachingAtTheForecourtHandlerService) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -251,7 +251,7 @@ func ApproachingAtTheForecourtHandler(service ApproachingAtTheForecourtHandlerSe
 /*
 GetPumpHandler handles request/response marshaling and validation for
 
-	Get /gas-stations/{gasStationId}/pumps/{pumpId}
+	Get /gas-stations/{gasStationId}/pumps/{pumpId}.
 */
 func GetPumpHandler(service GetPumpHandlerService) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -314,7 +314,7 @@ func GetPumpHandler(service GetPumpHandlerService) http.Handler {
 /*
 WaitOnPumpStatusChangeHandler handles request/response marshaling and validation for
 
-	Get /gas-stations/{gasStationId}/pumps/{pumpId}/wait-for-status-change
+	Get /gas-stations/{gasStationId}/pumps/{pumpId}/wait-for-status-change.
 */
 func WaitOnPumpStatusChangeHandler(service WaitOnPumpStatusChangeHandlerService) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -409,7 +409,7 @@ type ProcessPaymentCreatedVAT struct {
 
 /*
 ProcessPaymentResponseWriter is a standard http.ResponseWriter extended with methods
-to generate the respective responses easily
+to generate the respective responses easily.
 */
 type ProcessPaymentResponseWriter interface {
 	http.ResponseWriter
@@ -422,22 +422,22 @@ type processPaymentResponseWriter struct {
 	http.ResponseWriter
 }
 
-// Conflict responds with jsonapi error (HTTP code 409)
+// Conflict responds with jsonapi error (HTTP code 409).
 func (w *processPaymentResponseWriter) Conflict(err error) {
 	runtime.WriteError(w, 409, err)
 }
 
-// NotFound responds with jsonapi error (HTTP code 404)
+// NotFound responds with jsonapi error (HTTP code 404).
 func (w *processPaymentResponseWriter) NotFound(err error) {
 	runtime.WriteError(w, 404, err)
 }
 
-// BadRequest responds with jsonapi error (HTTP code 400)
+// BadRequest responds with jsonapi error (HTTP code 400).
 func (w *processPaymentResponseWriter) BadRequest(err error) {
 	runtime.WriteError(w, 400, err)
 }
 
-// Created responds with jsonapi marshaled data (HTTP code 201)
+// Created responds with jsonapi marshaled data (HTTP code 201).
 func (w *processPaymentResponseWriter) Created(data *ProcessPaymentCreated) {
 	runtime.Marshal(w, data, 201)
 }
@@ -451,7 +451,7 @@ type ProcessPaymentRequest struct {
 
 /*
 ApproachingAtTheForecourtResponseWriter is a standard http.ResponseWriter extended with methods
-to generate the respective responses easily
+to generate the respective responses easily.
 */
 type ApproachingAtTheForecourtResponseWriter interface {
 	http.ResponseWriter
@@ -463,17 +463,17 @@ type approachingAtTheForecourtResponseWriter struct {
 	http.ResponseWriter
 }
 
-// NotFound responds with jsonapi error (HTTP code 404)
+// NotFound responds with jsonapi error (HTTP code 404).
 func (w *approachingAtTheForecourtResponseWriter) NotFound(err error) {
 	runtime.WriteError(w, 404, err)
 }
 
-// BadRequest responds with jsonapi error (HTTP code 400)
+// BadRequest responds with jsonapi error (HTTP code 400).
 func (w *approachingAtTheForecourtResponseWriter) BadRequest(err error) {
 	runtime.WriteError(w, 400, err)
 }
 
-// Created responds with jsonapi marshaled data (HTTP code 201)
+// Created responds with jsonapi marshaled data (HTTP code 201).
 func (w *approachingAtTheForecourtResponseWriter) Created(data ApproachingResponse) {
 	runtime.Marshal(w, data, 201)
 }
@@ -488,7 +488,7 @@ type ApproachingAtTheForecourtRequest struct {
 
 /*
 GetPumpResponseWriter is a standard http.ResponseWriter extended with methods
-to generate the respective responses easily
+to generate the respective responses easily.
 */
 type GetPumpResponseWriter interface {
 	http.ResponseWriter
@@ -499,19 +499,19 @@ type getPumpResponseWriter struct {
 	http.ResponseWriter
 }
 
-// NotFound responds with jsonapi error (HTTP code 404)
+// NotFound responds with jsonapi error (HTTP code 404).
 func (w *getPumpResponseWriter) NotFound(err error) {
 	runtime.WriteError(w, 404, err)
 }
 
-// OK responds with jsonapi marshaled data (HTTP code 200)
+// OK responds with jsonapi marshaled data (HTTP code 200).
 func (w *getPumpResponseWriter) OK(data PumpResponse) {
 	runtime.Marshal(w, data, 200)
 }
 
 /*
 GetPumpRequest is a standard http.Request extended with the
-un-marshaled content object
+un-marshaled content object.
 */
 type GetPumpRequest struct {
 	Request           *http.Request `valid:"-"`
@@ -521,7 +521,7 @@ type GetPumpRequest struct {
 
 /*
 WaitOnPumpStatusChangeResponseWriter is a standard http.ResponseWriter extended with methods
-to generate the respective responses easily
+to generate the respective responses easily.
 */
 type WaitOnPumpStatusChangeResponseWriter interface {
 	http.ResponseWriter
@@ -534,29 +534,29 @@ type waitOnPumpStatusChangeResponseWriter struct {
 	http.ResponseWriter
 }
 
-// RequestTimeout responds with jsonapi error (HTTP code 408)
+// RequestTimeout responds with jsonapi error (HTTP code 408).
 func (w *waitOnPumpStatusChangeResponseWriter) RequestTimeout(err error) {
 	runtime.WriteError(w, 408, err)
 }
 
-// NotFound responds with jsonapi error (HTTP code 404)
+// NotFound responds with jsonapi error (HTTP code 404).
 func (w *waitOnPumpStatusChangeResponseWriter) NotFound(err error) {
 	runtime.WriteError(w, 404, err)
 }
 
-// BadRequest responds with jsonapi error (HTTP code 400)
+// BadRequest responds with jsonapi error (HTTP code 400).
 func (w *waitOnPumpStatusChangeResponseWriter) BadRequest(err error) {
 	runtime.WriteError(w, 400, err)
 }
 
-// OK responds with jsonapi marshaled data (HTTP code 200)
+// OK responds with jsonapi marshaled data (HTTP code 200).
 func (w *waitOnPumpStatusChangeResponseWriter) OK(data PumpResponse) {
 	runtime.Marshal(w, data, 200)
 }
 
 /*
 WaitOnPumpStatusChangeRequest is a standard http.Request extended with the
-un-marshaled content object
+un-marshaled content object.
 */
 type WaitOnPumpStatusChangeRequest struct {
 	Request           *http.Request `valid:"-"`
@@ -567,7 +567,7 @@ type WaitOnPumpStatusChangeRequest struct {
 	ParamTimeout      int64         `valid:"optional"`
 }
 
-// Service interface for ProcessPaymentHandler handler
+// Service interface for ProcessPaymentHandler handler.
 type ProcessPaymentHandlerService interface {
 	/*
 	   ProcessPayment Process payment
@@ -577,7 +577,7 @@ type ProcessPaymentHandlerService interface {
 	ProcessPayment(context.Context, ProcessPaymentResponseWriter, *ProcessPaymentRequest) error
 }
 
-// Service interface for ApproachingAtTheForecourtHandler handler
+// Service interface for ApproachingAtTheForecourtHandler handler.
 type ApproachingAtTheForecourtHandlerService interface {
 	/*
 	   ApproachingAtTheForecourt Gather information when approaching at the forecourt
@@ -591,7 +591,7 @@ type ApproachingAtTheForecourtHandlerService interface {
 	ApproachingAtTheForecourt(context.Context, ApproachingAtTheForecourtResponseWriter, *ApproachingAtTheForecourtRequest) error
 }
 
-// Service interface for GetPumpHandler handler
+// Service interface for GetPumpHandler handler.
 type GetPumpHandlerService interface {
 	/*
 	   GetPump Return current pump information
@@ -601,7 +601,7 @@ type GetPumpHandlerService interface {
 	GetPump(context.Context, GetPumpResponseWriter, *GetPumpRequest) error
 }
 
-// Service interface for WaitOnPumpStatusChangeHandler handler
+// Service interface for WaitOnPumpStatusChangeHandler handler.
 type WaitOnPumpStatusChangeHandlerService interface {
 	/*
 	   WaitOnPumpStatusChange Wait for a status change on a given pump
@@ -621,7 +621,7 @@ type Service interface {
 }
 
 // WaitOnPumpStatusChangeHandlerWithFallbackHelper helper that checks if the given service fulfills the interface. Returns fallback handler if not, otherwise returns matching handler.
-func WaitOnPumpStatusChangeHandlerWithFallbackHelper(service interface{}, fallback http.Handler) http.Handler {
+func WaitOnPumpStatusChangeHandlerWithFallbackHelper(service any, fallback http.Handler) http.Handler {
 	if service, ok := service.(WaitOnPumpStatusChangeHandlerService); ok {
 		return WaitOnPumpStatusChangeHandler(service)
 	} else {
@@ -630,7 +630,7 @@ func WaitOnPumpStatusChangeHandlerWithFallbackHelper(service interface{}, fallba
 }
 
 // GetPumpHandlerWithFallbackHelper helper that checks if the given service fulfills the interface. Returns fallback handler if not, otherwise returns matching handler.
-func GetPumpHandlerWithFallbackHelper(service interface{}, fallback http.Handler) http.Handler {
+func GetPumpHandlerWithFallbackHelper(service any, fallback http.Handler) http.Handler {
 	if service, ok := service.(GetPumpHandlerService); ok {
 		return GetPumpHandler(service)
 	} else {
@@ -639,7 +639,7 @@ func GetPumpHandlerWithFallbackHelper(service interface{}, fallback http.Handler
 }
 
 // ProcessPaymentHandlerWithFallbackHelper helper that checks if the given service fulfills the interface. Returns fallback handler if not, otherwise returns matching handler.
-func ProcessPaymentHandlerWithFallbackHelper(service interface{}, fallback http.Handler) http.Handler {
+func ProcessPaymentHandlerWithFallbackHelper(service any, fallback http.Handler) http.Handler {
 	if service, ok := service.(ProcessPaymentHandlerService); ok {
 		return ProcessPaymentHandler(service)
 	} else {
@@ -648,7 +648,7 @@ func ProcessPaymentHandlerWithFallbackHelper(service interface{}, fallback http.
 }
 
 // ApproachingAtTheForecourtHandlerWithFallbackHelper helper that checks if the given service fulfills the interface. Returns fallback handler if not, otherwise returns matching handler.
-func ApproachingAtTheForecourtHandlerWithFallbackHelper(service interface{}, fallback http.Handler) http.Handler {
+func ApproachingAtTheForecourtHandlerWithFallbackHelper(service any, fallback http.Handler) http.Handler {
 	if service, ok := service.(ApproachingAtTheForecourtHandlerService); ok {
 		return ApproachingAtTheForecourtHandler(service)
 	} else {

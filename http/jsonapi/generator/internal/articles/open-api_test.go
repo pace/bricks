@@ -58,7 +58,7 @@ type MapTypeString map[string]string
 /*
 GetArticleCommentsHandler handles request/response marshaling and validation for
 
-	Get /api/articles/{uuid}/relationships/comments
+	Get /api/articles/{uuid}/relationships/comments.
 */
 func GetArticleCommentsHandler(service GetArticleCommentsHandlerService) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -116,7 +116,7 @@ func GetArticleCommentsHandler(service GetArticleCommentsHandlerService) http.Ha
 /*
 UpdateArticleCommentsHandler handles request/response marshaling and validation for
 
-	Patch /api/articles/{uuid}/relationships/comments
+	Patch /api/articles/{uuid}/relationships/comments.
 */
 func UpdateArticleCommentsHandler(service UpdateArticleCommentsHandlerService) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -182,7 +182,7 @@ func UpdateArticleCommentsHandler(service UpdateArticleCommentsHandlerService) h
 /*
 UpdateArticleInlineTypeHandler handles request/response marshaling and validation for
 
-	Patch /api/articles/{uuid}/relationships/inline
+	Patch /api/articles/{uuid}/relationships/inline.
 */
 func UpdateArticleInlineTypeHandler(service UpdateArticleInlineTypeHandlerService) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -243,7 +243,7 @@ func UpdateArticleInlineTypeHandler(service UpdateArticleInlineTypeHandlerServic
 /*
 UpdateArticleInlineRefHandler handles request/response marshaling and validation for
 
-	Patch /api/articles/{uuid}/relationships/inlineref
+	Patch /api/articles/{uuid}/relationships/inlineref.
 */
 func UpdateArticleInlineRefHandler(service UpdateArticleInlineRefHandlerService) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -303,7 +303,7 @@ func UpdateArticleInlineRefHandler(service UpdateArticleInlineRefHandlerService)
 
 /*
 GetArticleCommentsResponseWriter is a standard http.ResponseWriter extended with methods
-to generate the respective responses easily
+to generate the respective responses easily.
 */
 type GetArticleCommentsResponseWriter interface {
 	http.ResponseWriter
@@ -315,25 +315,25 @@ type getArticleCommentsResponseWriter struct {
 	http.ResponseWriter
 }
 
-// NotFound responds with jsonapi error (HTTP code 404)
+// NotFound responds with jsonapi error (HTTP code 404).
 func (w *getArticleCommentsResponseWriter) NotFound(err error) {
 	runtime.WriteError(w, 404, err)
 }
 
-// NoContent responds with empty response (HTTP code 204)
+// NoContent responds with empty response (HTTP code 204).
 func (w *getArticleCommentsResponseWriter) NoContent() {
 	w.Header().Set("Content-Type", "application/vnd.api+json")
 	w.WriteHeader(204)
 }
 
-// Comments responds with jsonapi marshaled data (HTTP code 200)
+// Comments responds with jsonapi marshaled data (HTTP code 200).
 func (w *getArticleCommentsResponseWriter) Comments(data Comments) {
 	runtime.Marshal(w, data, 200)
 }
 
 /*
 GetArticleCommentsRequest is a standard http.Request extended with the
-un-marshaled content object
+un-marshaled content object.
 */
 type GetArticleCommentsRequest struct {
 	Request   *http.Request `valid:"-"`
@@ -342,7 +342,7 @@ type GetArticleCommentsRequest struct {
 
 /*
 UpdateArticleCommentsResponseWriter is a standard http.ResponseWriter extended with methods
-to generate the respective responses easily
+to generate the respective responses easily.
 */
 type UpdateArticleCommentsResponseWriter interface {
 	http.ResponseWriter
@@ -353,12 +353,12 @@ type updateArticleCommentsResponseWriter struct {
 	http.ResponseWriter
 }
 
-// NotFound responds with jsonapi error (HTTP code 404)
+// NotFound responds with jsonapi error (HTTP code 404).
 func (w *updateArticleCommentsResponseWriter) NotFound(err error) {
 	runtime.WriteError(w, 404, err)
 }
 
-// NoContent responds with empty response (HTTP code 204)
+// NoContent responds with empty response (HTTP code 204).
 func (w *updateArticleCommentsResponseWriter) NoContent() {
 	w.Header().Set("Content-Type", "application/vnd.api+json")
 	w.WriteHeader(204)
@@ -373,7 +373,7 @@ type UpdateArticleCommentsRequest struct {
 
 /*
 UpdateArticleInlineTypeResponseWriter is a standard http.ResponseWriter extended with methods
-to generate the respective responses easily
+to generate the respective responses easily.
 */
 type UpdateArticleInlineTypeResponseWriter interface {
 	http.ResponseWriter
@@ -384,12 +384,12 @@ type updateArticleInlineTypeResponseWriter struct {
 	http.ResponseWriter
 }
 
-// NotFound responds with jsonapi error (HTTP code 404)
+// NotFound responds with jsonapi error (HTTP code 404).
 func (w *updateArticleInlineTypeResponseWriter) NotFound(err error) {
 	runtime.WriteError(w, 404, err)
 }
 
-// NoContent responds with empty response (HTTP code 204)
+// NoContent responds with empty response (HTTP code 204).
 func (w *updateArticleInlineTypeResponseWriter) NoContent() {
 	w.Header().Set("Content-Type", "application/vnd.api+json")
 	w.WriteHeader(204)
@@ -413,7 +413,7 @@ type UpdateArticleInlineTypeRequest struct {
 
 /*
 UpdateArticleInlineRefResponseWriter is a standard http.ResponseWriter extended with methods
-to generate the respective responses easily
+to generate the respective responses easily.
 */
 type UpdateArticleInlineRefResponseWriter interface {
 	http.ResponseWriter
@@ -424,12 +424,12 @@ type updateArticleInlineRefResponseWriter struct {
 	http.ResponseWriter
 }
 
-// NotFound responds with jsonapi error (HTTP code 404)
+// NotFound responds with jsonapi error (HTTP code 404).
 func (w *updateArticleInlineRefResponseWriter) NotFound(err error) {
 	runtime.WriteError(w, 404, err)
 }
 
-// NoContent responds with empty response (HTTP code 204)
+// NoContent responds with empty response (HTTP code 204).
 func (w *updateArticleInlineRefResponseWriter) NoContent() {
 	w.Header().Set("Content-Type", "application/vnd.api+json")
 	w.WriteHeader(204)
@@ -453,25 +453,25 @@ type UpdateArticleInlineRefRequest struct {
 	ParamUuid string                        `valid:"required"`
 }
 
-// Service interface for GetArticleCommentsHandler handler
+// Service interface for GetArticleCommentsHandler handler.
 type GetArticleCommentsHandlerService interface {
 	// GetArticleComments Gets the Article's Comments
 	GetArticleComments(context.Context, GetArticleCommentsResponseWriter, *GetArticleCommentsRequest) error
 }
 
-// Service interface for UpdateArticleCommentsHandler handler
+// Service interface for UpdateArticleCommentsHandler handler.
 type UpdateArticleCommentsHandlerService interface {
 	// UpdateArticleComments Updates the Article with Comment relationships
 	UpdateArticleComments(context.Context, UpdateArticleCommentsResponseWriter, *UpdateArticleCommentsRequest) error
 }
 
-// Service interface for UpdateArticleInlineTypeHandler handler
+// Service interface for UpdateArticleInlineTypeHandler handler.
 type UpdateArticleInlineTypeHandlerService interface {
 	// UpdateArticleInlineType
 	UpdateArticleInlineType(context.Context, UpdateArticleInlineTypeResponseWriter, *UpdateArticleInlineTypeRequest) error
 }
 
-// Service interface for UpdateArticleInlineRefHandler handler
+// Service interface for UpdateArticleInlineRefHandler handler.
 type UpdateArticleInlineRefHandlerService interface {
 	// UpdateArticleInlineRef
 	UpdateArticleInlineRef(context.Context, UpdateArticleInlineRefResponseWriter, *UpdateArticleInlineRefRequest) error
@@ -487,7 +487,7 @@ type Service interface {
 }
 
 // GetArticleCommentsHandlerWithFallbackHelper helper that checks if the given service fulfills the interface. Returns fallback handler if not, otherwise returns matching handler.
-func GetArticleCommentsHandlerWithFallbackHelper(service interface{}, fallback http.Handler) http.Handler {
+func GetArticleCommentsHandlerWithFallbackHelper(service any, fallback http.Handler) http.Handler {
 	if service, ok := service.(GetArticleCommentsHandlerService); ok {
 		return GetArticleCommentsHandler(service)
 	} else {
@@ -496,7 +496,7 @@ func GetArticleCommentsHandlerWithFallbackHelper(service interface{}, fallback h
 }
 
 // UpdateArticleCommentsHandlerWithFallbackHelper helper that checks if the given service fulfills the interface. Returns fallback handler if not, otherwise returns matching handler.
-func UpdateArticleCommentsHandlerWithFallbackHelper(service interface{}, fallback http.Handler) http.Handler {
+func UpdateArticleCommentsHandlerWithFallbackHelper(service any, fallback http.Handler) http.Handler {
 	if service, ok := service.(UpdateArticleCommentsHandlerService); ok {
 		return UpdateArticleCommentsHandler(service)
 	} else {
@@ -505,7 +505,7 @@ func UpdateArticleCommentsHandlerWithFallbackHelper(service interface{}, fallbac
 }
 
 // UpdateArticleInlineTypeHandlerWithFallbackHelper helper that checks if the given service fulfills the interface. Returns fallback handler if not, otherwise returns matching handler.
-func UpdateArticleInlineTypeHandlerWithFallbackHelper(service interface{}, fallback http.Handler) http.Handler {
+func UpdateArticleInlineTypeHandlerWithFallbackHelper(service any, fallback http.Handler) http.Handler {
 	if service, ok := service.(UpdateArticleInlineTypeHandlerService); ok {
 		return UpdateArticleInlineTypeHandler(service)
 	} else {
@@ -514,7 +514,7 @@ func UpdateArticleInlineTypeHandlerWithFallbackHelper(service interface{}, fallb
 }
 
 // UpdateArticleInlineRefHandlerWithFallbackHelper helper that checks if the given service fulfills the interface. Returns fallback handler if not, otherwise returns matching handler.
-func UpdateArticleInlineRefHandlerWithFallbackHelper(service interface{}, fallback http.Handler) http.Handler {
+func UpdateArticleInlineRefHandlerWithFallbackHelper(service any, fallback http.Handler) http.Handler {
 	if service, ok := service.(UpdateArticleInlineRefHandlerService); ok {
 		return UpdateArticleInlineRefHandler(service)
 	} else {
