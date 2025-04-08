@@ -10,7 +10,6 @@ require (
 	github.com/asaskevich/govalidator v0.0.0-20210307081110-f21760c49a8d
 	github.com/bsm/redislock v0.9.3
 	github.com/caarlos0/env/v11 v11.3.1
-	github.com/certifi/gocertifi v0.0.0-20210507211836-431795d63e8d
 	github.com/dave/jennifer v1.4.1
 	github.com/getkin/kin-openapi v0.129.0
 	github.com/getsentry/sentry-go v0.31.1
@@ -23,10 +22,9 @@ require (
 	github.com/jpillora/backoff v1.0.0
 	github.com/mattn/go-isatty v0.0.20
 	github.com/minio/minio-go/v7 v7.0.87
-	github.com/pkg/errors v0.9.1
 	github.com/pmezard/go-difflib v1.0.1-0.20181226105442-5d4384ee4fb2
 	github.com/prometheus/client_golang v1.21.1
-	github.com/redis/go-redis/v9 v9.7.1
+	github.com/redis/go-redis/v9 v9.7.3
 	github.com/rs/xid v1.6.0
 	github.com/rs/zerolog v1.33.0
 	github.com/shopspring/decimal v1.4.0
