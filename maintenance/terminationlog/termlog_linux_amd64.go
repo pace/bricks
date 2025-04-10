@@ -8,20 +8,22 @@
 package terminationlog
 
 import (
+	"log"
 	"os"
 	"syscall"
 )
 
-// termLog default location of kubernetes termination log
+// termLog default location of kubernetes termination log.
 const termLog = "/dev/termination-log"
 
 func init() {
-	file, err := os.OpenFile(termLog, os.O_RDWR, 0o666)
-
+	file, err := os.OpenFile(termLog, os.O_RDWR, 0o600)
 	if err == nil {
 		logFile = file
 
 		// redirect stderr to the termLog
-		syscall.Dup2(int(logFile.Fd()), 2) // nolint: errcheck
+		if err := syscall.Dup2(int(logFile.Fd()), 2); err != nil {
+			log.Fatal(err)
+		}
 	}
 }

@@ -7,9 +7,10 @@ import (
 	"encoding/gob"
 	"strings"
 
+	"google.golang.org/grpc/metadata"
+
 	"github.com/pace/bricks/http/middleware"
 	"github.com/pace/bricks/pkg/tracking/utm"
-	"google.golang.org/grpc/metadata"
 )
 
 const utmMetadataKey = "utm-bin" // IMPORTANT -bin post-fix allows us to send binary data via grpc metadata, otherwise it will break the protocol
@@ -19,10 +20,12 @@ func ContextWithUTMFromMetadata(parentCtx context.Context, md metadata.MD) conte
 	if len(dataSlice) == 0 {
 		return parentCtx
 	}
+
 	var utmData utm.UTMData
 	if err := gob.NewDecoder(strings.NewReader(dataSlice[0])).Decode(&utmData); err != nil {
 		return parentCtx
 	}
+
 	return utm.ContextWithUTMData(parentCtx, utmData)
 }
 
@@ -31,10 +34,12 @@ func EncodeContextWithUTMData(parentCtx context.Context) context.Context {
 	if !exists {
 		return parentCtx
 	}
+
 	w := strings.Builder{}
 	if err := gob.NewEncoder(&w).Encode(utmData); err != nil {
 		return parentCtx
 	}
+
 	return metadata.AppendToOutgoingContext(parentCtx, utmMetadataKey, w.String())
 }
 

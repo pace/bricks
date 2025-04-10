@@ -12,12 +12,11 @@ import (
 	"time"
 
 	"github.com/caarlos0/env/v11"
-	"github.com/pace/bricks/maintenance/log/hlog"
-
+	"github.com/mattn/go-isatty"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 
-	isatty "github.com/mattn/go-isatty"
+	"github.com/pace/bricks/maintenance/log/hlog"
 )
 
 type config struct {
@@ -26,7 +25,7 @@ type config struct {
 	LogCompletedRequest bool   `env:"LOG_COMPLETED_REQUEST" envDefault:"true"`
 }
 
-// map to translate the string log level
+// map to translate the string log level.
 var levelMap = map[string]zerolog.Level{
 	"debug":    zerolog.DebugLevel,
 	"info":     zerolog.InfoLevel,
@@ -44,8 +43,7 @@ var (
 
 func init() {
 	// parse log config
-	err := env.Parse(&cfg)
-	if err != nil {
+	if err := env.Parse(&cfg); err != nil {
 		Fatalf("Failed to parse server environment: %v", err)
 	}
 
@@ -54,7 +52,9 @@ func init() {
 	if !ok {
 		Fatalf("Unknown log level: %q", cfg.LogLevel)
 	}
+
 	zerolog.SetGlobalLevel(v)
+
 	log.Logger = log.Logger.Level(v)
 
 	// auto detect log format
@@ -80,16 +80,17 @@ func init() {
 	log.Logger = log.Output(logOutput)
 }
 
-// RequestID returns a unique request id or an empty string if there is none
+// RequestID returns a unique request id or an empty string if there is none.
 func RequestID(r *http.Request) string {
 	id, ok := hlog.IDFromRequest(r)
 	if ok {
 		return id.String()
 	}
+
 	return ""
 }
 
-// RequestIDFromContext returns a unique request id or an empty string if there is none
+// RequestIDFromContext returns a unique request id or an empty string if there is none.
 func RequestIDFromContext(ctx context.Context) string {
 	id, ok := hlog.IDFromCtx(ctx)
 	if ok {
@@ -99,7 +100,7 @@ func RequestIDFromContext(ctx context.Context) string {
 	return ""
 }
 
-// TraceIDFromContext returns a unique request id or an empty string if there is none
+// TraceIDFromContext returns a unique request id or an empty string if there is none.
 func TraceIDFromContext(ctx context.Context) string {
 	id, ok := hlog.TraceIDFromCtx(ctx)
 	if ok {
@@ -109,24 +110,24 @@ func TraceIDFromContext(ctx context.Context) string {
 	return ""
 }
 
-// Req returns the logger for the passed request
+// Req returns the logger for the passed request.
 func Req(r *http.Request) *zerolog.Logger {
 	return hlog.FromRequest(r)
 }
 
-// Ctx returns the logger for the passed context
+// Ctx returns the logger for the passed context.
 func Ctx(ctx context.Context) *zerolog.Logger {
 	return log.Ctx(ctx)
 }
 
-// Logger returns the current logger instance
+// Logger returns the current logger instance.
 func Logger() *zerolog.Logger {
 	return &log.Logger
 }
 
-// Stack prints the stack of the calling goroutine
+// Stack prints the stack of the calling goroutine.
 func Stack(ctx context.Context) {
-	for _, line := range strings.Split(string(debug.Stack()), "\n") {
+	for line := range strings.SplitSeq(string(debug.Stack()), "\n") {
 		if line != "" {
 			Ctx(ctx).Error().Msg(line)
 		}

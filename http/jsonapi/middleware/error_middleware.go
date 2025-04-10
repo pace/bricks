@@ -22,15 +22,19 @@ func (e *errorMiddleware) Write(b []byte) (int, error) {
 		log.Req(e.req).Warn().Msgf("Error already sent, ignoring: %q", string(b))
 		return 0, nil
 	}
-	repliesJsonApi := e.Header().Get("Content-Type") == runtime.JSONAPIContentType
-	requestsJsonApi := e.req.Header.Get("Accept") == runtime.JSONAPIContentType
-	if e.statusCode >= 400 && requestsJsonApi && !repliesJsonApi {
+
+	repliesJSONAPI := e.Header().Get("Content-Type") == runtime.JSONAPIContentType
+	requestsJSONAPI := e.req.Header.Get("Accept") == runtime.JSONAPIContentType
+
+	if e.statusCode >= 400 && requestsJSONAPI && !repliesJSONAPI {
 		if e.hasBytes {
 			log.Req(e.req).Warn().Msgf("Body already contains data from previous writes: ignoring: %q", string(b))
 			return 0, nil
 		}
+
 		e.hasErr = true
 		runtime.WriteError(e.ResponseWriter, e.statusCode, errors.New(strings.Trim(string(b), "\n")))
+
 		return 0, nil
 	}
 
@@ -38,6 +42,7 @@ func (e *errorMiddleware) Write(b []byte) (int, error) {
 	if err == nil && n > 0 {
 		e.hasBytes = true
 	}
+
 	return n, err
 }
 
@@ -46,9 +51,9 @@ func (e *errorMiddleware) WriteHeader(code int) {
 	e.ResponseWriter.WriteHeader(code)
 }
 
-// ErrorMiddleware is a middleware that wraps http.ResponseWriter
+// Error is a middleware that wraps http.ResponseWriter
 // such that it forces responses with status codes 4xx/5xx to have
-// Content-Type: application/vnd.api+json
+// Content-Type: application/vnd.api+json.
 func Error(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		next.ServeHTTP(&errorMiddleware{ResponseWriter: w, req: r}, r)

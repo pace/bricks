@@ -8,30 +8,39 @@ import (
 	"testing"
 	"time"
 
+	"github.com/stretchr/testify/assert"
+
 	http2 "github.com/pace/bricks/http"
 	"github.com/pace/bricks/maintenance/log"
-	"github.com/stretchr/testify/assert"
 )
 
 func setup() *http.Response {
 	r := http2.Router()
 	rec := httptest.NewRecorder()
-	req := httptest.NewRequest("GET", "/health/check", nil)
+	req := httptest.NewRequest(http.MethodGet, "/health/check", nil)
 	r.ServeHTTP(rec, req)
-	resp := rec.Result()
-	defer resp.Body.Close()
-	return resp
+
+	return rec.Result()
 }
 
-// TestIntegrationHealthCheck tests if object storage health check ist working like expected
+// TestIntegrationHealthCheck tests if object storage health check ist working like expected.
 func TestIntegrationHealthCheck(t *testing.T) {
 	if testing.Short() {
 		t.SkipNow()
 	}
+
 	RegisterHealthchecks()
 	time.Sleep(1 * time.Second) // by the magic of asynchronous code, I here-by present a magic wait
+
 	resp := setup()
-	if resp.StatusCode != 200 {
+
+	defer func() {
+		if err := resp.Body.Close(); err != nil {
+			log.Println(err)
+		}
+	}()
+
+	if resp.StatusCode != http.StatusOK {
 		t.Errorf("Expected /health/check to respond with 200, got: %d", resp.StatusCode)
 	}
 
@@ -39,6 +48,7 @@ func TestIntegrationHealthCheck(t *testing.T) {
 	if err != nil {
 		log.Fatal(err)
 	}
+
 	if !strings.Contains(string(data), "objstore               OK") {
 		t.Errorf("Expected /health/check to return OK, got: %s", string(data))
 	}
@@ -46,6 +56,7 @@ func TestIntegrationHealthCheck(t *testing.T) {
 
 func TestConcurrentHealth(t *testing.T) {
 	ct := time.Date(2020, 12, 16, 15, 30, 46, 0, time.UTC)
+
 	tests := []struct {
 		name      string
 		checkTime time.Time

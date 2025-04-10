@@ -35,6 +35,7 @@ func TestScope_Add(t *testing.T) {
 	type args struct {
 		scope string
 	}
+
 	tests := []struct {
 		name string
 		s    Scope

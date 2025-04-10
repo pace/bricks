@@ -1,0 +1,51 @@
+# for further options, see https://github.com/golangci/golangci-lint/blob/master/.golangci.example.yml
+run:
+  timeout: 4m
+issues:
+  exclude-dirs:
+    - maintenance/errors/raven
+  exclude-use-default: false
+  include:
+    - EXC0005
+linters:
+  enable:
+    - bodyclose
+    - errname
+    - errorlint
+    - forcetypeassert
+    - gci
+    # - goconst
+    - godot
+    - gofumpt
+    - gosec
+    # - ireturn
+    - makezero
+    - misspell
+    - nakedret
+    - nolintlint
+    - prealloc
+    - protogetter
+    - stylecheck
+    - unconvert
+    - unparam
+    - unused
+    - usestdlibvars
+    - whitespace
+    # - wrapcheck #useful but pace bricks is blocking this one (Hide)
+    - wsl
+    - zerologlint
+linters-settings:
+  gci:
+    sections:
+      - standard
+      - default
+      - prefix(github.com/pace/bricks)
+  nolintlint:
+    allow-unused: true
+  stylecheck:
+    checks: ["all", "-ST1000"]
+  wsl:
+    allow-assign-and-call: false
+    allow-trailing-comment: true
+    force-err-cuddling: true
+    error-variable-names: ["err", "ok"]

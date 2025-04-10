@@ -8,7 +8,7 @@ import (
 )
 
 // Authorizer describes the needed functions for authorization,
-// already implemented in oauth2.Authorizer and apikey.Authorizer
+// already implemented in oauth2.Authorizer and apikey.Authorizer.
 type Authorizer interface {
 	// Authorize should authorize a request.
 	// Success: returns a context with information of the authorization
@@ -18,7 +18,7 @@ type Authorizer interface {
 }
 
 // CanAuthorize offers a method to check if an
-// authorizer can authorize a request
+// authorizer can authorize a request.
 type CanAuthorize interface {
 	// CanAuthorizeRequest should check if a request contains the needed information to be authorized
 	CanAuthorizeRequest(r http.Request) bool

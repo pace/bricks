@@ -40,7 +40,7 @@ var cfgProfileKey = &apikey.Config{
 /*
 GetTestHandler handles request/response marshaling and validation for
 
-	Get /beta/test
+	Get /beta/test.
 */
 func GetTestHandler(service GetTestHandlerService, authBackend AuthorizationBackend) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -103,7 +103,7 @@ func GetTestHandler(service GetTestHandlerService, authBackend AuthorizationBack
 
 /*
 GetTestResponseWriter is a standard http.ResponseWriter extended with methods
-to generate the respective responses easily
+to generate the respective responses easily.
 */
 type GetTestResponseWriter interface {
 	http.ResponseWriter
@@ -113,7 +113,7 @@ type getTestResponseWriter struct {
 	http.ResponseWriter
 }
 
-// OK responds with empty response (HTTP code 200)
+// OK responds with empty response (HTTP code 200).
 func (w *getTestResponseWriter) OK() {
 	w.Header().Set("Content-Type", "application/vnd.api+json")
 	w.WriteHeader(200)
@@ -121,13 +121,13 @@ func (w *getTestResponseWriter) OK() {
 
 /*
 GetTestRequest is a standard http.Request extended with the
-un-marshaled content object
+un-marshaled content object.
 */
 type GetTestRequest struct {
 	Request *http.Request `valid:"-"`
 }
 
-// Service interface for GetTestHandler handler
+// Service interface for GetTestHandler handler.
 type GetTestHandlerService interface {
 	// GetTest Test
 	GetTest(context.Context, GetTestResponseWriter, *GetTestRequest) error
@@ -140,7 +140,7 @@ type Service interface {
 }
 
 // GetTestHandlerWithFallbackHelper helper that checks if the given service fulfills the interface. Returns fallback handler if not, otherwise returns matching handler.
-func GetTestHandlerWithFallbackHelper(service interface{}, fallback http.Handler, authBackend AuthorizationBackend) http.Handler {
+func GetTestHandlerWithFallbackHelper(service any, fallback http.Handler, authBackend AuthorizationBackend) http.Handler {
 	if service, ok := service.(GetTestHandlerService); ok {
 		return GetTestHandler(service, authBackend)
 	} else {

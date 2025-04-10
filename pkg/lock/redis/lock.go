@@ -10,12 +10,12 @@ import (
 	"sync"
 	"time"
 
-	redisbackend "github.com/pace/bricks/backend/redis"
-	pberrors "github.com/pace/bricks/maintenance/errors"
-
 	"github.com/bsm/redislock"
 	"github.com/redis/go-redis/v9"
 	"github.com/rs/zerolog/log"
+
+	redisbackend "github.com/pace/bricks/backend/redis"
+	pberrors "github.com/pace/bricks/maintenance/errors"
 )
 
 var (
@@ -43,6 +43,7 @@ type LockOption func(l *Lock)
 
 func NewLock(name string, opts ...LockOption) *Lock {
 	initClient()
+
 	l := &Lock{Name: name}
 	for _, opt := range []LockOption{ // default options
 		SetTTL(5 * time.Second),
@@ -50,9 +51,11 @@ func NewLock(name string, opts ...LockOption) *Lock {
 	} {
 		opt(l)
 	}
+
 	for _, opt := range opts {
 		opt(l)
 	}
+
 	return l
 }
 
@@ -67,6 +70,7 @@ func (l *Lock) Acquire(ctx context.Context) (bool, error) {
 	lock, err := l.locker.Obtain(ctx, l.Name, l.lockTTL, opts)
 	if err != nil {
 		log.Ctx(ctx).Debug().Err(err).Str("lockName", l.Name).Msg("Could not acquire lock")
+
 		switch {
 		case errors.Is(err, redislock.ErrNotObtained):
 			return false, nil
@@ -76,6 +80,7 @@ func (l *Lock) Acquire(ctx context.Context) (bool, error) {
 	}
 
 	l.lock = lock
+
 	return true, nil
 }
 
@@ -94,6 +99,7 @@ func (l *Lock) AcquireWait(ctx context.Context) error {
 	}
 
 	l.lock = lock
+
 	return nil
 }
 
@@ -122,8 +128,9 @@ func (l *Lock) AcquireAndKeepUp(ctx context.Context) (context.Context, context.C
 		defer cancelLock()
 
 		keepUpLock(lockCtx, lock, l.lockTTL)
+
 		err := lock.Release(ctx)
-		if err != nil && err != redislock.ErrLockNotHeld {
+		if err != nil && !errors.Is(err, redislock.ErrLockNotHeld) {
 			log.Ctx(lockCtx).Debug().Err(err).Msgf("could not release lock %q", l.Name)
 		}
 	}()
@@ -136,6 +143,7 @@ func (l *Lock) AcquireAndKeepUp(ctx context.Context) (context.Context, context.C
 func keepUpLock(ctx context.Context, lock *redislock.Lock, refreshTTL time.Duration) {
 	refreshInterval := refreshTTL / 5
 	lockRunsOutIn := refreshTTL // initial value after obtaining the lock
+
 	for {
 		select {
 		case <-ctx.Done():
@@ -149,13 +157,15 @@ func keepUpLock(ctx context.Context, lock *redislock.Lock, refreshTTL time.Durat
 		// Try to refresh lock.
 		case <-time.After(refreshInterval):
 		}
-		if err := lock.Refresh(ctx, refreshTTL, nil); err == redislock.ErrNotObtained {
+
+		if err := lock.Refresh(ctx, refreshTTL, nil); errors.Is(err, redislock.ErrNotObtained) {
 			// Don't return just yet. Get the TTL of the lock and try to
 			// refresh for as long as the TTL is not over.
 			if lockRunsOutIn, err = lock.TTL(ctx); err != nil {
 				log.Ctx(ctx).Debug().Err(err).Msg("could not get ttl of lock")
 				return // assuming we lost the lock
 			}
+
 			continue
 		} else if err != nil {
 			log.Ctx(ctx).Debug().Err(err).Msg("could not refresh lock")
@@ -177,6 +187,7 @@ func (l *Lock) Release(ctx context.Context) error {
 
 	if err := l.lock.Release(ctx); err != nil {
 		log.Ctx(ctx).Debug().Err(err).Msg("error releasing redis lock")
+
 		switch {
 		case errors.Is(err, redislock.ErrLockNotHeld):
 			// well, since our only goal is that the lock is released, this will suffice
@@ -186,6 +197,7 @@ func (l *Lock) Release(ctx context.Context) error {
 	}
 
 	l.lock = nil
+
 	return nil
 }
 

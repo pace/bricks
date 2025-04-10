@@ -26,17 +26,25 @@ func (g *Generator) buildSecurityBackendInterface(schema *openapi3.T) error {
 	if !hasSecuritySchema(schema) {
 		return nil
 	}
+
 	securitySchemes := schema.Components.SecuritySchemes
 	// r contains the methods for the security interface
 	r := &jen.Group{}
 
 	// Because the order of the values while iterating over a map is randomized the generated result can only be tested if the keys are sorted
-	var keys []string
+	keys := make([]string, len(securitySchemes))
+	i := 0
+
 	for k := range securitySchemes {
-		keys = append(keys, k)
+		keys[i] = k
+
+		i++
 	}
+
 	sort.Stable(sort.StringSlice(keys))
+
 	hasDuplicatedSecuritySchema := false
+
 	for _, pathItem := range schema.Paths.Map() {
 		for _, op := range pathItem.Operations() {
 			if op.Security != nil {
@@ -46,9 +54,12 @@ func (g *Generator) buildSecurityBackendInterface(schema *openapi3.T) error {
 	}
 
 	caser := cases.Title(language.Und, cases.NoLower)
+
 	for _, name := range keys {
 		value := securitySchemes[name]
+
 		r.Line().Id(authFuncPrefix + caser.String(name))
+
 		switch value.Value.Type {
 		case "oauth2":
 			r.Params(jen.Id("r").Id("*http.Request"), jen.Id("w").Id("http.ResponseWriter"), jen.Id("scope").String()).Params(jen.Id("context.Context"), jen.Id("bool"))
@@ -58,7 +69,7 @@ func (g *Generator) buildSecurityBackendInterface(schema *openapi3.T) error {
 			r.Line().Id("Init" + caser.String(name)).Params(jen.Id("cfg"+caser.String(name)).Op("*").Qual(pkgOIDC, "Config"))
 		case "apiKey":
 			r.Params(jen.Id("r").Id("*http.Request"), jen.Id("w").Id("http.ResponseWriter")).Params(jen.Id("context.Context"), jen.Id("bool"))
-			r.Line().Id("Init" + caser.String(name)).Params(jen.Id("cfg"+caser.String(name)).Op("*").Qual(pkgApiKey, "Config"))
+			r.Line().Id("Init" + caser.String(name)).Params(jen.Id("cfg"+caser.String(name)).Op("*").Qual(pkgAPIKey, "Config"))
 		default:
 			return errors.New("security schema type not supported: " + value.Value.Type)
 		}
@@ -69,26 +80,35 @@ func (g *Generator) buildSecurityBackendInterface(schema *openapi3.T) error {
 	}
 
 	g.goSource.Type().Id(authBackendInterface).Interface(r)
+
 	return nil
 }
 
-// BuildSecurityConfigs creates structs with the config of each security schema
+// BuildSecurityConfigs creates structs with the config of each security schema.
 func (g *Generator) buildSecurityConfigs(schema *openapi3.T) error {
 	if !hasSecuritySchema(schema) {
 		return nil
 	}
+
 	securitySchemes := schema.Components.SecuritySchemes
 	// Because the order of the values while iterating over a map is randomized the generated result can only be tested if the keys are sorted
-	var keys []string
+	keys := make([]string, len(securitySchemes))
+	i := 0
+
 	for k := range securitySchemes {
-		keys = append(keys, k)
+		keys[i] = k
+
+		i++
 	}
+
 	sort.Stable(sort.StringSlice(keys))
 
 	for _, name := range keys {
 		value := securitySchemes[name]
 		instanceVal := jen.Dict{}
+
 		var pkgName string
+
 		switch value.Value.Type {
 		case "oauth2":
 			pkgName = pkgOAuth2
@@ -111,31 +131,36 @@ func (g *Generator) buildSecurityConfigs(schema *openapi3.T) error {
 		case "openIdConnect":
 			pkgName = pkgOIDC
 			instanceVal[jen.Id("Description")] = jen.Lit(value.Value.Description)
-			instanceVal[jen.Id("OpenIdConnectURL")] = jen.Lit(value.Value.OpenIdConnectUrl)
+			instanceVal[jen.Id("OpenIDConnectURL")] = jen.Lit(value.Value.OpenIdConnectUrl)
 		case "apiKey":
-			pkgName = pkgApiKey
+			pkgName = pkgAPIKey
 			instanceVal[jen.Id("Description")] = jen.Lit(value.Value.Description)
 			instanceVal[jen.Id("In")] = jen.Lit(value.Value.In)
 			instanceVal[jen.Id("Name")] = jen.Lit(value.Value.Name)
 		default:
 			return errors.New("security schema type not supported: " + value.Value.Type)
 		}
+
 		caser := cases.Title(language.Und, cases.NoLower)
 		g.goSource.Var().Id("cfg"+caser.String(name)).Op("=").Op("&").Qual(pkgName, "Config").Values(instanceVal)
 	}
+
 	return nil
 }
 
-// getValuesFromFlow puts the values from the OAuth Flow in a jen.Dict to generate it
+// getValuesFromFlow puts the values from the OAuth Flow in a jen.Dict to generate it.
 func getValuesFromFlow(flow *openapi3.OAuthFlow) jen.Dict {
 	r := jen.Dict{}
 	r[jen.Id("AuthorizationURL")] = jen.Lit(flow.AuthorizationURL)
 	r[jen.Id("TokenURL")] = jen.Lit(flow.TokenURL)
 	r[jen.Id("RefreshURL")] = jen.Lit(flow.RefreshURL)
+
 	scopes := jen.Dict{}
 	for scope, descr := range flow.Scopes {
 		scopes[jen.Lit(scope)] = jen.Lit(descr)
 	}
+
 	r[jen.Id("Scopes")] = jen.Map(jen.String()).String().Values(scopes)
+
 	return r
 }

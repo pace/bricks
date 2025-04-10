@@ -13,35 +13,35 @@ func WithQueryLogging(logRead, logWrite bool) ConfigOption {
 	}
 }
 
-// WithPort - customize the db port
+// WithPort - customize the db port.
 func WithPort(port int) ConfigOption {
 	return func(cfg *Config) {
 		cfg.Port = port
 	}
 }
 
-// WithHost - customise the db host
+// WithHost - customise the db host.
 func WithHost(host string) ConfigOption {
 	return func(cfg *Config) {
 		cfg.Host = host
 	}
 }
 
-// WithPassword - customise the db password
+// WithPassword - customise the db password.
 func WithPassword(password string) ConfigOption {
 	return func(cfg *Config) {
 		cfg.Password = password
 	}
 }
 
-// WithUser - customise the db user
+// WithUser - customise the db user.
 func WithUser(user string) ConfigOption {
 	return func(cfg *Config) {
 		cfg.User = user
 	}
 }
 
-// WithDatabase - customise the db name
+// WithDatabase - customise the db name.
 func WithDatabase(database string) ConfigOption {
 	return func(cfg *Config) {
 		cfg.Database = database

@@ -15,5 +15,5 @@ message Output {
 
 service MathService {
     rpc Add(Input) returns (Output);
-    rpc Substract(Input) returns (Output);
+    rpc Subtract(Input) returns (Output);
 }

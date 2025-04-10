@@ -23,10 +23,17 @@ import (
 func setup() *http.Response {
 	r := http2.Router()
 	rec := httptest.NewRecorder()
-	req := httptest.NewRequest("GET", "/health/check", nil)
+	req := httptest.NewRequest(http.MethodGet, "/health/check", nil)
 	r.ServeHTTP(rec, req)
+
 	resp := rec.Result()
-	defer resp.Body.Close()
+
+	defer func() {
+		if err := resp.Body.Close(); err != nil {
+			log.Println(err)
+		}
+	}()
+
 	return resp
 }
 
@@ -34,9 +41,18 @@ func TestIntegrationHealthCheck(t *testing.T) {
 	if testing.Short() {
 		t.SkipNow()
 	}
+
 	time.Sleep(1 * time.Second) // by the magic of asynchronous code, I here-by present a magic wait
+
 	resp := setup()
-	if resp.StatusCode != 200 {
+
+	defer func() {
+		if err := resp.Body.Close(); err != nil {
+			log.Println(err)
+		}
+	}()
+
+	if resp.StatusCode != http.StatusOK {
 		t.Errorf("Expected /health/check to respond with 200, got: %d", resp.StatusCode)
 	}
 
@@ -44,6 +60,7 @@ func TestIntegrationHealthCheck(t *testing.T) {
 	if err != nil {
 		log.Fatal(err)
 	}
+
 	if !strings.Contains(string(data[:]), "postgresdefault        OK") {
 		t.Errorf("Expected /health/check to return OK, got: %q", string(data[:]))
 	}

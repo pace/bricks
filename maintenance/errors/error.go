@@ -32,32 +32,37 @@ func init() {
 	prometheus.MustRegister(paceHTTPPanicCounter)
 }
 
-type ErrWithExtra struct {
+// ExtraError wraps an error and adds extra information to it.
+type ExtraError struct {
 	err   error
 	extra map[string]any
 }
 
-func NewErrWithExtra(err error, extra map[string]any) ErrWithExtra {
-	return ErrWithExtra{
+// NewExtraError creates a new ExtraError with the given error and extra.
+func NewExtraError(err error, extra map[string]any) ExtraError {
+	return ExtraError{
 		err:   err,
 		extra: extra,
 	}
 }
 
-func (e ErrWithExtra) Error() string {
+// Error implements the error interface.
+func (e ExtraError) Error() string {
 	return e.err.Error()
 }
 
-// Panic wraps a panic for HandleRequest
-type Panic struct {
+// PanicError is a wrapper for panics that occur in the code.
+type PanicError struct {
 	err any
 }
 
-func NewPanic(err any) Panic {
-	return Panic{err: err}
+// NewPanicError creates a new PanicError with the given error.
+func NewPanicError(err any) PanicError {
+	return PanicError{err: err}
 }
 
-func (p Panic) Error() string {
+// Error implements the error interface.
+func (p PanicError) Error() string {
 	return fmt.Sprintf("%v", p.err)
 }
 
@@ -80,8 +85,11 @@ func contextWithRequest(ctx context.Context, r *http.Request) context.Context {
 
 func requestFromContext(ctx context.Context) *http.Request {
 	if v := ctx.Value(reqKey); v != nil {
-		return v.(*http.Request)
+		if out, ok := v.(*http.Request); ok {
+			return out
+		}
 	}
+
 	return nil
 }
 
@@ -91,6 +99,7 @@ func ContextTransfer(ctx, targetCtx context.Context) context.Context {
 	if r := requestFromContext(ctx); r != nil {
 		return contextWithRequest(targetCtx, r)
 	}
+
 	return targetCtx
 }
 
@@ -106,7 +115,7 @@ func (h *contextHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	h.next.ServeHTTP(w, r.WithContext(contextWithRequest(r.Context(), r)))
 }
 
-// Handler implements a panic recovering middleware
+// Handler implements a panic recovering middleware.
 func Handler() func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		next = &contextHandler{next: next}
@@ -114,15 +123,15 @@ func Handler() func(http.Handler) http.Handler {
 	}
 }
 
-// HandleRequest should be called with defer to recover panics in request handlers
+// HandleRequest should be called with defer to recover panics in request handlers.
 func HandleRequest(handlerName string, w http.ResponseWriter, r *http.Request) {
 	if rec := recover(); rec != nil {
 		paceHTTPPanicCounter.Inc()
-		HandleError(NewPanic(rec), handlerName, w, r)
+		HandleError(NewPanicError(rec), handlerName, w, r)
 	}
 }
 
-// HandleError reports the passed error to sentry
+// HandleError reports the passed error to sentry.
 func HandleError(err error, handlerName string, w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
@@ -143,7 +152,7 @@ func handle(ctx context.Context, err error, handlerName string) {
 		l = l.Str("handler", handlerName)
 	}
 
-	var p Panic
+	var p PanicError
 
 	if errors.As(err, &p) {
 		l.Msg("Panic")
@@ -206,13 +215,13 @@ func getEvent(ctx context.Context, r *http.Request, err error, level int, handle
 	return event
 }
 
-// HandleWithCtx should be called with defer to recover panics in goroutines
+// HandleWithCtx should be called with defer to recover panics in goroutines.
 func HandleWithCtx(ctx context.Context, handlerName string) {
 	if r := recover(); r != nil {
 		log.Ctx(ctx).Error().Str("handler", handlerName).Msgf("Panic: %v", r)
 		log.Stack(ctx)
 
-		sentry.CaptureEvent(getEvent(ctx, nil, NewPanic(r), 2, handlerName))
+		sentry.CaptureEvent(getEvent(ctx, nil, NewPanicError(r), 2, handlerName))
 	}
 }
 
@@ -225,9 +234,9 @@ func New(text string) error {
 	return errors.New(text)
 }
 
-// WrapWithExtra adds extra data to an error before reporting to Sentry
+// WrapWithExtra adds extra data to an error before reporting to Sentry.
 func WrapWithExtra(err error, extraInfo map[string]any) error {
-	return NewErrWithExtra(err, extraInfo)
+	return NewExtraError(err, extraInfo)
 }
 
 // getBreadcrumbs takes a context and tries to extract the logs from it if it
@@ -240,13 +249,14 @@ func getBreadcrumbs(ctx context.Context) []*sentry.Breadcrumb {
 		return nil
 	}
 
-	var data []map[string]interface{}
+	var data []map[string]any
 	if err := json.Unmarshal(sink.ToJSON(), &data); err != nil {
 		log.Ctx(ctx).Warn().Err(err).Msg("failed to prepare sentry message")
 		return nil
 	}
 
 	result := make([]*sentry.Breadcrumb, len(data))
+
 	for i, d := range data {
 		crumb, err := createBreadcrumb(d)
 		if err != nil {
@@ -268,6 +278,7 @@ func createBreadcrumb(data map[string]any) (*sentry.Breadcrumb, error) {
 	if !ok {
 		return nil, errors.New(`cannot parse "time"`)
 	}
+
 	delete(data, "time")
 
 	time, err := time.Parse(time.RFC3339, timeRaw)
@@ -279,6 +290,7 @@ func createBreadcrumb(data map[string]any) (*sentry.Breadcrumb, error) {
 	if !ok {
 		return nil, errors.New(`cannot parse "level"`)
 	}
+
 	delete(data, "level")
 
 	level, err := translateZerologLevelToSentryLevel(levelRaw)
@@ -290,12 +302,14 @@ func createBreadcrumb(data map[string]any) (*sentry.Breadcrumb, error) {
 	if !ok {
 		return nil, errors.New(`cannot parse "message"`)
 	}
+
 	delete(data, "message")
 
 	categoryRaw, ok := data["sentry:category"]
 	if !ok {
 		categoryRaw = ""
 	}
+
 	delete(data, "sentry:category")
 
 	category, ok := categoryRaw.(string)
@@ -307,6 +321,7 @@ func createBreadcrumb(data map[string]any) (*sentry.Breadcrumb, error) {
 	if !ok {
 		typRaw = ""
 	}
+
 	delete(data, "sentry:type")
 
 	typ, ok := typRaw.(string)

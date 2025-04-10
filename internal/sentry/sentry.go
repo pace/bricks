@@ -11,8 +11,8 @@ import (
 
 func init() {
 	var (
-		tracesSampleRate float64 = 0.1
-		enableTracing            = true
+		tracesSampleRate = 0.1
+		enableTracing    = true
 	)
 
 	val := strings.TrimSpace(os.Getenv("SENTRY_TRACES_SAMPLE_RATE"))

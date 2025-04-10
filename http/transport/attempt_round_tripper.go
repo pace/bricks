@@ -49,11 +49,13 @@ func attemptFromCtx(ctx context.Context) int32 {
 	if !ok {
 		return 0
 	}
+
 	return a
 }
 
 func transportWithAttempt(rt http.RoundTripper) http.RoundTripper {
 	ar := &attemptRoundTripper{attempt: 0}
 	ar.SetTransport(rt)
+
 	return ar
 }

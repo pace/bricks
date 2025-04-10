@@ -10,7 +10,7 @@ import (
 )
 
 // ExternalDependencyRoundTripper greps external dependency headers and
-// attach them to the currect context
+// attach them to the currect context.
 type ExternalDependencyRoundTripper struct {
 	name      string
 	transport http.RoundTripper
@@ -20,17 +20,17 @@ func NewExternalDependencyRoundTripper(name string) *ExternalDependencyRoundTrip
 	return &ExternalDependencyRoundTripper{name: name}
 }
 
-// Transport returns the RoundTripper to make HTTP requests
+// Transport returns the RoundTripper to make HTTP requests.
 func (l *ExternalDependencyRoundTripper) Transport() http.RoundTripper {
 	return l.transport
 }
 
-// SetTransport sets the RoundTripper to make HTTP requests
+// SetTransport sets the RoundTripper to make HTTP requests.
 func (l *ExternalDependencyRoundTripper) SetTransport(rt http.RoundTripper) {
 	l.transport = rt
 }
 
-// RoundTrip executes a single HTTP transaction via Transport()
+// RoundTrip executes a single HTTP transaction via Transport().
 func (l *ExternalDependencyRoundTripper) RoundTrip(req *http.Request) (*http.Response, error) {
 	start := time.Now()
 	resp, err := l.Transport().RoundTrip(req)

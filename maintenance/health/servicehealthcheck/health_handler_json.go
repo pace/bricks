@@ -22,8 +22,11 @@ func JSONHealthHandler() http.HandlerFunc {
 		checkResponse := make(map[string]serviceStats)
 
 		var errors []string
+
 		var warnings []string
+
 		status := http.StatusOK
+
 		for name, res := range checksResults(&requiredChecks) {
 			scr := serviceStats{
 				Status:   res.State,
@@ -33,10 +36,12 @@ func JSONHealthHandler() http.HandlerFunc {
 			if res.State == Err {
 				scr.Error = res.Msg
 				status = http.StatusServiceUnavailable
+
 				errors = append(errors, fmt.Sprintf("%s: %s", name, res.Msg))
 			} else if res.State == Warn {
 				warnings = append(warnings, fmt.Sprintf("%s: %s", name, res.Msg))
 			}
+
 			checkResponse[name] = scr
 		}
 
@@ -50,6 +55,7 @@ func JSONHealthHandler() http.HandlerFunc {
 				scr.Error = res.Msg
 				status = http.StatusServiceUnavailable
 			}
+
 			checkResponse[name] = scr
 		}
 
@@ -59,8 +65,8 @@ func JSONHealthHandler() http.HandlerFunc {
 
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(status)
-		err := json.NewEncoder(w).Encode(checkResponse)
-		if err != nil {
+
+		if err := json.NewEncoder(w).Encode(checkResponse); err != nil {
 			log.Warnf("json health handler endpoint: encoding failed: %v", err)
 		}
 	}

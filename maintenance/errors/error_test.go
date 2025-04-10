@@ -33,13 +33,14 @@ func TestHandler(t *testing.T) {
 	})
 
 	rec := httptest.NewRecorder()
-	req := httptest.NewRequest("GET", "/", nil)
+	req := httptest.NewRequest(http.MethodGet, "/", nil)
 
 	mux.ServeHTTP(rec, req)
 
 	if rec.Code != 500 {
 		t.Errorf("Expected 500, got %d", rec.Code)
 	}
+
 	if strings.Contains(rec.Body.String(), `"error":"Error"`) {
 		t.Errorf(`Expected "error":"Error", got %q`, rec.Body.String())
 	}
@@ -59,7 +60,7 @@ func TestNew(t *testing.T) {
 }
 
 func TestWrapWithExtra(t *testing.T) {
-	if WrapWithExtra(New("Test"), map[string]interface{}{}).Error() != "Test" {
+	if WrapWithExtra(New("Test"), map[string]any{}).Error() != "Test" {
 		t.Error("invalid implementation of errors.WrapWithExtra")
 	}
 }
@@ -70,13 +71,13 @@ func Test_createBreadcrumb(t *testing.T) {
 
 	tests := []struct {
 		name    string
-		data    map[string]interface{}
+		data    map[string]any
 		want    *sentry.Breadcrumb
 		wantErr bool
 	}{
 		{
 			name: "standard_error",
-			data: map[string]interface{}{
+			data: map[string]any{
 				"level":   "error",
 				"message": "this is an error message",
 				"time":    "2020-02-27T10:19:28+01:00",
@@ -86,20 +87,20 @@ func Test_createBreadcrumb(t *testing.T) {
 				Level:     "error",
 				Message:   "this is an error message",
 				Timestamp: tm,
-				Data:      map[string]interface{}{},
+				Data:      map[string]any{},
 			},
 		},
 		{
 			name: "http",
-			data: map[string]interface{}{
+			data: map[string]any{
 				"level":           "debug",
 				"time":            "2020-02-27T10:19:28+01:00",
 				"sentry:category": "http",
 				"sentry:type":     "http",
 				"message":         "HTTPS GET www.pace.car",
-				"method":          "GET",
+				"method":          http.MethodGet,
 				"attempt":         1,
-				"status_code":     200,
+				"status_code":     http.StatusOK,
 				"duration":        227.717783,
 				"url":             "https://www.pace.car/",
 				"req_id":          "bpboj6bipt34r4teo7g0",
@@ -110,10 +111,10 @@ func Test_createBreadcrumb(t *testing.T) {
 				Message:   "HTTPS GET www.pace.car",
 				Timestamp: tm,
 				Type:      "http",
-				Data: map[string]interface{}{
-					"method":      "GET",
+				Data: map[string]any{
+					"method":      http.MethodGet,
 					"attempt":     1,
-					"status_code": 200,
+					"status_code": http.StatusOK,
 					"duration":    227.717783,
 					"url":         "https://www.pace.car/",
 				},
@@ -121,7 +122,7 @@ func Test_createBreadcrumb(t *testing.T) {
 		},
 		{
 			name: "panic_level",
-			data: map[string]interface{}{
+			data: map[string]any{
 				"level":   "panic",
 				"message": "this is a panic message",
 				"time":    "2020-02-27T10:19:28+01:00",
@@ -131,12 +132,12 @@ func Test_createBreadcrumb(t *testing.T) {
 				Type:      "error",
 				Message:   "this is a panic message",
 				Timestamp: tm,
-				Data:      map[string]interface{}{},
+				Data:      map[string]any{},
 			},
 		},
 		{
 			name: "custom_category",
-			data: map[string]interface{}{
+			data: map[string]any{
 				"level":           "info",
 				"message":         "this is an error message",
 				"sentry:category": "redis",
@@ -150,7 +151,7 @@ func Test_createBreadcrumb(t *testing.T) {
 				Timestamp: tm,
 				Message:   "this is an error message",
 				Type:      "error",
-				Data:      map[string]interface{}{},
+				Data:      map[string]any{},
 			},
 		},
 	}
@@ -172,10 +173,10 @@ func Test_createBreadcrumb(t *testing.T) {
 // which should be passed to all subsequent requests and handler.
 func TestHandlerWithLogSink(t *testing.T) {
 	rec1 := httptest.NewRecorder()
-	req1 := httptest.NewRequest("GET", "/test1", nil)
+	req1 := httptest.NewRequest(http.MethodGet, "/test1", nil)
 
 	rec2 := httptest.NewRecorder()
-	req2 := httptest.NewRequest("GET", "/test2", nil)
+	req2 := httptest.NewRequest(http.MethodGet, "/test2", nil)
 
 	var (
 		sink1Ctx context.Context
@@ -185,29 +186,38 @@ func TestHandlerWithLogSink(t *testing.T) {
 	mux := http.NewServeMux()
 	mux.HandleFunc("/test1", func(w http.ResponseWriter, r *http.Request) {
 		sink1Ctx = r.Context()
+
 		log.Ctx(r.Context()).Debug().Msg("ONLY FOR SINK1")
 		w.WriteHeader(http.StatusOK)
 	})
 	mux.HandleFunc("/test2", func(w http.ResponseWriter, r *http.Request) {
 		require.NotEqual(t, "", log.RequestID(r), "request should have request id")
+
 		sink2Ctx = r.Context()
 
 		client := &http.Client{
 			Transport: transport.Chain(&transport.LoggingRoundTripper{}, &transport.DumpRoundTripper{}),
 		}
 
-		r0, err := http.NewRequest("GET", "https://www.pace.car/de", nil)
+		r0, err := http.NewRequest(http.MethodGet, "https://www.pace.car/de", nil)
 		assert.NoError(t, err, `failed creating request to "/succeed"`)
 
 		r0 = r0.WithContext(r.Context())
-		_, err = client.Do(r0)
+
+		resp, err := client.Do(r0)
 		assert.NoError(t, err, `request to "/succeed" should not error`)
 
-		r1, err := http.NewRequest("GET", "http://localhost/fail", nil)
+		defer func() {
+			err := resp.Body.Close()
+			assert.NoError(t, err)
+		}()
+
+		r1, err := http.NewRequest(http.MethodGet, "http://localhost/fail", nil)
 		assert.NoError(t, err, `failed creating request to "/fail"`)
 
 		r1 = r1.WithContext(r.Context())
-		_, err = client.Do(r1)
+
+		_, err = client.Do(r1) //nolint:bodyclose
 		assert.Error(t, err, `request to "/fail" should error`)
 
 		log.Req(r).Info().
@@ -217,22 +227,30 @@ func TestHandlerWithLogSink(t *testing.T) {
 
 		panic("Sink2 Test Error, IGNORE")
 	})
+
 	handler := log.Handler()(Handler()(mux))
 
 	handler.ServeHTTP(rec1, req1)
+
 	resp1 := rec1.Result()
 	require.Equal(t, http.StatusOK, resp1.StatusCode, "wrong status code")
-	resp1.Body.Close()
+
+	err := resp1.Body.Close()
+	assert.NoError(t, err)
 
 	handler.ServeHTTP(rec2, req2)
+
 	resp2 := rec2.Result()
 	require.Equal(t, http.StatusInternalServerError, resp2.StatusCode, "wrong status code")
-	resp2.Body.Close()
+
+	err = resp2.Body.Close()
+	assert.NoError(t, err)
 
 	sink1, ok := log.SinkFromContext(sink1Ctx)
 	assert.True(t, ok, "failed getting sink1")
 
 	var sink1LogLines []json.RawMessage
+
 	assert.NoError(t, json.Unmarshal(sink1.ToJSON(), &sink1LogLines), "failed extracting logs from sink1")
 
 	assert.Len(t, sink1LogLines, 2, "more log lines than expected")
@@ -242,6 +260,7 @@ func TestHandlerWithLogSink(t *testing.T) {
 	assert.True(t, ok, "failed getting sink2")
 
 	var sink2LogLines []json.RawMessage
+
 	assert.NoError(t, json.Unmarshal(sink2.ToJSON(), &sink2LogLines), "failed extracting logs from sink2")
 
 	assert.NotContains(t, string(sink2LogLines[0]), "ONLY FOR SINK1", "unexpected log line found")
@@ -270,7 +289,7 @@ func TestHandle(t *testing.T) {
 		{
 			name:         "handle panic error",
 			ctx:          context.Background(),
-			err:          NewPanic("test panic"),
+			err:          NewPanicError("test panic"),
 			handlerName:  "testHandler",
 			expectLogMsg: "Panic",
 		},

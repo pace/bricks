@@ -3,7 +3,7 @@
 package k8sapi
 
 // Config gathers the required kubernetes system configuration to use the
-// kubernetes API
+// kubernetes API.
 type Config struct {
 	Host          string `env:"KUBERNETES_SERVICE_HOST" envDefault:"localhost"`
 	Port          int    `env:"KUBERNETES_PORT_443_TCP_PORT" envDefault:"433"`

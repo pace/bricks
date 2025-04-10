@@ -15,8 +15,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/pace/bricks/pkg/routine"
 	"github.com/stretchr/testify/assert"
+
+	"github.com/pace/bricks/pkg/routine"
 )
 
 func Example_clusterBackgroundTask() {
@@ -40,6 +41,7 @@ func Example_clusterBackgroundTask() {
 				default:
 				}
 				out <- fmt.Sprintf("task run %d", i)
+
 				time.Sleep(100 * time.Millisecond)
 			}
 		},
@@ -53,9 +55,10 @@ func Example_clusterBackgroundTask() {
 	// Cancel after 3 results. Cancel will only cancel the routine in this
 	// instance. It will not cancel the synchronized routines of other
 	// instances.
-	for i := 0; i < 3; i++ {
+	for range 3 {
 		println(<-out)
 	}
+
 	cancel()
 
 	// Output:
@@ -81,13 +84,15 @@ func TestIntegrationRunNamed_clusterBackgroundTask(t *testing.T) {
 	// tests that the second process will take over the execution of the task
 	// only after the first process exits.
 	var wg sync.WaitGroup
-	for i := 0; i < 2; i++ {
+	for range 2 {
 		wg.Add(1)
+
 		go func() {
 			spawnProcess(&buf)
 			wg.Done()
 		}()
 	}
+
 	wg.Wait() // until both processes are done
 
 	exp := `task run 0
@@ -101,18 +106,19 @@ task run 2
 }
 
 func spawnProcess(w io.Writer) {
-	cmd := exec.Command(os.Args[0],
+	cmd := exec.Command(os.Args[0], //nolint:gosec
 		"-test.timeout=2s",
 		"-test.run=Example_clusterBackgroundTask",
 	)
+
 	cmd.Env = append(os.Environ(),
 		"TEST_SUBPROCESS=1",
 		"ROUTINE_REDIS_LOCK_TTL=200ms",
 	)
 	cmd.Stdout = w
 	cmd.Stderr = w
-	err := cmd.Run()
-	if err != nil {
+
+	if err := cmd.Run(); err != nil {
 		_, _ = w.Write([]byte("error starting subprocess: " + err.Error()))
 	}
 }
@@ -134,12 +140,14 @@ func (b *subprocessOutputBuffer) Write(p []byte) (int, error) {
 		strings.Contains(s, "Redis connection pool created"):
 		return len(p), nil
 	}
+
 	return b.buf.Write(p)
 }
 
 func (b *subprocessOutputBuffer) String() string {
 	b.mx.Lock()
 	defer b.mx.Unlock()
+
 	return b.buf.String()
 }
 
@@ -151,5 +159,6 @@ func println(s string) {
 		// go around the test runner
 		_, _ = log.Writer().Write([]byte(s + "\n"))
 	}
+
 	fmt.Println(s)
 }

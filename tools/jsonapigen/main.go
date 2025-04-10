@@ -26,7 +26,7 @@ func main() {
 		log.Fatal(err)
 	}
 
-	f, err := os.Create(path)
+	f, err := os.Create(path) //nolint:gosec
 	if err != nil {
 		log.Fatal(err)
 	}

@@ -10,6 +10,7 @@ import (
 	"testing"
 
 	"github.com/shopspring/decimal"
+	"github.com/stretchr/testify/assert"
 
 	"github.com/pace/bricks/http/jsonapi"
 	"github.com/pace/bricks/http/jsonapi/runtime"
@@ -31,6 +32,7 @@ func (s *testService) CreatePaymentMethodSEPA(ctx context.Context, w CreatePayme
 	if str := "Jon"; r.Content.FirstName != str {
 		s.t.Errorf("expected FirstName to be %q, got %q", str, r.Content.FirstName)
 	}
+
 	if str := "Haid-und-Neu-Str."; r.Content.Address.Street != str {
 		s.t.Errorf("expected Address.Street to be %q, got %q", str, r.Content.Address.Street)
 	}
@@ -76,6 +78,7 @@ func (s *testService) ProcessPayment(ctx context.Context, w ProcessPaymentRespon
 	if r.Content.PriceIncludingVAT.String() != "69.34" {
 		s.t.Errorf(`expected priceIncludingVAT "69.34", got %q`, r.Content.PriceIncludingVAT)
 	}
+
 	amount := decimal.RequireFromString("11.07")
 	rate := decimal.RequireFromString("19.0")
 	priceWithVat := decimal.RequireFromString("69.34")
@@ -139,7 +142,7 @@ func (s testAuthBackend) InitProfileKey(cfgProfileKey *apikey.Config) {
 func TestHandler(t *testing.T) {
 	r := Router(&testService{t}, &testAuthBackend{})
 	rec := httptest.NewRecorder()
-	req := httptest.NewRequest("POST", "/pay/beta/payment-methods/sepa-direct-debit", strings.NewReader(`{
+	req := httptest.NewRequest(http.MethodPost, "/pay/beta/payment-methods/sepa-direct-debit", strings.NewReader(`{
 		"data": {
 			"id": "2a1319c3-c136-495d-b59a-47b3246d08af",
 			"type": "paymentMethod",
@@ -164,14 +167,20 @@ func TestHandler(t *testing.T) {
 	r.ServeHTTP(rec, req)
 
 	resp := rec.Result()
-	defer resp.Body.Close()
 
-	if resp.StatusCode != 201 {
+	defer func() {
+		err := resp.Body.Close()
+		assert.NoError(t, err)
+	}()
+
+	if resp.StatusCode != http.StatusCreated {
 		t.Errorf("expected OK got: %d", resp.StatusCode)
+
 		b, err := io.ReadAll(resp.Body)
 		if err != nil {
 			t.Fatal(err)
 		}
+
 		t.Error(string(b[:]))
 	}
 
@@ -188,7 +197,7 @@ func TestHandler(t *testing.T) {
 func TestHandlerDecimal(t *testing.T) {
 	r := Router(&testService{t}, &testAuthBackend{})
 	rec := httptest.NewRecorder()
-	req := httptest.NewRequest("POST", "/pay/beta/transaction/1337.42?queryDecimal=123.456", strings.NewReader(`{
+	req := httptest.NewRequest(http.MethodPost, "/pay/beta/transaction/1337.42?queryDecimal=123.456", strings.NewReader(`{
 		"data": {
 			"id": "5d3607f4-7855-4bfc-b926-1e662c225f06",
 			"type": "transaction",
@@ -211,14 +220,20 @@ func TestHandlerDecimal(t *testing.T) {
 	r.ServeHTTP(rec, req)
 
 	resp := rec.Result()
-	defer resp.Body.Close()
 
-	if resp.StatusCode != 201 {
+	defer func() {
+		err := resp.Body.Close()
+		assert.NoError(t, err)
+	}()
+
+	if resp.StatusCode != http.StatusCreated {
 		t.Errorf("expected OK got: %d", resp.StatusCode)
+
 		b, err := io.ReadAll(resp.Body)
 		if err != nil {
 			t.Fatal(err)
 		}
+
 		t.Error(string(b[:]))
 	}
 
@@ -242,21 +257,27 @@ func assertDecimal(t *testing.T, got, want decimal.Decimal) {
 func TestHandlerPanic(t *testing.T) {
 	r := Router(&testService{t}, &testAuthBackend{})
 	rec := httptest.NewRecorder()
-	req := httptest.NewRequest("GET", "/pay/beta/payment-methods?include=paymentToken", nil)
+	req := httptest.NewRequest(http.MethodGet, "/pay/beta/payment-methods?include=paymentToken", nil)
 	req.Header.Set("Accept", runtime.JSONAPIContentType)
 	req.Header.Set("Content-Type", runtime.JSONAPIContentType)
 
 	log.Handler()(r).ServeHTTP(rec, req)
 
 	resp := rec.Result()
-	defer resp.Body.Close()
+
+	defer func() {
+		err := resp.Body.Close()
+		assert.NoError(t, err)
+	}()
 
 	if resp.StatusCode != http.StatusInternalServerError {
 		t.Errorf("expected 500 got: %d", resp.StatusCode)
+
 		b, err := io.ReadAll(resp.Body)
 		if err != nil {
 			t.Fatal(err)
 		}
+
 		t.Error(string(b[:]))
 	}
 }
@@ -264,21 +285,27 @@ func TestHandlerPanic(t *testing.T) {
 func TestHandlerError(t *testing.T) {
 	r := Router(&testService{t}, &testAuthBackend{})
 	rec := httptest.NewRecorder()
-	req := httptest.NewRequest("GET", "/pay/beta/payment-methods", nil)
+	req := httptest.NewRequest(http.MethodGet, "/pay/beta/payment-methods", nil)
 	req.Header.Set("Accept", runtime.JSONAPIContentType)
 	req.Header.Set("Content-Type", runtime.JSONAPIContentType)
 
 	log.Handler()(r).ServeHTTP(rec, req)
 
 	resp := rec.Result()
-	defer resp.Body.Close()
+
+	defer func() {
+		err := resp.Body.Close()
+		assert.NoError(t, err)
+	}()
 
 	if resp.StatusCode != http.StatusInternalServerError {
 		t.Errorf("expected 500 got: %d", resp.StatusCode)
+
 		b, err := io.ReadAll(resp.Body)
 		if err != nil {
 			t.Fatal(err)
 		}
+
 		t.Error(string(b[:]))
 	}
 }

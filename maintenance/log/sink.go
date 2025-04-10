@@ -22,10 +22,11 @@ const defaultSinkSize = 1000
 func ContextWithSink(ctx context.Context, sink *Sink) context.Context {
 	l := log.Ctx(ctx).Output(sink)
 	ctx = l.WithContext(ctx)
+
 	return context.WithValue(ctx, sinkKey{}, sink)
 }
 
-// SinkFromContext returns the Sink of the given context if it exists
+// SinkFromContext returns the Sink of the given context if it exists.
 func SinkFromContext(ctx context.Context) (*Sink, bool) {
 	sink, ok := ctx.Value(sinkKey{}).(*Sink)
 	return sink, ok
@@ -33,7 +34,7 @@ func SinkFromContext(ctx context.Context) (*Sink, bool) {
 
 // SinkContextTransfer gets the sink from the sourceCtx
 // and returns a new context based on targetCtx with the
-// extracted sink. If no sink is present this is a noop
+// extracted sink. If no sink is present this is a noop.
 func SinkContextTransfer(sourceCtx, targetCtx context.Context) context.Context {
 	sink, ok := SinkFromContext(sourceCtx)
 	if !ok {
@@ -45,7 +46,7 @@ func SinkContextTransfer(sourceCtx, targetCtx context.Context) context.Context {
 
 // Sink respresents a log sink which is used to store
 // logs, created with log.Ctx(ctx), inside the context
-// and use them at a later point in time
+// and use them at a later point in time.
 type Sink struct {
 	Silent     bool
 	customSize int
@@ -57,7 +58,7 @@ type Sink struct {
 }
 
 // NewSink initializes a new sink. This will deprecate the public properties
-// of the sink struct sometime in the future
+// of the sink struct sometime in the future.
 func NewSink(opts ...SinkOption) *Sink {
 	sink := &Sink{}
 	for _, opt := range opts {
@@ -68,6 +69,7 @@ func NewSink(opts ...SinkOption) *Sink {
 	if sink.customSize > 0 {
 		sinkSize = sink.customSize
 	}
+
 	sink.ring = newStringRing(sinkSize)
 
 	return sink
@@ -84,6 +86,7 @@ func handlerWithSink(silentPrefixes ...string) mux.MiddlewareFunc {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			var sink Sink
+
 			for _, prefix := range silentPrefixes {
 				if strings.HasPrefix(r.URL.Path, prefix) {
 					sink.Silent = true
@@ -107,7 +110,7 @@ func (s *Sink) ToJSON() []byte {
 
 // Pretty returns the logs as string while using the
 // zerolog.ConsoleWriter to format them in a human
-// readable way
+// readable way.
 func (s *Sink) Pretty() string {
 	buf := &bytes.Buffer{}
 	writer := &zerolog.ConsoleWriter{
@@ -118,6 +121,7 @@ func (s *Sink) Pretty() string {
 
 	s.rwmutex.Lock()
 	defer s.rwmutex.Unlock()
+
 	for _, str := range s.ring.GetContent() {
 		n, err := strings.NewReader(str).WriteTo(writer)
 		if err != nil {
@@ -155,7 +159,7 @@ func (s *Sink) Write(b []byte) (int, error) {
 
 // this is required for cases where a sink is created directly
 // because then the ring will not be created via newStringRing
-// and its size may be 0 (causes div by zero error)
+// and its size may be 0 (causes div by zero error).
 func (s *Sink) initBuffer() {
 	if s.ring.size == 0 {
 		s.ring.size = defaultSinkSize
@@ -180,6 +184,7 @@ func (r *stringRing) writeString(c string) {
 		r.data = append(r.data, c)
 		return
 	}
+
 	if len(r.data) < r.size-1 {
 		// default case: ring has not reached maximum size yet
 		// so just append and increase
@@ -193,7 +198,7 @@ func (r *stringRing) writeString(c string) {
 	}
 }
 
-// GetContent returns the content of the buffer in the order it was written
+// GetContent returns the content of the buffer in the order it was written.
 func (r *stringRing) GetContent() []string {
 	// default case: write pointer has not started overflowing
 	if len(r.data) < r.size {
@@ -201,6 +206,7 @@ func (r *stringRing) GetContent() []string {
 	} else {
 		out := r.data[r.nextPos:]
 		out = append(out, r.data[:r.nextPos]...)
+
 		return out
 	}
 }

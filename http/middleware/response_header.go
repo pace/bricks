@@ -10,7 +10,7 @@ import (
 	jwt "github.com/golang-jwt/jwt/v5"
 )
 
-// ClientIDHeaderName name of the HTTP header that is used for reporting
+// ClientIDHeaderName name of the HTTP header that is used for reporting.
 const (
 	ClientIDHeaderName = "Client-ID"
 )
@@ -28,6 +28,7 @@ func ClientID(next http.Handler) http.Handler {
 				w.Header().Add(ClientIDHeaderName, claim.AuthorizedParty)
 			}
 		}
+
 		next.ServeHTTP(w, r)
 	})
 }
@@ -41,5 +42,6 @@ func (c clientIDClaim) Valid() error {
 	if c.AuthorizedParty == "" {
 		return ErrEmptyAuthorizedParty
 	}
+
 	return nil
 }

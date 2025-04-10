@@ -11,10 +11,11 @@ import (
 	"time"
 
 	"github.com/bsm/redislock"
+	"github.com/redis/go-redis/v9"
+
 	"github.com/pace/bricks/maintenance/errors"
 	"github.com/pace/bricks/maintenance/health"
 	"github.com/pace/bricks/maintenance/log"
-	"github.com/redis/go-redis/v9"
 )
 
 type status int
@@ -200,11 +201,15 @@ func (a *ActivePassive) Stop() {
 	a.close <- struct{}{}
 }
 
-// Handler implements the readiness http endpoint
+// Handler implements the readiness http endpoint.
 func (a *ActivePassive) Handler(w http.ResponseWriter, r *http.Request) {
 	label := a.label(a.getState())
+
 	w.WriteHeader(http.StatusOK)
-	fmt.Fprintln(w, strings.ToUpper(label))
+
+	if _, err := fmt.Fprintln(w, strings.ToUpper(label)); err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+	}
 }
 
 func (a *ActivePassive) label(s status) string {
@@ -238,7 +243,7 @@ func (a *ActivePassive) becomeUndefined(ctx context.Context) {
 	a.setState(ctx, UNDEFINED)
 }
 
-// setState returns true if the state was set successfully
+// setState returns true if the state was set successfully.
 func (a *ActivePassive) setState(ctx context.Context, state status) bool {
 	err := a.stateSetter.SetState(ctx, a.label(state))
 	if err != nil {
@@ -246,11 +251,14 @@ func (a *ActivePassive) setState(ctx context.Context, state status) bool {
 		a.stateMu.Lock()
 		a.state = UNDEFINED
 		a.stateMu.Unlock()
+
 		return false
 	}
+
 	a.stateMu.Lock()
 	a.state = state
 	a.stateMu.Unlock()
+
 	return true
 }
 
@@ -258,5 +266,6 @@ func (a *ActivePassive) getState() status {
 	a.stateMu.RLock()
 	state := a.state
 	a.stateMu.RUnlock()
+
 	return state
 }

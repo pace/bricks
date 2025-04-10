@@ -6,9 +6,9 @@ import (
 	"regexp"
 	"testing"
 
-	"github.com/pace/bricks/pkg/redact"
-
 	"github.com/stretchr/testify/assert"
+
+	"github.com/pace/bricks/pkg/redact"
 )
 
 func TestRedactionSchemeKeepLast(t *testing.T) {
@@ -30,6 +30,7 @@ and a ********************ring, as well as ****************cret`
 	res := redactor.Mask(originalString)
 	assert.Equal(t, expectedString1, res)
 	redactor.RemovePattern(regexp.MustCompile("DE12345678909876543210"))
+
 	res = redactor.Mask(originalString)
 	assert.Equal(t, expectedString2, res)
 }

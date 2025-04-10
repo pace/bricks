@@ -9,15 +9,16 @@ import (
 	"github.com/pace/bricks/http/jsonapi/generator"
 )
 
-// RestOptions options to respect when generating the rest api
+// RestOptions options to respect when generating the rest api.
 type RestOptions struct {
 	PkgName, Path, Source string
 }
 
-// Rest builds a jsonapi rest api
+// Rest builds a jsonapi rest api.
 func Rest(options RestOptions) {
 	// generate jsonapi
 	g := generator.Generator{}
+
 	result, err := g.BuildSource(options.Source, options.Path, options.PkgName)
 	if err != nil {
 		log.Fatal(err)
@@ -28,7 +29,12 @@ func Rest(options RestOptions) {
 	if err != nil {
 		log.Fatal(err)
 	}
-	defer file.Close() // nolint: errcheck
+
+	defer func() {
+		if err := file.Close(); err != nil {
+			log.Printf("failed closing file body: %v\n", err)
+		}
+	}()
 
 	// write file
 	_, err = file.WriteString(result)

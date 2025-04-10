@@ -9,27 +9,27 @@ import (
 	"strings"
 	"time"
 
+	"github.com/caarlos0/env/v11"
 	grpc_prometheus "github.com/grpc-ecosystem/go-grpc-middleware/providers/prometheus"
 	grpc_middleware "github.com/grpc-ecosystem/go-grpc-middleware/v2"
 	grpc_auth "github.com/grpc-ecosystem/go-grpc-middleware/v2/interceptors/auth"
 	grpc_logging "github.com/grpc-ecosystem/go-grpc-middleware/v2/interceptors/logging"
+	"github.com/rs/xid"
+	"github.com/rs/zerolog"
+	zlog "github.com/rs/zerolog/log"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/metadata"
+	"google.golang.org/grpc/peer"
+
 	"github.com/pace/bricks/http/middleware"
 	"github.com/pace/bricks/http/security"
 	"github.com/pace/bricks/locale"
 	"github.com/pace/bricks/maintenance/errors"
 	"github.com/pace/bricks/maintenance/log"
 	"github.com/pace/bricks/maintenance/log/hlog"
-	"github.com/rs/xid"
-	"github.com/rs/zerolog"
-	zlog "github.com/rs/zerolog/log"
-
-	"github.com/caarlos0/env/v11"
-	"google.golang.org/grpc"
-	"google.golang.org/grpc/metadata"
-	"google.golang.org/grpc/peer"
 )
 
-var InternalServerError = errors.New("internal server error")
+var ErrInternalServer = errors.New("internal server error")
 
 type Config struct {
 	Address string `env:"GRPC_ADDR" envDefault:":3001"`
@@ -45,18 +45,20 @@ func ListenAndServe(gs *grpc.Server) error {
 	if err != nil {
 		return err
 	}
+
 	log.Logger().Info().Str("addr", listener.Addr().String()).Msg("Starting grpc server ...")
-	err = gs.Serve(listener)
-	if err != nil {
+
+	if err := gs.Serve(listener); err != nil {
 		return err
 	}
+
 	return nil
 }
 
 func Listener() (net.Listener, error) {
 	var cfg Config
-	err := env.Parse(&cfg)
-	if err != nil {
+
+	if err := env.Parse(&cfg); err != nil {
 		return nil, fmt.Errorf("failed to parse grpc server environment: %w", err)
 	}
 
@@ -64,6 +66,7 @@ func Listener() (net.Listener, error) {
 	if err != nil {
 		return nil, fmt.Errorf("unable to create grpc listener for %q: %w", cfg.Address, err)
 	}
+
 	return tcpListener, nil
 }
 
@@ -74,12 +77,13 @@ func Server(ab AuthBackend, logger grpc_logging.Logger) *grpc.Server {
 		grpc.ChainStreamInterceptor(
 			grpc_logging.StreamServerInterceptor(logger),
 			serverMetrics.StreamServerInterceptor(),
-			func(srv interface{}, stream grpc.ServerStream, info *grpc.StreamServerInfo, handler grpc.StreamHandler) error {
+			func(srv any, stream grpc.ServerStream, info *grpc.StreamServerInfo, handler grpc.StreamHandler) error {
 				ctx := stream.Context()
 				ctx, md := prepareContext(ctx)
 
 				wrappedStream := grpc_middleware.WrapServerStream(stream)
 				wrappedStream.WrappedContext = ctx
+
 				var addr string
 				if p, ok := peer.FromContext(ctx); ok {
 					addr = p.Addr.String()
@@ -100,12 +104,15 @@ func Server(ab AuthBackend, logger grpc_logging.Logger) *grpc.Server {
 					Str("user_agent", strings.Join(md.Get("user-agent"), ",")).
 					Err(err).
 					Msg("GRPC completed Stream")
+
 				return err
 			},
-			func(srv interface{}, stream grpc.ServerStream, info *grpc.StreamServerInfo, handler grpc.StreamHandler) (err error) {
+			func(srv any, stream grpc.ServerStream, info *grpc.StreamServerInfo, handler grpc.StreamHandler) (err error) {
 				defer errors.HandleWithCtx(stream.Context(), "GRPC "+info.FullMethod)
-				err = InternalServerError // default in case of a panic
+
+				err = ErrInternalServer // default in case of a panic
 				err = handler(srv, stream)
+
 				return err
 			},
 			grpc_auth.StreamServerInterceptor(ab.AuthorizeStream),
@@ -113,7 +120,7 @@ func Server(ab AuthBackend, logger grpc_logging.Logger) *grpc.Server {
 		grpc.ChainUnaryInterceptor(
 			grpc_logging.UnaryServerInterceptor(logger),
 			serverMetrics.UnaryServerInterceptor(),
-			func(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (resp interface{}, err error) {
+			func(ctx context.Context, req any, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (resp any, err error) {
 				ctx, md := prepareContext(ctx)
 
 				var addr string
@@ -136,12 +143,15 @@ func Server(ab AuthBackend, logger grpc_logging.Logger) *grpc.Server {
 					Str("user_agent", strings.Join(md.Get("user-agent"), ",")).
 					Err(err).
 					Msg("GRPC completed Unary")
+
 				return
 			},
-			func(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (resp interface{}, err error) {
+			func(ctx context.Context, req any, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (resp any, err error) {
 				defer errors.HandleWithCtx(ctx, "GRPC "+info.FullMethod)
-				err = InternalServerError // default in case of a panic
+
+				err = ErrInternalServer // default in case of a panic
 				resp, err = handler(ctx, req)
+
 				return
 			},
 			grpc_auth.UnaryServerInterceptor(ab.AuthorizeUnary),
@@ -170,11 +180,14 @@ func prepareContext(ctx context.Context) (context.Context, metadata.MD) {
 
 	// add request context if req_id is given
 	var reqID xid.ID
+
 	if ri := md.Get(MetadataKeyRequestID); len(ri) > 0 {
 		var err error
+
 		reqID, err = xid.FromString(ri[0])
 		if err != nil {
 			log.Debugf("unable to parse xid from req_id: %v", err)
+
 			reqID = xid.New()
 		}
 	} else {

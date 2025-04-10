@@ -12,13 +12,13 @@ import (
 	"time"
 
 	"github.com/caarlos0/env/v11"
-	"github.com/pace/bricks/maintenance/health/servicehealthcheck"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/uptrace/bun"
 	"github.com/uptrace/bun/dialect/pgdialect"
 	"github.com/uptrace/bun/driver/pgdriver"
 
 	"github.com/pace/bricks/backend/postgres/hooks"
+	"github.com/pace/bricks/maintenance/health/servicehealthcheck"
 	"github.com/pace/bricks/maintenance/log"
 )
 
@@ -30,7 +30,7 @@ type Config struct {
 	Database string `env:"POSTGRES_DB" envDefault:"postgres"`
 
 	// ApplicationName is the application name. Used in logs on Pg side.
-	// Only availaible from pg-9.0.
+	// Only available from pg-9.0.
 	ApplicationName string `env:"POSTGRES_APPLICATION_NAME" envDefault:"-"`
 	// Dial timeout for establishing new connections.
 	DialTimeout time.Duration `env:"POSTGRES_DIAL_TIMEOUT" envDefault:"5s"`
@@ -58,8 +58,8 @@ func init() {
 	prometheus.MustRegister(hooks.MetricQueryDurationSeconds)
 	prometheus.MustRegister(hooks.MetricQueryAffectedTotal)
 
-	err := env.Parse(&cfg)
-	if err != nil {
+	// parse log Config
+	if err := env.Parse(&cfg); err != nil {
 		log.Fatalf("Failed to parse postgres environment: %v", err)
 	}
 

@@ -23,6 +23,7 @@ func ParseISO8601(str string) (time.Time, error) {
 	}
 
 	var t time.Time
+
 	var err error
 
 	for _, l := range iso8601Layouts {

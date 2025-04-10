@@ -8,9 +8,11 @@ import (
 	"net/http/httptest"
 	"testing"
 
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+
 	"github.com/pace/bricks/http/oauth2"
 	"github.com/pace/bricks/http/security/apikey"
-	"github.com/stretchr/testify/require"
 )
 
 type testService struct{}
@@ -57,39 +59,55 @@ func TestSecurityBothAuthenticationMethods(t *testing.T) {
 
 	// oauth2 OK, profileKey OK, canAuth: both
 	w := httptest.NewRecorder()
-	r := httptest.NewRequest("GET", "http://test.de/pay/beta/test", nil)
+	r := httptest.NewRequest(http.MethodGet, "http://test.de/pay/beta/test", nil)
 	router.ServeHTTP(w, r)
+
 	result := w.Result()
 	require.Equal(t, http.StatusOK, result.StatusCode)
+
+	err := result.Body.Close()
+	assert.NoError(t, err)
 
 	// oauth2 ok, profileKey OK, canAuth: none
 	authBackend.canAuthProfileKey = false
 	authBackend.canAuthOauth = false
 	w = httptest.NewRecorder()
-	r = httptest.NewRequest("GET", "http://test.de/pay/beta/test", nil)
+	r = httptest.NewRequest(http.MethodGet, "http://test.de/pay/beta/test", nil)
 	router.ServeHTTP(w, r)
+
 	result = w.Result()
 	require.Equal(t, http.StatusUnauthorized, result.StatusCode)
+
+	err = result.Body.Close()
+	assert.NoError(t, err)
 
 	// oauth2 400, profileKey OK, canAuth = oauth2
 	authBackend.canAuthProfileKey = false
 	authBackend.canAuthOauth = true
 	w = httptest.NewRecorder()
 	authBackend.oauth2Code = http.StatusBadRequest
-	r = httptest.NewRequest("GET", "http://test.de/pay/beta/test", nil)
+	r = httptest.NewRequest(http.MethodGet, "http://test.de/pay/beta/test", nil)
 	router.ServeHTTP(w, r)
+
 	result = w.Result()
 	require.Equal(t, http.StatusBadRequest, result.StatusCode)
+
+	err = result.Body.Close()
+	assert.NoError(t, err)
 
 	// oauth2 400, profileKey OK, canAuth = profileKey
 	authBackend.canAuthProfileKey = true
 	authBackend.canAuthOauth = false
 	w = httptest.NewRecorder()
 	authBackend.oauth2Code = http.StatusBadRequest
-	r = httptest.NewRequest("GET", "http://test.de/pay/beta/test", nil)
+	r = httptest.NewRequest(http.MethodGet, "http://test.de/pay/beta/test", nil)
 	router.ServeHTTP(w, r)
+
 	result = w.Result()
 	require.Equal(t, http.StatusOK, result.StatusCode)
+
+	err = result.Body.Close()
+	assert.NoError(t, err)
 
 	// oauth2 400, profileKey 500, canAuth = both
 	w = httptest.NewRecorder()
@@ -97,9 +115,13 @@ func TestSecurityBothAuthenticationMethods(t *testing.T) {
 	authBackend.oauth2Code = http.StatusBadRequest
 	authBackend.canAuthProfileKey = true
 	authBackend.canAuthOauth = true
-	r = httptest.NewRequest("GET", "http://test.de/pay/beta/test", nil)
+	r = httptest.NewRequest(http.MethodGet, "http://test.de/pay/beta/test", nil)
 	router.ServeHTTP(w, r)
+
 	result = w.Result()
 	// Alphabetic order => get the error of the alphabetic first security scheme
 	require.Equal(t, http.StatusBadRequest, result.StatusCode)
+
+	err = result.Body.Close()
+	assert.NoError(t, err)
 }
