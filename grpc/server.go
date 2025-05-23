@@ -13,6 +13,7 @@ import (
 	grpc_middleware "github.com/grpc-ecosystem/go-grpc-middleware/v2"
 	grpc_auth "github.com/grpc-ecosystem/go-grpc-middleware/v2/interceptors/auth"
 	grpc_logging "github.com/grpc-ecosystem/go-grpc-middleware/v2/interceptors/logging"
+	grpc_sentry "github.com/johnbellone/grpc-middleware-sentry"
 	"github.com/pace/bricks/http/middleware"
 	"github.com/pace/bricks/http/security"
 	"github.com/pace/bricks/locale"
@@ -72,6 +73,7 @@ func Server(ab AuthBackend, logger grpc_logging.Logger) *grpc.Server {
 
 	myServer := grpc.NewServer(
 		grpc.ChainStreamInterceptor(
+			grpc_sentry.StreamServerInterceptor(),
 			grpc_logging.StreamServerInterceptor(logger),
 			serverMetrics.StreamServerInterceptor(),
 			func(srv interface{}, stream grpc.ServerStream, info *grpc.StreamServerInfo, handler grpc.StreamHandler) error {
@@ -111,6 +113,7 @@ func Server(ab AuthBackend, logger grpc_logging.Logger) *grpc.Server {
 			grpc_auth.StreamServerInterceptor(ab.AuthorizeStream),
 		),
 		grpc.ChainUnaryInterceptor(
+			grpc_sentry.UnaryServerInterceptor(),
 			grpc_logging.UnaryServerInterceptor(logger),
 			serverMetrics.UnaryServerInterceptor(),
 			func(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (resp interface{}, err error) {
