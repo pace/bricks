@@ -17,6 +17,7 @@ import (
 
 	grpc_prometheus "github.com/grpc-ecosystem/go-grpc-middleware/providers/prometheus"
 	grpc_retry "github.com/grpc-ecosystem/go-grpc-middleware/v2/interceptors/retry"
+	grpc_sentry "github.com/johnbellone/grpc-middleware-sentry"
 )
 
 // Deprecated: Use NewClient instead.
@@ -42,6 +43,7 @@ func NewClient(addr string) (*grpc.ClientConn, error) {
 	conn, err := grpc.NewClient(addr,
 		grpc.WithTransportCredentials(insecure.NewCredentials()),
 		grpc.WithChainStreamInterceptor(
+			grpc_sentry.StreamClientInterceptor(),
 			grpc_retry.StreamClientInterceptor(opts...),
 			func(ctx context.Context, desc *grpc.StreamDesc, cc *grpc.ClientConn, method string, streamer grpc.Streamer, opts ...grpc.CallOption) (grpc.ClientStream, error) {
 				start := time.Now()
@@ -56,6 +58,7 @@ func NewClient(addr string) (*grpc.ClientConn, error) {
 		),
 		grpc.WithChainUnaryInterceptor(
 			clientMetrics.UnaryClientInterceptor(),
+			grpc_sentry.UnaryClientInterceptor(),
 			grpc_retry.UnaryClientInterceptor(opts...),
 			func(ctx context.Context, method string, req, reply interface{}, cc *grpc.ClientConn, invoker grpc.UnaryInvoker, opts ...grpc.CallOption) error {
 				start := time.Now()
