@@ -1,4 +1,4 @@
-// Copyright © 2018 by PACE Telematics GmbH. All rights reserved.
+// Copyright © 2018–2026 by PACE Mobility GmbH. All rights reserved.
 
 // Package health implements simple checks for readiness and liveness
 // that will be invoked by the loadbalancer frequently

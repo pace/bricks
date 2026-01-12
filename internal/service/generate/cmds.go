@@ -1,4 +1,4 @@
-// Copyright © 2018 by PACE Telematics GmbH. All rights reserved.
+// Copyright © 2018–2026 by PACE Mobility GmbH. All rights reserved.
 
 package generate
 
@@ -102,6 +102,6 @@ func generateControlMain(f *jen.File, cmdName string) {
 func copyright() string {
 	stmt := ""
 	now := time.Now()
-	stmt += fmt.Sprintf("// Copyright © %04d by PACE Telematics GmbH. All rights reserved.\n", now.Year())
+	stmt += fmt.Sprintf("// Copyright © %04d by PACE Mobility GmbH. All rights reserved.\n", now.Year())
 	return stmt
 }

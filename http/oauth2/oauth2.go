@@ -1,4 +1,4 @@
-// Copyright © 2018 by PACE Telematics GmbH. All rights reserved.
+// Copyright © 2018–2026 by PACE Mobility GmbH. All rights reserved.
 
 // Package oauth2 provides a middelware that introspects the auth token on
 // behalf of PACE services and populate the request context with useful information

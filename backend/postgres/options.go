@@ -1,4 +1,4 @@
-// Copyright © 2024 by PACE Telematics GmbH. All rights reserved.
+// Copyright © 2024–2026 by PACE Mobility GmbH. All rights reserved.
 
 package postgres
 

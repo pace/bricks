@@ -1,4 +1,4 @@
-// Copyright © 2018 by PACE Telematics GmbH. All rights reserved.
+// Copyright © 2018–2026 by PACE Mobility GmbH. All rights reserved.
 
 // Package metric returns the prometheus metrics handler
 package metric
