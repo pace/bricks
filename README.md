@@ -1,8 +1,15 @@
-# PACE Bricks [![Golang CI](https://github.com/pace/bricks/actions/workflows/golang-ci.yml/badge.svg)](https://github.com/pace/bricks/actions/workflows/golang-ci.yml)  [![Coverage Status](https://coveralls.io/repos/github/pace/bricks/badge.svg?branch=master)](https://coveralls.io/github/pace/bricks?branch=master)
+# PACE Bricks ![Deprecated](https://img.shields.io/badge/deprecated-FF0000) ![Golang CI](https://img.shields.io/badge/golang-00ADD8)
 
 ![](artwork/PACE-Bricks_Header_LightBackground.png)
 
 Opinionated microservice kit to help developers to build microservices with go.
+
+> [!CAUTION]
+> ## Project Status: Deprecated/Archived
+>
+> ![Deprecated](https://img.shields.io/badge/deprecated-FF0000) ![Archived](https://img.shields.io/badge/archived-1ECCF0)
+>
+> **As of January 2026, this project has reached its end-of-life and is no longer being actively developed. We are unable to provide support, security updates, or bug fixes. Developers looking for similar functionality are encouraged to seek actively maintained alternatives.**
 
 ## Opinions
 
