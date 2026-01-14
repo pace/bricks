@@ -1,4 +1,4 @@
-// Copyright © 2022  by PACE Telematics GmbH. All rights reserved.
+// Copyright © 2022  by PACE Mobility GmbH. All rights reserved.
 
 package hlog
 

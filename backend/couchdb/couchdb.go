@@ -1,4 +1,4 @@
-// Copyright © 2021 by PACE Telematics GmbH. All rights reserved.
+// Copyright © 2021–2026 by PACE Mobility GmbH. All rights reserved.
 
 package couchdb
 

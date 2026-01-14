@@ -1,4 +1,4 @@
-// Copyright © 2018 by PACE Telematics GmbH. All rights reserved.
+// Copyright © 2018–2026 by PACE Mobility GmbH. All rights reserved.
 
 // Package livetest implements a set of helpers that ease writing of a
 // sidecar that tests the functions of a service.

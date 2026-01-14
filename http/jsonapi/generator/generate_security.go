@@ -1,4 +1,4 @@
-// Copyright © 2019 by PACE Telematics GmbH. All rights reserved.
+// Copyright © 2019–2026 by PACE Mobility GmbH. All rights reserved.
 
 package generator
 

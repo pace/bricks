@@ -1,4 +1,4 @@
-// Copyright © 2020 by PACE Telematics GmbH. All rights reserved.
+// Copyright © 2020–2026 by PACE Mobility GmbH. All rights reserved.
 
 // The http locale package helps to transport and use the localization
 // information in a microservice landscape. It enables the propagation
